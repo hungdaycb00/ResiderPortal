@@ -33,6 +33,13 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
             <div className="absolute top-[-30px] left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-white border border-white/10 pointer-events-none">
                 {user.username || 'Mysterious User'}
             </div>
+            
+            {/* Status if available */}
+            {user.status && (
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-medium whitespace-nowrap text-white/80 border border-white/10 max-w-[120px] truncate pointer-events-none">
+                    {user.status}
+                </div>
+            )}
         </motion.div>
     );
 };
@@ -60,6 +67,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
     const [debugLog, setDebugLog] = useState<string[]>([]);
     const [wsStatus, setWsStatus] = useState('IDLE');
     const [myUserId, setMyUserId] = useState<string | null>(null);
+    const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
+    const [myStatus, setMyStatus] = useState("🚀 Exploring the digital universe");
+    const [isEditingStatus, setIsEditingStatus] = useState(false);
+    const [statusInput, setStatusInput] = useState("");
     const ws = useRef<WebSocket | null>(null);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
@@ -129,7 +140,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                     deviceId,
                     lat: position[0],
                     lng: position[1],
-                    radiusKm: radius
+                    radiusKm: radius,
+                    status: myStatus
                 }
             }));
             addLog(`📍 Sent GPS: ${position[0].toFixed(4)}, ${position[1].toFixed(4)}`);
@@ -195,6 +207,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
         if (!selectedUser) return;
         try {
             await externalApi.addFriend(selectedUser.id);
+            setSentFriendRequests(prev => [...prev, selectedUser.id]);
             alert(`Friend request sent to ${selectedUser.username}!`);
         } catch (err: any) {
             alert(err.message);
@@ -287,7 +300,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
-                    {searchTag && <X className="w-4 h-4 text-gray-400 cursor-pointer" onClick={() => setSearchTag('')} />}
                 </div>
                 <button 
                     onClick={onClose}
@@ -378,12 +390,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedUser({
-                                        id: user?.uid || 'self',
+                                        id: user?.uid || myUserId || 'self',
                                         username: user?.displayName || 'YOU',
                                         lat: myObfPos?.lat,
                                         lng: myObfPos?.lng,
                                         isSelf: true,
-                                        tags: ['#ALIN', '#EXPLORER']
+                                        tags: myStatus.split(' ').filter(w => w.startsWith('#')).map(w => {
+                                            return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '');
+                                        })
                                     });
                                 }}
                                 className="absolute w-14 h-14 -ml-7 -mt-7 group pointer-events-auto z-20 cursor-grab active:cursor-grabbing" 
@@ -392,7 +406,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                 whileTap={{ scale: 0.95 }}
                             >
                                 <div className="w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] border-blue-400">
-                                    <img src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || 'self'}`} className="w-full h-full object-cover" />
+                                    <img src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || myUserId || 'default'}`} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 bg-blue-500/60" />
                                 
@@ -402,6 +416,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                 
                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                                     Click to view | Drag to move
+                                </div>
+
+                                {/* Status under avatar */}
+                                <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-medium whitespace-nowrap text-white/80 border border-white/10 max-w-[120px] truncate pointer-events-none">
+                                    {myStatus}
                                 </div>
                             </motion.div>
 
@@ -562,18 +581,58 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="absolute bottom-0 left-0 right-0 bg-[#1a1d24] rounded-t-[32px] p-6 z-[140] border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
+                            className="absolute bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[450px] md:max-w-[90vw] md:rounded-[32px] bg-[#1a1d24] rounded-t-[32px] p-6 z-[140] border-t md:border border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
                         >
-                            <div className="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6" />
+                            <div className="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6 md:hidden" />
                             <div className="flex items-start gap-4 mb-6">
-                                <div className="w-16 h-16 bg-gray-800 rounded-2xl border-2 border-blue-500/30 overflow-hidden">
-                                    <img src={`https://i.pravatar.cc/150?u=${selectedUser.id}`} alt="Avatar" className="w-full h-full object-cover" />
+                                <div className="w-16 h-16 bg-gray-800 rounded-2xl border-2 border-blue-500/30 overflow-hidden shrink-0">
+                                    <img src={selectedUser.isSelf ? (user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || myUserId}`) : `https://i.pravatar.cc/150?u=${selectedUser.id}`} alt="Avatar" className="w-full h-full object-cover" />
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-bold">{selectedUser.username || 'Mysterious User'}</h3>
-                                    <p className="text-gray-400 text-sm mt-1">"Exploring the digital universe"</p>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-xl font-bold truncate">{selectedUser.username || 'Mysterious User'}</h3>
+                                    
+                                    {selectedUser.isSelf ? (
+                                        isEditingStatus ? (
+                                            <div className="flex gap-2 mt-2">
+                                                <input 
+                                                    autoFocus
+                                                    type="text" 
+                                                    value={statusInput} 
+                                                    onChange={(e) => setStatusInput(e.target.value)} 
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            setMyStatus(statusInput);
+                                                            setIsEditingStatus(false);
+                                                            if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
+                                                                ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: myObfPos.lat, lng: myObfPos.lng, zoom: 13, status: statusInput } }));
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-black/50 border border-blue-500/50 rounded-lg px-2 py-1.5 text-xs text-white w-full outline-none focus:border-blue-400"
+                                                />
+                                                <button 
+                                                    onClick={() => { 
+                                                        setMyStatus(statusInput); 
+                                                        setIsEditingStatus(false);
+                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
+                                                            ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: myObfPos.lat, lng: myObfPos.lng, zoom: 13, status: statusInput } }));
+                                                        }
+                                                    }}
+                                                    className="bg-blue-600 hover:bg-blue-500 transition-colors text-white px-3 rounded-lg text-xs font-bold shrink-0"
+                                                >Lưu</button>
+                                            </div>
+                                        ) : (
+                                            <div className="group/status inline-flex items-center gap-2 mt-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
+                                                <p className="text-gray-300 text-sm truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
+                                                <svg className="w-3 h-3 text-gray-500 group-hover/status:text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <p className="text-gray-400 text-sm mt-1 truncate">{selectedUser.status || "Exploring the digital universe"}</p>
+                                    )}
+
                                     <div className="flex flex-wrap gap-2 mt-3">
-                                        {(selectedUser.tags || ['#GAMER', '#ALIN']).map((tag: string) => (
+                                        {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
                                             <span key={tag} className="text-[10px] font-bold bg-blue-500/20 text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/30">
                                                 {tag.toUpperCase()}
                                             </span>
@@ -620,15 +679,17 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                     </button>
                                 ) : (
                                     <>
-                                        <button 
-                                            onClick={handleAddFriend}
-                                            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-                                        >
-                                            <UserPlus className="w-5 h-5" /> Kết bạn
-                                        </button>
+                                        {!sentFriendRequests.includes(selectedUser.id) && (
+                                            <button 
+                                                onClick={handleAddFriend}
+                                                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                                            >
+                                                <UserPlus className="w-5 h-5" /> Kết bạn
+                                            </button>
+                                        )}
                                         <button 
                                             onClick={handleMessage}
-                                            className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
+                                            className={`flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}
                                         >
                                             <MessageCircle className="w-5 h-5" /> Nhắn tin
                                         </button>
