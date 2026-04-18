@@ -646,7 +646,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                                             setMyStatus(statusInput);
                                                             setIsEditingStatus(false);
                                                             if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                                                ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: myObfPos.lat, lng: myObfPos.lng, zoom: 13, status: statusInput } }));
+                                                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
                                                             }
                                                         }
                                                     }}
@@ -657,7 +657,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                                         setMyStatus(statusInput); 
                                                         setIsEditingStatus(false);
                                                         if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                                            ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: myObfPos.lat, lng: myObfPos.lng, zoom: 13, status: statusInput } }));
+                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
                                                         }
                                                     }}
                                                     className="bg-blue-600 hover:bg-blue-500 transition-colors text-white px-3 rounded-lg text-xs font-bold shrink-0"
