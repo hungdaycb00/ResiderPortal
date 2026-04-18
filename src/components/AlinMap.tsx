@@ -59,7 +59,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [debugLog, setDebugLog] = useState<string[]>([]);
     const [wsStatus, setWsStatus] = useState('IDLE');
+    const [myUserId, setMyUserId] = useState<string | null>(null);
+    const [isSelfDragging, setIsSelfDragging] = useState(false);
     const ws = useRef<WebSocket | null>(null);
+    const selfDragX = useMotionValue(0);
+    const selfDragY = useMotionValue(0);
 
     const addLog = (msg: string) => {
         console.log('[Alin]', msg);
@@ -140,6 +144,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                 const p = data.payload;
                 addLog(`🎯 My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
                 setMyObfPos({ lat: p.lat, lng: p.lng });
+                setMyUserId(p.userId);
                 // Auto scan immediately
                 socket.send(JSON.stringify({
                     type: 'MAP_MOVE',
@@ -153,7 +158,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                 users.forEach((u: any) => {
                     addLog(`  → ${u.username || u.id} at ${u.lat?.toFixed(4)},${u.lng?.toFixed(4)}`);
                 });
-                let filtered = users;
+                // Filter out self from nearby users to avoid duplicate avatar
+                let filtered = users.filter((u: any) => u.id !== myUserId);
                 if (searchTag.trim()) {
                     const tag = searchTag.toLowerCase().replace('#', '');
                     filtered = filtered.filter((u: any) => 
@@ -348,15 +354,52 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                 backgroundPosition: "center center",
                             }} />
 
-                            {/* Self Node */}
-                            <motion.div className="absolute w-12 h-12 -ml-6 -mt-6 group pointer-events-auto" style={{ top: '50%', left: '50%' }}>
-                                <div className="w-full h-full rounded-full border-[3px] overflow-hidden shadow-[0_0_25px_rgba(59,130,246,0.8)] border-blue-400 bg-[#1a1d24] relative z-10">
-                                    <img src={`https://i.pravatar.cc/150?u=${user?.uid || 'self'}`} className="w-full h-full object-cover" />
+                            {/* Self Node — Draggable & Clickable */}
+                            <motion.div 
+                                drag={isSelfDragging}
+                                dragConstraints={{ left: -2000, right: 2000, top: -2000, bottom: 2000 }}
+                                dragElastic={0.05}
+                                style={{ x: selfDragX, y: selfDragY }}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isSelfDragging) {
+                                        setSelectedUser({
+                                            id: user?.uid || 'self',
+                                            username: user?.displayName || 'YOU',
+                                            lat: myObfPos?.lat,
+                                            lng: myObfPos?.lng,
+                                            isSelf: true,
+                                            tags: ['#ALIN', '#EXPLORER']
+                                        });
+                                    }
+                                }}
+                                onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsSelfDragging(!isSelfDragging);
+                                    if (isSelfDragging) {
+                                        // Reset position when exiting drag mode
+                                        selfDragX.set(0);
+                                        selfDragY.set(0);
+                                    }
+                                }}
+                                className={`absolute w-14 h-14 -ml-7 -mt-7 group pointer-events-auto z-20 ${isSelfDragging ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`} 
+                                style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all ${isSelfDragging ? 'shadow-[0_0_35px_rgba(16,185,129,0.8)] border-emerald-400' : 'shadow-[0_0_25px_rgba(59,130,246,0.8)] border-blue-400'}`}>
+                                    <img src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || 'self'}`} className="w-full h-full object-cover" />
                                 </div>
-                                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 bg-blue-500/60 blur-[6px] rounded-full -z-10" />
+                                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 ${isSelfDragging ? 'bg-emerald-500/60' : 'bg-blue-500/60'}`} />
                                 
-                                <div className="absolute top-[-30px] left-1/2 -translate-x-1/2 bg-blue-600/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap text-white border border-white/20">
-                                    YOU
+                                <div className={`absolute top-[-30px] left-1/2 -translate-x-1/2 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap text-white border border-white/20 ${isSelfDragging ? 'bg-emerald-600/80' : 'bg-blue-600/80'}`}>
+                                    {isSelfDragging ? '✋ DRAG ME' : 'YOU'}
+                                </div>
+                                
+                                {/* Double-tap hint */}
+                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-gray-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Double-click to {isSelfDragging ? 'lock' : 'drag'}
                                 </div>
                             </motion.div>
 
@@ -564,18 +607,37 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 pb-4">
-                                <button 
-                                    onClick={handleAddFriend}
-                                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-                                >
-                                    <UserPlus className="w-5 h-5" /> Add Friend
-                                </button>
-                                <button 
-                                    onClick={handleMessage}
-                                    className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
-                                >
-                                    <MessageCircle className="w-5 h-5" /> Message
-                                </button>
+                                {selectedUser?.isSelf ? (
+                                    <>
+                                        <button 
+                                            onClick={() => { setIsSelfDragging(true); setSelectedUser(null); }}
+                                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+                                        >
+                                            <Navigation className="w-5 h-5" /> Move Avatar
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedUser(null)}
+                                            className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
+                                        >
+                                            <X className="w-5 h-5" /> Close
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button 
+                                            onClick={handleAddFriend}
+                                            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                                        >
+                                            <UserPlus className="w-5 h-5" /> Add Friend
+                                        </button>
+                                        <button 
+                                            onClick={handleMessage}
+                                            className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
+                                        >
+                                            <MessageCircle className="w-5 h-5" /> Message
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </motion.div>
                     </>
