@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# AI & System
+project_context.session.json
+.agent/
+logs/
+
+# Scripts & Binaries
+*.bat
+*.exe
+cloudflared

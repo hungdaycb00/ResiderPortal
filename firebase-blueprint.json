@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "photoURL": { "type": "string", "description": "URL to user's profile photo" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user was created" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "When the user last logged in" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "Game metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the game" },
+        "title": { "type": "string", "description": "Title of the game" },
+        "image": { "type": "string", "description": "URL to game image" },
+        "creatorId": { "type": "string", "description": "UID of the user who created the game" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the game was published" }
+      },
+      "required": ["id", "title", "creatorId"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message in the world chat",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the message" },
+        "senderId": { "type": "string", "description": "UID of the sender" },
+        "senderName": { "type": "string", "description": "Name of the sender" },
+        "message": { "type": "string", "description": "The message content" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the message was sent" }
+      },
+      "required": ["senderId", "message", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/games/{gameId}": {
+      "schema": "Game",
+      "description": "Game metadata documents"
+    },
+    "/chat/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "World chat messages"
+    }
+  }
+}

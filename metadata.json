@@ -1,0 +1,5 @@
+{
+  "name": "Remix: Remix: Resider Game Portal",
+  "description": "A full-stack game portal with real-time notifications (Socket.IO), browser automation (Playwright), file processing (Multer/AdmZip), and persistent logging (SQLite).",
+  "requestFramePermissions": []
+}
