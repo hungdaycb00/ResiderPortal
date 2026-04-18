@@ -358,7 +358,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                 drag
                                 dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
                                 dragElastic={0.05}
-                                style={{ x: selfDragX, y: selfDragY }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onDragEnd={() => {
                                     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
