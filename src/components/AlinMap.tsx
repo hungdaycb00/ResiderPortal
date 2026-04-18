@@ -407,7 +407,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                             </motion.div>
 
                             {/* Other Nodes */}
-                            {nearbyUsers.map(u => (
+                            {nearbyUsers.filter(u => u.id !== myUserId).map(u => (
                                 <SpatialNode 
                                     key={u.id}
                                     user={u} 
