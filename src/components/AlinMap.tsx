@@ -69,8 +69,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
     const [myUserId, setMyUserId] = useState<string | null>(null);
     const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
     const [myStatus, setMyStatus] = useState("🚀 Exploring the digital universe");
+    const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
     const [isEditingStatus, setIsEditingStatus] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
+    const [nameInput, setNameInput] = useState("");
     const ws = useRef<WebSocket | null>(null);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
@@ -156,6 +159,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                 addLog(`🎯 My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
                 setMyObfPos({ lat: p.lat, lng: p.lng });
                 setMyUserId(p.userId);
+                if (p.username) setMyDisplayName(p.username);
                 // Auto scan immediately
                 socket.send(JSON.stringify({
                     type: 'MAP_MOVE',
@@ -391,7 +395,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                     e.stopPropagation();
                                     setSelectedUser({
                                         id: user?.uid || myUserId || 'self',
-                                        username: user?.displayName || 'YOU',
+                                        username: myDisplayName,
                                         lat: myObfPos?.lat,
                                         lng: myObfPos?.lng,
                                         isSelf: true,
@@ -589,7 +593,45 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
                                     <img src={selectedUser.isSelf ? (user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || myUserId}`) : `https://i.pravatar.cc/150?u=${selectedUser.id}`} alt="Avatar" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-xl font-bold truncate">{selectedUser.username || 'Mysterious User'}</h3>
+                                    {selectedUser.isSelf ? (
+                                        isEditingName ? (
+                                            <div className="flex gap-2 mb-2">
+                                                <input 
+                                                    autoFocus
+                                                    type="text" 
+                                                    value={nameInput} 
+                                                    onChange={(e) => setNameInput(e.target.value)} 
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            setMyDisplayName(nameInput);
+                                                            setIsEditingName(false);
+                                                            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                                                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-black/50 border border-emerald-500/50 rounded-lg px-2 py-1 text-sm font-bold text-white w-full outline-none focus:border-emerald-400"
+                                                />
+                                                <button 
+                                                    onClick={() => { 
+                                                        setMyDisplayName(nameInput); 
+                                                        setIsEditingName(false);
+                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
+                                                        }
+                                                    }}
+                                                    className="bg-emerald-600 hover:bg-emerald-500 transition-colors text-white px-3 rounded-lg text-xs font-bold shrink-0"
+                                                >Lưu</button>
+                                            </div>
+                                        ) : (
+                                            <div className="group/name inline-flex items-center gap-2 mb-2 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
+                                                <h3 className="text-xl font-bold truncate group-hover/name:text-blue-300 transition-colors">{myDisplayName}</h3>
+                                                <svg className="w-4 h-4 text-gray-600 group-hover/name:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <h3 className="text-xl font-bold truncate">{selectedUser.username || 'Mysterious User'}</h3>
+                                    )}
                                     
                                     {selectedUser.isSelf ? (
                                         isEditingStatus ? (
