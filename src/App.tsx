@@ -69,6 +69,7 @@ export default function App() {
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatTargetUser, setChatTargetUser] = useState<{id: string, name: string} | null>(null);
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [isMyGamesOverlayOpen, setIsMyGamesOverlayOpen] = useState(false);
@@ -1265,6 +1266,10 @@ export default function App() {
             user={user} 
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
+            onOpenChat={(id: string, name: string) => {
+              setChatTargetUser({ id, name });
+              setIsChatOpen(true);
+            }}
           />
         )}
       </AnimatePresence>
@@ -1350,6 +1355,8 @@ export default function App() {
                 currentUserId={user?.uid}
                 userName={user?.displayName || ''}
                 userAvatar={user?.photoURL || ''}
+                targetUser={chatTargetUser}
+                onClose={() => setIsChatOpen(false)}
               />
             </motion.div>
           </div>

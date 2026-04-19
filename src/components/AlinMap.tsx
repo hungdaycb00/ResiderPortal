@@ -50,9 +50,10 @@ interface AlinMapProps {
     user: any;
     onClose: () => void;
     externalApi: any; // Pass externalApi from props or import it
+    onOpenChat?: (id: string, name: string) => void;
 }
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenChat }) => {
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
@@ -219,7 +220,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi }) => {
     };
 
     const handleMessage = () => {
-        alert("Chat feature is coming soon to Alin Map!");
+        if (selectedUser && onOpenChat) {
+            onOpenChat(selectedUser.id, selectedUser.username);
+        } else {
+            alert("Chat feature is coming soon to Alin Map!");
+        }
     };
 
     // Fetch games for selected user

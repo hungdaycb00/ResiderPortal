@@ -93,10 +93,33 @@ export function leaveRoom(roomId: number) {
     }
 }
 
+export function getMyPrivateRooms(): Promise<any> {
+    const socket = getSocket();
+    
+    return new Promise((resolve, reject) => {
+        if (!socket) return reject(new Error('WebSocket not connected'));
+
+        socket.emit('get_my_private_rooms');
+
+        socket.once('my_private_rooms', (data) => {
+            resolve(data.rooms);
+        });
+
+        socket.once('error', (error) => {
+            reject(new Error(error.message));
+        });
+
+        setTimeout(() => {
+            reject(new Error('Fetch rooms timeout'));
+        }, 10000);
+    });
+}
+
 export default {
     authenticateChat,
     joinRoom,
     sendMessage,
     createOrGetPrivateRoom,
+    getMyPrivateRooms,
     leaveRoom
 };
