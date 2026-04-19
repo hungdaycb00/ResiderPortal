@@ -364,12 +364,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                     Activate Hologram
                                 </button>
                                 <button 
-                                    onClick={() => { setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
-                                    className="text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors"
-                                >
-                                    Deploy as Ghost (Fake coords)
-                                </button>
-                                <button 
                                     onClick={() => { setIsVisibleOnMap(false); setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
                                     className="text-gray-400 hover:text-white text-xs py-2 transition-colors border border-white/10 rounded-xl hover:border-white/30"
                                 >

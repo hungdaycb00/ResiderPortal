@@ -12,6 +12,15 @@ const getBaseUrl = (urlOverride?: string): string => {
   return url;
 };
 
+export const normalizeImageUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  const baseUrl = getBaseUrl();
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export const externalApi = {
   /**
    * Check if the external server is reachable.
