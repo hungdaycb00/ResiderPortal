@@ -23,7 +23,11 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
             whileTap={{ scale: 0.95 }}
         >
             <div className="w-full h-full rounded-full border-[3px] overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.6)] border-blue-500 bg-[#1a1d24]">
-                <img src={`https://i.pravatar.cc/150?u=${user.id}`} className="w-full h-full object-cover" />
+                <img 
+                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                />
             </div>
             
             {/* Hologram base shadow/glow */}
@@ -75,9 +79,19 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
     const [nameInput, setNameInput] = useState("");
+    const [isVisibleOnMap, setIsVisibleOnMap] = useState(true);
     const ws = useRef<WebSocket | null>(null);
+    const reconnectTimeout = useRef<any>(null);
+    const isMounted = useRef(true);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     const addLog = (msg: string) => {
         console.log('[Alin]', msg);
@@ -134,10 +148,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
         ws.current = socket;
 
         socket.onopen = () => {
+            if (!isMounted.current) {
+                socket.close();
+                return;
+            }
             addLog(`✅ Connected! Sending USER_JOIN...`);
             setIsConnecting(false);
             setWsStatus('OPEN');
-            const deviceId = localStorage.getItem('deviceId') || '';
+            const deviceId = externalApi.getDeviceId();
             socket.send(JSON.stringify({
                 type: 'USER_JOIN',
                 payload: {
@@ -145,7 +163,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                     lat: position[0],
                     lng: position[1],
                     radiusKm: radius,
-                    status: myStatus
+                    status: myStatus,
+                    visible: isVisibleOnMap
                 }
             }));
             addLog(`📍 Sent GPS: ${position[0].toFixed(4)}, ${position[1].toFixed(4)}`);
@@ -188,10 +207,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
         };
 
         socket.onclose = () => {
+            if (!isMounted.current) return;
             addLog('🔌 Disconnected, retrying in 3s...');
             setIsConnecting(false);
             setWsStatus('CLOSED');
-            setTimeout(connectWS, 3000);
+            if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+            reconnectTimeout.current = setTimeout(() => {
+                if (isMounted.current) connectWS();
+            }, 3000);
         };
 
         socket.onerror = (e) => {
@@ -204,6 +227,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     useEffect(() => {
         connectWS();
         return () => {
+            if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
             if (ws.current) ws.current.close();
         };
     }, [position]); // Only reconnect if position changes significantly or on mount
@@ -345,6 +369,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 >
                                     Deploy as Ghost (Fake coords)
                                 </button>
+                                <button 
+                                    onClick={() => { setIsVisibleOnMap(false); setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
+                                    className="text-gray-400 hover:text-white text-xs py-2 transition-colors border border-white/10 rounded-xl hover:border-white/30"
+                                >
+                                    👁️ Browse Only — Xem mà không chia sẻ vị trí
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -374,7 +404,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 backgroundPosition: "center center",
                             }} />
 
-                            {/* Self Node — Always Draggable */}
+                            {/* Self Node — Only show when visible */}
+                            {isVisibleOnMap && (
                             <motion.div 
                                 drag
                                 dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
@@ -382,7 +413,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onDragEnd={() => {
                                     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                        // Calculate new coordinates from travel offset
                                         const deltaLng = selfDragX.get() / DEGREES_TO_PX;
                                         const deltaLat = -selfDragY.get() / DEGREES_TO_PX;
                                         
@@ -415,7 +445,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 whileTap={{ scale: 0.95 }}
                             >
                                 <div className="w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] border-blue-400">
-                                    <img src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || myUserId || 'default'}`} className="w-full h-full object-cover" />
+                                    <img 
+                                        src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
+                                        className="w-full h-full object-cover" 
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                                    />
                                 </div>
                                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 bg-blue-500/60" />
                                 
@@ -432,6 +466,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                     {myStatus}
                                 </div>
                             </motion.div>
+                            )}
+
+                            {/* Observer mode indicator */}
+                            {!isVisibleOnMap && (
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex flex-col items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-dashed border-gray-500 rounded-full animate-pulse" />
+                                    <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase bg-black/40 px-2 py-1 rounded-md">OBSERVER</span>
+                                </div>
+                            )}
 
                             {/* Other Nodes */}
                             {nearbyUsers.filter(u => u.id !== myUserId).map(u => (
@@ -561,9 +604,23 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                     <div className="pt-6 border-t border-white/5">
                                         <h3 className="font-bold mb-4">Display Mode</h3>
                                         <label className="flex items-center justify-between cursor-pointer group">
-                                            <span className="text-gray-400 group-hover:text-white transition-colors">Visible on Map</span>
+                                            <div>
+                                                <span className="text-gray-400 group-hover:text-white transition-colors">Visible on Map</span>
+                                                <p className="text-[10px] text-gray-600 mt-0.5">{isVisibleOnMap ? 'Người khác có thể thấy bạn' : 'Bạn đang ẩn danh (Observer)'}</p>
+                                            </div>
                                             <div className="relative inline-flex items-center">
-                                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="sr-only peer" 
+                                                    checked={isVisibleOnMap}
+                                                    onChange={(e) => {
+                                                        const newVal = e.target.checked;
+                                                        setIsVisibleOnMap(newVal);
+                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                                                        }
+                                                    }}
+                                                />
                                                 <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                             </div>
                                         </label>
@@ -595,7 +652,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                             <div className="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6 md:hidden" />
                             <div className="flex items-start gap-4 mb-6">
                                 <div className="w-16 h-16 bg-gray-800 rounded-2xl border-2 border-blue-500/30 overflow-hidden shrink-0">
-                                    <img src={selectedUser.isSelf ? (user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || myUserId}`) : `https://i.pravatar.cc/150?u=${selectedUser.id}`} alt="Avatar" className="w-full h-full object-cover" />
+                                    <img 
+                                        src={selectedUser.isSelf 
+                                            ? (user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`) 
+                                            : (selectedUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`)
+                                        } 
+                                        alt="Avatar" 
+                                        className="w-full h-full object-cover" 
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.isSelf ? myDisplayName : (selectedUser.username || 'U'))}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                                    />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     {selectedUser.isSelf ? (
@@ -697,19 +762,30 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                             {[1,2,3].map(i => <div key={i} className="min-w-[120px] h-20 bg-gray-800/50 rounded-xl animate-pulse" />)}
                                         </div>
                                     ) : userGames.length > 0 ? (
-                                        userGames.map((game) => (
-                                            <div key={game.id} className="min-w-[140px] bg-gray-800 rounded-xl overflow-hidden border border-white/5 group active:scale-95 transition-transform">
-                                                <div className="h-20 bg-gray-700 relative">
-                                                    <img src={game.image} className="w-full h-full object-cover" alt={game.title} />
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Navigation className="w-5 h-5 text-white" />
+                                        userGames.map((game) => {
+                                            const baseUrl = (localStorage.getItem('cloudflareUrl') || '').replace(/\/$/, '');
+                                            const imgSrc = game.image?.startsWith('http') || game.image?.startsWith('data:') 
+                                                ? game.image 
+                                                : `${baseUrl}${game.image?.startsWith('/') ? '' : '/'}${game.image || ''}`;
+                                            return (
+                                                <div key={game.id} className="min-w-[140px] bg-gray-800 rounded-xl overflow-hidden border border-white/5 group active:scale-95 transition-transform">
+                                                    <div className="h-20 bg-gray-700 relative">
+                                                        <img 
+                                                            src={imgSrc} 
+                                                            className="w-full h-full object-cover" 
+                                                            alt={game.title}
+                                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Navigation className="w-5 h-5 text-white" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-2">
+                                                        <p className="text-[10px] font-bold truncate">{game.title}</p>
                                                     </div>
                                                 </div>
-                                                <div className="p-2">
-                                                    <p className="text-[10px] font-bold truncate">{game.title}</p>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     ) : (
                                         <p className="text-gray-500 text-xs italic">No games published yet.</p>
                                     )}
