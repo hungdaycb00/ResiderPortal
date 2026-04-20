@@ -352,7 +352,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar (Mobile First & Left Sidebar on PC) */}
-            <div className="absolute top-12 left-4 right-4 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] z-[170] flex gap-2 transition-all">
+            <div className="absolute top-12 left-4 right-4 md:left-[88px] md:top-6 md:right-auto md:translate-x-0 md:w-[400px] z-[170] flex gap-2 transition-all">
                 <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-full flex items-center px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
@@ -707,8 +707,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                     )}
                 </AnimatePresence>
 
-            {/* Bottom Navigation */}
-            <div className="absolute bottom-0 left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] h-[65px] bg-white border-t md:border-x border-gray-200 z-[160] flex justify-around items-center px-4 md:rounded-t-[32px] md:shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all">
+            {/* Bottom Navigation (Mobile) / Mini Vertical Sidebar (PC) */}
+            <div className="absolute bottom-0 left-0 right-0 md:top-0 md:bottom-0 md:right-auto md:w-[72px] h-[65px] md:h-full bg-white border-t md:border-t-0 md:border-r border-gray-200 z-[160] flex flex-row md:flex-col justify-around md:justify-start md:pt-8 md:gap-8 items-center px-4 md:px-0 md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] transition-all">
                 <button className="flex flex-col items-center justify-center gap-1 text-blue-600 active:scale-95 transition-transform" onClick={() => setIsSheetExpanded(false)}>
                     <MapPin className="w-6 h-6 fill-blue-100" />
                     <span className="text-[10px] font-bold">Khám phá</span>
@@ -724,7 +724,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Floating Tabs */}
-            <div className={`absolute left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 md:w-[420px] md:justify-center z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] opacity-0 pointer-events-none scale-95' : 'bottom-[115px] opacity-100 scale-100'}`}>
+            <div className={`absolute left-1/2 -translate-x-1/2 md:left-[88px] md:translate-x-0 md:w-[400px] md:justify-start z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] md:top-[80px] md:bottom-auto opacity-0 pointer-events-none scale-95' : 'bottom-[115px] md:top-[90px] md:bottom-auto opacity-100 scale-100'}`}>
                 <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
                     <Compass className="w-5 h-5 mb-0.5" />
                     <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
@@ -740,9 +740,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Smart Bottom Sheet / PC Sidebar */}
-            <div className={`absolute top-28 left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] pointer-events-none z-[140] ${isDesktop ? 'bottom-[65px] md:bottom-12 overflow-visible' : 'bottom-[65px] overflow-hidden'}`}>
+            <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-28 bottom-[65px] overflow-hidden'}`}>
                 <motion.div 
-                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[0_0_40px_rgba(0,0,0,0.1)] md:border md:border-gray-200 flex flex-col pointer-events-auto"
+                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
                         expanded: { y: 0, x: 0 },
                         collapsed: { 

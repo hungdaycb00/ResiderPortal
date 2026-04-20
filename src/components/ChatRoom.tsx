@@ -100,18 +100,21 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         useCallback((newMessage) => {
             if (activeRoomIdRef.current === null || String(newMessage.roomId) === String(activeRoomIdRef.current)) {
                 setMessages(prev => [...prev, newMessage]);
-                scrollToBottom();
             }
         }, []),
         useCallback((history) => {
             setMessages(history);
-            scrollToBottom();
         }, [])
     );
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    // Auto-scroll after messages have rendered
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleSend = () => {
         if (inputText.trim() && activeRoomId) {

@@ -27,7 +27,7 @@ export function joinRoom(type: 'global' | 'private', roomId: number | null = nul
     return new Promise((resolve, reject) => {
         if (!socket) return reject(new Error('WebSocket not connected'));
 
-        socket.emit('join_room', { type, roomId });
+        socket.emit('join', { roomType: type, roomId });
 
         socket.once('room_joined', (data) => {
             console.log(`✅ Joined ${type} room:`, data.roomId);
