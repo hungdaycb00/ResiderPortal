@@ -344,8 +344,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
 
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
-            {/* Header / Search Bar (Mobile First) */}
-            <div className="absolute top-12 left-4 right-4 z-[170] flex gap-2">
+            {/* Header / Search Bar (Mobile First & Centered on PC) */}
+            <div className="absolute top-12 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[450px] z-[170] flex gap-2 transition-all">
                 <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-full flex items-center px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
@@ -688,7 +688,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 </AnimatePresence>
 
             {/* Bottom Navigation */}
-            <div className="absolute bottom-0 left-0 right-0 h-[65px] bg-white border-t border-gray-200 z-[160] flex justify-around items-center px-4 md:hidden">
+            <div className="absolute bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] h-[65px] bg-white border-t md:border-x border-gray-200 z-[160] flex justify-around items-center px-4 md:rounded-t-[32px] md:shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all">
                 <button className="flex flex-col items-center justify-center gap-1 text-blue-600 active:scale-95 transition-transform" onClick={() => setIsSheetExpanded(false)}>
                     <MapPin className="w-6 h-6 fill-blue-100" />
                     <span className="text-[10px] font-bold">Khám phá</span>
@@ -704,7 +704,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Floating Tabs */}
-            <div className={`absolute left-1/2 -translate-x-1/2 z-[150] flex gap-2 pointer-events-auto w-max md:hidden transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[120px] opacity-0 pointer-events-none' : 'bottom-[80px] opacity-100'}`}>
+            <div className={`absolute left-1/2 -translate-x-1/2 z-[150] flex gap-2 pointer-events-auto w-max transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[120px] opacity-0 pointer-events-none' : 'bottom-[80px] md:bottom-[90px] opacity-100'}`}>
                 <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
                     <Compass className="w-5 h-5 mb-0.5" />
                     <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
@@ -720,12 +720,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Smart Bottom Sheet */}
-            <div className="absolute top-24 bottom-[65px] md:bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] overflow-hidden pointer-events-none z-[140]">
+            <div className="absolute top-28 bottom-[65px] left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] overflow-hidden pointer-events-none z-[140]">
                 <motion.div 
-                    className="absolute top-0 left-0 right-0 h-[1200px] bg-white rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto"
+                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-t-none md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-none md:border-x md:border-t md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
                         expanded: { y: 0 },
-                        collapsed: { y: 'calc(100vh - 360px)' }
+                        collapsed: { y: 'calc(100% - 320px)' }
                     }}
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? "expanded" : "collapsed"}
