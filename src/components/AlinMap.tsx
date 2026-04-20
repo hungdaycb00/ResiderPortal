@@ -524,10 +524,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     {/* User Avatar Inside Search */}
                     <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img
-                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=50&bold=true`}
+                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
                             alt="Me"
                             className="w-7 h-7 object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=50&bold=true`; }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`; }}
                         />
                     </button>
                 </div>
@@ -659,28 +659,31 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         })
                                     });
                                 }}
-                                className="absolute w-14 h-14 -ml-7 -mt-7 group pointer-events-auto z-20 cursor-grab active:cursor-grabbing select-none"
+                                className="absolute w-16 h-16 -ml-8 -mt-16 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
                                 style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
                             >
-                                <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-gray-500 opacity-60'}`}>
+                                {/* Pulse Effect Ripple */}
+                                <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
+                                
+                                <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_30px_rgba(59,130,246,0.9)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
                                     <img
-                                        src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
+                                        src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                                         className="w-full h-full object-cover pointer-events-none"
                                         draggable={false}
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                                     />
                                     {!isVisibleOnMap && (
                                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                            <div className="w-5 h-5 border-2 border-white/40 border-dashed rounded-full animate-spin-slow" />
+                                            <div className="w-5 h-5 border-2 border-emerald-400/40 border-dashed rounded-full animate-spin-slow" />
                                         </div>
                                     )}
                                 </div>
-                                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 ${isVisibleOnMap ? 'bg-blue-500/60' : 'bg-gray-500/30'}`} />
-
-                                <div className={`absolute top-[-30px] left-1/2 -translate-x-1/2 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap text-white border border-white/20 ${isVisibleOnMap ? 'bg-blue-600/80' : 'bg-gray-600/80'}`}>
-                                    {isVisibleOnMap ? 'YOU' : 'YOU (HIDDEN)'}
+                                
+                                {/* Self Label */}
+                                <div className={`absolute top-[-35px] left-1/2 -translate-x-1/2 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap text-white border-2 border-white/20 shadow-lg ${isVisibleOnMap ? 'bg-blue-600/90' : 'bg-emerald-600/90'}`}>
+                                    {isVisibleOnMap ? 'YOU' : 'GHOST MODE'}
                                     {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
                                 </div>
 
@@ -703,7 +706,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             )}
 
                             {/* Other Nodes */}
-                            {nearbyUsers.filter(u => u.id !== myUserId).map(u => (
+                            {nearbyUsers.filter(u => u.id !== myUserId && u.id !== user?.uid).map(u => (
                                 <SpatialNode
                                     key={u.id}
                                     user={u}

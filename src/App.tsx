@@ -186,10 +186,10 @@ export default function App() {
       const result = await externalApi.syncGoogleLogin(response.credential);
       if (result.success && result.user) {
         const loggedInUser: User = {
-          uid: result.user.id,
+          uid: result.user.id || result.user.uid,
           email: result.user.email,
-          displayName: result.user.display_name,
-          photoURL: normalizeImageUrl(result.user.avatar_url),
+          displayName: result.user.display_name || result.user.displayName,
+          photoURL: normalizeImageUrl(result.user.photoURL || result.user.avatar_url),
         };
         setUser(loggedInUser);
         localStorage.setItem('user', JSON.stringify(loggedInUser));
