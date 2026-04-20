@@ -34,7 +34,7 @@ export default function FriendsView({ friends, requests, onAddFriend, onAccept, 
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#1a1d24] rounded-full"></div>
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white">{friend.displayName || friend.id}</p>
+                        <p className="text-sm font-bold text-white">{friend.display_name || friend.displayName || friend.id}</p>
                         <p className="text-[10px] text-gray-500 uppercase tracking-widest">Active now</p>
                       </div>
                     </div>
@@ -80,7 +80,7 @@ export default function FriendsView({ friends, requests, onAddFriend, onAccept, 
                 <div className="flex items-center gap-3">
                   <img src={req.photoURL || `https://i.pravatar.cc/150?u=${req.id}`} className="w-10 h-10 rounded-full border border-gray-700" alt="" />
                   <div>
-                    <p className="text-sm font-bold text-white">{req.displayName || req.id}</p>
+                    <p className="text-sm font-bold text-white">{req.display_name || req.displayName || req.id}</p>
                     <p className="text-[10px] text-gray-500">Wants to be your friend</p>
                   </div>
                 </div>

@@ -45,6 +45,45 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
                     {user.status}
                 </div>
             )}
+
+            {/* Gallery Billboard */}
+            {user.gallery?.active && (
+                <motion.div 
+                    initial={{ y: 0, opacity: 0 }}
+                    animate={{ y: [0, -5, 0], opacity: 1 }}
+                    transition={{ 
+                        y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+                        opacity: { duration: 0.5 }
+                    }}
+                    className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 bg-blue-600/20 backdrop-blur-lg border border-blue-400/30 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.4)] pointer-events-none group-hover:scale-110 transition-transform"
+                >
+                    <div className="bg-blue-500/40 px-2 py-1 border-b border-blue-400/20">
+                        <p className="text-[9px] font-black text-white truncate text-center uppercase tracking-wider">
+                            {user.gallery.title || 'ADVERTISEMENT'}
+                        </p>
+                    </div>
+                    {user.gallery.images?.[0] ? (
+                        <div className="w-full aspect-video bg-black/40">
+                            <img 
+                                src={normalizeImageUrl(user.gallery.images[0])} 
+                                className="w-full h-full object-cover opacity-80"
+                                alt="Ads"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-full h-12 flex items-center justify-center bg-blue-900/20">
+                            <Diamond className="w-4 h-4 text-blue-400 animate-pulse" />
+                        </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent mix-blend-overlay" />
+                    {/* Glowing scanning line effect */}
+                    <motion.div 
+                        animate={{ top: ['0%', '100%', '0%'] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="absolute left-0 right-0 h-[1px] bg-blue-300/60 shadow-[0_0_10px_#60a5fa] z-10"
+                    />
+                </motion.div>
+            )}
         </motion.div>
     );
 };
@@ -61,15 +100,17 @@ interface AlinMapProps {
 }
 
 const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat }) => {
+    const API_BASE = import.meta.env.DEV ? 'http://localhost:3003' : (window.location.origin.includes('alin.city') ? 'https://api.alin.city' : window.location.origin);
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
+    const [activeTab, setActiveTab] = useState<'info' | 'gallery'>('info');
     const [userGames, setUserGames] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
     const [radius, setRadius] = useState(5);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isConsentOpen, setIsConsentOpen] = useState(true);
+    const [isConsentOpen, setIsConsentOpen] = useState(() => !localStorage.getItem('alin_location_consent_handled'));
     const [isLoadingGames, setIsLoadingGames] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -84,6 +125,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [nameInput, setNameInput] = useState("");
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
+    
+    // Gallery state
+    const [galleryTitle, setGalleryTitle] = useState('');
+    const [galleryImages, setGalleryImages] = useState<string[]>([]);
+    const [galleryActive, setGalleryActive] = useState(false);
+    const [galleryLinks, setGalleryLinks] = useState<any[]>([]);
+    const [isSavingGallery, setIsSavingGallery] = useState(false);
+
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<any>(null);
     const isMounted = useRef(true);
@@ -148,6 +197,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
     // Initial Geolocation
     const requestLocation = () => {
+        localStorage.setItem('alin_location_consent_handled', 'true');
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -157,8 +207,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 },
                 (err) => {
                     console.error("Geolocation error:", err);
-                    // Fallback to IP logic would go here
-                    setPosition([10.762622, 106.660172]); // Sample: HCM City
+                    // Fallback to HCM City
+                    setPosition([10.762622, 106.660172]); 
                     setIsConsentOpen(false);
                 }
             );
@@ -227,6 +277,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     setMyStatus(p.status);
                     setStatusInput(p.status);
                 }
+                if (p.gallery) {
+                    setGalleryTitle(p.gallery.title || '');
+                    setGalleryImages(p.gallery.images || []);
+                    setGalleryActive(p.gallery.active || false);
+                    setGalleryLinks(p.gallery.links || []);
+                }
                 // Auto scan immediately
                 socket.send(JSON.stringify({
                     type: 'MAP_MOVE',
@@ -235,21 +291,31 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 addLog(`🔍 Sent MAP_MOVE scan`);
             }
             if (data.type === 'NEARBY_USERS') {
-                const users = data.payload;
-                addLog(`👥 Found ${users.length} users nearby`);
-                users.forEach((u: any) => {
-                    addLog(`  → ${u.username || u.id} at ${u.lat?.toFixed(4)},${u.lng?.toFixed(4)}`);
-                });
-                // Filter out self from nearby users to avoid duplicate avatar
-                let filtered = users.filter((u: any) => u.id !== myUserId);
+                const users = data.payload.map((u: any) => ({
+                    ...u,
+                    isSelf: u.id === myUserId
+                }));
+                
+                // Filter out self from map to avoid duplicate avatar at center 
+                // (though SpatialNode handles it, filtering here is cleaner)
+                let filtered = users.filter((u: any) => !u.isSelf);
+                
                 if (searchTag.trim()) {
                     const tag = searchTag.toLowerCase().replace('#', '');
                     filtered = filtered.filter((u: any) => 
-                        (u.tags && u.tags.some((t: string) => t.toLowerCase().includes(tag))) ||
-                        (u.username && u.username.toLowerCase().includes(tag))
+                        (u.gallery?.title && u.gallery.title.toLowerCase().includes(tag)) ||
+                        (u.username && u.username.toLowerCase().includes(tag)) ||
+                        (u.status && u.status.toLowerCase().includes(tag))
                     );
                 }
+                
                 setNearbyUsers(filtered);
+                
+                // Update selectedUser if they are in the nearby list to get latest gallery data
+                if (selectedUser && !selectedUser.isSelf) {
+                    const updated = users.find(u => u.id === selectedUser.id);
+                    if (updated) setSelectedUser(updated);
+                }
             }
         };
 
@@ -282,25 +348,85 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const handleAddFriend = async () => {
         if (!selectedUser) return;
         try {
-            await externalApi.addFriend(selectedUser.id);
-            setSentFriendRequests(prev => [...prev, selectedUser.id]);
-            alert(`Yêu cầu kết bạn đã được gửi tới ${selectedUser.username || selectedUser.id}!`);
+            alert(`Friend request sent to ${selectedUser.username || selectedUser.id}!`);
         } catch (err: any) {
             if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
-                alert("Bạn đã gửi yêu cầu hoặc đã là bạn bè với người này!");
-                // Đồng bộ local state nếu server báo đã là bạn/đã gửi
-                setSentFriendRequests(prev => [...prev, selectedUser.id]);
+                alert("Request already sent or you are already friends!");
             } else {
-                alert(err.message || "Không thể gửi yêu cầu kết bạn.");
+                alert(err.message || "Failed to send friend request.");
             }
         }
     };
 
     const handleMessage = () => {
-        if (selectedUser && onOpenChat) {
-            onOpenChat(selectedUser.id, selectedUser.username);
-        } else {
-            alert("Chat feature is coming soon to Alin Map!");
+        if (!selectedUser || !onOpenChat) return;
+        onOpenChat(selectedUser.id, selectedUser.username || 'User');
+    };
+
+    const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        // Validation
+        const validFiles = files.filter(f => f.size <= 1024 * 1024); // 1MB
+        if (validFiles.length < files.length) {
+            alert("Some files were skipped (limit 1MB per file).");
+        }
+        if (validFiles.length === 0) return;
+
+        const formData = new FormData();
+        validFiles.forEach(f => formData.append('images', f));
+        
+        const deviceId = externalApi.getDeviceId();
+        
+        try {
+            const resp = await fetch(`${API_BASE}/api/user/gallery`, {
+                method: 'POST',
+                headers: { 'X-Device-Id': deviceId },
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                setGalleryImages(data.gallery.images);
+                // Also update session in WS
+                ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
+            } else {
+                alert(data.error || "Upload failed");
+            }
+        } catch (err) {
+            console.error("Gallery upload error:", err);
+        }
+    };
+
+    const saveGallerySettings = async (updates: any) => {
+        setIsSavingGallery(true);
+        const deviceId = externalApi.getDeviceId();
+        const formData = new FormData();
+        
+        if (updates.title !== undefined) formData.append('title', updates.title);
+        if (updates.active !== undefined) formData.append('active', updates.active);
+        if (updates.links !== undefined) formData.append('links', JSON.stringify(updates.links));
+        
+        // Indicate which images to keep
+        formData.append('keepImages', JSON.stringify(galleryImages));
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/user/gallery`, {
+                method: 'POST',
+                headers: { 'X-Device-Id': deviceId },
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                setGalleryActive(data.gallery.active);
+                setGalleryTitle(data.gallery.title);
+                // Refresh Billboard
+                ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
+            }
+        } catch (err) {
+            console.error("Save gallery failed", err);
+        } finally {
+            setIsSavingGallery(false);
         }
     };
 
@@ -368,7 +494,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
                         type="text" 
-                        placeholder="Tìm kiếm..." 
+                        placeholder="Search..." 
                         onFocus={() => setIsSheetExpanded(true)}
                         className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
                         value={searchTag}
@@ -393,9 +519,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
             {/* Desktop Sticky Header Tabs */}
             <div className={`hidden md:flex absolute z-[170] transition-all duration-300 top-[80px] left-[72px] w-[400px] bg-white border-b border-gray-200 px-4 pt-4 gap-6 pointer-events-auto ${!isSheetExpanded ? 'opacity-0 pointer-events-none -translate-x-4' : 'opacity-100'}`}>
-                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">Danh sách</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Đã gắn nhãn</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Bản đồ</button>
+                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">List</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Labeled</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Map</button>
             </div>
 
             {/* 2D Flat Space Interactor */}
@@ -423,11 +549,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                     Activate Hologram
                                 </button>
                                 <button 
-                                    onClick={() => { setIsVisibleOnMap(false); setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
+                                    onClick={() => { localStorage.setItem('alin_location_consent_handled', 'true'); setIsVisibleOnMap(false); setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
                                     className="text-gray-400 hover:text-white text-xs py-2 transition-colors border border-white/10 rounded-xl hover:border-white/30"
                                 >
-                                    👁️ Browse Only — Xem mà không chia sẻ vị trí
+                                    👁️ Browse Only — View without sharing location
                                 </button>
+                                <p className="text-[10px] text-gray-500 mt-2">Note: You can change your visibility anytime in settings.</p>
                             </div>
                         </div>
                     </div>
@@ -542,7 +669,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                 </div>
                                 
                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {isVisibleOnMap ? 'Click to view | Drag to move' : 'Bạn đang ẩn danh | Kéo để di chuyển'}
+                                    {isVisibleOnMap ? 'Click to view | Drag to move' : 'You are invisible | Drag to move'}
                                 </div>
 
                                 {/* Status under avatar */}
@@ -585,178 +712,120 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         <RefreshCw className="w-3 h-3 animate-spin" /> SCANNING SECTOR...
                     </div>
                 )}
-
-                {/* DEBUG PANEL (Hidden) */}
-                {false && (
-                    <div className="absolute bottom-4 left-4 z-[200] bg-black/90 backdrop-blur-lg border border-green-500/50 rounded-xl p-3 max-w-[300px] max-h-[250px] overflow-y-auto text-[9px] font-mono text-green-400 pointer-events-auto">
-                        <div className="text-green-300 font-bold mb-1">🛰️ ALIN DEBUG [{wsStatus}]</div>
-                        <div className="text-yellow-400">GPS: {position ? `${position[0].toFixed(4)}, ${position[1].toFixed(4)}` : 'null'}</div>
-                        <div className="text-cyan-400">ObfPos: {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : 'null'}</div>
-                        <div className="text-pink-400">Nearby: {nearbyUsers.length} users</div>
-                        {nearbyUsers.map(u => (
-                            <div key={u.id} className="text-gray-400 pl-2">
-                                → {u.username || u.id}: {u.lat?.toFixed(4)},{u.lng?.toFixed(4)}
-                                {myObfPos && <span className="text-orange-400"> ({((u.lng - myObfPos.lng) * DEGREES_TO_PX).toFixed(0)}px, {(-(u.lat - myObfPos.lat) * DEGREES_TO_PX).toFixed(0)}px)</span>}
-                            </div>
-                        ))}
-                        <div className="border-t border-green-500/30 mt-1 pt-1">
-                            {debugLog.slice(-8).map((log, i) => (
-                                <div key={i} className="text-gray-500">{log}</div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Floating Controls (Map Tools) */}
             <div className="absolute bottom-[200px] md:bottom-12 right-4 md:right-8 z-[120] flex flex-col gap-3 pointer-events-auto items-end">
-                {/* Extra Options */}
                 <button 
                     onClick={handleRefresh}
                     className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
-                    title="Làm mới"
+                    title="Refresh"
                 >
                     <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
                 </button>
                 <button 
                     onClick={() => setIsSidebarOpen(true)}
                     className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
-                    title="Cài đặt / Bộ lọc"
+                    title="Settings / Filters"
                 >
                     <Filter className="w-5 h-5" />
                 </button>
-
-                {/* Target / Locate Me */}
                 <button 
                     onClick={handleCenter}
                     className="w-[42px] h-[42px] bg-white text-blue-600 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all mt-1"
-                    title="Vị trí của bạn"
+                    title="Your Position"
                 >
                     <LocateFixed className="w-5 h-5" />
                 </button>
-
-                {/* Zoom Controls */}
                 <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1">
                     <button 
                         onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
                         className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
-                        title="Phóng to"
+                        title="Zoom In"
                     >
                         <Plus className="w-6 h-6 stroke-[2.5]" />
                     </button>
                     <button 
                         onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
                         className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center active:bg-gray-100 transition-colors"
-                        title="Thu nhỏ"
+                        title="Zoom Out"
                     >
                         <Minus className="w-6 h-6 stroke-[2.5]" />
                     </button>
                 </div>
             </div>
 
-                {/* Sidebar (Settings/Radius) */}
-                <AnimatePresence>
-                    {isSidebarOpen && (
-                        <>
-                            <motion.div 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setIsSidebarOpen(false)}
-                                className="absolute inset-0 bg-black/40 z-[150]"
-                            />
-                            <motion.div 
-                                initial={{ x: '100%' }}
-                                animate={{ x: 0 }}
-                                exit={{ x: '100%' }}
-                                className="absolute top-0 right-0 bottom-0 w-80 bg-[#1a1d24] z-[160] p-6 shadow-2xl border-l border-white/10"
-                            >
-                                <div className="flex justify-between items-center mb-8">
-                                    <h2 className="text-xl font-bold">Privacy Settings</h2>
-                                    <X className="w-6 h-6 cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
+            {/* Sidebar (Settings/Radius) */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="absolute inset-0 bg-black/40 z-[150]"
+                        />
+                        <motion.div 
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            className="absolute top-0 right-0 bottom-0 w-80 bg-[#1a1d24] z-[160] p-6 shadow-2xl border-l border-white/10"
+                        >
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-xl font-bold">Privacy Settings</h2>
+                                <X className="w-6 h-6 cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
+                            </div>
+
+                            <div className="space-y-8">
+                                <div>
+                                    <div className="flex justify-between mb-4">
+                                        <span className="text-gray-400 font-medium">Obfuscation Radius</span>
+                                        <span className="text-blue-400 font-bold">{radius} km</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="0" 
+                                        max="100" 
+                                        value={radius} 
+                                        onChange={(e) => handleUpdateRadius(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-3 leading-relaxed">
+                                        Your avatar will be placed randomly within this radius from your real location. 
+                                        Higher radius means more privacy.
+                                    </p>
                                 </div>
 
-                                <div className="space-y-8">
-                                    <div>
-                                        <div className="flex justify-between mb-4">
-                                            <span className="text-gray-400 font-medium">Obfuscation Radius</span>
-                                            <span className="text-blue-400 font-bold">{radius} km</span>
+                                <div className="pt-6 border-t border-white/5">
+                                    <h3 className="font-bold mb-4">Display Mode</h3>
+                                    <label className="flex items-center justify-between cursor-pointer group">
+                                        <div>
+                                            <span className="text-gray-400 group-hover:text-white transition-colors">Visible on Map</span>
+                                            <p className="text-[10px] text-gray-600 mt-0.5">{isVisibleOnMap ? 'Others can see you' : 'You are invisible (Observer)'}</p>
                                         </div>
-                                        <input 
-                                            type="range" 
-                                            min="0" 
-                                            max="100" 
-                                            value={radius} 
-                                            onChange={(e) => handleUpdateRadius(parseInt(e.target.value))}
-                                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                        />
-                                        <p className="text-[11px] text-gray-500 mt-3 leading-relaxed">
-                                            Your avatar will be placed randomly within this radius from your real location. 
-                                            Higher radius means more privacy.
-                                        </p>
-                                    </div>
-
-                                    <div className="pt-6 border-t border-white/5">
-                                        <h3 className="font-bold mb-4">Display Mode</h3>
-                                        <label className="flex items-center justify-between cursor-pointer group">
-                                            <div>
-                                                <span className="text-gray-400 group-hover:text-white transition-colors">Visible on Map</span>
-                                                <p className="text-[10px] text-gray-600 mt-0.5">{isVisibleOnMap ? 'Người khác có thể thấy bạn' : 'Bạn đang ẩn danh (Observer)'}</p>
-                                            </div>
-                                            <div className="relative inline-flex items-center">
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="sr-only peer" 
-                                                    checked={isVisibleOnMap}
-                                                    onChange={(e) => {
-                                                        const newVal = e.target.checked;
-                                                        setIsVisibleOnMap(newVal);
-                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
-                                                        }
-                                                    }}
-                                                />
-                                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </div>
-                                        </label>
-                                    </div>
+                                        <div className="relative inline-flex items-center">
+                                            <input 
+                                                type="checkbox" 
+                                                className="sr-only peer" 
+                                                checked={isVisibleOnMap}
+                                                onChange={(e) => {
+                                                    const newVal = e.target.checked;
+                                                    setIsVisibleOnMap(newVal);
+                                                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                                                        ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                                                    }
+                                                }}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </div>
+                                    </label>
                                 </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-
-            {/* Bottom Navigation (Mobile) / Mini Vertical Sidebar (PC) */}
-            <div className="absolute bottom-0 left-0 right-0 md:top-0 md:bottom-0 md:right-auto md:w-[72px] h-[65px] md:h-full bg-white border-t md:border-t-0 md:border-r border-gray-200 z-[160] flex flex-row md:flex-col justify-around md:justify-start md:pt-8 md:gap-8 items-center px-4 md:px-0 md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] transition-all">
-                <button className="flex flex-col items-center justify-center gap-1 text-blue-600 active:scale-95 transition-transform" onClick={() => setIsSheetExpanded(false)}>
-                    <MapPin className="w-6 h-6 fill-blue-100" />
-                    <span className="text-[10px] font-bold">Khám phá</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-900 transition-colors active:scale-95">
-                    <Bookmark className="w-6 h-6" />
-                    <span className="text-[10px] font-medium">Đã lưu</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-900 transition-colors active:scale-95">
-                    <PlusCircle className="w-6 h-6" />
-                    <span className="text-[10px] font-medium">Đóng góp</span>
-                </button>
-            </div>
-
-            {/* Floating Tabs (Mobile Only) */}
-            <div className={`absolute left-1/2 -translate-x-1/2 md:hidden z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] opacity-0 pointer-events-none scale-95' : 'bottom-[115px] opacity-100 scale-100'}`}>
-                <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
-                    <Compass className="w-5 h-5 mb-0.5" />
-                    <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
-                </button>
-                <button className="bg-white text-gray-700 px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <Heart className="w-5 h-5 mb-0.5" />
-                    <span className="text-[10px] font-bold tracking-tight uppercase">Ưa thích</span>
-                </button>
-                <button className="bg-white text-gray-700 px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <Star className="w-5 h-5 mb-0.5" />
-                    <span className="text-[10px] font-bold tracking-tight uppercase">Đề cử</span>
-                </button>
-            </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Smart Bottom Sheet / PC Sidebar */}
             <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-28 bottom-[65px] overflow-hidden'}`}>
@@ -787,24 +856,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
                     </div>
 
-                    {/* PC Toggle Drawer Handle */}
-                    {isDesktop && (
-                        <button 
-                            onClick={() => {
-                                if (isSheetExpanded || selectedUser) {
-                                    setIsSheetExpanded(false);
-                                    setSelectedUser(null);
-                                } else {
-                                    setIsSheetExpanded(true);
-                                }
-                            }}
-                            className="absolute top-1/2 -right-[16px] -translate-y-1/2 w-4 h-16 bg-white border-y border-r border-gray-200 shadow-[4px_0_10px_rgba(0,0,0,0.05)] rounded-r-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:w-5 hover:-right-[20px] transition-all outline-none z-50 overflow-hidden"
-                            title="Đóng/Mở bảng"
-                        >
-                            <div className="w-0.5 h-8 bg-gray-300 rounded-full" />
-                        </button>
-                    )}
-
                     <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[150px] scrollbar-hide relative z-[100]">
                         {selectedUser ? (
                             <div className="pt-2">
@@ -819,11 +870,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                             className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110" 
                                             onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.isSelf ? myDisplayName : (selectedUser.username || 'U'))}&background=3b82f6&color=fff&size=150&bold=true`; }}
                                         />
-                                        {selectedUser.isSelf && (
-                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                                                <Edit className="w-5 h-5 text-white" />
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0 pt-1">
                                         {selectedUser.isSelf ? (
@@ -839,7 +885,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                         }}
                                                         className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 w-full outline-none focus:border-blue-500 transition-colors"
                                                     />
-                                                    <button onClick={() => { setMyDisplayName(nameInput); setIsEditingName(false); if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Lưu</button>
+                                                    <button onClick={() => { setMyDisplayName(nameInput); setIsEditingName(false); if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
                                                 </div>
                                             ) : (
                                                 <div className="group/name inline-flex items-center gap-2 mb-1 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
@@ -850,6 +896,27 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         ) : (
                                             <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight mb-1">{selectedUser.username || 'Mysterious User'}</h3>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* Tab Toggle */}
+                                <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
+                                    <button 
+                                        onClick={() => setActiveTab('info')}
+                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                    >
+                                        Information
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveTab('gallery')}
+                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'gallery' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                    >
+                                        Gallery {selectedUser.gallery?.active && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
+                                    </button>
+                                </div>
+
+                                {activeTab === 'info' ? (
+                                    <>
                                         {selectedUser.isSelf ? (
                                             isEditingStatus ? (
                                                 <div className="bg-gray-100/80 p-3 rounded-xl mt-2 border border-gray-200 shadow-inner">
@@ -864,7 +931,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                                     if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); 
                                                                 } 
                                                             }} 
-                                                            placeholder="Cập nhật tâm trạng của bạn..."
+                                                            placeholder="Update your status..."
                                                             className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 w-full outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" 
                                                         />
                                                         <button 
@@ -875,57 +942,159 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                             }} 
                                                             className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
                                                         >
-                                                            Lưu
+                                                            Save
                                                         </button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="group/status inline-flex items-center gap-2 cursor-pointer" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
-                                                    <p className="text-gray-500 text-[13px] truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
+                                                <div className="group/status inline-flex items-center gap-2 cursor-pointer mb-2" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
+                                                    <p className="text-gray-500 text-[13px] truncate">{myStatus || "Tap to add status..."}</p>
                                                     <Edit className="w-3.5 h-3.5 text-gray-400 opacity-40 group-hover/status:opacity-100 transition-opacity" />
                                                 </div>
                                             )
                                         ) : (
-                                            <p className="text-gray-500 text-[13px] truncate">{selectedUser.status || "Exploring the digital universe"}</p>
+                                            <p className="text-gray-500 text-[13px] truncate mb-2">{selectedUser.status || "Exploring the digital universe"}</p>
                                         )}
-                                        <div className="flex flex-wrap gap-1.5 mt-3">
+                                        <div className="flex flex-wrap gap-1.5 mt-3 mb-6">
                                             {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
                                                 <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
                                                     {tag.toUpperCase()}
                                                 </span>
                                             ))}
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-3 pb-8">
-                                    {selectedUser?.isSelf ? (
-                                        <button onClick={() => { setSelectedUser(null); setIsSheetExpanded(false); }} className="col-span-2 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm">
-                                            <X className="w-5 h-5" /> Đóng hồ sơ
-                                        </button>
-                                    ) : (
-                                        <>
-                                            {!sentFriendRequests.includes(selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
-                                                <button onClick={handleAddFriend} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
-                                                    <UserPlus className="w-5 h-5" /> Kết bạn
+                                        <div className="grid grid-cols-2 gap-3 pb-8">
+                                            {selectedUser?.isSelf ? (
+                                                <button onClick={() => { setSelectedUser(null); setIsSheetExpanded(false); }} className="col-span-2 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm">
+                                                    <X className="w-5 h-5" /> Close Profile
                                                 </button>
+                                            ) : (
+                                                <>
+                                                    {!sentFriendRequests.includes(selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
+                                                        <button onClick={handleAddFriend} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                                                            <UserPlus className="w-5 h-5" /> Add Friend
+                                                        </button>
+                                                    )}
+                                                    <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
+                                                        <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
+                                                            <MessageCircle className="w-5 h-5" /> Message
+                                                        </button>
+                                                        <button onClick={() => { const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX; const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX; panX.set(-pxX); panY.set(-pxY); scale.set(2); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
+                                                            <MapPin className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </>
                                             )}
-                                            <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
-                                                <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
-                                                    <MessageCircle className="w-5 h-5" /> Nhắn tin
-                                                </button>
-                                                <button onClick={() => { const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX; const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX; panX.set(-pxX); panY.set(-pxY); scale.set(2); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
-                                                    <MapPin className="w-5 h-5" />
-                                                </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="pb-8">
+                                        {selectedUser.isSelf ? (
+                                            <div className="space-y-5">
+                                                <div className="bg-blue-50/50 p-4 rounded-3xl border border-blue-100">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <label className="text-[13px] font-bold text-gray-900">Active Billboard</label>
+                                                        <button 
+                                                            onClick={() => saveGallerySettings({ active: !galleryActive })}
+                                                            className={`w-12 h-6 rounded-full transition-colors relative ${galleryActive ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                                        >
+                                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${galleryActive ? 'left-7' : 'left-1'}`} />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[11px] text-gray-500">Toggle this to show your advertisement board above your avatar on the map.</p>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="text-[13px] font-bold text-gray-900 block mb-2">Headline</label>
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Example: My cool puzzle game..."
+                                                            value={galleryTitle}
+                                                            onChange={(e) => setGalleryTitle(e.target.value.substring(0, 50))}
+                                                            onBlur={() => saveGallerySettings({ title: galleryTitle })}
+                                                            className="w-full bg-gray-100 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                        />
+                                                        <p className="text-[10px] text-right text-gray-400 mt-1">{galleryTitle.length}/50</p>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <label className="text-[13px] font-bold text-gray-900">Promotional Images</label>
+                                                            <span className="text-[11px] text-gray-400">{galleryImages.length}/5</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            {galleryImages.map((img, idx) => (
+                                                                <div key={idx} className="aspect-square rounded-xl overflow-hidden relative group">
+                                                                    <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Ad" />
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            const newImgs = galleryImages.filter((_, i) => i !== idx);
+                                                                            setGalleryImages(newImgs);
+                                                                            saveGallerySettings({ images: newImgs });
+                                                                        }}
+                                                                        className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                            {galleryImages.length < 5 && (
+                                                                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+                                                                    <Plus className="w-6 h-6 text-gray-300" />
+                                                                    <input type="file" hidden accept="image/png,image/jpeg,image/webp" onChange={handleGalleryUpload} />
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[10px] text-gray-400 mt-2">Max 1MB per image (.jpg, .png, .webp)</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </>
-                                    )}
-                                </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                {selectedUser.gallery?.active ? (
+                                                    <>
+                                                        <div className="flex items-center gap-3">
+                                                            <Diamond className="w-5 h-5 text-blue-500" />
+                                                            <h3 className="text-xl font-black text-gray-900">{selectedUser.gallery.title || 'Special Offer'}</h3>
+                                                        </div>
+                                                        
+                                                        {selectedUser.gallery.images?.length > 0 && (
+                                                            <div className="flex overflow-x-auto gap-3 pb-2 -mx-5 px-5 scrollbar-hide snap-x">
+                                                                {selectedUser.gallery.images.map((img: string, idx: number) => (
+                                                                    <div key={idx} className="snap-start shrink-0 w-72 aspect-[16/10] bg-gray-100 rounded-3xl overflow-hidden shadow-sm">
+                                                                        <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Ad Content" />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        <div className="bg-gray-100 p-6 rounded-[32px]">
+                                                            <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                                                                Visit my creative space and discover more exciting projects and games!
+                                                            </p>
+                                                            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20">
+                                                                Explore Projects
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                            <Diamond className="w-8 h-8 text-gray-200" />
+                                                        </div>
+                                                        <p className="text-gray-400 text-sm">Gallery is currently offline</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="pt-2">
                                 <div className="flex justify-between items-center mb-5">
-                                    <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Nổi bật trong khu vực</h2>
+                                    <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Featured in this area</h2>
                                     <div className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-1.5 shrink-0">
                                         <CloudSun className="w-4 h-4 text-gray-500" />
                                         <span className="text-[11px] font-bold text-gray-700">28°</span>
@@ -938,12 +1107,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                             <div key={isPlaceholder ? idx : game.id} className="snap-start shrink-0 w-64 bg-[#eef5fa] rounded-3xl overflow-hidden border border-[#d6eaf3] flex flex-col active:scale-[0.98] transition-transform cursor-pointer">
                                                 <div className="p-4 pb-3">
                                                     <div className="flex items-start justify-between gap-2">
-                                                        <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Khám phá thế giới trò chơi mượt mà...' : game.title}</h3>
+                                                        <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Explore a world of smooth gaming...' : game.title}</h3>
                                                         <Diamond className="w-5 h-5 text-blue-500 shrink-0 fill-blue-50 mt-0.5" />
                                                     </div>
                                                     <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-2">
                                                         <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                                                        <span>Alin Maps • {isPlaceholder ? 'Sắp ra mắt' : (game.mode || 'Nhiều người chơi')}</span>
+                                                        <span>Alin Maps • {isPlaceholder ? 'Coming Soon' : (game.mode || 'Multiplayer')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="p-2 pt-0 flex-1 flex flex-col justify-end">

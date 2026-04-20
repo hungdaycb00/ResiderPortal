@@ -177,7 +177,7 @@ export default function FriendsModal({
                         <div key={friend.id} className="flex items-center justify-between px-1 py-2 group">
                           <div className="flex items-center gap-4">
                             <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-10 h-10 rounded-full bg-[#24252a] object-cover" alt="" />
-                            <p className="font-normal text-gray-100 text-[17px]">{friend.displayName || friend.id}</p>
+                            <p className="font-normal text-gray-100 text-[17px]">{friend.display_name || friend.displayName || friend.id}</p>
                           </div>
                           
                           <div className="flex items-center gap-3">
@@ -212,7 +212,7 @@ export default function FriendsModal({
                         <div className="flex items-center gap-4">
                           <img src={normalizeImageUrl(req.photoURL || req.avatar_url) || `https://i.pravatar.cc/150?u=${req.id}`} className="w-12 h-12 rounded-full object-cover" alt="" />
                           <div>
-                            <p className="font-medium text-white text-base">{req.displayName || req.id}</p>
+                            <p className="font-medium text-white text-base">{req.display_name || req.displayName || req.id}</p>
                             <p className="text-[11px] text-gray-500 uppercase font-medium mt-0.5">Incoming Request</p>
                           </div>
                         </div>
