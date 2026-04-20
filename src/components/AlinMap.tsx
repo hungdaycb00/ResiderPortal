@@ -351,9 +351,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
 
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
-            {/* Header / Search Bar (Mobile First & Left Sidebar on PC) */}
-            <div className="absolute top-12 left-4 right-4 md:left-[88px] md:top-6 md:right-auto md:translate-x-0 md:w-[400px] z-[170] flex gap-2 transition-all">
-                <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-full flex items-center px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
+            {/* Header / Search Bar (Mobile First & Sticky Header on PC) */}
+            <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'}`}>
+                <div className={`flex-1 backdrop-blur-xl rounded-full flex items-center px-4 py-3 overflow-hidden transition-all duration-300 ${isDesktop && isSheetExpanded ? 'bg-white border border-gray-200 shadow-none' : 'bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.15)]'}`}>
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
                         type="text" 
@@ -378,6 +378,13 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                         />
                     </button>
                 </div>
+            </div>
+
+            {/* Desktop Sticky Header Tabs */}
+            <div className={`hidden md:flex absolute z-[170] transition-all duration-300 top-[80px] left-[72px] w-[400px] bg-white border-b border-gray-200 px-4 pt-4 gap-6 pointer-events-auto ${!isSheetExpanded ? 'opacity-0 pointer-events-none -translate-x-4' : 'opacity-100'}`}>
+                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">Danh sách</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Đã gắn nhãn</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Bản đồ</button>
             </div>
 
             {/* 2D Flat Space Interactor */}
@@ -723,8 +730,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 </button>
             </div>
 
-            {/* Floating Tabs */}
-            <div className={`absolute left-1/2 -translate-x-1/2 md:left-[88px] md:translate-x-0 md:w-[400px] md:justify-start z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] md:top-[80px] md:bottom-auto opacity-0 pointer-events-none scale-95' : 'bottom-[115px] md:top-[90px] md:bottom-auto opacity-100 scale-100'}`}>
+            {/* Floating Tabs (Mobile Only) */}
+            <div className={`absolute left-1/2 -translate-x-1/2 md:hidden z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] opacity-0 pointer-events-none scale-95' : 'bottom-[115px] opacity-100 scale-100'}`}>
                 <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
                     <Compass className="w-5 h-5 mb-0.5" />
                     <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
@@ -779,7 +786,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                         </button>
                     )}
 
-                    <div className="flex-1 overflow-y-auto px-5 pb-32 md:pb-6 md:pt-6 scrollbar-hide relative z-40">
+                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[150px] scrollbar-hide relative z-[100]">
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
