@@ -1368,6 +1368,7 @@ export default function App() {
                 userName={user?.displayName || ''}
                 userAvatar={user?.photoURL || ''}
                 targetUser={chatTargetUser}
+                friends={fetchedFriends}
                 onClose={() => setIsChatOpen(false)}
               />
             </motion.div>

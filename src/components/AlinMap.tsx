@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -222,6 +222,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 setMyObfPos({ lat: p.lat, lng: p.lng });
                 setMyUserId(p.userId);
                 if (p.username) setMyDisplayName(p.username);
+                if (p.status) {
+                    setMyStatus(p.status);
+                    setStatusInput(p.status);
+                }
                 // Auto scan immediately
                 socket.send(JSON.stringify({
                     type: 'MAP_MOVE',
@@ -370,7 +374,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                         </div>
                     )}
                     {/* User Avatar Inside Search */}
-                    <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-transparent hover:border-blue-500">
+                    <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img 
                             src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=50&bold=true`} 
                             alt="Me" 
@@ -794,7 +798,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                     <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200">
                                         <img 
                                             src={selectedUser.isSelf 
-                                                ? (user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
+                                                ? (normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
                                                 : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`)
                                             } 
                                             alt="Avatar" 
@@ -821,6 +825,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                             ) : (
                                                 <div className="group/name inline-flex items-center gap-2 mb-1 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
                                                     <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
+                                                    <Edit className="w-4 h-4 text-blue-500 opacity-0 group-hover/name:opacity-100 transition-opacity" />
                                                 </div>
                                             )
                                         ) : (
@@ -835,6 +840,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                             ) : (
                                                 <div className="group/status inline-flex items-center gap-2 cursor-pointer" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
                                                     <p className="text-gray-500 text-[13px] truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
+                                                    <Edit className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover/status:opacity-100 transition-opacity" />
                                                 </div>
                                             )
                                         ) : (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initSocket, getSocket } from '../utils/socket';
 import { authenticateChat, joinRoom, sendMessage, getMyPrivateRooms, createOrGetPrivateRoom } from '../utils/chatService';
 import { useChat } from '../hooks/useChat';
-import { MessageCircle, Send, MessageSquare, ChevronLeft, Globe, User } from 'lucide-react';
+import { MessageCircle, Send, MessageSquare, ChevronLeft, Globe, User, Plus, MessageSquarePlus, Search } from 'lucide-react';
 import { normalizeImageUrl } from '../services/externalApi';
 
 interface ChatRoomProps {
@@ -11,6 +11,7 @@ interface ChatRoomProps {
     userName?: string;
     userAvatar?: string;
     targetUser?: { id: string, name: string } | null;
+    friends?: any[];
     onClose?: () => void;
 }
 
@@ -23,18 +24,20 @@ interface RoomInfo {
     last_message?: string;
 }
 
-export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar, targetUser, onClose }: ChatRoomProps) {
+export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar, targetUser, onClose, friends = [] }: ChatRoomProps) {
     const [messages, setMessages] = useState<any[]>([]);
     const [inputText, setInputText] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [authenticatedUserId, setAuthenticatedUserId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
+    
     const [privateRooms, setPrivateRooms] = useState<RoomInfo[]>([]);
     const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
     const [activeRoomName, setActiveRoomName] = useState('World Chat');
     const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+    const [isSelectingFriend, setIsSelectingFriend] = useState(false);
+    const [friendSearch, setFriendSearch] = useState('');
     
     const activeRoomIdRef = useRef<number | null>(null);
 
@@ -143,6 +146,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         setActiveRoomName(roomName);
         setMobileView('chat');
         setMessages([]);
+        setIsSelectingFriend(false);
         
         joinRoom(type, roomId)
             .then((data) => {
@@ -150,6 +154,18 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 setIsLoading(false);
             })
             .catch(() => setIsLoading(false));
+    };
+
+    const startChatWithFriend = (friend: any) => {
+        setIsLoading(true);
+        createOrGetPrivateRoom(friend.id)
+            .then((data) => {
+                switchRoom('private', data.room_id, friend.displayName || friend.username || friend.id);
+            })
+            .catch((err) => {
+                alert('Không thể bắt đầu chat: ' + err.message);
+                setIsLoading(false);
+            });
     };
 
     if (isLoading && !activeRoomId) {
@@ -166,15 +182,67 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
             
             {/* LEFT SIDEBAR (Room List) */}
             <div className={`w-full md:w-[320px] shrink-0 border-r border-gray-800 flex-col bg-[#16181d] ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-gray-800 bg-[#1e2128]">
+                <div className="p-4 border-b border-gray-800 bg-[#1e2128] flex items-center justify-between">
                     <h2 className="font-bold text-white flex items-center gap-2 text-lg">
                         <MessageCircle className="w-5 h-5 text-blue-500" />
                         Messenger
                     </h2>
+                    <button 
+                        onClick={() => setIsSelectingFriend(!isSelectingFriend)}
+                        className={`p-2 rounded-lg transition-all active:scale-95 ${isSelectingFriend ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                        title="Tin nhắn mới"
+                    >
+                        <MessageSquarePlus className="w-5 h-5" />
+                    </button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    {/* World Chat Global Option */}
+                    {isSelectingFriend ? (
+                        <>
+                            <div className="px-2 py-3 bg-[#1e2128] rounded-xl mb-4 border border-gray-800">
+                                <div className="flex items-center gap-2 bg-[#16181d] px-3 py-2 rounded-lg">
+                                    <Search className="w-4 h-4 text-gray-500" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Tìm bạn bè..." 
+                                        className="bg-transparent border-none outline-none text-xs text-white w-full"
+                                        value={friendSearch}
+                                        onChange={(e) => setFriendSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-1">
+                                {friends
+                                    .filter(f => (f.displayName || f.username || f.id).toLowerCase().includes(friendSearch.toLowerCase()))
+                                    .map(friend => (
+                                        <button 
+                                            key={friend.id}
+                                            onClick={() => startChatWithFriend(friend)}
+                                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition-all active:scale-95"
+                                        >
+                                            <div className="relative w-10 h-10 rounded-full shrink-0 border border-gray-700 overflow-hidden bg-[#252830]">
+                                                <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-full h-full object-cover" />
+                                                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                                            </div>
+                                            <div className="flex-1 text-left min-w-0">
+                                                <h3 className="font-bold text-sm text-gray-200 truncate">{friend.displayName || friend.username || friend.id}</h3>
+                                                <p className="text-[10px] text-gray-500 uppercase tracking-widest">{friend.is_online ? 'Online' : 'Offline'}</p>
+                                            </div>
+                                        </button>
+                                    ))
+                                }
+                                {friends.length === 0 && (
+                                    <div className="text-center py-10 opacity-50 space-y-2">
+                                        <Users className="w-8 h-8 mx-auto text-gray-600" />
+                                        <p className="text-xs">Chưa có bạn bè nào.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* World Chat Global Option */}
                     <button 
                         onClick={() => switchRoom('global', null, 'World Chat')}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors active:scale-95 ${activeRoomName === 'World Chat' ? 'bg-blue-600/20 shadow-inner' : 'hover:bg-gray-800/50'}`}
@@ -215,6 +283,8 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                             <p>Không có tin nhắn nào.</p>
                             <p className="mt-1 opacity-70">Tìm kiếm bạn bè trên AlinMap để bắt đầu!</p>
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 
