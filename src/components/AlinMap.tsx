@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl } from '../services/externalApi';
 import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
 // So 1 degree = 111 * 100 = 11100 pixels
@@ -121,6 +121,20 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     const panX = useMotionValue(0);
     const panY = useMotionValue(0);
     const scale = useMotionValue(1);
+
+    const handleWheel = (e: React.WheelEvent) => {
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        const currentScale = scale.get();
+        const newScale = Math.min(Math.max(0.5, currentScale + delta), 3);
+        
+        // Use Framer Motion's animate for smooth zoom
+        animate(scale, newScale, {
+            type: "spring",
+            damping: 25,
+            stiffness: 200,
+            restDelta: 0.001
+        });
+    };
 
     // Initial Geolocation
     const requestLocation = () => {
@@ -368,7 +382,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
             </div>
 
             {/* 2D Flat Space Interactor */}
-            <div className="flex-1 relative overflow-hidden bg-[#0a0a0f]">
+            <div 
+                className="flex-1 relative overflow-hidden bg-[#0a0a0f]"
+                onWheel={handleWheel}
+            >
                 
                 {/* Glow Background Elements */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
@@ -404,18 +421,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                         style={{ scale }}
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
-                        <motion.div 
+                             <motion.div 
                             drag
                             style={{ x: panX, y: panY }}
                             dragConstraints={{ left: -5000, right: 5000, top: -5000, bottom: 5000 }}
                             dragElastic={0.1}
                             className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
-                            styles={{
-                                backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
-                                backgroundSize: "100px 100px",
-                                backgroundPosition: "center center"
-                            }}
                         >
+                            {/* Province Boundary (Symbolic Gray Circle) */}
+                            {currentProvince && (
+                                <div 
+                                    className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none"
+                                    style={{ 
+                                        left: 'calc(50% - 1000px)', 
+                                        top: 'calc(50% - 1000px)' 
+                                    }}
+                                >
+                                    <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm">
+                                        {currentProvince} BOUNDARY
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Grid styling explicit fix */}
                             <div className="absolute inset-0 pointer-events-none" style={{
                                 backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
@@ -426,13 +453,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                             {/* Self Node — Always show, but visual diff if hidden */}
                             <motion.div 
                                 drag
+                                dragMomentum={false}
                                 dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
-                                dragElastic={0.05}
+                                dragElastic={0}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onDragEnd={(e, info) => {
                                     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
                                         const currentScale = scale.get() || 1;
-                                        // Adjust displacement by scale factor
+                                        // Use info.offset which is the corrected cumulative displacement
                                         const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
                                         const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
                                         
@@ -446,7 +474,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                         
                                         // Sync local origin
                                         setMyObfPos({ lat: newLat, lng: newLng });
-                                        // Reset displacement values so avatar stays centered at new pos
+                                        
+                                        // RESET drag displacement to zero so avatar remains at visual center relative to new myObfPos
                                         selfDragX.set(0);
                                         selfDragY.set(0);
 
