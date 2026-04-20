@@ -505,7 +505,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                         })
                                     });
                                 }}
-                                className="absolute w-14 h-14 -ml-7 -mt-7 group pointer-events-auto z-20 cursor-grab active:cursor-grabbing" 
+                                className="absolute w-14 h-14 -ml-7 -mt-7 group pointer-events-auto z-20 cursor-grab active:cursor-grabbing select-none" 
                                 style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -513,7 +513,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                 <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-gray-500 opacity-60'}`}>
                                     <img 
                                         src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
-                                        className="w-full h-full object-cover" 
+                                        className="w-full h-full object-cover pointer-events-none" 
+                                        draggable={false}
                                         onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                                     />
                                     {!isVisibleOnMap && (
