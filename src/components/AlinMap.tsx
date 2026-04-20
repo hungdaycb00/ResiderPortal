@@ -89,6 +89,13 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
     const [isSheetExpanded, setIsSheetExpanded] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' && window.innerWidth >= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         isMounted.current = true;
@@ -351,6 +358,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                     <input 
                         type="text" 
                         placeholder="Tìm kiếm..." 
+                        onFocus={() => setIsSheetExpanded(true)}
                         className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
@@ -731,32 +739,47 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 </button>
             </div>
 
-            {/* Smart Bottom Sheet */}
-            <div className="absolute top-28 bottom-[65px] left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] overflow-hidden pointer-events-none z-[140]">
+            {/* Smart Bottom Sheet / PC Sidebar */}
+            <div className={`absolute top-28 left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] pointer-events-none z-[140] ${isDesktop ? 'bottom-[65px] md:bottom-12 overflow-visible' : 'bottom-[65px] overflow-hidden'}`}>
                 <motion.div 
-                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[0_0_40px_rgba(0,0,0,0.1)] md:border md:border-gray-200 flex flex-col pointer-events-auto"
+                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[0_0_40px_rgba(0,0,0,0.1)] md:border md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
-                        expanded: { y: 0 },
-                        collapsed: { y: 'calc(100% - 36px)' }
+                        expanded: { y: 0, x: 0 },
+                        collapsed: { 
+                            y: isDesktop ? 0 : 'calc(100% - 36px)',
+                            x: isDesktop ? '-120%' : 0
+                        }
                     }}
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? "expanded" : "collapsed"}
                     transition={{ type: "spring", stiffness: 350, damping: 35 }}
-                    drag="y"
+                    drag={isDesktop ? false : "y"}
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={0.05}
                     onDragEnd={(e, info) => {
+                        if (isDesktop) return;
                         const threshold = 100;
                         if (info.offset.y < -threshold) setIsSheetExpanded(true);
                         else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
                     }}
                 >
-                    {/* Hover Area / Handle */}
-                    <div className="w-full flex flex-col items-center pt-3 pb-4 cursor-grab active:cursor-grabbing shrink-0" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
+                    {/* Hover Area / Handle (Mobile Only) */}
+                    <div className="w-full flex-col items-center pt-3 pb-4 cursor-grab active:cursor-grabbing shrink-0 flex md:hidden" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
                         <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-5 pb-32 scrollbar-hide">
+                    {/* PC Toggle Drawer Handle */}
+                    {isDesktop && (
+                        <button 
+                            onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+                            className="absolute top-1/2 -right-[16px] -translate-y-1/2 w-4 h-16 bg-white border-y border-r border-gray-200 shadow-[4px_0_10px_rgba(0,0,0,0.05)] rounded-r-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:w-5 hover:-right-[20px] transition-all outline-none z-50 overflow-hidden"
+                            title="Đóng/Mở bảng"
+                        >
+                            <div className="w-0.5 h-8 bg-gray-300 rounded-full" />
+                        </button>
+                    )}
+
+                    <div className="flex-1 overflow-y-auto px-5 pb-32 md:pb-6 md:pt-6 scrollbar-hide relative z-40">
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
