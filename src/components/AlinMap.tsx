@@ -106,6 +106,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'gallery'>('info');
+    const [mainTab, setMainTab] = useState<'discover' | 'nearby' | 'friends'>('discover');
     const [userGames, setUserGames] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
     const [radius, setRadius] = useState(5);
@@ -834,21 +835,17 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
                 
                 <div className="flex flex-col gap-6">
-                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 group">
-                        <Navigation className="w-6 h-6 text-blue-600" />
-                        <span className="text-[9px] font-bold text-blue-600">Explore</span>
+                    <button onClick={() => { setSelectedUser(null); setMainTab('discover'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <Navigation className={`w-6 h-6 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
+                        <span className={`text-[9px] font-bold ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Explore</span>
                     </button>
-                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
-                        <Heart className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-bold">Saved</span>
+                    <button onClick={() => { setSelectedUser(null); setMainTab('nearby'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <Compass className={`w-6 h-6 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
+                        <span className={`text-[9px] font-bold ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Nearby</span>
                     </button>
-                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
-                        <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-bold">Friends</span>
-                    </button>
-                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
-                        <Star className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-bold">Contribute</span>
+                    <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <UserPlus className={`w-6 h-6 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
+                        <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Friends</span>
                     </button>
                 </div>
 
@@ -859,8 +856,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
+            {/* Mobile Bottom Navigation */}
+            <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pointer-events-auto">
+                <button onClick={() => { setSelectedUser(null); setMainTab('discover'); setIsSheetExpanded(false); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <Navigation className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Explore</span>
+                </button>
+                <button onClick={() => { setSelectedUser(null); setMainTab('nearby'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <Compass className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Nearby</span>
+                </button>
+                <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <UserPlus className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Friends</span>
+                </button>
+                <button onClick={onClose} className="flex-1 flex flex-col items-center justify-center gap-1 py-1 text-gray-400 hover:text-red-500">
+                    <X className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Close</span>
+                </button>
+            </div>
+
             {/* Smart Bottom Sheet / PC Sidebar */}
-            <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-28 bottom-[65px] overflow-hidden'}`}>
+            <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-20 bottom-[60px] overflow-hidden'}`}>
                 <motion.div 
                     className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
@@ -1146,45 +1163,159 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             </div>
                         ) : (
                             <div className="pt-2">
-                                <div className="flex justify-between items-center mb-5">
-                                    <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Featured in this area</h2>
-                                    <div className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-1.5 shrink-0">
-                                        <CloudSun className="w-4 h-4 text-gray-500" />
-                                        <span className="text-[11px] font-bold text-gray-700">28°</span>
-                                    </div>
-                                </div>
-                                <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                                    {(games && games.length > 0 ? games : [1,2,3]).slice(0, 5).map((game: any, idx: number) => {
-                                        const isPlaceholder = typeof game === 'number';
-                                        return (
-                                            <div key={isPlaceholder ? idx : game.id} className="snap-start shrink-0 w-64 bg-[#eef5fa] rounded-3xl overflow-hidden border border-[#d6eaf3] flex flex-col active:scale-[0.98] transition-transform cursor-pointer">
-                                                <div className="p-4 pb-3">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Explore a world of smooth gaming...' : game.title}</h3>
-                                                        <Diamond className="w-5 h-5 text-blue-500 shrink-0 fill-blue-50 mt-0.5" />
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-2">
-                                                        <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                                                        <span>Alin Maps • {isPlaceholder ? 'Coming Soon' : (game.mode || 'Multiplayer')}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="p-2 pt-0 flex-1 flex flex-col justify-end">
-                                                    <div className="w-full aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                                                        {!isPlaceholder && (
-                                                            <img 
-                                                                src={normalizeImageUrl(game.image || '')} 
-                                                                alt={game.title} 
-                                                                className="w-full h-full object-cover"
-                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                            />
-                                                        )}
-                                                        {isPlaceholder && <div className="w-full h-full bg-gradient-to-br from-blue-100 to-gray-200" />}
-                                                    </div>
-                                                </div>
+                                {mainTab === 'discover' && (
+                                    <>
+                                        <div className="flex justify-between items-center mb-5">
+                                            <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Featured Games</h2>
+                                            <div className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-1.5 shrink-0">
+                                                <CloudSun className="w-4 h-4 text-gray-500" />
+                                                <span className="text-[11px] font-bold text-gray-700">28°</span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                        </div>
+                                        <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
+                                            {(games && games.length > 0 ? games : [1,2,3]).slice(0, 5).map((game: any, idx: number) => {
+                                                const isPlaceholder = typeof game === 'number';
+                                                return (
+                                                    <div key={isPlaceholder ? idx : game.id} className="snap-start shrink-0 w-64 bg-[#eef5fa] rounded-3xl overflow-hidden border border-[#d6eaf3] flex flex-col active:scale-[0.98] transition-transform cursor-pointer">
+                                                        <div className="p-4 pb-3">
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Explore a world of smooth gaming...' : game.title}</h3>
+                                                                <Diamond className="w-5 h-5 text-blue-500 shrink-0 fill-blue-50 mt-0.5" />
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-2">
+                                                                <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                                                                <span>Alin Maps • {isPlaceholder ? 'Coming Soon' : (game.mode || 'Multiplayer')}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-2 pt-0 flex-1 flex flex-col justify-end">
+                                                            <div className="w-full aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                                                {!isPlaceholder && (
+                                                                    <img 
+                                                                        src={normalizeImageUrl(game.image || '')} 
+                                                                        alt={game.title} 
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                    />
+                                                                )}
+                                                                {isPlaceholder && <div className="w-full h-full bg-gradient-to-br from-blue-100 to-gray-200" />}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-4 space-y-4">
+                                            <div className="flex justify-between items-center px-1">
+                                                <h3 className="text-lg font-black text-gray-900">Active Residents</h3>
+                                                <button onClick={() => setMainTab('nearby')} className="text-[11px] font-bold text-blue-600 hover:underline">View All</button>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {nearbyUsers.slice(0, 4).map(u => (
+                                                    <div 
+                                                        key={u.id} 
+                                                        onClick={() => setSelectedUser(u)}
+                                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer group"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
+                                                            <img src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`} className="w-full h-full object-cover" alt={u.username} />
+                                                            {u.gallery?.active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <h4 className="font-bold text-gray-900 text-sm truncate">{u.username || 'Mysterious User'}</h4>
+                                                                {u.isSelf && <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">You</span>}
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-400 truncate">{u.status || "Exploring digital world"}</p>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-300 font-bold uppercase group-hover:text-blue-500 transition-colors">Details</div>
+                                                    </div>
+                                                ))}
+                                                {nearbyUsers.length === 0 && (
+                                                    <p className="text-center py-4 text-gray-400 text-xs italic">Searching for residents nearby...</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {mainTab === 'nearby' && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-lg font-black text-gray-900 px-1">Nearby People</h3>
+                                        {nearbyUsers.length > 0 ? (
+                                            <div className="divide-y divide-gray-50">
+                                                {nearbyUsers.map(u => (
+                                                    <div 
+                                                        key={u.id} 
+                                                        onClick={() => setSelectedUser(u)}
+                                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer group"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
+                                                            <img src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`} className="w-full h-full object-cover" alt={u.username} />
+                                                            {u.gallery?.active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <h4 className="font-bold text-gray-900 text-sm truncate">{u.username || 'Mysterious User'}</h4>
+                                                                {u.isSelf && <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">You</span>}
+                                                            </div>
+                                                            <p className="text-[11px] text-gray-400 truncate">{u.status || "Exploring digital world"}</p>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-300 font-bold uppercase group-hover:text-blue-500 transition-colors">View</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="py-12 text-center bg-gray-50 rounded-[32px]">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                                    <Navigation className="w-6 h-6 text-gray-200" />
+                                                </div>
+                                                <p className="text-gray-400 text-xs font-medium">No active users found nearby</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {mainTab === 'friends' && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-lg font-black text-gray-900 px-1">Your Friends</h3>
+                                        {friends.length > 0 ? (
+                                            <div className="divide-y divide-gray-50">
+                                                {friends.map(f => (
+                                                    <div 
+                                                        key={f.id} 
+                                                        onClick={() => { setSelectedUser({...f, isFriend: true}); setActiveTab('info'); }}
+                                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
+                                                            <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                                                <p className="text-[10px] text-emerald-500 font-bold uppercase">Online</p>
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username); }}
+                                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                                                        >
+                                                            <MessageCircle className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="py-12 text-center bg-gray-50 rounded-[32px]">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                                    <UserPlus className="w-6 h-6 text-gray-200" />
+                                                </div>
+                                                <p className="text-gray-400 text-xs font-medium">No friends added yet</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
