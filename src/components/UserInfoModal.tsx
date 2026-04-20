@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, LogIn, LogOut, Trophy, Wallet, User as UserIcon, Settings, Camera, Gamepad2, Edit2, Check, Upload, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../App';
-import { externalApi } from '../services/externalApi';
+import { externalApi, normalizeImageUrl } from '../services/externalApi';
 
 interface UserInfoModalProps {
   isOpen: boolean;
@@ -120,7 +120,7 @@ export default function UserInfoModal({
             <div className="relative group cursor-pointer" onClick={() => setShowAvatars(!showAvatars)}>
               <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-gray-800 bg-[#252830] shadow-xl relative transition-transform active:scale-95 group-hover:border-purple-500/50">
                 <img 
-                  src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid || 'guest'}`} 
+                  src={normalizeImageUrl(user?.photoURL) || `https://i.pravatar.cc/150?u=${user?.uid || 'guest'}`} 
                   className="w-full h-full object-cover"
                   alt="Profile"
                 />
@@ -249,7 +249,7 @@ export default function UserInfoModal({
                             {myGames.map(game => (
                               <div key={game.id} className="flex items-center gap-2 bg-[#252830] p-1.5 rounded-lg border border-gray-800/50">
                                 <img 
-                                  src={game.thumbnail_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${game.id}`} 
+                                  src={normalizeImageUrl(game.thumbnail_url || game.image) || `https://api.dicebear.com/7.x/identicon/svg?seed=${game.id}`} 
                                   className="w-6 h-6 rounded bg-gray-800 object-cover"
                                 />
                                 <div className="flex flex-col overflow-hidden">

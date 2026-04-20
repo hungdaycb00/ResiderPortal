@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { externalApi } from '../services/externalApi';
+import { externalApi, normalizeImageUrl } from '../services/externalApi';
 
 interface FriendsModalProps {
   isOpen: boolean;
@@ -172,7 +172,7 @@ export default function FriendsModal({
                         <div key={friend.id} className="flex items-center justify-between p-3 bg-[#252830]/30 border border-gray-800/50 rounded-2xl hover:bg-[#252830]/50 transition-all group">
                           <div className="flex items-center gap-4">
                             <div className="relative">
-                              <img src={friend.photoURL || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-12 h-12 rounded-2xl border border-gray-700 object-cover" alt="" />
+                              <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-12 h-12 rounded-2xl border border-gray-700 object-cover" alt="" />
                               <div className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-[#1a1d24] rounded-full ${friend.is_online ? 'bg-green-500' : 'bg-gray-500'}`}></div>
                             </div>
                             <div>
@@ -206,7 +206,7 @@ export default function FriendsModal({
                     {requests.map((req) => (
                       <div key={req.id} className="flex items-center justify-between p-4 bg-[#252830]/50 border border-gray-800 rounded-3xl">
                         <div className="flex items-center gap-4">
-                          <img src={req.photoURL || `https://i.pravatar.cc/150?u=${req.id}`} className="w-12 h-12 rounded-2xl border border-gray-700 object-cover" alt="" />
+                          <img src={normalizeImageUrl(req.photoURL || req.avatar_url) || `https://i.pravatar.cc/150?u=${req.id}`} className="w-12 h-12 rounded-2xl border border-gray-700 object-cover" alt="" />
                           <div>
                             <p className="font-bold text-white text-sm">{req.displayName || req.id}</p>
                             <p className="text-[10px] text-gray-500 uppercase font-black">Incoming Request</p>

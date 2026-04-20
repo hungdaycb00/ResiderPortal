@@ -3,6 +3,7 @@ import { initSocket, getSocket } from '../utils/socket';
 import { authenticateChat, joinRoom, sendMessage, getMyPrivateRooms, createOrGetPrivateRoom } from '../utils/chatService';
 import { useChat } from '../hooks/useChat';
 import { MessageCircle, Send, MessageSquare, ChevronLeft, Globe, User } from 'lucide-react';
+import { normalizeImageUrl } from '../services/externalApi';
 
 interface ChatRoomProps {
     deviceId: string;
@@ -196,7 +197,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                         >
                             <div className="relative w-12 h-12 rounded-full shrink-0 border-2 border-gray-700 overflow-hidden shadow-lg bg-[#252830]">
                                 {room.target_user_avatar ? (
-                                    <img src={room.target_user_avatar} className="w-full h-full object-cover" />
+                                    <img src={normalizeImageUrl(room.target_user_avatar)} className="w-full h-full object-cover" />
                                 ) : (
                                     <User className="w-full h-full p-2 text-gray-400" />
                                 )}

@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Menu, Home, Grid, Users, HelpCircle, Play, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, Sword, Shield, Brain, Zap, Trophy, MessageSquare, Mail, MessageCircle, Layout, RefreshCw, Plus, Gamepad2, Filter, Trash2, Book, Star, Coins, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { externalApi } from './services/externalApi';
+import { externalApi, normalizeImageUrl } from './services/externalApi';
 import { initSocket, disconnectSocket, getSocket } from './utils/socket';
 import { setupSocketErrorHandlers } from './utils/socketErrorHandler';
 import { User } from './types';
@@ -189,7 +189,7 @@ export default function App() {
           uid: result.user.id,
           email: result.user.email,
           displayName: result.user.display_name,
-          photoURL: result.user.avatar_url,
+          photoURL: normalizeImageUrl(result.user.avatar_url),
         };
         setUser(loggedInUser);
         localStorage.setItem('user', JSON.stringify(loggedInUser));
@@ -274,15 +274,18 @@ export default function App() {
             xp: profile.user.xp || 0,
             rankScore: profile.user.balance || 0
           });
+          
+          // Update photoURL if it changed on server
+          if (profile.user.avatar_url) {
+            const normalizedAvatar = normalizeImageUrl(profile.user.avatar_url);
+            setUser(prev => prev ? { ...prev, photoURL: normalizedAvatar, displayName: profile.user.display_name || prev.displayName } : null);
+          }
         }
         const gamesData = await externalApi.listServer();
         if (gamesData && Array.isArray(gamesData.games)) {
-          const baseUrl = cloudflareUrl.endsWith('/') ? cloudflareUrl.slice(0, -1) : cloudflareUrl;
           const normalized = gamesData.games.map(g => ({
             ...g,
-            image: g.image?.startsWith('http') || g.image?.startsWith('data:') 
-              ? g.image 
-              : `${baseUrl}${g.image?.startsWith('/') ? '' : '/'}${g.image}`
+            image: normalizeImageUrl(g.image)
           }));
           setFetchedGames(normalized);
         }
@@ -293,8 +296,16 @@ export default function App() {
       try {
         const friendsData = await externalApi.getFriends();
         if (friendsData && friendsData.success) {
-          setFetchedFriends(friendsData.friends || []);
-          setFriendRequests(friendsData.requests || []);
+          const normalizedFriends = (friendsData.friends || []).map((f: any) => ({
+            ...f,
+            photoURL: normalizeImageUrl(f.photoURL || f.avatar_url)
+          }));
+          const normalizedRequests = (friendsData.requests || []).map((r: any) => ({
+            ...r,
+            photoURL: normalizeImageUrl(r.photoURL || r.avatar_url)
+          }));
+          setFetchedFriends(normalizedFriends);
+          setFriendRequests(normalizedRequests);
         }
       } catch (err: any) {
         if (retry && err.message.toLowerCase().includes('user not found')) {
@@ -330,8 +341,8 @@ export default function App() {
         }
 
         // If it has a relative path but no match (maybe offline?), normalize it anyway if possible
-        if (recent.image && !recent.image.startsWith('http') && !recent.image.startsWith('data:')) {
-          return { ...recent, image: `${baseUrl}${recent.image.startsWith('/') ? '' : '/'}${recent.image}` };
+        if (recent.image && !recent.image.startsWith('http') && !recent.image.startsWith('data:') && !recent.image.startsWith('blob:')) {
+          return { ...recent, image: normalizeImageUrl(recent.image) };
         }
 
         return recent;
@@ -798,7 +809,7 @@ export default function App() {
                     className="relative group transition-all active:scale-95"
                   >
                     <img 
-                      src={user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`} 
+                      src={normalizeImageUrl(user.photoURL) || `https://i.pravatar.cc/150?u=${user.uid}`} 
                       alt="Avatar" 
                       className="w-10 h-10 rounded-2xl border-2 border-blue-500/20 group-hover:border-blue-500/50 transition-colors object-cover"
                     />

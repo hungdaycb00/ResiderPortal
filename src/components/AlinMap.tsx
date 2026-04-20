@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { normalizeImageUrl } from '../services/externalApi';
 import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 
@@ -24,7 +25,7 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
         >
             <div className="w-full h-full rounded-full border-[3px] overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.6)] border-blue-500 bg-[#1a1d24]">
                 <img 
-                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
+                    src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                 />
@@ -80,6 +81,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     const [statusInput, setStatusInput] = useState("");
     const [nameInput, setNameInput] = useState("");
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(true);
+    const [currentProvince, setCurrentProvince] = useState<string | null>(null);
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<any>(null);
     const isMounted = useRef(true);
@@ -92,6 +94,23 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
             isMounted.current = false;
         };
     }, []);
+
+    const fetchProvinceName = async (lat: number, lng: number) => {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
+            const data = await res.json();
+            const province = data.address?.province || data.address?.city || data.address?.state || 'Unknown Location';
+            setCurrentProvince(province);
+        } catch (e) {
+            console.error('Geocoding error:', e);
+        }
+    };
+
+    useEffect(() => {
+        if (myObfPos) {
+            fetchProvinceName(myObfPos.lat, myObfPos.lng);
+        }
+    }, [myObfPos?.lat, myObfPos?.lng]);
 
     const addLog = (msg: string) => {
         console.log('[Alin]', msg);
@@ -333,6 +352,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
+                    {currentProvince && (
+                        <div className="ml-2 pl-2 border-l border-white/10 flex items-center gap-1.5 shrink-0">
+                            <MapPin className="w-3 h-3 text-blue-400" />
+                            <span className="text-[10px] text-blue-300 font-bold whitespace-nowrap">{currentProvince}</span>
+                        </div>
+                    )}
                 </div>
                 <button 
                     onClick={onClose}
@@ -398,17 +423,18 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 backgroundPosition: "center center",
                             }} />
 
-                            {/* Self Node — Only show when visible */}
-                            {isVisibleOnMap && (
+                            {/* Self Node — Always show, but visual diff if hidden */}
                             <motion.div 
                                 drag
                                 dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
                                 dragElastic={0.05}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onDragEnd={() => {
+                                onDragEnd={(e, info) => {
                                     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                        const deltaLng = selfDragX.get() / DEGREES_TO_PX;
-                                        const deltaLat = -selfDragY.get() / DEGREES_TO_PX;
+                                        const currentScale = scale.get() || 1;
+                                        // Adjust displacement by scale factor
+                                        const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
+                                        const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
                                         
                                         const newLat = myObfPos.lat + deltaLat;
                                         const newLng = myObfPos.lng + deltaLng;
@@ -417,7 +443,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                             type: 'MAP_MOVE',
                                             payload: { lat: newLat, lng: newLng, zoom: 13 }
                                         }));
-                                        addLog(`🚀 Teleported to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
+                                        
+                                        // Sync local origin
+                                        setMyObfPos({ lat: newLat, lng: newLng });
+                                        // Reset displacement values so avatar stays centered at new pos
+                                        selfDragX.set(0);
+                                        selfDragY.set(0);
+
+                                        addLog(`🚀 Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
                                     }
                                 }}
                                 onClick={(e) => {
@@ -438,21 +471,27 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
                             >
-                                <div className="w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] border-blue-400">
+                                <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-gray-500 opacity-60'}`}>
                                     <img 
                                         src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
                                         className="w-full h-full object-cover" 
                                         onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                                     />
+                                    {!isVisibleOnMap && (
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                            <div className="w-5 h-5 border-2 border-white/40 border-dashed rounded-full animate-spin-slow" />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 bg-blue-500/60" />
+                                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-2 blur-[6px] rounded-full -z-10 ${isVisibleOnMap ? 'bg-blue-500/60' : 'bg-gray-500/30'}`} />
                                 
-                                <div className="absolute top-[-30px] left-1/2 -translate-x-1/2 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap text-white border border-white/20 bg-blue-600/80">
-                                    YOU
+                                <div className={`absolute top-[-30px] left-1/2 -translate-x-1/2 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap text-white border border-white/20 ${isVisibleOnMap ? 'bg-blue-600/80' : 'bg-gray-600/80'}`}>
+                                    {isVisibleOnMap ? 'YOU' : 'YOU (HIDDEN)'}
+                                    {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
                                 </div>
                                 
                                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Click to view | Drag to move
+                                    {isVisibleOnMap ? 'Click to view | Drag to move' : 'Bạn đang ẩn danh | Kéo để di chuyển'}
                                 </div>
 
                                 {/* Status under avatar */}
@@ -460,7 +499,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                     {myStatus}
                                 </div>
                             </motion.div>
-                            )}
 
                             {/* Observer mode indicator */}
                             {!isVisibleOnMap && (
@@ -649,7 +687,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                     <img 
                                         src={selectedUser.isSelf 
                                             ? (user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`) 
-                                            : (selectedUser.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`)
+                                            : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`)
                                         } 
                                         alt="Avatar" 
                                         className="w-full h-full object-cover" 
@@ -757,10 +795,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                         </div>
                                     ) : userGames.length > 0 ? (
                                         userGames.map((game) => {
-                                            const baseUrl = (localStorage.getItem('cloudflareUrl') || '').replace(/\/$/, '');
-                                            const imgSrc = game.image?.startsWith('http') || game.image?.startsWith('data:') 
-                                                ? game.image 
-                                                : `${baseUrl}${game.image?.startsWith('/') ? '' : '/'}${game.image || ''}`;
+                                            const imgSrc = normalizeImageUrl(game.image || '');
                                             return (
                                                 <div key={game.id} className="min-w-[140px] bg-gray-800 rounded-xl overflow-hidden border border-white/5 group active:scale-95 transition-transform">
                                                     <div className="h-20 bg-gray-700 relative">
@@ -804,12 +839,26 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                                 <UserPlus className="w-5 h-5" /> Kết bạn
                                             </button>
                                         )}
-                                        <button 
-                                            onClick={handleMessage}
-                                            className={`flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}
-                                        >
-                                            <MessageCircle className="w-5 h-5" /> Nhắn tin
-                                        </button>
+                                        <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}>
+                                            <button 
+                                                onClick={handleMessage}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
+                                            >
+                                                <MessageCircle className="w-5 h-5" /> Nhắn tin
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX;
+                                                    const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX;
+                                                    panX.set(-pxX);
+                                                    panY.set(-pxY);
+                                                }}
+                                                className="px-4 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-blue-400 rounded-2xl border border-white/5 active:scale-95 transition-all"
+                                                title="Center on map"
+                                            >
+                                                <MapPin className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>
