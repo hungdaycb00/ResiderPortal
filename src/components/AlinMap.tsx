@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -55,10 +55,11 @@ interface AlinMapProps {
     user: any;
     onClose: () => void;
     externalApi: any; // Pass externalApi from props or import it
+    games?: any[];
     onOpenChat?: (id: string, name: string) => void;
 }
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenChat }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, onOpenChat }) => {
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
@@ -87,6 +88,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     const isMounted = useRef(true);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
+    const [isSheetExpanded, setIsSheetExpanded] = useState(false);
 
     useEffect(() => {
         isMounted.current = true;
@@ -343,22 +345,30 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar (Mobile First) */}
-            <div className="absolute top-4 left-4 right-4 z-[110] flex gap-2">
-                <div className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center px-4 py-2.5 shadow-2xl">
-                    <Search className="w-5 h-5 text-gray-400 mr-2" />
+            <div className="absolute top-12 left-4 right-4 z-[170] flex gap-2">
+                <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-full flex items-center px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
+                    <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
                         type="text" 
-                        placeholder="Search tags (#gaming, #coder...)" 
-                        className="bg-transparent border-none outline-none text-white text-sm w-full placeholder:text-gray-500"
+                        placeholder="Tìm kiếm..." 
+                        className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
                     {currentProvince && (
-                        <div className="ml-2 pl-2 border-l border-white/10 flex items-center gap-1.5 shrink-0">
-                            <MapPin className="w-3 h-3 text-blue-400" />
-                            <span className="text-[10px] text-blue-300 font-bold whitespace-nowrap">{currentProvince}</span>
+                        <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 hidden sm:flex">
+                            <MapPin className="w-3 h-3 text-blue-500" />
+                            <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap">{currentProvince}</span>
                         </div>
                     )}
+                    {/* User Avatar Inside Search */}
+                    <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-transparent hover:border-blue-500">
+                        <img 
+                            src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=50&bold=true`} 
+                            alt="Me" 
+                            className="w-7 h-7 object-cover"
+                        />
+                    </button>
                 </div>
             </div>
 
@@ -572,7 +582,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
             </div>
 
             {/* Floating Controls */}
-            <div className="absolute bottom-20 right-4 z-[110] flex flex-col gap-3">
+            <div className="absolute top-24 right-4 z-[120] flex flex-col gap-3">
                 <button 
                     onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
                     className="w-12 h-12 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
@@ -677,209 +687,196 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                     )}
                 </AnimatePresence>
 
-            {/* Bottom Sheet (Mobile Info) */}
-            <AnimatePresence>
-                {selectedUser && (
-                    <>
-                        <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSelectedUser(null)}
-                            className="absolute inset-0 bg-black/40 z-[130]"
-                        />
-                        <motion.div 
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="absolute bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-6 md:w-[450px] md:max-w-[90vw] md:rounded-[32px] bg-[#1a1d24] rounded-t-[32px] p-6 z-[140] border-t md:border border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
-                        >
-                            <div className="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6 md:hidden" />
-                            <div className="flex items-start gap-4 mb-6">
-                                <div className="w-16 h-16 bg-gray-800 rounded-2xl border-2 border-blue-500/30 overflow-hidden shrink-0">
-                                    <img 
-                                        src={selectedUser.isSelf 
-                                            ? (user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`) 
-                                            : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`)
-                                        } 
-                                        alt="Avatar" 
-                                        className="w-full h-full object-cover" 
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.isSelf ? myDisplayName : (selectedUser.username || 'U'))}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
-                                    />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    {selectedUser.isSelf ? (
-                                        isEditingName ? (
-                                            <div className="flex gap-2 mb-2">
-                                                <input 
-                                                    autoFocus
-                                                    type="text" 
-                                                    value={nameInput} 
-                                                    onChange={(e) => setNameInput(e.target.value)} 
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            setMyDisplayName(nameInput);
-                                                            setIsEditingName(false);
-                                                            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                                                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-black/50 border border-emerald-500/50 rounded-lg px-2 py-1 text-sm font-bold text-white w-full outline-none focus:border-emerald-400"
-                                                />
-                                                <button 
-                                                    onClick={() => { 
-                                                        setMyDisplayName(nameInput); 
-                                                        setIsEditingName(false);
-                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
-                                                        }
-                                                    }}
-                                                    className="bg-emerald-600 hover:bg-emerald-500 transition-colors text-white px-3 rounded-lg text-xs font-bold shrink-0"
-                                                >Lưu</button>
-                                            </div>
-                                        ) : (
-                                            <div className="group/name inline-flex items-center gap-2 mb-2 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
-                                                <h3 className="text-xl font-bold truncate group-hover/name:text-blue-300 transition-colors">{myDisplayName}</h3>
-                                                <svg className="w-4 h-4 text-gray-600 group-hover/name:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <h3 className="text-xl font-bold truncate">{selectedUser.username || 'Mysterious User'}</h3>
-                                    )}
-                                    
-                                    {selectedUser.isSelf ? (
-                                        isEditingStatus ? (
-                                            <div className="flex gap-2 mt-2">
-                                                <input 
-                                                    autoFocus
-                                                    type="text" 
-                                                    value={statusInput} 
-                                                    onChange={(e) => setStatusInput(e.target.value)} 
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            setMyStatus(statusInput);
-                                                            setIsEditingStatus(false);
-                                                            if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="bg-black/50 border border-blue-500/50 rounded-lg px-2 py-1.5 text-xs text-white w-full outline-none focus:border-blue-400"
-                                                />
-                                                <button 
-                                                    onClick={() => { 
-                                                        setMyStatus(statusInput); 
-                                                        setIsEditingStatus(false);
-                                                        if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
-                                                        }
-                                                    }}
-                                                    className="bg-blue-600 hover:bg-blue-500 transition-colors text-white px-3 rounded-lg text-xs font-bold shrink-0"
-                                                >Lưu</button>
-                                            </div>
-                                        ) : (
-                                            <div className="group/status inline-flex items-center gap-2 mt-1 cursor-pointer bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
-                                                <p className="text-gray-300 text-sm truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
-                                                <svg className="w-3 h-3 text-gray-500 group-hover/status:text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <p className="text-gray-400 text-sm mt-1 truncate">{selectedUser.status || "Exploring the digital universe"}</p>
-                                    )}
+            {/* Bottom Navigation */}
+            <div className="absolute bottom-0 left-0 right-0 h-[65px] bg-white border-t border-gray-200 z-[160] flex justify-around items-center px-4 md:hidden">
+                <button className="flex flex-col items-center justify-center gap-1 text-blue-600 active:scale-95 transition-transform" onClick={() => setIsSheetExpanded(false)}>
+                    <MapPin className="w-6 h-6 fill-blue-100" />
+                    <span className="text-[10px] font-bold">Khám phá</span>
+                </button>
+                <button className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-900 transition-colors active:scale-95">
+                    <Bookmark className="w-6 h-6" />
+                    <span className="text-[10px] font-medium">Đã lưu</span>
+                </button>
+                <button className="flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-gray-900 transition-colors active:scale-95">
+                    <PlusCircle className="w-6 h-6" />
+                    <span className="text-[10px] font-medium">Đóng góp</span>
+                </button>
+            </div>
 
-                                    <div className="flex flex-wrap gap-2 mt-3">
-                                        {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
-                                            <span key={tag} className="text-[10px] font-bold bg-blue-500/20 text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/30">
-                                                {tag.toUpperCase()}
-                                            </span>
-                                        ))}
+            {/* Floating Tabs */}
+            <div className={`absolute left-1/2 -translate-x-1/2 z-[150] flex gap-2 pointer-events-auto w-max md:hidden transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[120px] opacity-0 pointer-events-none' : 'bottom-[80px] opacity-100'}`}>
+                <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
+                    <Compass className="w-5 h-5 mb-0.5" />
+                    <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
+                </button>
+                <button className="bg-white text-gray-700 px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <Heart className="w-5 h-5 mb-0.5" />
+                    <span className="text-[10px] font-bold tracking-tight uppercase">Ưa thích</span>
+                </button>
+                <button className="bg-white text-gray-700 px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <Star className="w-5 h-5 mb-0.5" />
+                    <span className="text-[10px] font-bold tracking-tight uppercase">Đề cử</span>
+                </button>
+            </div>
+
+            {/* Smart Bottom Sheet */}
+            <div className="absolute top-24 bottom-[65px] md:bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] overflow-hidden pointer-events-none z-[140]">
+                <motion.div 
+                    className="absolute top-0 left-0 right-0 h-[1200px] bg-white rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto"
+                    variants={{
+                        expanded: { y: 0 },
+                        collapsed: { y: 'calc(100vh - 360px)' }
+                    }}
+                    initial="collapsed"
+                    animate={isSheetExpanded || selectedUser ? "expanded" : "collapsed"}
+                    transition={{ type: "spring", stiffness: 350, damping: 35 }}
+                    drag="y"
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={0.05}
+                    onDragEnd={(e, info) => {
+                        const threshold = 100;
+                        if (info.offset.y < -threshold) setIsSheetExpanded(true);
+                        else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
+                    }}
+                >
+                    {/* Hover Area / Handle */}
+                    <div className="w-full flex flex-col items-center pt-3 pb-4 cursor-grab active:cursor-grabbing shrink-0" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
+                        <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-5 pb-32 scrollbar-hide">
+                        {selectedUser ? (
+                            <div className="pt-2">
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200">
+                                        <img 
+                                            src={selectedUser.isSelf 
+                                                ? (user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
+                                                : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`)
+                                            } 
+                                            alt="Avatar" 
+                                            className="w-full h-full object-cover" 
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.isSelf ? myDisplayName : (selectedUser.username || 'U'))}&background=3b82f6&color=fff&size=150&bold=true`; }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0 pt-1">
+                                        {selectedUser.isSelf ? (
+                                            isEditingName ? (
+                                                <div className="flex gap-2 mb-2">
+                                                    <input 
+                                                        autoFocus type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} 
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                setMyDisplayName(nameInput); setIsEditingName(false);
+                                                                if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
+                                                            }
+                                                        }}
+                                                        className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 w-full outline-none focus:border-blue-500 transition-colors"
+                                                    />
+                                                    <button onClick={() => { setMyDisplayName(nameInput); setIsEditingName(false); if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Lưu</button>
+                                                </div>
+                                            ) : (
+                                                <div className="group/name inline-flex items-center gap-2 mb-1 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
+                                                    <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
+                                                </div>
+                                            )
+                                        ) : (
+                                            <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight mb-1">{selectedUser.username || 'Mysterious User'}</h3>
+                                        )}
+                                        {selectedUser.isSelf ? (
+                                            isEditingStatus ? (
+                                                <div className="flex gap-2 mt-1">
+                                                    <input autoFocus type="text" value={statusInput} onChange={(e) => setStatusInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setMyStatus(statusInput); setIsEditingStatus(false); if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); } }} className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1.5 text-xs text-gray-900 w-full outline-none focus:border-blue-500 transition-colors" />
+                                                    <button onClick={() => { setMyStatus(statusInput); setIsEditingStatus(false); if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Lưu</button>
+                                                </div>
+                                            ) : (
+                                                <div className="group/status inline-flex items-center gap-2 cursor-pointer" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
+                                                    <p className="text-gray-500 text-[13px] truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
+                                                </div>
+                                            )
+                                        ) : (
+                                            <p className="text-gray-500 text-[13px] truncate">{selectedUser.status || "Exploring the digital universe"}</p>
+                                        )}
+                                        <div className="flex flex-wrap gap-1.5 mt-3">
+                                            {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
+                                                <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
+                                                    {tag.toUpperCase()}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Game List (Creator connection) */}
-                            <div className="mb-8">
-                                <h4 className="text-xs font-black text-gray-500 tracking-widest uppercase mb-4">Created Games</h4>
-                                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                                    {isLoadingGames ? (
-                                        <div className="flex gap-4">
-                                            {[1,2,3].map(i => <div key={i} className="min-w-[120px] h-20 bg-gray-800/50 rounded-xl animate-pulse" />)}
-                                        </div>
-                                    ) : userGames.length > 0 ? (
-                                        userGames.map((game) => {
-                                            const imgSrc = normalizeImageUrl(game.image || '');
-                                            return (
-                                                <div key={game.id} className="min-w-[140px] bg-gray-800 rounded-xl overflow-hidden border border-white/5 group active:scale-95 transition-transform">
-                                                    <div className="h-20 bg-gray-700 relative">
-                                                        <img 
-                                                            src={imgSrc} 
-                                                            className="w-full h-full object-cover" 
-                                                            alt={game.title}
-                                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Navigation className="w-5 h-5 text-white" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-2">
-                                                        <p className="text-[10px] font-bold truncate">{game.title}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
+                                <div className="grid grid-cols-2 gap-3 pb-8">
+                                    {selectedUser?.isSelf ? (
+                                        <button onClick={() => { setSelectedUser(null); setIsSheetExpanded(false); }} className="col-span-2 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm">
+                                            <X className="w-5 h-5" /> Đóng hồ sơ
+                                        </button>
                                     ) : (
-                                        <p className="text-gray-500 text-xs italic">No games published yet.</p>
+                                        <>
+                                            {!sentFriendRequests.includes(selectedUser.id) && (
+                                                <button onClick={handleAddFriend} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                                                    <UserPlus className="w-5 h-5" /> Kết bạn
+                                                </button>
+                                            )}
+                                            <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}>
+                                                <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
+                                                    <MessageCircle className="w-5 h-5" /> Nhắn tin
+                                                </button>
+                                                <button onClick={() => { const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX; const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX; panX.set(-pxX); panY.set(-pxY); scale.set(2); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
+                                                    <MapPin className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-3 pb-4">
-                                {selectedUser?.isSelf ? (
-                                    <button 
-                                        onClick={() => setSelectedUser(null)}
-                                        className="col-span-2 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
-                                    >
-                                        <X className="w-5 h-5" /> Đóng
-                                    </button>
-                                ) : (
-                                    <>
-                                        {!sentFriendRequests.includes(selectedUser.id) && (
-                                            <button 
-                                                onClick={handleAddFriend}
-                                                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-                                            >
-                                                <UserPlus className="w-5 h-5" /> Kết bạn
-                                            </button>
-                                        )}
-                                        <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}>
-                                            <button 
-                                                onClick={handleMessage}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-bold transition-all border border-white/5 active:scale-95"
-                                            >
-                                                <MessageCircle className="w-5 h-5" /> Nhắn tin
-                                            </button>
-                                            <button 
-                                                onClick={() => {
-                                                    const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX;
-                                                    const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX;
-                                                    panX.set(-pxX);
-                                                    panY.set(-pxY);
-                                                }}
-                                                className="px-4 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-blue-400 rounded-2xl border border-white/5 active:scale-95 transition-all"
-                                                title="Center on map"
-                                            >
-                                                <MapPin className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                        ) : (
+                            <div className="pt-2">
+                                <div className="flex justify-between items-center mb-5">
+                                    <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Nổi bật trong khu vực</h2>
+                                    <div className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-1.5 shrink-0">
+                                        <CloudSun className="w-4 h-4 text-gray-500" />
+                                        <span className="text-[11px] font-bold text-gray-700">28°</span>
+                                    </div>
+                                </div>
+                                <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
+                                    {(games && games.length > 0 ? games : [1,2,3]).slice(0, 5).map((game: any, idx: number) => {
+                                        const isPlaceholder = typeof game === 'number';
+                                        return (
+                                            <div key={isPlaceholder ? idx : game.id} className="snap-start shrink-0 w-64 bg-[#eef5fa] rounded-3xl overflow-hidden border border-[#d6eaf3] flex flex-col active:scale-[0.98] transition-transform cursor-pointer">
+                                                <div className="p-4 pb-3">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Khám phá thế giới trò chơi mượt mà...' : game.title}</h3>
+                                                        <Diamond className="w-5 h-5 text-blue-500 shrink-0 fill-blue-50 mt-0.5" />
+                                                    </div>
+                                                    <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-2">
+                                                        <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                                                        <span>Alin Maps • {isPlaceholder ? 'Sắp ra mắt' : (game.mode || 'Nhiều người chơi')}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-2 pt-0 flex-1 flex flex-col justify-end">
+                                                    <div className="w-full aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                                        {!isPlaceholder && (
+                                                            <img 
+                                                                src={normalizeImageUrl(game.image || '')} 
+                                                                alt={game.title} 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        )}
+                                                        {isPlaceholder && <div className="w-full h-full bg-gradient-to-br from-blue-100 to-gray-200" />}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                        )}
+                    </div>
+                </motion.div>
+            </div>
         </div>
     );
 };
