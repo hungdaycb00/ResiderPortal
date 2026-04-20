@@ -1278,6 +1278,7 @@ export default function App() {
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
             games={fetchedGames}
+            friends={fetchedFriends}
             onOpenChat={(id: string, name: string) => {
               setChatTargetUser({ id, name });
               setIsChatOpen(true);

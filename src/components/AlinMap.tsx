@@ -54,12 +54,13 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
 interface AlinMapProps {
     user: any;
     onClose: () => void;
-    externalApi: any; // Pass externalApi from props or import it
-    games?: any[];
+    externalApi: any;
+    games: any[];
+    friends?: any[];
     onOpenChat?: (id: string, name: string) => void;
 }
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, onOpenChat }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat }) => {
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
@@ -283,9 +284,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
         try {
             await externalApi.addFriend(selectedUser.id);
             setSentFriendRequests(prev => [...prev, selectedUser.id]);
-            alert(`Friend request sent to ${selectedUser.username}!`);
+            alert(`Yêu cầu kết bạn đã được gửi tới ${selectedUser.username || selectedUser.id}!`);
         } catch (err: any) {
-            alert(err.message);
+            if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
+                alert("Bạn đã gửi yêu cầu hoặc đã là bạn bè với người này!");
+                // Đồng bộ local state nếu server báo đã là bạn/đã gửi
+                setSentFriendRequests(prev => [...prev, selectedUser.id]);
+            } else {
+                alert(err.message || "Không thể gửi yêu cầu kết bạn.");
+            }
         }
     };
 
@@ -783,7 +790,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                     {/* PC Toggle Drawer Handle */}
                     {isDesktop && (
                         <button 
-                            onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+                            onClick={() => {
+                                if (isSheetExpanded || selectedUser) {
+                                    setIsSheetExpanded(false);
+                                    setSelectedUser(null);
+                                } else {
+                                    setIsSheetExpanded(true);
+                                }
+                            }}
                             className="absolute top-1/2 -right-[16px] -translate-y-1/2 w-4 h-16 bg-white border-y border-r border-gray-200 shadow-[4px_0_10px_rgba(0,0,0,0.05)] rounded-r-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:w-5 hover:-right-[20px] transition-all outline-none z-50 overflow-hidden"
                             title="Đóng/Mở bảng"
                         >
@@ -795,16 +809,21 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200">
+                                    <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => selectedUser.isSelf && alert("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!")}>
                                         <img 
                                             src={selectedUser.isSelf 
                                                 ? (normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
                                                 : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`)
                                             } 
                                             alt="Avatar" 
-                                            className="w-full h-full object-cover" 
+                                            className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110" 
                                             onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.isSelf ? myDisplayName : (selectedUser.username || 'U'))}&background=3b82f6&color=fff&size=150&bold=true`; }}
                                         />
+                                        {selectedUser.isSelf && (
+                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                                                <Edit className="w-5 h-5 text-white" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0 pt-1">
                                         {selectedUser.isSelf ? (
@@ -825,7 +844,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                             ) : (
                                                 <div className="group/name inline-flex items-center gap-2 mb-1 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
                                                     <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
-                                                    <Edit className="w-4 h-4 text-blue-500 opacity-0 group-hover/name:opacity-100 transition-opacity" />
+                                                    <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
                                                 </div>
                                             )
                                         ) : (
@@ -833,14 +852,37 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                         )}
                                         {selectedUser.isSelf ? (
                                             isEditingStatus ? (
-                                                <div className="flex gap-2 mt-1">
-                                                    <input autoFocus type="text" value={statusInput} onChange={(e) => setStatusInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setMyStatus(statusInput); setIsEditingStatus(false); if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); } }} className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1.5 text-xs text-gray-900 w-full outline-none focus:border-blue-500 transition-colors" />
-                                                    <button onClick={() => { setMyStatus(statusInput); setIsEditingStatus(false); if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Lưu</button>
+                                                <div className="bg-gray-100/80 p-3 rounded-xl mt-2 border border-gray-200 shadow-inner">
+                                                    <div className="flex gap-2">
+                                                        <input 
+                                                            autoFocus type="text" value={statusInput} 
+                                                            onChange={(e) => setStatusInput(e.target.value)} 
+                                                            onKeyDown={(e) => { 
+                                                                if (e.key === 'Enter') { 
+                                                                    setMyStatus(statusInput); 
+                                                                    setIsEditingStatus(false); 
+                                                                    if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); 
+                                                                } 
+                                                            }} 
+                                                            placeholder="Cập nhật tâm trạng của bạn..."
+                                                            className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 w-full outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                                                        />
+                                                        <button 
+                                                            onClick={() => { 
+                                                                setMyStatus(statusInput); 
+                                                                setIsEditingStatus(false); 
+                                                                if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } })); 
+                                                            }} 
+                                                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                                                        >
+                                                            Lưu
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="group/status inline-flex items-center gap-2 cursor-pointer" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
                                                     <p className="text-gray-500 text-[13px] truncate">{myStatus || "Nhấp để thêm trạng thái..."}</p>
-                                                    <Edit className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover/status:opacity-100 transition-opacity" />
+                                                    <Edit className="w-3.5 h-3.5 text-gray-400 opacity-40 group-hover/status:opacity-100 transition-opacity" />
                                                 </div>
                                             )
                                         ) : (
@@ -863,12 +905,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                                         </button>
                                     ) : (
                                         <>
-                                            {!sentFriendRequests.includes(selectedUser.id) && (
+                                            {!sentFriendRequests.includes(selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
                                                 <button onClick={handleAddFriend} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
                                                     <UserPlus className="w-5 h-5" /> Kết bạn
                                                 </button>
                                             )}
-                                            <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) ? 'col-span-2' : ''}`}>
+                                            <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
                                                 <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
                                                     <MessageCircle className="w-5 h-5" /> Nhắn tin
                                                 </button>

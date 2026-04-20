@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle, Send as SendIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 
@@ -49,7 +49,11 @@ export default function FriendsModal({
       setStatusMsg({ text: result.message || 'Friend request sent!', type: 'success' });
       setFriendInput('');
     } catch (err: any) {
-      setStatusMsg({ text: err.message || 'Error sending request', type: 'error' });
+      if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
+        setStatusMsg({ text: 'Bạn đã là bạn bè hoặc đã gửi yêu cầu rồi!', type: 'error' });
+      } else {
+        setStatusMsg({ text: err.message || 'Lỗi khi gửi yêu cầu kết bạn', type: 'error' });
+      }
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setStatusMsg(null), 5000);
@@ -143,7 +147,7 @@ export default function FriendsModal({
                         disabled={isSubmitting || !friendInput.trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 disabled:text-gray-600 text-gray-400 hover:text-gray-200 font-medium rounded-lg transition-all active:scale-95 flex items-center justify-center gap-1.5 text-sm tracking-widest uppercase"
                       >
-                        <Send className="w-4 h-4 -rotate-45 mb-1" />
+                        <SendIcon className="w-4 h-4 -rotate-45 mb-1" />
                         SEND
                       </button>
                     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initSocket, getSocket } from '../utils/socket';
 import { authenticateChat, joinRoom, sendMessage, getMyPrivateRooms, createOrGetPrivateRoom } from '../utils/chatService';
 import { useChat } from '../hooks/useChat';
-import { MessageCircle, Send, MessageSquare, ChevronLeft, Globe, User, Plus, MessageSquarePlus, Search } from 'lucide-react';
+import { MessageCircle, Send as SendIcon, MessageSquare, ChevronLeft, Globe, User, Plus, Search, Users } from 'lucide-react';
 import { normalizeImageUrl } from '../services/externalApi';
 
 interface ChatRoomProps {
@@ -35,9 +35,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
     const [privateRooms, setPrivateRooms] = useState<RoomInfo[]>([]);
     const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
     const [activeRoomName, setActiveRoomName] = useState('World Chat');
-    const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
-    const [isSelectingFriend, setIsSelectingFriend] = useState(false);
-    const [friendSearch, setFriendSearch] = useState('');
+    const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
     
     const activeRoomIdRef = useRef<number | null>(null);
 
@@ -146,7 +144,6 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         setActiveRoomName(roomName);
         setMobileView('chat');
         setMessages([]);
-        setIsSelectingFriend(false);
         
         joinRoom(type, roomId)
             .then((data) => {
@@ -187,115 +184,71 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                         <MessageCircle className="w-5 h-5 text-blue-500" />
                         Messenger
                     </h2>
-                    <button 
-                        onClick={() => setIsSelectingFriend(!isSelectingFriend)}
-                        className={`p-2 rounded-lg transition-all active:scale-95 ${isSelectingFriend ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
-                        title="Tin nhắn mới"
-                    >
-                        <MessageSquarePlus className="w-5 h-5" />
-                    </button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    {isSelectingFriend ? (
-                        <>
-                            <div className="px-2 py-3 bg-[#1e2128] rounded-xl mb-4 border border-gray-800">
-                                <div className="flex items-center gap-2 bg-[#16181d] px-3 py-2 rounded-lg">
-                                    <Search className="w-4 h-4 text-gray-500" />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Tìm bạn bè..." 
-                                        className="bg-transparent border-none outline-none text-xs text-white w-full"
-                                        value={friendSearch}
-                                        onChange={(e) => setFriendSearch(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-1">
-                                {friends
-                                    .filter(f => (f.displayName || f.username || f.id).toLowerCase().includes(friendSearch.toLowerCase()))
-                                    .map(friend => (
-                                        <button 
-                                            key={friend.id}
-                                            onClick={() => startChatWithFriend(friend)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition-all active:scale-95"
-                                        >
-                                            <div className="relative w-10 h-10 rounded-full shrink-0 border border-gray-700 overflow-hidden bg-[#252830]">
-                                                <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-full h-full object-cover" />
-                                                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                                            </div>
-                                            <div className="flex-1 text-left min-w-0">
-                                                <h3 className="font-bold text-sm text-gray-200 truncate">{friend.displayName || friend.username || friend.id}</h3>
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-widest">{friend.is_online ? 'Online' : 'Offline'}</p>
-                                            </div>
-                                        </button>
-                                    ))
-                                }
-                                {friends.length === 0 && (
-                                    <div className="text-center py-10 opacity-50 space-y-2">
-                                        <Users className="w-8 h-8 mx-auto text-gray-600" />
-                                        <p className="text-xs">Chưa có bạn bè nào.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            {/* World Chat Global Option */}
+                    {/* World Chat Global Option */}
                     <button 
                         onClick={() => switchRoom('global', null, 'World Chat')}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors active:scale-95 ${activeRoomName === 'World Chat' ? 'bg-blue-600/20 shadow-inner' : 'hover:bg-gray-800/50'}`}
                     >
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg ${activeRoomName === 'World Chat' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                            <Globe className="w-6 h-6 text-white" />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${activeRoomName === 'World Chat' ? 'bg-blue-600' : 'bg-gray-700'}`}>
+                            <Globe className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                            <h3 className={`font-bold truncate ${activeRoomName === 'World Chat' ? 'text-blue-400' : 'text-gray-200'}`}>World Chat</h3>
-                            <p className="text-xs text-gray-500 truncate">Kênh thế giới chung</p>
+                            <h3 className={`font-bold text-sm truncate ${activeRoomName === 'World Chat' ? 'text-blue-400' : 'text-gray-200'}`}>Kênh Tổng Thế Giới</h3>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-widest">Toàn bộ cư dân Alin</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                         </div>
                     </button>
 
-                    <div className="my-2 border-t border-gray-800" />
-                    
-                    {/* Private Rooms */}
-                    <h4 className="text-[10px] uppercase font-bold text-gray-500 px-3 pt-2 mb-1">Tin nhắn cá nhân</h4>
-                    {privateRooms.length > 0 ? privateRooms.map(room => (
-                        <button 
-                            key={room.room_id}
-                            onClick={() => switchRoom('private', room.room_id, room.target_user_name)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-95 ${activeRoomId === room.room_id ? 'bg-emerald-600/20 shadow-inner' : 'hover:bg-gray-800/50'}`}
-                        >
-                            <div className="relative w-12 h-12 rounded-full shrink-0 border-2 border-gray-700 overflow-hidden shadow-lg bg-[#252830]">
-                                {room.target_user_avatar ? (
-                                    <img src={normalizeImageUrl(room.target_user_avatar)} className="w-full h-full object-cover" />
-                                ) : (
-                                    <User className="w-full h-full p-2 text-gray-400" />
-                                )}
-                            </div>
-                            <div className="flex-1 text-left min-w-0">
-                                <h3 className={`font-bold truncate ${activeRoomId === room.room_id ? 'text-emerald-400' : 'text-gray-200'}`}>{room.target_user_name}</h3>
-                                <p className="text-xs text-gray-400 truncate">{room.last_message || 'Bắt đầu trò chuyện'}</p>
-                            </div>
-                        </button>
-                    )) : (
-                        <div className="px-3 py-6 text-center text-gray-500 text-xs">
-                            <p>Không có tin nhắn nào.</p>
-                            <p className="mt-1 opacity-70">Tìm kiếm bạn bè trên AlinMap để bắt đầu!</p>
+                    <div className="pt-4 pb-2 px-2">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Danh sách Bạn bè</span>
+                            <span className="text-[10px] font-bold text-gray-600 bg-gray-800/50 px-1.5 py-0.5 rounded-md">{friends.length}</span>
                         </div>
-                    )}
-                        </>
-                    )}
+                        <div className="h-px bg-gray-800/50 mt-2"></div>
+                    </div>
+
+                    <div className="space-y-1">
+                        {friends.map(friend => {
+                            const isActive = activeRoomName === (friend.displayName || friend.username || friend.id);
+                            return (
+                                <button 
+                                    key={friend.id}
+                                    onClick={() => startChatWithFriend(friend)}
+                                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all active:scale-95 ${isActive ? 'bg-blue-600/10' : 'hover:bg-gray-800/40'}`}
+                                >
+                                    <div className="relative w-9 h-9 rounded-full shrink-0 border border-gray-700 overflow-hidden bg-[#252830]">
+                                        <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-full h-full object-cover" />
+                                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-gray-600'}`}></div>
+                                    </div>
+                                    <div className="flex-1 text-left min-w-0">
+                                        <h3 className={`font-bold text-xs truncate ${isActive ? 'text-blue-400' : 'text-gray-300'}`}>{friend.displayName || friend.username || friend.id}</h3>
+                                        <p className="text-[9px] text-gray-500 uppercase font-medium">{friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}</p>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                        {friends.length === 0 && (
+                            <div className="text-center py-8 opacity-40 space-y-2">
+                                <Users className="w-8 h-8 mx-auto text-gray-600" />
+                                <p className="text-[10px] uppercase font-bold tracking-widest">Chưa có bạn bè</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* RIGHT MAIN (Chat Area) */}
-            <div className={`flex-1 flex-col bg-[#1a1d24] ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`flex-1 flex-col bg-[#1a1d24] ${mobileView === 'sidebar' ? 'hidden md:flex' : 'flex'}`}>
                 {/* Header */}
                 <div className="p-4 border-b border-gray-800 bg-[#20232a] flex items-center justify-between shrink-0 h-[69px]">
                     <div className="flex items-center gap-3">
                         <button 
-                            onClick={() => setMobileView('list')}
+                            onClick={() => setMobileView('sidebar')}
                             className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full transition-colors active:scale-95"
                         >
                             <ChevronLeft className="w-5 h-5" />
@@ -384,7 +337,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                             disabled={!inputText.trim() || !isConnected || isLoading}
                             className="p-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:hover:bg-gray-800 text-white rounded-xl transition-all active:scale-95 flex items-center justify-center"
                         >
-                            <Send className="w-5 h-5 -ml-0.5 mt-0.5" />
+                            <SendIcon className="w-5 h-5 -ml-0.5 mt-0.5" />
                         </button>
                     </div>
                 </div>
