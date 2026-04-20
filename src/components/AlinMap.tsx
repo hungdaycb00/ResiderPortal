@@ -481,12 +481,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         }
     };
 
-    // Replaced blocking screen with Guest Mode logic
+    // Show consent if position is missing (always, not just if guest)
     useEffect(() => {
-        if (!user && !position && !isConsentOpen) {
+        if (!position && !isConsentOpen) {
             setIsConsentOpen(true);
         }
-    }, [user, position, isConsentOpen]);
+    }, [position, isConsentOpen]);
 
     // Sync avatar/displayName to alin_social WS whenever user data changes
     useEffect(() => {
@@ -581,6 +581,17 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         style={{ scale }}
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
+                        {/* WebSocket Status Indicator (Floating) */}
+                        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                wsStatus === 'OPEN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
+                                wsStatus === 'CONNECTING' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
+                                ALIN NETWORK: {wsStatus}
+                            </span>
+                        </div>
+
                         <motion.div
                             drag
                             style={{ x: panX, y: panY }}
@@ -588,21 +599,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             dragElastic={0.1}
                             className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
                         >
-                            {/* Province Boundary (Symbolic Gray Circle) */}
-                            {currentProvince && (
-                                <div
-                                    className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none"
-                                    style={{
-                                        left: 'calc(50% - 1000px)',
-                                        top: 'calc(50% - 1000px)'
-                                    }}
-                                >
-                                    <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm">
-                                        {currentProvince} BOUNDARY
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Grid styling explicit fix */}
                             <div className="absolute inset-0 pointer-events-none" style={{
                                 backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
@@ -610,118 +606,124 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                 backgroundPosition: "center center",
                             }} />
 
-                            {/* Self Node — Always show, but visual diff if hidden */}
-                            <motion.div
-                                drag
-                                dragMomentum={false}
-                                dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
-                                dragElastic={0}
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onDragEnd={(e, info) => {
-                                    if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                                        const currentScale = scale.get() || 1;
-                                        // Use info.offset which is the corrected cumulative displacement
-                                        const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
-                                        const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
-
-                                        const newLat = myObfPos.lat + deltaLat;
-                                        const newLng = myObfPos.lng + deltaLng;
-
-                                        ws.current.send(JSON.stringify({
-                                            type: 'MAP_MOVE',
-                                            payload: { lat: newLat, lng: newLng, zoom: 13 }
-                                        }));
-
-                                        // Sync local origin
-                                        setMyObfPos({ lat: newLat, lng: newLng });
-
-                                        // Pan the grid by the exact offset so the avatar stays under the cursor visually!
-                                        panX.set(panX.get() + info.offset.x / currentScale);
-                                        panY.set(panY.get() + info.offset.y / currentScale);
-
-                                        // RESET drag displacement to zero so avatar remains at visual center relative to new myObfPos
-                                        selfDragX.set(0);
-                                        selfDragY.set(0);
-
-                                        addLog(`🚀 Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
-                                    }
-                                }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedUser({
-                                        id: user?.uid || myUserId || 'self',
-                                        username: myDisplayName,
-                                        lat: myObfPos?.lat,
-                                        lng: myObfPos?.lng,
-                                        isSelf: true,
-                                        tags: myStatus.split(' ').filter(w => w.startsWith('#')).map(w => {
-                                            return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '');
-                                        })
-                                    });
-                                }}
-                                className="absolute w-16 h-16 -ml-8 -mt-16 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
-                                style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                {/* Pulse Effect Ripple */}
-                                <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
-                                
-                                <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_30px_rgba(59,130,246,0.9)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
-                                    <img
-                                        src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
-                                        className="w-full h-full object-cover pointer-events-none"
-                                        draggable={false}
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
-                                    />
-                                    {!isVisibleOnMap && (
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                            <div className="w-5 h-5 border-2 border-emerald-400/40 border-dashed rounded-full animate-spin-slow" />
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Self Label */}
-                                <div className={`absolute top-[-35px] left-1/2 -translate-x-1/2 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap text-white border-2 border-white/20 shadow-lg ${isVisibleOnMap ? 'bg-blue-600/90' : 'bg-emerald-600/90'}`}>
-                                    {isVisibleOnMap ? 'YOU' : 'GHOST MODE'}
-                                    {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
-                                </div>
-
-                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[8px] text-gray-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {isVisibleOnMap ? 'Click to view | Drag to move' : 'You are invisible | Drag to move'}
-                                </div>
-
-                                {/* Status under avatar */}
-                                <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-medium whitespace-nowrap text-white/80 border border-white/10 max-w-[120px] truncate pointer-events-none">
-                                    {myStatus}
-                                </div>
-                            </motion.div>
-
-                            {/* Observer mode indicator */}
-                            {!isVisibleOnMap && (
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex flex-col items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-dashed border-gray-500 rounded-full animate-pulse" />
-                                    <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase bg-black/40 px-2 py-1 rounded-md">OBSERVER</span>
+                            {!myObfPos && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                     <div className="flex flex-col items-center gap-4">
+                                         <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                                         <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
+                                     </div>
                                 </div>
                             )}
 
-                            {/* Other Nodes */}
-                            {nearbyUsers.filter(u => u.id !== myUserId && u.id !== user?.uid).map(u => (
-                                <SpatialNode
-                                    key={u.id}
-                                    user={u}
-                                    myPos={myObfPos!}
-                                    onClick={() => {
-                                        setSelectedUser(u);
-                                        // Auto-center by pan calculation
-                                        const pxX = (u.lng - myObfPos!.lng) * DEGREES_TO_PX;
-                                        const pxY = -(u.lat - myObfPos!.lat) * DEGREES_TO_PX;
-                                        panX.set(-pxX);
-                                        panY.set(-pxY);
-                                    }}
-                                />
-                            ))}
+                            {myObfPos && (
+                                <>
+                                    {/* Province Boundary (Symbolic Gray Circle) */}
+                                    {currentProvince && (
+                                        <div
+                                            className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none"
+                                            style={{
+                                                left: 'calc(50% - 1000px)',
+                                                top: 'calc(50% - 1000px)'
+                                            }}
+                                        >
+                                            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm">
+                                                {currentProvince} BOUNDARY
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Self Node — Always show, but visual diff if hidden */}
+                                    <motion.div
+                                        drag
+                                        dragMomentum={false}
+                                        dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
+                                        dragElastic={0}
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                        onDragEnd={(e, info) => {
+                                            if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
+                                                const currentScale = scale.get() || 1;
+                                                const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
+                                                const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
+
+                                                const newLat = myObfPos.lat + deltaLat;
+                                                const newLng = myObfPos.lng + deltaLng;
+
+                                                ws.current.send(JSON.stringify({
+                                                    type: 'MAP_MOVE',
+                                                    payload: { lat: newLat, lng: newLng, zoom: 13 }
+                                                }));
+
+                                                setMyObfPos({ lat: newLat, lng: newLng });
+                                                panX.set(panX.get() + info.offset.x / currentScale);
+                                                panY.set(panY.get() + info.offset.y / currentScale);
+                                                selfDragX.set(0);
+                                                selfDragY.set(0);
+                                                addLog(`🚀 Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
+                                            }
+                                        }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedUser({
+                                                id: user?.uid || myUserId || 'self',
+                                                username: myDisplayName,
+                                                lat: myObfPos?.lat,
+                                                lng: myObfPos?.lng,
+                                                isSelf: true,
+                                                tags: myStatus.split(' ').filter(w => w.startsWith('#')).map(w => {
+                                                    return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '');
+                                                })
+                                            });
+                                        }}
+                                        className="absolute w-16 h-16 -ml-8 -mt-16 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
+                                        style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
+                                        <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_30px_rgba(59,130,246,0.9)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
+                                            <img
+                                                src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
+                                                className="w-full h-full object-cover pointer-events-none"
+                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                                            />
+                                            {!isVisibleOnMap && (
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                    <div className="w-5 h-5 border-2 border-emerald-400/40 border-dashed rounded-full animate-spin-slow" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={`absolute top-[-35px] left-1/2 -translate-x-1/2 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap text-white border-2 border-white/20 shadow-lg ${isVisibleOnMap ? 'bg-blue-600/90' : 'bg-emerald-600/90'}`}>
+                                            {isVisibleOnMap ? 'YOU' : 'GHOST MODE'}
+                                            {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Other Nodes */}
+                                    {nearbyUsers.filter(u => u.id !== myUserId && u.id !== user?.uid).map(u => (
+                                        <SpatialNode
+                                            key={u.id}
+                                            user={u}
+                                            myPos={myObfPos!}
+                                            onClick={() => {
+                                                setSelectedUser(u);
+                                                const pxX = (u.lng - myObfPos!.lng) * DEGREES_TO_PX;
+                                                const pxY = -(u.lat - myObfPos!.lat) * DEGREES_TO_PX;
+                                                panX.set(-pxX);
+                                                panY.set(-pxY);
+                                            }}
+                                        />
+                                    ))}
+                                </>
+                            )}
                         </motion.div>
+
+                        {/* Observer mode indicator (Fixed center) */}
+                        {myObfPos && !isVisibleOnMap && (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex flex-col items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-dashed border-gray-500 rounded-full animate-pulse" />
+                                <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase bg-black/40 px-2 py-1 rounded-md">OBSERVER</span>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
