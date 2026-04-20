@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronLeft, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -518,6 +518,13 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
+            {/* Desktop Sticky Header Tabs */}
+            <div className={`hidden md:flex absolute z-[170] transition-all duration-300 top-[80px] left-[72px] w-[400px] bg-white border-b border-gray-200 px-4 pt-4 gap-6 pointer-events-auto ${!isSheetExpanded ? 'opacity-0 pointer-events-none -translate-x-4' : 'opacity-100'}`}>
+                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">List</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Labeled</button>
+                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Map</button>
+            </div>
+
             {/* 2D Flat Space Interactor */}
             <div 
                 className="flex-1 relative overflow-hidden bg-[#0a0a0f]"
@@ -557,12 +564,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 {position && (
                     <motion.div 
                         style={{ scale }}
-                        onClick={() => {
-                            // Collapse side sheet when clicking empty map area
-                            if (isSheetExpanded) {
-                                setIsSheetExpanded(false);
-                            }
-                        }}
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
                              <motion.div 
@@ -650,7 +651,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             >
                                 <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-gray-500 opacity-60'}`}>
                                     <img 
-                                        src={normalizeImageUrl(user?.photoURL || user?.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
+                                        src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`} 
                                         className="w-full h-full object-cover pointer-events-none" 
                                         draggable={false}
                                         onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
@@ -899,16 +900,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
                     }}
                 >
-                    {/* PC View Edge Close Button */}
-                    {isDesktop && (
-                        <button 
-                            onClick={() => setIsSheetExpanded(!isSheetExpanded)}
-                            className="absolute -right-[32px] top-1/2 -translate-y-1/2 w-8 h-12 bg-white border border-gray-200 border-l-0 rounded-r-xl flex items-center justify-center shadow-[4px_0_10px_rgba(0,0,0,0.05)] text-gray-400 hover:text-blue-600 transition-colors pointer-events-auto"
-                        >
-                            <ChevronLeft className={`w-5 h-5 transition-transform duration-300 ${isSheetExpanded ? '' : 'rotate-180'}`} />
-                        </button>
-                    )}
-
                     {/* Header Part (Search & Handle) */}
                     <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
                         {/* Hover Area / Handle (Mobile Only) */}
@@ -942,8 +933,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                     <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => selectedUser.isSelf && alert("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!")}>
                                         <img 
                                             src={selectedUser.isSelf 
-                                                ? (normalizeImageUrl(user?.photoURL || user?.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
-                                                : (normalizeImageUrl(selectedUser.avatar_url || selectedUser.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`)
+                                                ? (normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`) 
+                                                : (normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`)
                                             } 
                                             alt="Avatar" 
                                             className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110" 
@@ -1036,17 +1027,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         )}
                                         <div className="flex flex-wrap gap-1.5 mt-3 mb-6">
                                             {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
-                                                <button 
-                                                    key={tag} 
-                                                    onClick={() => {
-                                                        setSearchTag(tag);
-                                                        setMainTab('nearby');
-                                                        if (!isDesktop) setIsSheetExpanded(true);
-                                                    }}
-                                                    className="text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-full border border-blue-100 transition-colors cursor-pointer"
-                                                >
+                                                <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
                                                     {tag.toUpperCase()}
-                                                </button>
+                                                </span>
                                             ))}
                                         </div>
 
