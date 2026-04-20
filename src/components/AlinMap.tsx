@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -344,8 +344,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
 
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
-            {/* Header / Search Bar (Mobile First & Centered on PC) */}
-            <div className="absolute top-12 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[450px] z-[170] flex gap-2 transition-all">
+            {/* Header / Search Bar (Mobile First & Left Sidebar on PC) */}
+            <div className="absolute top-12 left-4 right-4 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] z-[170] flex gap-2 transition-all">
                 <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-full flex items-center px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input 
@@ -581,38 +581,50 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 )}
             </div>
 
-            {/* Floating Controls */}
-            <div className="absolute top-24 right-4 z-[120] flex flex-col gap-3">
-                <button 
-                    onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
-                    className="w-12 h-12 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-                >
-                    <ZoomIn className="w-5 h-5" />
-                </button>
-                <button 
-                    onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
-                    className="w-12 h-12 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform"
-                >
-                    <ZoomOut className="w-5 h-5" />
-                </button>
+            {/* Floating Controls (Map Tools) */}
+            <div className="absolute bottom-[200px] md:bottom-12 right-4 md:right-8 z-[120] flex flex-col gap-3 pointer-events-auto items-end">
+                {/* Extra Options */}
                 <button 
                     onClick={handleRefresh}
-                    className="w-12 h-12 bg-white text-gray-900 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center active:scale-95 transition-transform"
+                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    title="Làm mới"
                 >
-                    <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin' : ''}`} />
-                </button>
-                <button 
-                    onClick={handleCenter}
-                    className="w-12 h-12 bg-gray-800 text-white rounded-full shadow-xl border border-white/10 flex items-center justify-center active:scale-95 transition-transform"
-                >
-                    <Navigation className="w-5 h-5" />
+                    <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
                 </button>
                 <button 
                     onClick={() => setIsSidebarOpen(true)}
-                    className="w-12 h-12 bg-blue-600 text-white rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] flex items-center justify-center active:scale-95 transition-transform mt-4"
+                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    title="Cài đặt / Bộ lọc"
                 >
                     <Filter className="w-5 h-5" />
                 </button>
+
+                {/* Target / Locate Me */}
+                <button 
+                    onClick={handleCenter}
+                    className="w-[42px] h-[42px] bg-white text-blue-600 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all mt-1"
+                    title="Vị trí của bạn"
+                >
+                    <LocateFixed className="w-5 h-5" />
+                </button>
+
+                {/* Zoom Controls */}
+                <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1">
+                    <button 
+                        onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
+                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        title="Phóng to"
+                    >
+                        <Plus className="w-6 h-6 stroke-[2.5]" />
+                    </button>
+                    <button 
+                        onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
+                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center active:bg-gray-100 transition-colors"
+                        title="Thu nhỏ"
+                    >
+                        <Minus className="w-6 h-6 stroke-[2.5]" />
+                    </button>
+                </div>
             </div>
 
                 {/* Sidebar (Settings/Radius) */}
@@ -688,7 +700,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
                 </AnimatePresence>
 
             {/* Bottom Navigation */}
-            <div className="absolute bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] h-[65px] bg-white border-t md:border-x border-gray-200 z-[160] flex justify-around items-center px-4 md:rounded-t-[32px] md:shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all">
+            <div className="absolute bottom-0 left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] h-[65px] bg-white border-t md:border-x border-gray-200 z-[160] flex justify-around items-center px-4 md:rounded-t-[32px] md:shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all">
                 <button className="flex flex-col items-center justify-center gap-1 text-blue-600 active:scale-95 transition-transform" onClick={() => setIsSheetExpanded(false)}>
                     <MapPin className="w-6 h-6 fill-blue-100" />
                     <span className="text-[10px] font-bold">Khám phá</span>
@@ -704,7 +716,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Floating Tabs */}
-            <div className={`absolute left-1/2 -translate-x-1/2 z-[150] flex gap-2 pointer-events-auto w-max transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[120px] opacity-0 pointer-events-none' : 'bottom-[80px] md:bottom-[90px] opacity-100'}`}>
+            <div className={`absolute left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 md:w-[420px] md:justify-center z-[150] flex gap-2 pointer-events-auto transition-all duration-300 ${isSheetExpanded || selectedUser ? 'bottom-[80px] opacity-0 pointer-events-none scale-95' : 'bottom-[115px] opacity-100 scale-100'}`}>
                 <button className="bg-blue-600 text-white px-5 py-3 rounded-full flex flex-col items-center justify-center shadow-lg active:scale-95 transition-transform" onClick={() => { panX.set(0); panY.set(0); scale.set(1.5); }}>
                     <Compass className="w-5 h-5 mb-0.5" />
                     <span className="text-[10px] font-bold tracking-tight uppercase">Gần bạn</span>
@@ -720,12 +732,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, on
             </div>
 
             {/* Smart Bottom Sheet */}
-            <div className="absolute top-28 bottom-[65px] left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[450px] overflow-hidden pointer-events-none z-[140]">
+            <div className="absolute top-28 bottom-[65px] left-0 right-0 md:left-6 md:right-auto md:translate-x-0 md:w-[420px] overflow-hidden pointer-events-none z-[140]">
                 <motion.div 
-                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-t-none md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-none md:border-x md:border-t md:border-gray-200 flex flex-col pointer-events-auto"
+                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[0_0_40px_rgba(0,0,0,0.1)] md:border md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
                         expanded: { y: 0 },
-                        collapsed: { y: 'calc(100% - 320px)' }
+                        collapsed: { y: 'calc(100% - 36px)' }
                     }}
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? "expanded" : "collapsed"}
