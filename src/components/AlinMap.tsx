@@ -827,6 +827,38 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 )}
             </AnimatePresence>
 
+            {/* Global Left Navigation (PC Only) */}
+            <div className="hidden md:flex absolute top-0 left-0 bottom-0 w-[72px] bg-white border-r border-gray-100 flex-col items-center py-8 z-[150] shadow-[4px_0_24px_rgba(0,0,0,0.05)]">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg shadow-blue-600/20">
+                    <Compass className="w-7 h-7 text-white" />
+                </div>
+                
+                <div className="flex flex-col gap-6">
+                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 group">
+                        <Navigation className="w-6 h-6 text-blue-600" />
+                        <span className="text-[9px] font-bold text-blue-600">Explore</span>
+                    </button>
+                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
+                        <Heart className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        <span className="text-[9px] font-bold">Saved</span>
+                    </button>
+                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
+                        <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        <span className="text-[9px] font-bold">Friends</span>
+                    </button>
+                    <button className="w-12 h-12 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-900 group transition-colors">
+                        <Star className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        <span className="text-[9px] font-bold">Contribute</span>
+                    </button>
+                </div>
+
+                <div className="mt-auto flex flex-col gap-6">
+                    <button onClick={onClose} className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            </div>
+
             {/* Smart Bottom Sheet / PC Sidebar */}
             <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-28 bottom-[65px] overflow-hidden'}`}>
                 <motion.div 
@@ -851,9 +883,30 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
                     }}
                 >
-                    {/* Hover Area / Handle (Mobile Only) */}
-                    <div className="w-full flex-col items-center pt-3 pb-4 cursor-grab active:cursor-grabbing shrink-0 flex md:hidden" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
-                        <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
+                    {/* Header Part (Search & Handle) */}
+                    <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
+                        {/* Hover Area / Handle (Mobile Only) */}
+                        <div className="w-full flex md:hidden flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
+                            <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
+                        </div>
+                        
+                        <div className="px-5 pt-4 md:pt-10 pb-4">
+                            <div className="relative group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-gray-100 hover:bg-gray-200/70 focus:bg-white border-none rounded-2xl pl-11 pr-4 py-3.5 text-[13px] font-medium transition-all outline-none focus:ring-2 focus:ring-blue-500/20" 
+                                    placeholder="Search users, billboards, tags..." 
+                                    value={searchTag}
+                                    onChange={(e) => setSearchTag(e.target.value)}
+                                />
+                                {searchTag && (
+                                    <button onClick={() => setSearchTag('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[150px] scrollbar-hide relative z-[100]">
