@@ -4,8 +4,8 @@
 
 const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL;
 
-const getBaseUrl = (urlOverride?: string): string => {
-  let url = urlOverride || localStorage.getItem('cloudflareUrl') || EXTERNAL_API_URL || 'http://localhost:3000';
+export const getBaseUrl = (urlOverride?: string): string => {
+  let url = urlOverride || localStorage.getItem('cloudflareUrl') || EXTERNAL_API_URL || 'http://localhost:3001';
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
