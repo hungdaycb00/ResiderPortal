@@ -518,13 +518,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
-            {/* Desktop Sticky Header Tabs */}
-            <div className={`hidden md:flex absolute z-[170] transition-all duration-300 top-[80px] left-[72px] w-[400px] bg-white border-b border-gray-200 px-4 pt-4 gap-6 pointer-events-auto ${!isSheetExpanded ? 'opacity-0 pointer-events-none -translate-x-4' : 'opacity-100'}`}>
-                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">List</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Labeled</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Map</button>
-            </div>
-
             {/* 2D Flat Space Interactor */}
             <div 
                 className="flex-1 relative overflow-hidden bg-[#0a0a0f]"
@@ -564,6 +557,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 {position && (
                     <motion.div 
                         style={{ scale }}
+                        onClick={() => {
+                            // Collapse side sheet when clicking empty map area
+                            if (isSheetExpanded) {
+                                setIsSheetExpanded(false);
+                            }
+                        }}
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
                              <motion.div 
@@ -1027,9 +1026,17 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         )}
                                         <div className="flex flex-wrap gap-1.5 mt-3 mb-6">
                                             {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
-                                                <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
+                                                <button 
+                                                    key={tag} 
+                                                    onClick={() => {
+                                                        setSearchTag(tag);
+                                                        setMainTab('nearby');
+                                                        if (!isDesktop) setIsSheetExpanded(true);
+                                                    }}
+                                                    className="text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-full border border-blue-100 transition-colors cursor-pointer"
+                                                >
                                                     {tag.toUpperCase()}
-                                                </span>
+                                                </button>
                                             ))}
                                         </div>
 

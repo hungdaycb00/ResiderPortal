@@ -157,7 +157,8 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         setIsLoading(true);
         createOrGetPrivateRoom(friend.id)
             .then((data) => {
-                switchRoom('private', data.room_id, friend.displayName || friend.username || friend.id);
+                const friendName = friend.display_name || friend.displayName || friend.username || friend.id;
+                switchRoom('private', data.room_id, friendName);
             })
             .catch((err) => {
                 alert('Không thể bắt đầu chat: ' + err.message);
@@ -214,7 +215,8 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
 
                     <div className="space-y-1">
                         {friends.map(friend => {
-                            const isActive = activeRoomName === (friend.displayName || friend.username || friend.id);
+                            const friendName = friend.display_name || friend.displayName || friend.username || friend.id;
+                            const isActive = activeRoomName === friendName;
                             return (
                                 <button 
                                     key={friend.id}
@@ -226,7 +228,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                                         <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-gray-600'}`}></div>
                                     </div>
                                     <div className="flex-1 text-left min-w-0">
-                                        <h3 className={`font-bold text-xs truncate ${isActive ? 'text-blue-400' : 'text-gray-300'}`}>{friend.display_name || friend.displayName || friend.username || friend.id}</h3>
+                                        <h3 className={`font-bold text-xs truncate ${isActive ? 'text-blue-400' : 'text-gray-300'}`}>{friendName}</h3>
                                         <p className="text-[9px] text-gray-500 uppercase font-medium">{friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}</p>
                                     </div>
                                 </button>
