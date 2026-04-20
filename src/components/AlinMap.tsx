@@ -80,7 +80,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
     const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
     const [nameInput, setNameInput] = useState("");
-    const [isVisibleOnMap, setIsVisibleOnMap] = useState(true);
+    const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<any>(null);
@@ -333,25 +333,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
         }
     };
 
-    if (!user) {
-        return (
-            <div className="fixed inset-0 z-[100] bg-[#050508] flex border border-blue-500/20 items-center justify-center p-6">
-                <div className="bg-[#1a1d24] p-8 rounded-3xl max-w-sm w-full text-center shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <MapPin className="w-8 h-8 text-red-400" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-                    <p className="text-gray-400 text-sm mb-8">Bạn cần đăng nhập vào Resider Portal để khởi động không gian Alin 3D Universe.</p>
-                    <button 
-                        onClick={onClose}
-                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                    >
-                        Quay lại
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // Replaced blocking screen with Guest Mode logic
+    useEffect(() => {
+        if (!user && !position && !isConsentOpen) {
+            setIsConsentOpen(true);
+        }
+    }, [user, position, isConsentOpen]);
 
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
@@ -373,12 +360,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                         </div>
                     )}
                 </div>
-                <button 
-                    onClick={onClose}
-                    className="w-12 h-12 bg-gray-800/80 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 text-white"
-                >
-                    <X className="w-6 h-6" />
-                </button>
             </div>
 
             {/* 2D Flat Space Interactor */}
@@ -475,6 +456,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, onOpenCha
                                         // Sync local origin
                                         setMyObfPos({ lat: newLat, lng: newLng });
                                         
+                                        // Pan the grid by the exact offset so the avatar stays under the cursor visually!
+                                        panX.set(panX.get() + info.offset.x / currentScale);
+                                        panY.set(panY.get() + info.offset.y / currentScale);
+
                                         // RESET drag displacement to zero so avatar remains at visual center relative to new myObfPos
                                         selfDragX.set(0);
                                         selfDragY.set(0);
