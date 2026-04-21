@@ -34,32 +34,16 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
             {/* Hologram base shadow/glow */}
             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-2 bg-blue-500/50 blur-sm rounded-full -z-10" />
 
-            {/* Username Tooltip */}
-            <div className="absolute top-[-30px] left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-white border border-white/10 pointer-events-none">
-                {user.username || 'Mysterious User'}
-            </div>
-
-            {/* Status if available */}
-            {user.status && (
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-medium whitespace-nowrap text-white/80 border border-white/10 max-w-[120px] truncate pointer-events-none">
-                    {user.status}
-                </div>
-            )}
-
-            {/* Gallery Billboard */}
+            {/* Billboard Container (Positioned Above Avatar) */}
             {user.gallery?.active && (
-                <motion.div
-                    initial={{ y: 0, opacity: 0 }}
-                    animate={{ y: [0, -5, 0], opacity: 1 }}
-                    transition={{
-                        y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-                        opacity: { duration: 0.5 }
-                    }}
-                    className="absolute -top-24 left-1/2 -translate-x-1/2 w-32 bg-blue-600/20 backdrop-blur-lg border border-blue-400/30 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.4)] pointer-events-none group-hover:scale-110 transition-transform"
+                <div 
+                    onClick={(e) => { e.stopPropagation(); onClick(); }}
+                    className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                 >
-                    <div className="bg-blue-500/40 px-2 py-1 border-b border-blue-400/20">
-                        <p className="text-[9px] font-black text-white truncate text-center uppercase tracking-wider">
-                            {user.gallery.title || 'ADVERTISEMENT'}
+                    {/* Header */}
+                    <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
+                        <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">
+                            {user.gallery?.title || 'SPECIAL OFFER'}
                         </p>
                     </div>
                     {user.gallery.images?.[0] ? (
@@ -82,8 +66,23 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
                         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                         className="absolute left-0 right-0 h-[1px] bg-blue-300/60 shadow-[0_0_10px_#60a5fa] z-10"
                     />
-                </motion.div>
+                </div>
             )}
+
+            {/* Labels under avatar to prevent blocking billboard */}
+            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+                {/* Name Tooltip */}
+                <div className={`whitespace-nowrap px-2 py-1 rounded border shadow-xl flex items-center gap-1 ${getTooltipColor(user.status)}`}>
+                    <span className="text-[10px] font-black">{user.username}</span>
+                </div>
+
+                {/* Status Tooltip */}
+                {user.status && (
+                    <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+                        <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{user.status}</span>
+                    </div>
+                )}
+            </div>
         </motion.div>
     );
 };
@@ -719,43 +718,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </div>
                                             )}
                                         </div>
-                                        <div className={`absolute top-[-35px] left-1/2 -translate-x-1/2 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap text-white border-2 border-white/20 shadow-lg ${isVisibleOnMap ? 'bg-blue-600/90' : 'bg-emerald-600/90'}`}>
-                                            {isVisibleOnMap ? 'YOU' : 'GHOST MODE'}
-                                            {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
-                                        </div>
-
-                                        {/* Gallery Billboard for Self */}
+                                        
+                                        {/* Billboard for SELF NODE */}
                                         {galleryActive && (
-                                            <motion.div
-                                                initial={{ y: 0, opacity: 0 }}
-                                                animate={{ y: [0, -5, 0], opacity: 1 }}
-                                                transition={{
-                                                    y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-                                                    opacity: { duration: 0.5 }
-                                                }}
-                                                onPointerDown={(e) => e.stopPropagation()}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setActiveTab('gallery');
-                                                    setSelectedUser({
-                                                        id: user?.uid || myUserId || 'self',
-                                                        username: myDisplayName,
-                                                        lat: myObfPos?.lat,
-                                                        lng: myObfPos?.lng,
-                                                        isSelf: true,
-                                                        gallery: {
-                                                            active: galleryActive,
-                                                            title: galleryTitle,
-                                                            images: galleryImages,
-                                                            links: galleryLinks
-                                                        }
-                                                    });
-                                                    setIsSheetExpanded(true);
-                                                }}
-                                                className="absolute -top-28 left-1/2 -translate-x-1/2 w-32 bg-blue-600/20 backdrop-blur-lg border border-blue-400/30 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.4)] pointer-events-auto cursor-pointer group-hover:scale-110 transition-transform z-[110]"
+                                            <div 
+                                                onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('gallery'); setIsSheetExpanded(true); }}
+                                                className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                                             >
-                                                <div className="bg-blue-500/40 px-2 py-1 border-b border-blue-400/20">
-                                                    <p className="text-[9px] font-black text-white truncate text-center uppercase tracking-wider">
+                                                <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
+                                                    <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">
                                                         {galleryTitle || 'MY ADVERTISEMENT'}
                                                     </p>
                                                 </div>
@@ -778,8 +749,22 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                     transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                                                     className="absolute left-0 right-0 h-[1px] bg-blue-300/60 shadow-[0_0_10px_#60a5fa] z-10"
                                                 />
-                                            </motion.div>
+                                            </div>
                                         )}
+
+                                        {/* Labels under self avatar to prevent blocking billboard */}
+                                        <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+                                            <div className="whitespace-nowrap bg-[#1a73e8] border border-blue-400 text-white px-2 py-1 rounded shadow-xl flex items-center gap-1">
+                                                <span className="text-[11px] font-black">{myDisplayName}</span>
+                                            </div>
+
+                                            {/* Status Tooltip for Self */}
+                                            {myStatus && (
+                                                <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+                                                    <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </motion.div>
 
                                     {/* Other Nodes */}
@@ -800,14 +785,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                 </>
                             )}
                         </motion.div>
-
-                        {/* Observer mode indicator (Fixed center) */}
-                        {myObfPos && !isVisibleOnMap && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex flex-col items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-dashed border-gray-500 rounded-full animate-pulse" />
-                                <span className="text-[9px] text-gray-500 font-bold tracking-widest uppercase bg-black/40 px-2 py-1 rounded-md">OBSERVER</span>
-                            </div>
-                        )}
                     </motion.div>
                 )}
 
