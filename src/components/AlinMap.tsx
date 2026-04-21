@@ -696,6 +696,63 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                             {isVisibleOnMap ? 'YOU' : 'GHOST MODE'}
                                             {currentProvince && <span className="ml-1 opacity-70 text-[9px]">| {currentProvince}</span>}
                                         </div>
+
+                                        {/* Gallery Billboard for Self */}
+                                        {galleryActive && (
+                                            <motion.div
+                                                initial={{ y: 0, opacity: 0 }}
+                                                animate={{ y: [0, -5, 0], opacity: 1 }}
+                                                transition={{
+                                                    y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+                                                    opacity: { duration: 0.5 }
+                                                }}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveTab('gallery');
+                                                    setSelectedUser({
+                                                        id: user?.uid || myUserId || 'self',
+                                                        username: myDisplayName,
+                                                        lat: myObfPos?.lat,
+                                                        lng: myObfPos?.lng,
+                                                        isSelf: true,
+                                                        gallery: {
+                                                            active: galleryActive,
+                                                            title: galleryTitle,
+                                                            images: galleryImages,
+                                                            links: galleryLinks
+                                                        }
+                                                    });
+                                                    setIsSheetExpanded(true);
+                                                }}
+                                                className="absolute -top-28 left-1/2 -translate-x-1/2 w-32 bg-blue-600/20 backdrop-blur-lg border border-blue-400/30 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.4)] pointer-events-auto cursor-pointer group-hover:scale-110 transition-transform z-[110]"
+                                            >
+                                                <div className="bg-blue-500/40 px-2 py-1 border-b border-blue-400/20">
+                                                    <p className="text-[9px] font-black text-white truncate text-center uppercase tracking-wider">
+                                                        {galleryTitle || 'MY ADVERTISEMENT'}
+                                                    </p>
+                                                </div>
+                                                {galleryImages?.[0] ? (
+                                                    <div className="w-full aspect-video bg-black/40">
+                                                        <img
+                                                            src={normalizeImageUrl(galleryImages[0])}
+                                                            className="w-full h-full object-cover opacity-80"
+                                                            alt="My Ads"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full h-12 flex items-center justify-center bg-blue-900/20">
+                                                        <Diamond className="w-4 h-4 text-blue-400 animate-pulse" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent mix-blend-overlay" />
+                                                <motion.div
+                                                    animate={{ top: ['0%', '100%', '0%'] }}
+                                                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                                    className="absolute left-0 right-0 h-[1px] bg-blue-300/60 shadow-[0_0_10px_#60a5fa] z-10"
+                                                />
+                                            </motion.div>
+                                        )}
                                     </motion.div>
 
                                     {/* Other Nodes */}
