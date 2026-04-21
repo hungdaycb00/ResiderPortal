@@ -1,26 +1,32 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
 // So 1 degree = 111 * 100 = 11100 pixels
 const DEGREES_TO_PX = 11100;
 
-const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number, lng: number }, onClick: () => void }) => {
+const SpatialNode = ({ user, myPos, onClick, mapScale }: { user: any, myPos: { lat: number, lng: number }, onClick: () => void, mapScale: import('framer-motion').MotionValue<number> }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
     const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
+    const [hoverScale, setHoverScale] = useState(1.1);
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     return (
         <motion.div
             onPointerDown={(e) => e.stopPropagation()} // Prevent dragging the floor when clicking this
             onClick={(e) => { e.stopPropagation(); onClick(); }}
+            onPointerEnter={() => {
+                const s = mapScale.get();
+                setHoverScale(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1);
+            }}
             className="absolute w-12 h-12 -ml-6 -mt-12 cursor-pointer group hover:z-50 pointer-events-auto"
             style={{
                 left: `calc(50% + ${dx}px)`,
                 top: `calc(50% + ${dy}px)`
             }}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: hoverScale }}
             whileTap={{ scale: 0.95 }}
         >
             <div className="w-full h-full rounded-full border-[3px] overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.6)] border-blue-500 bg-[#1a1d24]">
@@ -113,7 +119,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [myUserId, setMyUserId] = useState<string | null>(null);
     const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
     const [myStatus, setMyStatus] = useState("🚀 Exploring the digital universe");
+    const [friendIdInput, setFriendIdInput] = useState('');
+    const [socialSection, setSocialSection] = useState<'friends' | 'recent' | 'blocked'>('friends');
     const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
+    const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string } | null>(null);
+    const [isReporting, setIsReporting] = useState(false);
+    const [reportReason, setReportReason] = useState("");
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
@@ -121,6 +132,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
 
+    // Map Filters
+    const [filterDistance, setFilterDistance] = useState(50);
+    const [filterAgeMin, setFilterAgeMin] = useState(13);
+    const [filterAgeMax, setFilterAgeMax] = useState(99);
     // Gallery state
     const [galleryTitle, setGalleryTitle] = useState('');
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -179,7 +194,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const handleWheel = (e: React.WheelEvent) => {
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         const currentScale = scale.get();
-        const newScale = Math.min(Math.max(0.5, currentScale + delta), 3);
+        const newScale = Math.min(Math.max(0.02, currentScale + delta * currentScale), 5);
 
         // Use Framer Motion's animate for smooth zoom
         animate(scale, newScale, {
@@ -379,23 +394,59 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         onOpenChat(selectedUser.id, selectedUser.username || 'User');
     };
 
+    const compressImage = (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    const max = 1080;
+                    if (width > height && width > max) {
+                        height *= max / width;
+                        width = max;
+                    } else if (height > max) {
+                        width *= max / height;
+                        height = max;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        resolve(blob ? new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' }) : file);
+                    }, 'image/webp', 0.8);
+                };
+                img.src = e.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
     const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        // Validation
-        const validFiles = files.filter(f => f.size <= 1024 * 1024); // 1MB
-        if (validFiles.length < files.length) {
-            alert("Some files were skipped (limit 1MB per file).");
-        }
-        if (validFiles.length === 0) return;
-
-        const formData = new FormData();
-        validFiles.forEach(f => formData.append('images', f));
-
-        const deviceId = externalApi.getDeviceId();
-
+        setIsSavingGallery(true);
         try {
+            const compressedFiles = await Promise.all(files.map(f => compressImage(f)));
+            
+            // Validation
+            const validFiles = compressedFiles.filter(f => f.size <= 1024 * 1024); // 1MB just in case
+            if (validFiles.length < compressedFiles.length) {
+                alert("Some files were skipped because they couldn't be compressed under 1MB.");
+            }
+            if (validFiles.length === 0) {
+                setIsSavingGallery(false);
+                return;
+            }
+
+            const formData = new FormData();
+            validFiles.forEach(f => formData.append('images', f));
+
+            const deviceId = externalApi.getDeviceId();
+
             const resp = await fetch(`${API_BASE}/api/user/gallery`, {
                 method: 'POST',
                 headers: { 'X-Device-Id': deviceId },
@@ -411,6 +462,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
             }
         } catch (err) {
             console.error("Gallery upload error:", err);
+        } finally {
+            setIsSavingGallery(false);
         }
     };
 
@@ -446,7 +499,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         }
     };
 
-    // Fetch games for selected user
     useEffect(() => {
         if (selectedUser) {
             setIsLoadingGames(true);
@@ -460,6 +512,29 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
             setUserGames([]);
         }
     }, [selectedUser, externalApi]);
+
+    // Fetch Weather Data
+    useEffect(() => {
+        if (myObfPos) {
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${myObfPos.lat}&longitude=${myObfPos.lng}&current_weather=true`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.current_weather) {
+                        const code = data.current_weather.weathercode;
+                        let icon = '🌤️', desc = 'Clear';
+                        if (code === 0) { icon = '☀️'; desc = 'Clear Sky'; }
+                        else if (code <= 3) { icon = '☁️'; desc = 'Cloudy'; }
+                        else if (code <= 48) { icon = '🌫️'; desc = 'Fog'; }
+                        else if (code <= 57) { icon = '🌦️'; desc = 'Drizzle'; }
+                        else if (code <= 67) { icon = '🌧️'; desc = 'Rain'; }
+                        else if (code <= 77) { icon = '❄️'; desc = 'Snow'; }
+                        else if (code <= 82) { icon = '🌧️'; desc = 'Showers'; }
+                        else if (code >= 95) { icon = '⛈️'; desc = 'Thunderstorm'; }
+                        setWeatherData({ temp: data.current_weather.temperature, desc, icon });
+                    }
+                }).catch(err => console.error('Weather fetch error:', err));
+        }
+    }, [myObfPos]);
 
     const handleRefresh = () => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
@@ -680,7 +755,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         }}
                                         className="absolute w-16 h-16 -ml-8 -mt-16 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
                                         style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
-                                        whileHover={{ scale: 1.1 }}
+                                        onPointerEnter={() => {
+                                            const s = scale.get();
+                                            document.documentElement.style.setProperty('--self-hover-scale', String(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
+                                        }}
+                                        whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                         whileTap={{ scale: 0.95 }}
                                     >
                                         <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
@@ -742,11 +821,35 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                     </motion.div>
 
                                     {/* Other Nodes */}
-                                    {nearbyUsers.filter(u => u.id !== myUserId && u.id !== user?.uid).map(u => (
+                                    {nearbyUsers.filter(u => {
+                                        if (u.id === myUserId || u.id === user?.uid) return false;
+                                        
+                                        // 1. Keyword/Tag filter
+                                        if (searchTag) {
+                                            const term = searchTag.toLowerCase();
+                                            const matchesName = (u.displayName || u.username || '').toLowerCase().includes(term);
+                                            const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase();
+                                            const matchesTags = tagsStr.includes(term);
+                                            const statusStr = (u.status || '').toLowerCase();
+                                            const matchesStatus = statusStr.includes(term);
+                                            if (!matchesName && !matchesTags && !matchesStatus) return false;
+                                        }
+
+                                        // 2. Distance filter
+                                        const distKm = Math.sqrt(Math.pow(u.lat - myObfPos!.lat, 2) + Math.pow(u.lng - myObfPos!.lng, 2)) * 111;
+                                        if (distKm > filterDistance) return false;
+
+                                        // 3. Age filter (mocked to 20 if missing to avoid breaking UX)
+                                        const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
+                                        if (age < filterAgeMin || age > filterAgeMax) return false;
+
+                                        return true;
+                                    }).map(u => (
                                         <SpatialNode
                                             key={u.id}
                                             user={u}
                                             myPos={myObfPos!}
+                                            mapScale={scale}
                                             onClick={() => {
                                                 setSelectedUser(u);
                                                 const pxX = (u.lng - myObfPos!.lng) * DEGREES_TO_PX;
@@ -786,14 +889,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 >
                     <Filter className="w-5 h-5" />
                 </button>
-                <button
-                    onClick={handleCenter}
-                    className="w-[42px] h-[42px] bg-white text-blue-600 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all mt-1"
-                    title="Your Position"
-                >
-                    <LocateFixed className="w-5 h-5" />
-                </button>
-                <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1">
+                <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1 pointer-events-auto">
+                    <button
+                        onClick={handleCenter}
+                        className="w-[42px] h-11 text-blue-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        title="Your Position"
+                    >
+                        <LocateFixed className="w-5 h-5" />
+                    </button>
                     <button
                         onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
                         className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
@@ -811,7 +914,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
-            {/* Sidebar (Settings/Radius) */}
+            {/* Weather & Coordinates Widget */}
+            <div className="absolute bottom-[200px] md:bottom-12 left-4 md:left-[430px] z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[140px]">
+                {weatherData && (
+                    <div className="flex items-center gap-2 mb-1 px-1">
+                        <span className="text-xl">{weatherData.icon}</span>
+                        <div>
+                            <p className="text-[14px] font-black text-gray-900 leading-tight">{weatherData.temp}°C</p>
+                            <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase">{weatherData.desc}</p>
+                        </div>
+                    </div>
+                )}
+                {myObfPos && (
+                    <div className="bg-gray-100 rounded-lg py-1 px-2 flex flex-col gap-0.5">
+                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Encrypted Location</p>
+                        <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
+                            {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Sidebar (Map Filters) */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
@@ -829,53 +953,65 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             className="absolute top-0 right-0 bottom-0 w-80 bg-[#1a1d24] z-[160] p-6 shadow-2xl border-l border-white/10"
                         >
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-xl font-bold">Privacy Settings</h2>
+                                <h2 className="text-xl font-bold">Map Filters</h2>
                                 <X className="w-6 h-6 cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
                             </div>
 
-                            <div className="space-y-8">
+                            <div className="space-y-6">
                                 <div>
-                                    <div className="flex justify-between mb-4">
-                                        <span className="text-gray-400 font-medium">Obfuscation Radius</span>
-                                        <span className="text-blue-400 font-bold">{radius} km</span>
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Distance (km)</h3>
+                                    <div className="flex justify-between text-blue-400 font-bold mb-2">
+                                        <span>Within {filterDistance} km</span>
                                     </div>
                                     <input
                                         type="range"
-                                        min="0"
-                                        max="100"
-                                        value={radius}
-                                        onChange={(e) => handleUpdateRadius(parseInt(e.target.value))}
-                                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                        min="1"
+                                        max="500"
+                                        value={filterDistance}
+                                        onChange={(e) => setFilterDistance(parseInt(e.target.value))}
+                                        className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
                                     />
-                                    <p className="text-[11px] text-gray-500 mt-3 leading-relaxed">
-                                        Your avatar will be placed randomly within this radius from your real location.
-                                        Higher radius means more privacy.
-                                    </p>
                                 </div>
 
-                                <div className="pt-6 border-t border-white/5">
-                                    <h3 className="font-bold mb-4">Display Mode</h3>
-                                    <label className="flex items-center justify-between cursor-pointer group">
-                                        <div>
-                                            <span className="text-gray-400 group-hover:text-white transition-colors">Visible on Map</span>
-                                            <p className="text-[10px] text-gray-600 mt-0.5">{isVisibleOnMap ? 'Others can see you' : 'You are invisible (Observer)'}</p>
-                                        </div>
-                                        <div className="relative inline-flex items-center">
+                                <div className="pt-6 border-t border-white/10">
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Age Range</h3>
+                                    <div className="flex justify-between items-center gap-4">
+                                        <div className="flex-1">
                                             <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={isVisibleOnMap}
-                                                onChange={(e) => {
-                                                    const newVal = e.target.checked;
-                                                    setIsVisibleOnMap(newVal);
-                                                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                                                        ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
-                                                    }
-                                                }}
+                                                type="number"
+                                                min="13"
+                                                max="99"
+                                                value={filterAgeMin}
+                                                onChange={(e) => setFilterAgeMin(parseInt(e.target.value))}
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
-                                            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <span className="text-[10px] text-gray-500 block text-center mt-1">Min Age</span>
                                         </div>
-                                    </label>
+                                        <span className="text-gray-500 font-bold">-</span>
+                                        <div className="flex-1">
+                                            <input
+                                                type="number"
+                                                min="13"
+                                                max="99"
+                                                value={filterAgeMax}
+                                                onChange={(e) => setFilterAgeMax(parseInt(e.target.value))}
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span className="text-[10px] text-gray-500 block text-center mt-1">Max Age</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="pt-6 border-t border-white/10">
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Keywords / Tags</h3>
+                                    <input
+                                        type="text"
+                                        placeholder="E.g. #GAMER or 'Looking for...'"
+                                        value={searchTag}
+                                        onChange={(e) => setSearchTag(e.target.value)}
+                                        className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-2">Filters the map instantly as you type.</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -900,11 +1036,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     </button>
                     <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <UserPlus className={`w-6 h-6 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
-                        <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Friends</span>
+                        <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Social</span>
                     </button>
-                    <button onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setActiveTab('gallery'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
-                        <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-amber-500" />
-                        <span className="text-[9px] font-bold text-gray-400 group-hover:text-amber-500">Gallery</span>
+                    <button onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setActiveTab('info'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <User className="w-6 h-6 text-gray-400 group-hover:text-blue-500" />
+                        <span className="text-[9px] font-bold text-gray-400 group-hover:text-blue-500">Profile</span>
                     </button>
                 </div>
             </div>
@@ -921,7 +1057,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </button>
                 <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <UserPlus className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Friends</span>
+                    <span className="text-[9px] font-black uppercase">Social</span>
                 </button>
             </div>
 
@@ -1028,7 +1164,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         onClick={() => setActiveTab('info')}
                                         className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                                     >
-                                        Information
+                                        Info
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('gallery')}
@@ -1078,13 +1214,76 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         ) : (
                                             <p className="text-gray-500 text-[13px] truncate mb-2">{selectedUser.status || "Exploring the digital universe"}</p>
                                         )}
-                                        <div className="flex flex-wrap gap-1.5 mt-3 mb-6">
+                                        <div className="flex flex-wrap gap-1.5 mt-3 mb-4">
                                             {(selectedUser.isSelf ? myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')) : (selectedUser.tags || ['#GAMER', '#ALIN'])).map((tag: string) => (
                                                 <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
                                                     {tag.toUpperCase()}
                                                 </span>
                                             ))}
                                         </div>
+
+                                        {/* Create Post + Star (Self only) */}
+                                        {selectedUser.isSelf && (
+                                            <div className="flex gap-2 mb-4">
+                                                <button onClick={() => setActiveTab('gallery')} className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 border border-blue-100">
+                                                    <Edit className="w-3.5 h-3.5" /> Create Post
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        const newStarred = !selectedUser.starred;
+                                                        setSelectedUser((prev: any) => ({ ...prev, starred: newStarred }));
+                                                        if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { starred: newStarred } }));
+                                                    }}
+                                                    className={`px-4 flex items-center justify-center rounded-xl transition-all active:scale-95 border ${selectedUser.starred ? 'bg-amber-50 border-amber-200 text-amber-500' : 'bg-gray-50 border-gray-200 text-gray-400 hover:text-amber-500'}`}
+                                                >
+                                                    <Star className={`w-4 h-4 ${selectedUser.starred ? 'fill-amber-400' : ''}`} />
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Privacy Settings (Self Only) */}
+                                        {selectedUser.isSelf && (
+                                            <div className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
+                                                <h4 className="text-[13px] font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                    <Compass className="w-4 h-4 text-blue-500" /> Privacy & Location
+                                                </h4>
+                                                
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <div className="flex justify-between mb-2">
+                                                            <span className="text-[11px] font-bold text-gray-500">Obfuscation Radius</span>
+                                                            <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                                                        </div>
+                                                        <input
+                                                            type="range"
+                                                            min="0"
+                                                            max="100"
+                                                            value={radius}
+                                                            onChange={(e) => handleUpdateRadius(parseInt(e.target.value))}
+                                                            className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
+                                                        <div>
+                                                            <span className="text-[11px] font-bold text-gray-700 block">Visible on Map</span>
+                                                            <span className="text-[9px] font-medium text-gray-400">{isVisibleOnMap ? 'Others can see you' : 'Ghost mode'}</span>
+                                                        </div>
+                                                        <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
+                                                            const newVal = !isVisibleOnMap;
+                                                            setIsVisibleOnMap(newVal);
+                                                            if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                                                        }}>
+                                                            <div className={`w-9 h-5 rounded-full transition-colors ${isVisibleOnMap ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                                                <div className={`w-4 h-4 bg-white rounded-full mt-0.5 ml-0.5 transition-transform shadow-sm flex items-center justify-center ${isVisibleOnMap ? 'translate-x-4' : 'translate-x-0'}`}>
+                                                                    {isVisibleOnMap && <div className="w-1 h-1 bg-blue-600 rounded-full" />}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="grid grid-cols-2 gap-3 pb-8">
                                             {selectedUser?.isSelf ? (
@@ -1109,6 +1308,44 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </>
                                             )}
                                         </div>
+
+                                        {/* Report User Section */}
+                                        {!selectedUser?.isSelf && (
+                                            <div className="mt-2 mb-6">
+                                                {!isReporting ? (
+                                                    <button onClick={() => setIsReporting(true)} className="flex items-center gap-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors px-2 py-1">
+                                                        <Flag className="w-3.5 h-3.5" /> Report User
+                                                    </button>
+                                                ) : (
+                                                    <div className="bg-red-50/50 border border-red-100 rounded-xl p-3">
+                                                        <p className="text-[10px] uppercase font-bold text-red-500 mb-2">Report Content/User</p>
+                                                        <textarea
+                                                            value={reportReason}
+                                                            onChange={e => setReportReason(e.target.value)}
+                                                            placeholder="Why are you reporting this user?"
+                                                            className="w-full bg-white border border-red-200 rounded-lg p-2 text-xs outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 mb-2 resize-none h-16"
+                                                        />
+                                                        <div className="flex justify-end gap-2">
+                                                            <button onClick={() => { setIsReporting(false); setReportReason(""); }} className="px-3 py-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    if (ws.current?.readyState === WebSocket.OPEN && reportReason.trim()) {
+                                                                        ws.current.send(JSON.stringify({ type: 'REPORT_USER', payload: { reportedId: selectedUser.id, reason: reportReason.trim() } }));
+                                                                        setIsReporting(false);
+                                                                        setReportReason("");
+                                                                        alert("Report submitted successfully.");
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-1.5 text-[11px] font-bold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+                                                                disabled={!reportReason.trim()}
+                                                            >
+                                                                Submit Report
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* User Games Section */}
                                         {games && games.length > 0 && (
@@ -1292,35 +1529,30 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                             })}
                                         </div>
 
+                                        {/* Trending Tags from nearby users */}
                                         <div className="mt-4 space-y-4">
                                             <div className="flex justify-between items-center px-1">
-                                                <h3 className="text-lg font-black text-gray-900">Active Residents</h3>
-                                                <button onClick={() => setMainTab('nearby')} className="text-[11px] font-bold text-blue-600 hover:underline">View All</button>
+                                                <h3 className="text-lg font-black text-gray-900">Trending Tags</h3>
+                                                <span className="text-[11px] font-bold text-gray-400">{nearbyUsers.length} users nearby</span>
                                             </div>
-                                            <div className="divide-y divide-gray-50">
-                                                {nearbyUsers.slice(0, 4).map(u => (
-                                                    <div
-                                                        key={u.id}
-                                                        onClick={() => setSelectedUser(u)}
-                                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer group"
-                                                    >
-                                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
-                                                            <img src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`} className="w-full h-full object-cover" alt={u.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
-                                                            {u.gallery?.active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <h4 className="font-bold text-gray-900 text-sm truncate">{u.username || 'Mysterious User'}</h4>
-                                                                {u.isSelf && <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">You</span>}
-                                                            </div>
-                                                            <p className="text-[11px] text-gray-400 truncate">{u.status || "Exploring digital world"}</p>
-                                                        </div>
-                                                        <div className="text-[10px] text-gray-300 font-bold uppercase group-hover:text-blue-500 transition-colors">Details</div>
-                                                    </div>
-                                                ))}
-                                                {nearbyUsers.length === 0 && (
-                                                    <p className="text-center py-4 text-gray-400 text-xs italic">Searching for residents nearby...</p>
-                                                )}
+                                            <div className="flex flex-wrap gap-2">
+                                                {(() => {
+                                                    const tagCounts: Record<string, number> = {};
+                                                    nearbyUsers.forEach(u => {
+                                                        const words = (u.status || '').split(' ').filter((w: string) => w.startsWith('#'));
+                                                        words.forEach((w: string) => {
+                                                            const clean = w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '').toUpperCase();
+                                                            if (clean.length > 1) tagCounts[clean] = (tagCounts[clean] || 0) + 1;
+                                                        });
+                                                    });
+                                                    const sorted = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+                                                    if (sorted.length === 0) return <p className="text-[12px] text-gray-400 italic py-2">No trending tags yet.</p>;
+                                                    return sorted.map(([tag, count]) => (
+                                                        <button key={tag} onClick={() => setSearchTag(tag)} className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-bold rounded-full border border-blue-100 transition-colors active:scale-95">
+                                                            {tag} <span className="text-blue-400 ml-1">×{count}</span>
+                                                        </button>
+                                                    ));
+                                                })()}
                                             </div>
                                         </div>
                                     </>
@@ -1364,41 +1596,112 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                 )}
 
                                 {mainTab === 'friends' && (
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-black text-gray-900 px-1">Your Friends</h3>
-                                        {friends.length > 0 ? (
-                                            <div className="divide-y divide-gray-50">
-                                                {friends.map(f => (
-                                                    <div
-                                                        key={f.id}
-                                                        onClick={() => { setSelectedUser({ ...f, isFriend: true }); setActiveTab('info'); }}
-                                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
-                                                    >
-                                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
-                                                            <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
-                                                            <div className="flex items-center gap-1">
-                                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                                                                <p className="text-[10px] text-emerald-500 font-bold uppercase">Online</p>
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username); }}
-                                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
-                                                        >
-                                                            <MessageCircle className="w-5 h-5" />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                    <div className="space-y-5">
+                                        <h3 className="text-lg font-black text-gray-900 px-1">Social</h3>
+
+                                        {/* User ID + Copy */}
+                                        <div className="bg-gray-50 rounded-2xl p-3 flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Your User ID</p>
+                                                <p className="text-[13px] font-mono font-bold text-gray-900 truncate">{myUserId || '...'}</p>
                                             </div>
-                                        ) : (
-                                            <div className="py-12 text-center bg-gray-50 rounded-[32px]">
-                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
-                                                    <UserPlus className="w-6 h-6 text-gray-200" />
+                                            <button 
+                                                onClick={() => { if (myUserId) { navigator.clipboard.writeText(myUserId); } }}
+                                                className="p-2.5 bg-white hover:bg-blue-50 border border-gray-200 rounded-xl transition-colors active:scale-95 shrink-0"
+                                                title="Copy ID"
+                                            >
+                                                <Copy className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                        </div>
+
+                                        {/* Add Friend by ID */}
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter User ID to add..."
+                                                value={friendIdInput}
+                                                onChange={(e) => setFriendIdInput(e.target.value)}
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    if (friendIdInput.trim() && ws.current?.readyState === WebSocket.OPEN) {
+                                                        ws.current.send(JSON.stringify({ type: 'FRIEND_REQUEST_BY_ID', payload: { targetId: friendIdInput.trim() } }));
+                                                        setSentFriendRequests(prev => [...prev, friendIdInput.trim()]);
+                                                        setFriendIdInput('');
+                                                    }
+                                                }}
+                                                className="px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition-colors active:scale-95 shrink-0"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Section Tabs */}
+                                        <div className="flex bg-gray-100 p-1 rounded-xl">
+                                            <button onClick={() => setSocialSection('friends')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Friends ({friends.length})</button>
+                                            <button onClick={() => setSocialSection('recent')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'recent' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Recent</button>
+                                            <button onClick={() => setSocialSection('blocked')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'blocked' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Blocked</button>
+                                        </div>
+
+                                        {/* Friends Section */}
+                                        {socialSection === 'friends' && (
+                                            friends.length > 0 ? (
+                                                <div className="divide-y divide-gray-50">
+                                                    {friends.map(f => (
+                                                        <div
+                                                            key={f.id}
+                                                            onClick={() => { setSelectedUser({ ...f, isFriend: true }); setActiveTab('info'); }}
+                                                            className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
+                                                        >
+                                                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
+                                                                <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                                                    <p className="text-[10px] text-emerald-500 font-bold uppercase">Online</p>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username); }}
+                                                                className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                                                            >
+                                                                <MessageCircle className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <p className="text-gray-400 text-xs font-medium">No friends added yet</p>
+                                            ) : (
+                                                <div className="py-10 text-center bg-gray-50 rounded-[32px]">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                                        <UserPlus className="w-6 h-6 text-gray-200" />
+                                                    </div>
+                                                    <p className="text-gray-400 text-xs font-medium">No friends added yet</p>
+                                                    <p className="text-gray-300 text-[11px] mt-1">Share your ID or add someone above</p>
+                                                </div>
+                                            )
+                                        )}
+
+                                        {/* Recent Interactions */}
+                                        {socialSection === 'recent' && (
+                                            <div className="py-10 text-center bg-gray-50 rounded-[32px]">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                                    <RefreshCw className="w-6 h-6 text-gray-200" />
+                                                </div>
+                                                <p className="text-gray-400 text-xs font-medium">No recent interactions</p>
+                                                <p className="text-gray-300 text-[11px] mt-1">View profiles and chat to build history</p>
+                                            </div>
+                                        )}
+
+                                        {/* Blocked Users */}
+                                        {socialSection === 'blocked' && (
+                                            <div className="py-10 text-center bg-gray-50 rounded-[32px]">
+                                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                                    <AlertTriangle className="w-6 h-6 text-gray-200" />
+                                                </div>
+                                                <p className="text-gray-400 text-xs font-medium">No blocked users</p>
                                             </div>
                                         )}
                                     </div>
