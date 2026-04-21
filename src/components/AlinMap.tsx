@@ -71,9 +71,9 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
 
             {/* Labels under avatar to prevent blocking billboard */}
             <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                {/* Name Tooltip */}
-                <div className={`whitespace-nowrap px-2 py-1 rounded border shadow-xl flex items-center gap-1 ${getTooltipColor(user.status)}`}>
-                    <span className="text-[10px] font-black">{user.username}</span>
+                {/* Name Tooltip (visible on hover) */}
+                <div className="whitespace-nowrap bg-black/60 backdrop-blur-md border border-white/10 text-white px-2 py-1 rounded-md shadow-xl flex items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="text-[10px] font-bold">{user.username || 'Mysterious User'}</span>
                 </div>
 
                 {/* Status Tooltip */}
