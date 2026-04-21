@@ -41,8 +41,8 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
                     className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                 >
                     {/* Header */}
-                    <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
-                        <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">
+                    <div className="bg-white/80 px-2 py-1 border-b border-white/40">
+                        <p className="text-[9px] font-black text-gray-800 truncate text-center uppercase tracking-wider">
                             {user.gallery?.title || 'SPECIAL OFFER'}
                         </p>
                     </div>
@@ -718,8 +718,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('gallery'); setIsSheetExpanded(true); }}
                                                 className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                                             >
-                                                <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
-                                                    <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">
+                                                <div className="bg-white/80 px-2 py-1 border-b border-white/40">
+                                                    <p className="text-[9px] font-black text-gray-800 truncate text-center uppercase tracking-wider">
                                                         {galleryTitle || 'MY ADVERTISEMENT'}
                                                     </p>
                                                 </div>
@@ -969,6 +969,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         {/* Hover Area / Handle (Mobile Only) */}
                         <div className="w-full flex md:hidden flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
                             <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
+                        </div>
+                        {/* Close Button (Desktop Only) */}
+                        <div className="hidden md:flex justify-end px-4 pt-4 pb-2">
+                            <button onClick={() => { setIsSheetExpanded(false); setSelectedUser(null); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-900 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
                     </div>
 
