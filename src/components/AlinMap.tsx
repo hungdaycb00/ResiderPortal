@@ -535,14 +535,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
-                    {currentProvince && (
-                        <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 hidden sm:flex">
-                            <MapPin className="w-3 h-3 text-blue-500" />
-                            <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap">{currentProvince}</span>
-                        </div>
-                    )}
+                    <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setIsSheetExpanded(true); }}>
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap truncate max-w-[80px] sm:max-w-[100px] hidden sm:block">{currentProvince || 'Locating...'}</span>
+                    </div>
                     {/* User Avatar Inside Search */}
-                    <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
+                    <button onClick={() => { setSelectedUser({ id: myUserId, isSelf: true, username: myDisplayName, status: myStatus }); setIsSheetExpanded(true); }} className="ml-2 sm:ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img
                             src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
                             alt="Me"
@@ -971,32 +969,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         {/* Hover Area / Handle (Mobile Only) */}
                         <div className="w-full flex md:hidden flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
                             <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
-                        </div>
-
-                        <div className="px-5 pt-4 md:pt-10 pb-4">
-                            <div className="flex items-center bg-gray-100 hover:bg-gray-200/70 focus-within:bg-white border focus-within:border-blue-500 border-transparent rounded-full px-4 py-3 transition-all shadow-sm">
-                                <Search className="w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    className="flex-1 bg-transparent border-none px-3 text-[13px] font-medium outline-none w-full"
-                                    placeholder="Search..."
-                                    value={searchTag}
-                                    onChange={(e) => setSearchTag(e.target.value)}
-                                />
-                                {searchTag && (
-                                    <button onClick={() => setSearchTag('')} className="text-gray-400 hover:text-gray-600 mr-2">
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                )}
-                                <div className="w-[1px] h-4 bg-gray-300 mx-2" />
-                                <div className="flex items-center gap-1.5 cursor-pointer shrink-0" onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setIsSheetExpanded(true); }}>
-                                    <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                                    <span className="text-xs font-bold text-blue-600 truncate max-w-[80px] sm:max-w-[100px] hidden sm:block">{currentProvince || 'Locating...'}</span>
-                                    <div className="w-7 h-7 rounded-full overflow-hidden ml-1 border border-blue-200">
-                                        <img src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff`} className="w-full h-full object-cover" />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
