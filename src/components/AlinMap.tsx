@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -36,7 +36,7 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
 
             {/* Billboard Container (Positioned Above Avatar) */}
             {user.gallery?.active && (
-                <div 
+                <div
                     onClick={(e) => { e.stopPropagation(); onClick(); }}
                     className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                 >
@@ -599,17 +599,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         style={{ scale }}
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
-                        {/* WebSocket Status Indicator (Floating) */}
-                        {wsStatus !== 'OPEN' && (
-                            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                    wsStatus === 'CONNECTING' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                    'bg-red-500/20 text-red-400 border border-red-500/30'
-                                }`}>
-                                    ALIN NETWORK: {wsStatus}
-                                </span>
-                            </div>
-                        )}
+
 
                         <motion.div
                             drag
@@ -627,10 +617,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
                             {!myObfPos && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                     <div className="flex flex-col items-center gap-4">
-                                         <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
-                                         <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
-                                     </div>
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                                        <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -711,10 +701,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         {/* Billboard for SELF NODE */}
                                         {galleryActive && (
-                                            <div 
+                                            <div
                                                 onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('gallery'); setIsSheetExpanded(true); }}
                                                 className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                                             >
@@ -947,8 +937,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     variants={{
                         expanded: { y: 0, x: 0 },
                         collapsed: {
-                            y: isDesktop ? 0 : 'calc(100% - 36px)',
-                            x: isDesktop ? '-120%' : 0
+                            y: isDesktop ? 0 : 'calc(100% - 40px)',
+                            x: isDesktop ? '-100%' : 0
                         }
                     }}
                     initial="collapsed"
@@ -964,15 +954,27 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
                     }}
                 >
+                    {/* PC Hinge Toggle Button */}
+                    <button 
+                        onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+                        className="hidden md:flex absolute top-1/2 -right-[23px] -translate-y-1/2 w-6 h-14 bg-white border border-l-0 border-gray-200 rounded-r-[10px] shadow-[4px_0_10px_rgba(0,0,0,0.05)] items-center justify-center cursor-pointer hover:bg-gray-50 z-50 text-gray-500 hover:text-gray-700 transition-colors"
+                        title={isSheetExpanded ? "Collapse panel" : "Expand panel"}
+                    >
+                        {isSheetExpanded ? <ChevronLeft className="w-4 h-4 ml-[-4px]" /> : <ChevronRight className="w-4 h-4 ml-[-4px]" />}
+                    </button>
+
                     {/* Header Part (Search & Handle) */}
                     <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
                         {/* Hover Area / Handle (Mobile Only) */}
-                        <div className="w-full flex md:hidden flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
-                            <div className="w-12 h-[5px] bg-gray-300 rounded-full" />
+                        <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
+                            <div className="w-10 h-1 bg-gray-300 rounded-full mb-1" />
+                            <div className="text-gray-400">
+                                {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[20px] scrollbar-hide relative z-[100]">
+                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[100px] scrollbar-hide relative z-[100]">
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
