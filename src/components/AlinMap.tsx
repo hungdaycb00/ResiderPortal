@@ -551,12 +551,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
-            {/* Desktop Sticky Header Tabs */}
-            <div className={`hidden md:flex absolute z-[170] transition-all duration-300 top-[80px] left-[72px] w-[400px] bg-white border-b border-gray-200 px-4 pt-4 gap-6 pointer-events-auto ${!isSheetExpanded ? 'opacity-0 pointer-events-none -translate-x-4' : 'opacity-100'}`}>
-                <button className="text-blue-600 border-b-2 border-blue-600 pb-3 px-1 font-bold text-[13px] tracking-tight">List</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Labeled</button>
-                <button className="text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 pb-3 px-1 font-medium text-[13px] tracking-tight">Map</button>
-            </div>
+
 
             {/* 2D Flat Space Interactor */}
             <div
@@ -974,7 +969,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[100px] scrollbar-hide relative z-[100]">
+                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[20px] scrollbar-hide relative z-[100]">
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
@@ -1114,6 +1109,40 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </>
                                             )}
                                         </div>
+
+                                        {/* User Games Section */}
+                                        {games && games.length > 0 && (
+                                            <div className="mt-2">
+                                                <h4 className="text-[13px] font-bold text-gray-900 mb-3">🎮 Games</h4>
+                                                <div className="space-y-2">
+                                                    {games.filter((g: any) => {
+                                                        if (selectedUser.isSelf) return g.creatorId === user?.uid || g.creatorId === myUserId;
+                                                        return g.creatorId === selectedUser.id;
+                                                    }).map((g: any) => (
+                                                        <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
+                                                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                                                                {g.thumbnail ? (
+                                                                    <img src={normalizeImageUrl(g.thumbnail)} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <span>🎮</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[13px] font-bold text-gray-900 truncate">{g.name || g.title || 'Untitled Game'}</p>
+                                                                <p className="text-[11px] text-gray-500">{g.type || 'Game'} {g.playCount ? `• ${g.playCount} plays` : ''}</p>
+                                                            </div>
+                                                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                                                        </div>
+                                                    ))}
+                                                    {games.filter((g: any) => {
+                                                        if (selectedUser.isSelf) return g.creatorId === user?.uid || g.creatorId === myUserId;
+                                                        return g.creatorId === selectedUser.id;
+                                                    }).length === 0 && (
+                                                        <p className="text-[12px] text-gray-400 text-center py-4">No games created yet.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
                                     <div className="pb-8">
