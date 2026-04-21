@@ -197,22 +197,41 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     };
 
     // Initial Geolocation
-    const requestLocation = () => {
+    const requestLocation = (forceInvisible: boolean = false) => {
         localStorage.setItem('alin_location_consent_handled', 'true');
+        if (forceInvisible) {
+            setIsVisibleOnMap(false);
+            if (ws.current?.readyState === WebSocket.OPEN) {
+                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: false } }));
+            }
+        }
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const { latitude, longitude } = pos.coords;
                     setPosition([latitude, longitude]);
+                    localStorage.setItem('alin_last_position', JSON.stringify([latitude, longitude]));
                     setIsConsentOpen(false);
                 },
                 (err) => {
                     console.error("Geolocation error:", err);
-                    // Fallback to HCM City
-                    setPosition([10.762622, 106.660172]);
+                    const lastPos = localStorage.getItem('alin_last_position');
+                    if (lastPos) {
+                        try { setPosition(JSON.parse(lastPos)); } catch (e) { setPosition([10.762622, 106.660172]); }
+                    } else {
+                        setPosition([10.762622, 106.660172]); // Fallback to HCM City
+                    }
                     setIsConsentOpen(false);
                 }
             );
+        } else {
+            const lastPos = localStorage.getItem('alin_last_position');
+            if (lastPos) {
+                try { setPosition(JSON.parse(lastPos)); } catch (e) { setPosition([10.762622, 106.660172]); }
+            } else {
+                setPosition([10.762622, 106.660172]);
+            }
+            setIsConsentOpen(false);
         }
     };
 
@@ -259,7 +278,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     radiusKm: radius,
                     status: myStatus,
                     visible: isVisibleOnMap,
-                    avatar_url: user?.photoURL || ''
+                    avatar_url: user?.photoURL || '',
+                    province: currentProvince || ''
                 }
             }));
             addLog(`📍 Sent GPS: ${position[0].toFixed(4)}, ${position[1].toFixed(4)}`);
@@ -481,25 +501,31 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         }
     };
 
-    // Show consent if position is missing (always, not just if guest)
+    // Auto-init for old users or show consent
     useEffect(() => {
-        if (!position && !isConsentOpen) {
-            setIsConsentOpen(true);
+        if (!position) {
+            const hasConsented = localStorage.getItem('alin_location_consent_handled');
+            if (hasConsented === 'true') {
+                requestLocation(); // Automatically grant and connect using previous settings
+            } else if (!isConsentOpen) {
+                setIsConsentOpen(true);
+            }
         }
-    }, [position, isConsentOpen]);
+    }, [position]); // Run on mount or if position is somehow cleared
 
-    // Sync avatar/displayName to alin_social WS whenever user data changes
+    // Sync avatar/displayName/province to alin_social WS whenever user data changes
     useEffect(() => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN && user) {
             ws.current.send(JSON.stringify({
                 type: 'UPDATE_PROFILE',
                 payload: {
                     avatar_url: user.photoURL || '',
-                    displayName: user.displayName || myDisplayName
+                    displayName: user.displayName || myDisplayName,
+                    province: currentProvince || ''
                 }
             }));
         }
-    }, [user?.photoURL, user?.displayName]);
+    }, [user?.photoURL, user?.displayName, currentProvince]);
 
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
@@ -559,13 +585,13 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                             <p className="text-blue-200/50 text-sm mb-8">Deploying your hologram into the social grid. Reveal your relative position to discover other entities.</p>
                             <div className="flex flex-col gap-3">
                                 <button
-                                    onClick={requestLocation}
+                                    onClick={() => requestLocation(false)}
                                     className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                                 >
                                     Activate Hologram
                                 </button>
                                 <button
-                                    onClick={() => { localStorage.setItem('alin_location_consent_handled', 'true'); setIsVisibleOnMap(false); setPosition([10.762, 106.660]); setIsConsentOpen(false); }}
+                                    onClick={() => requestLocation(true)}
                                     className="text-gray-400 hover:text-white text-xs py-2 transition-colors border border-white/10 rounded-xl hover:border-white/30"
                                 >
                                     👁️ Browse Only — View without sharing location
@@ -582,15 +608,16 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
                         {/* WebSocket Status Indicator (Floating) */}
-                        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
-                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                wsStatus === 'OPEN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-                                wsStatus === 'CONNECTING' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                'bg-red-500/20 text-red-400 border border-red-500/30'
-                            }`}>
-                                ALIN NETWORK: {wsStatus}
-                            </span>
-                        </div>
+                        {wsStatus !== 'OPEN' && (
+                            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
+                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                    wsStatus === 'CONNECTING' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                    'bg-red-500/20 text-red-400 border border-red-500/30'
+                                }`}>
+                                    ALIN NETWORK: {wsStatus}
+                                </span>
+                            </div>
+                        )}
 
                         <motion.div
                             drag
@@ -925,12 +952,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Friends</span>
                     </button>
                 </div>
-
-                <div className="mt-auto flex flex-col gap-6">
-                    <button onClick={onClose} className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
             </div>
 
             {/* Mobile Bottom Navigation */}
@@ -946,10 +967,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <UserPlus className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Friends</span>
-                </button>
-                <button onClick={onClose} className="flex-1 flex flex-col items-center justify-center gap-1 py-1 text-gray-400 hover:text-red-500">
-                    <X className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Close</span>
                 </button>
             </div>
 
@@ -1041,7 +1058,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </div>
                                             )
                                         ) : (
-                                            <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight mb-1">{selectedUser.username || 'Mysterious User'}</h3>
+                                            <div>
+                                                <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight mb-1">{selectedUser.username || 'Mysterious User'}</h3>
+                                                {selectedUser.province && (
+                                                    <p className="text-xs text-gray-500 font-medium">📍 {selectedUser.province}</p>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
