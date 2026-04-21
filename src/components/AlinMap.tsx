@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
@@ -71,11 +71,6 @@ const SpatialNode = ({ user, myPos, onClick }: { user: any, myPos: { lat: number
 
             {/* Labels under avatar to prevent blocking billboard */}
             <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                {/* Name Tooltip (visible on hover) */}
-                <div className="whitespace-nowrap bg-black/60 backdrop-blur-md border border-white/10 text-white px-2 py-1 rounded-md shadow-xl flex items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <span className="text-[10px] font-bold">{user.username || 'Mysterious User'}</span>
-                </div>
-
                 {/* Status Tooltip */}
                 {user.status && (
                     <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
@@ -754,10 +749,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
                                         {/* Labels under self avatar to prevent blocking billboard */}
                                         <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                                            <div className="whitespace-nowrap bg-[#1a73e8] border border-blue-400 text-white px-2 py-1 rounded shadow-xl flex items-center gap-1">
-                                                <span className="text-[11px] font-black">{myDisplayName}</span>
-                                            </div>
-
                                             {/* Status Tooltip for Self */}
                                             {myStatus && (
                                                 <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
@@ -928,6 +919,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         <UserPlus className={`w-6 h-6 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Friends</span>
                     </button>
+                    <button onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setActiveTab('gallery'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-amber-500" />
+                        <span className="text-[9px] font-bold text-gray-400 group-hover:text-amber-500">Gallery</span>
+                    </button>
                 </div>
             </div>
 
@@ -979,20 +974,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         </div>
 
                         <div className="px-5 pt-4 md:pt-10 pb-4">
-                            <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                            <div className="flex items-center bg-gray-100 hover:bg-gray-200/70 focus-within:bg-white border focus-within:border-blue-500 border-transparent rounded-full px-4 py-3 transition-all shadow-sm">
+                                <Search className="w-4 h-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    className="w-full bg-gray-100 hover:bg-gray-200/70 focus:bg-white border-none rounded-2xl pl-11 pr-4 py-3.5 text-[13px] font-medium transition-all outline-none focus:ring-2 focus:ring-blue-500/20"
-                                    placeholder="Search users, billboards, tags..."
+                                    className="flex-1 bg-transparent border-none px-3 text-[13px] font-medium outline-none w-full"
+                                    placeholder="Search..."
                                     value={searchTag}
                                     onChange={(e) => setSearchTag(e.target.value)}
                                 />
                                 {searchTag && (
-                                    <button onClick={() => setSearchTag('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <button onClick={() => setSearchTag('')} className="text-gray-400 hover:text-gray-600 mr-2">
                                         <X className="w-4 h-4" />
                                     </button>
                                 )}
+                                <div className="w-[1px] h-4 bg-gray-300 mx-2" />
+                                <div className="flex items-center gap-1.5 cursor-pointer shrink-0" onClick={() => { setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName, province: currentProvince }); setIsSheetExpanded(true); }}>
+                                    <MapPin className="w-3.5 h-3.5 text-blue-500" />
+                                    <span className="text-xs font-bold text-blue-600 truncate max-w-[80px] sm:max-w-[100px] hidden sm:block">{currentProvince || 'Locating...'}</span>
+                                    <div className="w-7 h-7 rounded-full overflow-hidden ml-1 border border-blue-200">
+                                        <img src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff`} className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1029,9 +1032,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                     <button onClick={() => { setMyDisplayName(nameInput); setIsEditingName(false); if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
                                                 </div>
                                             ) : (
-                                                <div className="group/name inline-flex items-center gap-2 mb-1 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
-                                                    <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
-                                                    <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
+                                                <div className="mb-1">
+                                                    <div className="group/name inline-flex items-center gap-2 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
+                                                        <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
+                                                        <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
+                                                    </div>
+                                                    {currentProvince && (
+                                                        <p className="text-sm text-gray-500 font-medium">📍 {currentProvince}</p>
+                                                    )}
                                                 </div>
                                             )
                                         ) : (
