@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../services/externalApi';
-import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle } from 'lucide-react';
+import { Search, MapPin, Navigation, X, UserPlus, MessageCircle, Filter, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, ZoomIn, ZoomOut, Heart, Star, Bookmark, PlusCircle, CloudSun, Diamond, Compass, LocateFixed, Plus, Minus, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
 // So 1 degree = 111 * 100 = 11100 pixels
 const DEGREES_TO_PX = 11100;
 
-const SpatialNode = ({ user, myPos, onClick, mapScale }: { user: any, myPos: { lat: number, lng: number }, onClick: () => void, mapScale: import('framer-motion').MotionValue<number> }) => {
+const SpatialNode: React.FC<{ user: any, myPos: { lat: number, lng: number }, onClick: () => void, mapScale: import('framer-motion').MotionValue<number> }> = ({ user, myPos, onClick, mapScale }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
     const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
     const [hoverScale, setHoverScale] = useState(1.1);
@@ -105,7 +105,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
-    const [activeTab, setActiveTab] = useState<'info' | 'gallery'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'posts'>('info');
     const [mainTab, setMainTab] = useState<'discover' | 'nearby' | 'friends'>('discover');
     const [userGames, setUserGames] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
@@ -136,12 +136,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [filterDistance, setFilterDistance] = useState(50);
     const [filterAgeMin, setFilterAgeMin] = useState(13);
     const [filterAgeMax, setFilterAgeMax] = useState(99);
-    // Gallery state
+    // Post state (replaces Gallery)
+    const [userPosts, setUserPosts] = useState<any[]>([]);
+    const [postTitle, setPostTitle] = useState('');
+    const [isCreatingPost, setIsCreatingPost] = useState(false);
+    const [isSavingPost, setIsSavingPost] = useState(false);
+    // Billboard state (derived from starred post)
+    const [galleryActive, setGalleryActive] = useState(false);
     const [galleryTitle, setGalleryTitle] = useState('');
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
-    const [galleryActive, setGalleryActive] = useState(false);
-    const [galleryLinks, setGalleryLinks] = useState<any[]>([]);
-    const [isSavingGallery, setIsSavingGallery] = useState(false);
 
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<any>(null);
@@ -312,7 +315,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     setGalleryTitle(p.gallery.title || '');
                     setGalleryImages(p.gallery.images || []);
                     setGalleryActive(p.gallery.active || false);
-                    setGalleryLinks(p.gallery.links || []);
                 }
                 // Auto scan immediately
                 socket.send(JSON.stringify({
@@ -424,80 +426,96 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         });
     };
 
-    const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
-
-        setIsSavingGallery(true);
+    const handleCreatePost = async (files: File[]) => {
+        if (files.length === 0 && !postTitle.trim()) return;
+        setIsSavingPost(true);
         try {
-            const compressedFiles = await Promise.all(files.map(f => compressImage(f)));
-            
-            // Validation
-            const validFiles = compressedFiles.filter(f => f.size <= 1024 * 1024); // 1MB just in case
-            if (validFiles.length < compressedFiles.length) {
-                alert("Some files were skipped because they couldn't be compressed under 1MB.");
-            }
-            if (validFiles.length === 0) {
-                setIsSavingGallery(false);
-                return;
-            }
-
+            const compressedFiles = files.length > 0 ? await Promise.all(files.map(f => compressImage(f))) : [];
+            const validFiles = compressedFiles.filter(f => f.size <= 1024 * 1024);
             const formData = new FormData();
             validFiles.forEach(f => formData.append('images', f));
-
+            formData.append('title', postTitle);
             const deviceId = externalApi.getDeviceId();
-
-            const resp = await fetch(`${API_BASE}/api/user/gallery`, {
+            const resp = await fetch(`${API_BASE}/api/user/post`, {
                 method: 'POST',
                 headers: { 'X-Device-Id': deviceId },
                 body: formData
             });
             const data = await resp.json();
             if (data.success) {
-                setGalleryImages(data.gallery.images);
-                // Also update session in WS
+                setPostTitle('');
+                setIsCreatingPost(false);
+                fetchUserPosts(myUserId || user?.uid);
                 ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
             } else {
-                alert(data.error || "Upload failed");
+                alert(data.error || 'Post creation failed');
             }
         } catch (err) {
-            console.error("Gallery upload error:", err);
+            console.error('Create post error:', err);
         } finally {
-            setIsSavingGallery(false);
+            setIsSavingPost(false);
         }
     };
 
-    const saveGallerySettings = async (updates: any) => {
-        setIsSavingGallery(true);
-        const deviceId = externalApi.getDeviceId();
-        const formData = new FormData();
-
-        if (updates.title !== undefined) formData.append('title', updates.title);
-        if (updates.active !== undefined) formData.append('active', updates.active);
-        if (updates.links !== undefined) formData.append('links', JSON.stringify(updates.links));
-
-        // Indicate which images to keep
-        formData.append('keepImages', JSON.stringify(galleryImages));
-
+    const fetchUserPosts = async (userId: string | null | undefined) => {
+        if (!userId) return;
         try {
-            const resp = await fetch(`${API_BASE}/api/user/gallery`, {
-                method: 'POST',
-                headers: { 'X-Device-Id': deviceId },
-                body: formData
+            const resp = await fetch(`${API_BASE}/api/user/${userId}/posts`);
+            const data = await resp.json();
+            if (data.success) {
+                setUserPosts(data.posts);
+                const starred = data.posts.find((p: any) => p.isStarred);
+                if (starred) {
+                    setGalleryActive(true);
+                    setGalleryTitle(starred.title || '');
+                    setGalleryImages(starred.images || []);
+                } else {
+                    setGalleryActive(false);
+                    setGalleryTitle('');
+                    setGalleryImages([]);
+                }
+            }
+        } catch (err) {
+            console.error('Fetch posts error:', err);
+        }
+    };
+
+    const handleStarPost = async (postId: string) => {
+        const deviceId = externalApi.getDeviceId();
+        try {
+            const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, {
+                method: 'PUT',
+                headers: { 'X-Device-Id': deviceId }
             });
             const data = await resp.json();
             if (data.success) {
-                setGalleryActive(data.gallery.active);
-                setGalleryTitle(data.gallery.title);
-                // Refresh Billboard
+                fetchUserPosts(myUserId || user?.uid);
                 ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
             }
         } catch (err) {
-            console.error("Save gallery failed", err);
-        } finally {
-            setIsSavingGallery(false);
+            console.error('Star post error:', err);
         }
     };
+
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm('Xoá bài viết này?')) return;
+        const deviceId = externalApi.getDeviceId();
+        try {
+            const resp = await fetch(`${API_BASE}/api/user/post/${postId}`, {
+                method: 'DELETE',
+                headers: { 'X-Device-Id': deviceId }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                fetchUserPosts(myUserId || user?.uid);
+                ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
+            }
+        } catch (err) {
+            console.error('Delete post error:', err);
+        }
+    };
+
+
 
     useEffect(() => {
         if (selectedUser) {
@@ -508,6 +526,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 })
                 .catch(console.error)
                 .finally(() => setIsLoadingGames(false));
+            const targetId = selectedUser.isSelf ? (myUserId || user?.uid) : selectedUser.id;
+            fetchUserPosts(targetId);
         } else {
             setUserGames([]);
         }
@@ -779,7 +799,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         {/* Billboard for SELF NODE */}
                                         {galleryActive && (
                                             <div
-                                                onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('gallery'); setIsSheetExpanded(true); }}
+                                                onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('posts'); setIsSheetExpanded(true); }}
                                                 className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                                             >
                                                 <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
@@ -1167,10 +1187,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                         Info
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('gallery')}
-                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'gallery' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                        onClick={() => setActiveTab('posts')}
+                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                                     >
-                                        Gallery {selectedUser.gallery?.active && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
+                                        Posts {(selectedUser.gallery?.active || galleryActive) && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
                                     </button>
                                 </div>
 
@@ -1221,25 +1241,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </span>
                                             ))}
                                         </div>
-
-                                        {/* Create Post + Star (Self only) */}
-                                        {selectedUser.isSelf && (
-                                            <div className="flex gap-2 mb-4">
-                                                <button onClick={() => setActiveTab('gallery')} className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 border border-blue-100">
-                                                    <Edit className="w-3.5 h-3.5" /> Create Post
-                                                </button>
-                                                <button 
-                                                    onClick={() => {
-                                                        const newStarred = !selectedUser.starred;
-                                                        setSelectedUser((prev: any) => ({ ...prev, starred: newStarred }));
-                                                        if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { starred: newStarred } }));
-                                                    }}
-                                                    className={`px-4 flex items-center justify-center rounded-xl transition-all active:scale-95 border ${selectedUser.starred ? 'bg-amber-50 border-amber-200 text-amber-500' : 'bg-gray-50 border-gray-200 text-gray-400 hover:text-amber-500'}`}
-                                                >
-                                                    <Star className={`w-4 h-4 ${selectedUser.starred ? 'fill-amber-400' : ''}`} />
-                                                </button>
-                                            </div>
-                                        )}
 
                                         {/* Privacy Settings (Self Only) */}
                                         {selectedUser.isSelf && (
@@ -1383,103 +1384,115 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                     </>
                                 ) : (
                                     <div className="pb-8">
-                                        {selectedUser.isSelf ? (
-                                            <div className="space-y-5">
-                                                <div className="bg-blue-50/50 p-4 rounded-3xl border border-blue-100">
-                                                    <div className="flex justify-between items-center mb-3">
-                                                        <label className="text-[13px] font-bold text-gray-900">Active Billboard</label>
-                                                        <button
-                                                            onClick={() => saveGallerySettings({ active: !galleryActive })}
-                                                            className={`w-12 h-6 rounded-full transition-colors relative ${galleryActive ? 'bg-blue-500' : 'bg-gray-300'}`}
-                                                        >
-                                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${galleryActive ? 'left-7' : 'left-1'}`} />
-                                                        </button>
-                                                    </div>
-                                                    <p className="text-[11px] text-gray-500">Toggle this to show your advertisement board above your avatar on the map.</p>
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <label className="text-[13px] font-bold text-gray-900 block mb-2">Headline</label>
+                                        {/* Create Post Form (Self only) */}
+                                        {selectedUser.isSelf && (
+                                            <div className="mb-6">
+                                                {!isCreatingPost ? (
+                                                    <button
+                                                        onClick={() => setIsCreatingPost(true)}
+                                                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                                                    >
+                                                        <Edit className="w-4 h-4" /> Create Post
+                                                    </button>
+                                                ) : (
+                                                    <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
                                                         <input
                                                             type="text"
-                                                            placeholder="Example: My cool puzzle game..."
-                                                            value={galleryTitle}
-                                                            onChange={(e) => setGalleryTitle(e.target.value.substring(0, 50))}
-                                                            onBlur={() => saveGallerySettings({ title: galleryTitle })}
-                                                            className="w-full bg-gray-100 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                            placeholder="Post title..."
+                                                            value={postTitle}
+                                                            onChange={(e) => setPostTitle(e.target.value.substring(0, 50))}
+                                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
                                                         />
-                                                        <p className="text-[10px] text-right text-gray-400 mt-1">{galleryTitle.length}/50</p>
-                                                    </div>
-
-                                                    <div>
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <label className="text-[13px] font-bold text-gray-900">Promotional Images</label>
-                                                            <span className="text-[11px] text-gray-400">{galleryImages.length}/5</span>
+                                                        <p className="text-[10px] text-right text-gray-400">{postTitle.length}/50</p>
+                                                        <div className="flex gap-2">
+                                                            <label className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95">
+                                                                <ImageIcon className="w-4 h-4" /> Add Photos & Post
+                                                                <input
+                                                                    type="file"
+                                                                    hidden
+                                                                    accept="image/png,image/jpeg,image/webp"
+                                                                    multiple
+                                                                    onChange={(e) => {
+                                                                        const files = Array.from(e.target.files || []) as File[];
+                                                                        handleCreatePost(files);
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                            <button
+                                                                onClick={() => handleCreatePost([])}
+                                                                className="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                            >
+                                                                Text Only
+                                                            </button>
                                                         </div>
-                                                        <div className="grid grid-cols-3 gap-2">
-                                                            {galleryImages.map((img, idx) => (
-                                                                <div key={idx} className="aspect-square rounded-xl overflow-hidden relative group">
-                                                                    <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Ad" />
+                                                        <button
+                                                            onClick={() => { setIsCreatingPost(false); setPostTitle(''); }}
+                                                            className="w-full text-gray-400 hover:text-gray-600 text-xs font-medium py-1 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        {isSavingPost && <p className="text-[10px] text-blue-500 text-center animate-pulse">Posting...</p>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Posts Timeline */}
+                                        {userPosts.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {userPosts.map((post: any) => (
+                                                    <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                                        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                    {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
+                                                            </div>
+                                                            {selectedUser.isSelf && (
+                                                                <div className="flex items-center gap-1 shrink-0 ml-2">
                                                                     <button
-                                                                        onClick={() => {
-                                                                            const newImgs = galleryImages.filter((_, i) => i !== idx);
-                                                                            setGalleryImages(newImgs);
-                                                                            saveGallerySettings({ images: newImgs });
-                                                                        }}
-                                                                        className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        onClick={() => handleStarPost(post.id)}
+                                                                        className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`}
+                                                                        title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}
                                                                     >
-                                                                        <X className="w-3 h-3" />
+                                                                        <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeletePost(post.id)}
+                                                                        className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
+                                                                        title="Delete post"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
                                                                     </button>
                                                                 </div>
-                                                            ))}
-                                                            {galleryImages.length < 5 && (
-                                                                <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
-                                                                    <Plus className="w-6 h-6 text-gray-300" />
-                                                                    <input type="file" hidden accept="image/png,image/jpeg,image/webp" onChange={handleGalleryUpload} />
-                                                                </label>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] text-gray-400 mt-2">Max 1MB per image (.jpg, .png, .webp)</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-6">
-                                                {selectedUser.gallery?.active ? (
-                                                    <>
-                                                        <div className="flex items-center gap-3">
-                                                            <Diamond className="w-5 h-5 text-blue-500" />
-                                                            <h3 className="text-xl font-black text-gray-900">{selectedUser.gallery.title || 'Special Offer'}</h3>
-                                                        </div>
-
-                                                        {selectedUser.gallery.images?.length > 0 && (
-                                                            <div className="flex overflow-x-auto gap-3 pb-2 -mx-5 px-5 scrollbar-hide snap-x">
-                                                                {selectedUser.gallery.images.map((img: string, idx: number) => (
-                                                                    <div key={idx} className="snap-start shrink-0 w-72 aspect-[16/10] bg-gray-100 rounded-3xl overflow-hidden shadow-sm">
-                                                                        <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Ad Content" />
+                                                        {post.images?.length > 0 && (
+                                                            <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
+                                                                {post.images.map((img: string, idx: number) => (
+                                                                    <div key={idx} className="snap-start shrink-0 w-full aspect-[16/10] bg-gray-100 overflow-hidden">
+                                                                        <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         )}
-
-                                                        <div className="bg-gray-100 p-6 rounded-[32px]">
-                                                            <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                                                                Visit my creative space and discover more exciting projects and games!
-                                                            </p>
-                                                            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20">
-                                                                Explore Projects
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                                            <Diamond className="w-8 h-8 text-gray-200" />
-                                                        </div>
-                                                        <p className="text-gray-400 text-sm">Gallery is currently offline</p>
+                                                        {post.isStarred && (
+                                                            <div className="px-4 py-2 bg-amber-50 border-t border-amber-100 flex items-center gap-1.5">
+                                                                <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                                                                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Active Billboard</span>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                    <Edit className="w-8 h-8 text-gray-200" />
+                                                </div>
+                                                <p className="text-gray-400 text-sm">No posts yet</p>
+                                                <p className="text-gray-300 text-[11px] mt-1">{selectedUser.isSelf ? 'Create your first post above!' : 'This user has no posts.'}</p>
                                             </div>
                                         )}
                                     </div>
@@ -1621,7 +1634,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 placeholder="Enter User ID to add..."
                                                 value={friendIdInput}
                                                 onChange={(e) => setFriendIdInput(e.target.value)}
-                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                                className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-gray-900 font-medium placeholder:text-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                                             />
                                             <button
                                                 onClick={() => {
