@@ -14,7 +14,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
-    const [activeTab, setActiveTab] = useState<'info' | 'posts'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('info');
     const [mainTab, setMainTab] = useState<'discover' | 'nearby' | 'friends' | 'profile'>('discover');
     const [userGames, setUserGames] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
@@ -57,6 +57,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [galleryActive, setGalleryActive] = useState(false);
     const [galleryTitle, setGalleryTitle] = useState('');
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<any>(null);
@@ -230,6 +231,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     if (updated) setSelectedUser(updated);
                 }
             }
+            if (data.type === 'NEW_NOTIFICATION') {
+                fetchNotifications();
+            }
         };
 
         socket.onclose = () => {
@@ -324,7 +328,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const fetchUserPosts = async (userId: string | null | undefined) => {
         if (!userId) return;
         try {
-            const resp = await fetch(`${API_BASE}/api/user/${userId}/posts`);
+            const endpoint = userId === 'saved' 
+                ? `${API_BASE}/api/user/archived-posts` 
+                : `${API_BASE}/api/user/${userId}/posts`;
+            const resp = await fetch(endpoint, { headers: { 'X-Device-Id': externalApi.getDeviceId() } });
             const data = await resp.json();
             if (data.success) {
                 setUserPosts(data.posts);
@@ -365,6 +372,18 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
             fetchUserPosts(targetId);
         } else { setUserGames([]); }
     }, [selectedUser, externalApi]);
+
+    const fetchNotifications = async () => {
+        try {
+            const resp = await fetch(`${API_BASE}/api/notifications`, { headers: { 'X-Device-Id': externalApi.getDeviceId() }});
+            const data = await resp.json();
+            if (data.success) setNotifications(data.notifications);
+        } catch (err) { console.error('Fetch notifications error:', err); }
+    };
+
+    useEffect(() => {
+        if (wsStatus === 'OPEN') fetchNotifications();
+    }, [wsStatus]);
 
     // Fetch Weather Data
     useEffect(() => {
@@ -426,6 +445,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         else { setMainTab(tabId as any); setIsSheetExpanded(true); }
     };
 
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar */}
@@ -481,7 +502,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 handleRefresh={handleRefresh} handleCenter={handleCenter} handleUpdateRadius={handleUpdateRadius}
             />
 
-            <NavigationBar mainTab={mainTab} selectedUser={selectedUser} isDesktop={isDesktop} handleTabClick={handleTabClick} />
+            <NavigationBar mainTab={mainTab} selectedUser={selectedUser} isDesktop={isDesktop} unreadCount={unreadCount} handleTabClick={handleTabClick} />
 
             <BottomSheet
                 isDesktop={isDesktop} isSheetExpanded={isSheetExpanded} selectedUser={selectedUser}
@@ -494,7 +515,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 nameInput={nameInput} isVisibleOnMap={isVisibleOnMap} friendIdInput={friendIdInput}
                 socialSection={socialSection} isCreatingPost={isCreatingPost} postTitle={postTitle}
                 isSavingPost={isSavingPost} galleryActive={galleryActive} currentProvince={currentProvince}
-                radius={radius}
+                radius={radius} notifications={notifications} fetchNotifications={fetchNotifications} fetchUserPosts={fetchUserPosts}
                 ws={ws} panX={panX} panY={panY} scale={scale} externalApi={externalApi} onOpenChat={onOpenChat}
                 setSentFriendRequests={setSentFriendRequests} handleUpdateRadius={handleUpdateRadius}
                 setIsSheetExpanded={setIsSheetExpanded} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}

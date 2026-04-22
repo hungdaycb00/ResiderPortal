@@ -1,13 +1,13 @@
 import React from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
-import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw } from 'lucide-react';
+import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BottomSheetProps {
     isDesktop: boolean;
     isSheetExpanded: boolean;
     selectedUser: any;
-    activeTab: 'info' | 'posts';
+    activeTab: 'info' | 'posts' | 'saved';
     mainTab: string;
     nearbyUsers: any[];
     friends: any[];
@@ -37,6 +37,9 @@ interface BottomSheetProps {
     galleryActive: boolean;
     currentProvince: string | null;
     radius: number;
+    notifications: any[];
+    fetchNotifications: () => void;
+    fetchUserPosts: (uid: string) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     panX: any;
     panY: any;
@@ -47,7 +50,7 @@ interface BottomSheetProps {
     handleUpdateRadius: (v: number) => void;
     setIsSheetExpanded: (v: boolean) => void;
     setSelectedUser: (user: any) => void;
-    setActiveTab: (tab: 'info' | 'posts') => void;
+    setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMainTab: (tab: any) => void;
     setSearchTag: (v: string) => void;
     setIsReporting: (v: boolean) => void;
@@ -71,6 +74,158 @@ interface BottomSheetProps {
     handleDeletePost: (postId: string) => void;
 }
 
+const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts }: any) => {
+    const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://alin-api.alin.city';
+    const [liked, setLiked] = React.useState(post.isLiked);
+    const [likeCount, setLikeCount] = React.useState(post.likeCount || 0);
+    const [archived, setArchived] = React.useState(post.isArchived);
+    const [commentCount, setCommentCount] = React.useState(post.commentCount || 0);
+    const [comments, setComments] = React.useState<any[]>(post.comments || []);
+    const [showComments, setShowComments] = React.useState(false);
+    const [newCmt, setNewCmt] = React.useState('');
+    const [loadingCmt, setLoadingCmt] = React.useState(false);
+
+    const toggleLike = async () => {
+        setLiked(!liked);
+        setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+        try {
+            await fetch(`${API_BASE}/api/user/post/${post.id}/like`, { method: 'POST', headers: { 'X-Device-Id': externalApi.getDeviceId() } });
+        } catch (e) {
+            setLiked(liked);
+            setLikeCount(likeCount);
+        }
+    };
+
+    const toggleArchive = async () => {
+        setArchived(!archived);
+        try {
+            await fetch(`${API_BASE}/api/user/post/${post.id}/archive`, { method: 'POST', headers: { 'X-Device-Id': externalApi.getDeviceId() } });
+        } catch (e) {
+            setArchived(archived);
+        }
+    };
+
+    const fetchAllComments = async () => {
+        try {
+            const r = await fetch(`${API_BASE}/api/user/post/${post.id}/comments`);
+            const d = await r.json();
+            if (d.success) setComments(d.comments);
+        } catch (e) {}
+    };
+
+    const submitComment = async () => {
+        if (!newCmt.trim()) return;
+        setLoadingCmt(true);
+        try {
+            const r = await fetch(`${API_BASE}/api/user/post/${post.id}/comment`, {
+                method: 'POST',
+                headers: { 'X-Device-Id': externalApi.getDeviceId(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newCmt })
+            });
+            const d = await r.json();
+            if (d.success) {
+                setComments([...comments, d.comment]);
+                setCommentCount(commentCount + 1);
+                setNewCmt('');
+            }
+        } catch (e) {}
+        finally { setLoadingCmt(false); }
+    };
+
+    return (
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                <div className="flex items-center gap-2">
+                    <img 
+                        src={normalizeImageUrl(post.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=random`} 
+                        alt="author" 
+                        className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-100" 
+                    />
+                    <div>
+                        <div className="flex items-center gap-1.5">
+                            <h4 className="text-[14px] font-bold text-gray-900">{post.author?.name || 'Unknown User'}</h4>
+                            {post.isStarred && !post.isArchivedState && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
+                        </div>
+                        <p className="text-[10px] text-gray-400">
+                            {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                    </div>
+                </div>
+                {isSelf && !post.isArchivedState && (
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <button onClick={() => onStar(post.id)} className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`} title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}>
+                            <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
+                        </button>
+                        <button onClick={() => onDelete(post.id)} className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90" title="Delete post">
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {post.title && <div className="px-4 pb-2 text-sm text-gray-800">{post.title}</div>}
+
+            {post.images?.length > 0 && (
+                <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
+                    {post.images.map((img: string, idx: number) => (
+                        <div key={idx} className={`snap-start shrink-0 aspect-[4/5] bg-gray-900 overflow-hidden ${post.images.length === 1 ? 'w-full rounded-lg' : 'w-[85%] rounded-lg'}`}>
+                            <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {(likeCount > 0 || commentCount > 0) && (
+                <div className="px-4 py-2 flex justify-between items-center text-[11px] text-gray-500">
+                    <span className="flex items-center gap-1"><Heart className={`w-3.5 h-3.5 ${liked ? 'fill-red-500 text-red-500' : ''}`} /> {likeCount}</span>
+                    <span>{commentCount} bình luận</span>
+                </div>
+            )}
+
+            <div className="mx-2 py-1 flex items-center justify-between border-t border-gray-50">
+                <button onClick={toggleLike} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${liked ? 'text-red-500' : 'text-gray-500 hover:bg-gray-50'}`}>
+                    <Heart className={`w-4 h-4 ${liked ? 'fill-red-500' : ''}`} /> Thích
+                </button>
+                <button onClick={() => { setShowComments(!showComments); if (!showComments) fetchAllComments(); }} className="flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-colors active:scale-95">
+                    <MessageCircle className="w-4 h-4" /> Bình luận
+                </button>
+                <button onClick={toggleArchive} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${archived ? 'text-blue-500' : 'text-gray-500 hover:bg-gray-50'}`}>
+                    <Bookmark className={`w-4 h-4 ${archived ? 'fill-blue-500' : ''}`} /> Lưu trữ
+                </button>
+            </div>
+
+            {showComments && (
+                <div className="px-4 py-3 bg-gray-50/50">
+                    <div className="max-h-[250px] overflow-y-auto space-y-3 mb-3 pr-1">
+                        {comments.length === 0 ? (
+                            <p className="text-center text-xs text-gray-400 py-2">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                        ) : (
+                            comments.map((c: any) => (
+                                <div key={c.id} className="flex gap-2">
+                                    <img src={normalizeImageUrl(c.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'User')}&background=random`} alt="cmt-author" className="w-7 h-7 rounded-full bg-gray-200 mt-0.5 object-cover" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="bg-gray-100 px-3 py-2 rounded-2xl rounded-tl-sm inline-block max-w-full">
+                                            <p className="text-xs font-bold text-gray-900">{c.author?.name}</p>
+                                            <p className="text-sm text-gray-800 break-words whitespace-pre-wrap">{c.content}</p>
+                                        </div>
+                                        <p className="text-[9px] text-gray-400 px-2 mt-0.5">{new Date(c.createdAt).toLocaleDateString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 relative">
+                        <input type="text" value={newCmt} onChange={e => setNewCmt(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submitComment() }} placeholder="Viết bình luận..." className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-300 transition-colors" disabled={loadingCmt} />
+                        <button onClick={submitComment} disabled={!newCmt.trim() || loadingCmt} className={`w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all active:scale-90 ${(!newCmt.trim() || loadingCmt) ? 'opacity-50' : 'hover:bg-blue-500'}`}>
+                            <Navigation className="w-4 h-4 rotate-45 -ml-0.5" />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const {
         isDesktop, isSheetExpanded, selectedUser, activeTab, mainTab, nearbyUsers, friends, games, userGames, userPosts,
@@ -83,7 +238,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsReporting, setReportReason, setReportStatus,
         setIsEditingStatus, setIsEditingName, setStatusInput, setNameInput, setMyStatus, setMyDisplayName,
         setIsVisibleOnMap, setFriendIdInput, setSocialSection, setSentFriendRequests,
-        setIsCreatingPost, setPostTitle,
+        setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
         handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius
     } = props;
 
@@ -299,36 +454,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 ) : (
                                     <div className="pb-8">
                                         {userPosts.length > 0 ? (
-                                            <div className="space-y-4">
+                                            <div className="space-y-0">
                                                 {userPosts.map((post) => (
-                                                    <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                                        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    {post.isStarred && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
-                                                                    <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
-                                                                </div>
-                                                                <p className="text-[10px] text-gray-400 mt-0.5">
-                                                                    {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {post.images?.length > 0 && (
-                                                            <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
-                                                                {post.images.map((img, idx) => (
-                                                                    <div key={idx} className="snap-start shrink-0 w-full aspect-[16/10] bg-gray-100 overflow-hidden">
-                                                                        <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        {post.isStarred && (
-                                                            <div className="px-4 py-2 bg-amber-50 border-t border-amber-100 flex items-center gap-1.5">
-                                                                <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
-                                                                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Active Billboard</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    <PostCard 
+                                                        key={post.id} post={post} isSelf={false} 
+                                                        onStar={handleStarPost} onDelete={handleDeletePost} 
+                                                        externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                                    />
                                                 ))}
                                             </div>
                                         ) : (
@@ -564,6 +696,47 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         )}
                                     </div>
                                 )}
+                                {mainTab === 'notifications' && (
+                                    <div className="space-y-4 pt-16 md:pt-4">
+                                        <div className="flex items-center justify-between px-1 mb-2">
+                                            <h3 className="text-lg font-black text-gray-900">Notifications</h3>
+                                            {notifications.filter((n: any) => !n.isRead).length > 0 && (
+                                                <button 
+                                                    onClick={async () => {
+                                                        const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://alin-api.alin.city';
+                                                        await fetch(`${API_BASE}/api/notifications/read-all`, { method: 'PUT', headers: { 'X-Device-Id': externalApi.getDeviceId() }});
+                                                        if (fetchNotifications) fetchNotifications();
+                                                    }} 
+                                                    className="text-xs text-blue-600 font-bold hover:underline"
+                                                >
+                                                    Mark all read
+                                                </button>
+                                            )}
+                                        </div>
+                                        {notifications.length > 0 ? (
+                                            <div className="divide-y divide-gray-50 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                                {notifications.map((n: any) => (
+                                                    <div key={n.id} className={`flex items-start gap-3 p-4 transition-colors ${!n.isRead ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}>
+                                                        <div className="relative shrink-0">
+                                                            <img src={normalizeImageUrl(n.actor?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(n.actor?.name || 'User')}&background=random`} className="w-10 h-10 rounded-full object-cover" />
+                                                            {!n.isRead && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0 pt-0.5">
+                                                            <p className="text-sm text-gray-900"><span className="font-bold">{n.actor?.name}</span> {n.message}</p>
+                                                            <p className="text-[10px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleDateString('vi-VN', {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'})}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="py-12 flex flex-col items-center justify-center text-center">
+                                                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4"><Bell className="w-8 h-8 text-gray-300" /></div>
+                                                <p className="text-gray-500 font-bold text-sm">No notifications</p>
+                                                <p className="text-gray-400 text-xs mt-1">You're all caught up!</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 {mainTab === 'profile' && !selectedUser && (
                                     <div className="space-y-4 pt-16 md:pt-4">
                                         <h3 className="text-lg font-black text-gray-900 px-1 mb-2">My Profile</h3>
@@ -629,6 +802,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                 className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                                             >
                                                 Posts {galleryActive && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
+                                            </button>
+                                            <button
+                                                onClick={() => { setActiveTab('saved'); fetchUserPosts('saved'); }}
+                                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'saved' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                            >
+                                                Saved
                                             </button>
                                         </div>
 
@@ -806,52 +985,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
                                                 {/* Posts Timeline */}
                                                 {userPosts.length > 0 ? (
-                                                    <div className="space-y-4">
+                                                    <div className="space-y-0">
                                                         {userPosts.map((post) => (
-                                                            <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                                                <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            {post.isStarred && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
-                                                                            <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
-                                                                        </div>
-                                                                        <p className="text-[10px] text-gray-400 mt-0.5">
-                                                                            {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                                                                        <button
-                                                                            onClick={() => handleStarPost(post.id)}
-                                                                            className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`}
-                                                                            title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}
-                                                                        >
-                                                                            <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleDeletePost(post.id)}
-                                                                            className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
-                                                                            title="Delete post"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                                {post.images?.length > 0 && (
-                                                                    <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
-                                                                        {post.images.map((img, idx) => (
-                                                                            <div key={idx} className="snap-start shrink-0 w-full aspect-[16/10] bg-gray-100 overflow-hidden">
-                                                                                <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                                {post.isStarred && (
-                                                                    <div className="px-4 py-2 bg-amber-50 border-t border-amber-100 flex items-center gap-1.5">
-                                                                        <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
-                                                                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Active Billboard</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                            <PostCard 
+                                                                key={post.id} post={post} isSelf={true} 
+                                                                onStar={handleStarPost} onDelete={handleDeletePost} 
+                                                                externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                                            />
                                                         ))}
                                                     </div>
                                                 ) : (
