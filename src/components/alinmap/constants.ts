@@ -11,6 +11,7 @@ export interface AlinMapProps {
     games: any[];
     friends?: any[];
     onOpenChat?: (id: string, name: string) => void;
+    showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 export interface SpatialNodeProps {

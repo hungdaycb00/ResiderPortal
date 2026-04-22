@@ -46,6 +46,7 @@ interface BottomSheetProps {
     scale: any;
     externalApi: any;
     onOpenChat?: (id: string, name: string) => void;
+    showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     setSentFriendRequests: (fn: (prev: string[]) => string[]) => void;
     handleUpdateRadius: (v: number) => void;
     setIsSheetExpanded: (v: boolean) => void;
@@ -233,7 +234,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         isReporting, reportReason, reportStatus, sentFriendRequests,
         isEditingStatus, isEditingName, statusInput, nameInput, isVisibleOnMap, friendIdInput, socialSection,
         isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
-        ws, panX, panY, scale, externalApi, onOpenChat,
+        ws, panX, panY, scale, externalApi, onOpenChat, showNotification,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setIsReporting, setReportReason, setReportStatus,
         setIsEditingStatus, setIsEditingName, setStatusInput, setNameInput, setMyStatus, setMyDisplayName,
@@ -743,7 +744,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
                                         {/* Avatar & Basic Info */}
                                         <div className="flex items-start gap-4 mb-6 px-1">
-                                            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => alert("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!")}>
+                                            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => showNotification?.("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!", "info")}>
                                                 <img
                                                     src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
                                                     alt="Avatar"
@@ -782,7 +783,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                 )}
                                                 
                                                 {/* ID Copy placed here concisely */}
-                                                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => { navigator.clipboard.writeText(myUserId); alert("ID copied to clipboard!"); }}>
+                                                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => { navigator.clipboard.writeText(myUserId || ""); showNotification?.("ID copied to clipboard!", "success"); }}>
                                                     <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 truncate max-w-[120px]">ID: {myUserId}</span>
                                                     <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500" />
                                                 </div>

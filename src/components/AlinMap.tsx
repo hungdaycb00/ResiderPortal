@@ -8,7 +8,7 @@ import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification }) => {
     const API_BASE = getBaseUrl();
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
@@ -263,11 +263,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const handleAddFriend = async () => {
         if (!selectedUser) return;
         try {
-            alert(`Friend request sent to ${selectedUser.username || selectedUser.id}!`);
+            showNotification?.(`Friend request sent to ${selectedUser.username || selectedUser.id}!`, 'success');
         } catch (err: any) {
             if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
-                alert("Request already sent or you are already friends!");
-            } else { alert(err.message || "Failed to send friend request."); }
+                showNotification?.("Request already sent or you are already friends!", 'info');
+            } else { showNotification?.(err.message || "Failed to send friend request.", 'error'); }
         }
     };
 
@@ -320,7 +320,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 setIsCreatingPost(false);
                 fetchUserPosts(myUserId || user?.uid);
                 ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
-            } else { alert(data.error || 'Post creation failed'); }
+                showNotification?.('Post created successfully!', 'success');
+            } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
         } catch (err) { console.error('Create post error:', err); }
         finally { setIsSavingPost(false); }
     };
@@ -516,6 +517,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 socialSection={socialSection} isCreatingPost={isCreatingPost} postTitle={postTitle}
                 isSavingPost={isSavingPost} galleryActive={galleryActive} currentProvince={currentProvince}
                 radius={radius} notifications={notifications} fetchNotifications={fetchNotifications} fetchUserPosts={fetchUserPosts}
+                showNotification={showNotification}
                 ws={ws} panX={panX} panY={panY} scale={scale} externalApi={externalApi} onOpenChat={onOpenChat}
                 setSentFriendRequests={setSentFriendRequests} handleUpdateRadius={handleUpdateRadius}
                 setIsSheetExpanded={setIsSheetExpanded} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
