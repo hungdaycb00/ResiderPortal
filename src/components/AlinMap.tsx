@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../services/externalApi';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, ChevronRight } from 'lucide-react';
 import { useMotionValue, animate } from 'framer-motion';
 import { DEGREES_TO_PX, AlinMapProps, getWeatherInfo } from './alinmap/constants';
 import MapCanvas from './alinmap/MapCanvas';
