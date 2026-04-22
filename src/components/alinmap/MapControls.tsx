@@ -1,0 +1,229 @@
+import React from 'react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X } from 'lucide-react';
+import { motion, AnimatePresence, MotionValue } from 'framer-motion';
+
+interface MapControlsProps {
+    isConnecting: boolean;
+    isSidebarOpen: boolean;
+    weatherData: { temp: number; desc: string; icon: string } | null;
+    myObfPos: { lat: number; lng: number } | null;
+    friendLocInput: string;
+    filterDistance: number;
+    filterAgeMin: number;
+    filterAgeMax: number;
+    searchTag: string;
+    radius: number;
+    scale: MotionValue<number>;
+    ws: React.MutableRefObject<WebSocket | null>;
+    setIsSidebarOpen: (v: boolean) => void;
+    setFriendLocInput: (v: string) => void;
+    setMyObfPos: (pos: { lat: number; lng: number }) => void;
+    setSearchMarkerPos: (pos: { lat: number; lng: number } | null) => void;
+    setFilterDistance: (v: number) => void;
+    setFilterAgeMin: (v: number) => void;
+    setFilterAgeMax: (v: number) => void;
+    setSearchTag: (v: string) => void;
+    handleRefresh: () => void;
+    handleCenter: () => void;
+    handleUpdateRadius: (v: number) => void;
+}
+
+const MapControls: React.FC<MapControlsProps> = ({
+    isConnecting, isSidebarOpen, weatherData, myObfPos, friendLocInput,
+    filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws,
+    setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
+    setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
+    handleRefresh, handleCenter, handleUpdateRadius
+}) => {
+    return (
+        <>
+            {/* Floating Controls (Map Tools) */}
+            <div className="absolute bottom-[200px] md:bottom-12 right-4 md:right-8 z-[120] flex flex-col gap-3 pointer-events-auto items-end">
+                <button
+                    onClick={handleRefresh}
+                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    title="Refresh"
+                >
+                    <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
+                </button>
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    title="Settings / Filters"
+                >
+                    <Filter className="w-5 h-5" />
+                </button>
+                <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1 pointer-events-auto">
+                    <button
+                        onClick={handleCenter}
+                        className="w-[42px] h-11 text-blue-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        title="Your Position"
+                    >
+                        <LocateFixed className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
+                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        title="Zoom In"
+                    >
+                        <Plus className="w-6 h-6 stroke-[2.5]" />
+                    </button>
+                    <button
+                        onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
+                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center active:bg-gray-100 transition-colors"
+                        title="Zoom Out"
+                    >
+                        <Minus className="w-6 h-6 stroke-[2.5]" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Weather & Coordinates Widget - Top Right */}
+            <div className="absolute top-28 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px]">
+                {weatherData && (
+                    <div className="flex items-center gap-2 mb-1 px-1">
+                        <span className="text-xl">{weatherData.icon}</span>
+                        <div>
+                            <p className="text-[14px] font-black text-gray-900 leading-tight">{weatherData.temp}°C</p>
+                            <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase">{weatherData.desc}</p>
+                        </div>
+                    </div>
+                )}
+                {myObfPos && (
+                    <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full">
+                        <div>
+                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Encrypted Location</p>
+                            <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
+                                {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-1 border-t border-gray-200 pt-1.5 mt-0.5">
+                            <input 
+                                type="text"
+                                placeholder="Lat, Lng" 
+                                value={friendLocInput}
+                                onChange={e => setFriendLocInput(e.target.value)}
+                                className="text-[10px] w-full bg-white border border-gray-200 rounded px-1.5 py-1 outline-none font-mono text-gray-800"
+                            />
+                            <div className="flex gap-1 w-full">
+                                <button 
+                                    onClick={() => {
+                                        if(!friendLocInput) return;
+                                        const parts = friendLocInput.split(',');
+                                        const locLat = parseFloat(parts[0]);
+                                        const locLng = parseFloat(parts[1]);
+                                        if(!isNaN(locLat) && !isNaN(locLng)) {
+                                            setMyObfPos({ lat: locLat, lng: locLng });
+                                            if (ws.current?.readyState === WebSocket.OPEN) {
+                                                ws.current.send(JSON.stringify({ type: 'move', x: locLng, y: locLat }));
+                                            }
+                                        }
+                                    }}
+                                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                >Move</button>
+                                <button 
+                                    onClick={() => {
+                                        if(!friendLocInput) return;
+                                        const parts = friendLocInput.split(',');
+                                        const locLat = parseFloat(parts[0]);
+                                        const locLng = parseFloat(parts[1]);
+                                        if(!isNaN(locLat) && !isNaN(locLng)) {
+                                            setSearchMarkerPos({ lat: locLat, lng: locLng });
+                                        }
+                                    }}
+                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                >Search</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Sidebar (Map Filters) */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="absolute inset-0 bg-black/40 z-[150]"
+                        />
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            className="absolute top-0 right-0 bottom-0 w-80 bg-[#1a1d24] z-[160] p-6 shadow-2xl border-l border-white/10"
+                        >
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-xl font-bold">Map Filters</h2>
+                                <X className="w-6 h-6 cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Distance (km)</h3>
+                                    <div className="flex justify-between text-blue-400 font-bold mb-2">
+                                        <span>Within {filterDistance} km</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="500"
+                                        value={filterDistance}
+                                        onChange={(e) => setFilterDistance(parseInt(e.target.value))}
+                                        className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                                    />
+                                </div>
+
+                                <div className="pt-6 border-t border-white/10">
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Age Range</h3>
+                                    <div className="flex justify-between items-center gap-4">
+                                        <div className="flex-1">
+                                            <input
+                                                type="number"
+                                                min="13"
+                                                max="99"
+                                                value={filterAgeMin}
+                                                onChange={(e) => setFilterAgeMin(parseInt(e.target.value))}
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span className="text-[10px] text-gray-500 block text-center mt-1">Min Age</span>
+                                        </div>
+                                        <span className="text-gray-500 font-bold">-</span>
+                                        <div className="flex-1">
+                                            <input
+                                                type="number"
+                                                min="13"
+                                                max="99"
+                                                value={filterAgeMax}
+                                                onChange={(e) => setFilterAgeMax(parseInt(e.target.value))}
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span className="text-[10px] text-gray-500 block text-center mt-1">Max Age</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="pt-6 border-t border-white/10">
+                                    <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Keywords / Tags</h3>
+                                    <input
+                                        type="text"
+                                        placeholder="E.g. #GAMER or 'Looking for...'"
+                                        value={searchTag}
+                                        onChange={(e) => setSearchTag(e.target.value)}
+                                        className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-2">Filters the map instantly as you type.</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
+    );
+};
+
+export default MapControls;
