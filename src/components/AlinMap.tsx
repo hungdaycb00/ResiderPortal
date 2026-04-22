@@ -619,13 +619,18 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar (Mobile First & Sticky Header on PC) */}
-            <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'}`}>
+            <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'}`}>
                 <div className={`flex-1 backdrop-blur-xl rounded-full flex items-center px-4 py-3 overflow-hidden transition-all duration-300 ${isDesktop && isSheetExpanded ? 'bg-white border border-gray-200 shadow-none' : 'bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.15)]'}`}>
                     <Search className="w-5 h-5 text-gray-500 mr-2 shrink-0" />
                     <input
                         type="text"
                         placeholder="Search..."
-                        onFocus={() => setIsSheetExpanded(true)}
+                        onFocus={() => {
+                            setIsSheetExpanded(true);
+                            if (!isDesktop) {
+                                setTimeout(() => document.getElementById('sheet-search-mobile')?.focus(), 50);
+                            }
+                        }}
                         className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
@@ -1127,6 +1132,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                 {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                             </div>
                         </div>
+
+                        {/* MOBILE Search Bar inside Sheet */}
+                        {!isDesktop && isSheetExpanded && (
+                            <div className="px-4 pb-3 -mt-1 block md:hidden animate-in fade-in duration-300">
+                                <div className="flex bg-gray-100 rounded-full items-center px-4 py-2 border border-gray-200 shadow-inner">
+                                    <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
+                                    <input
+                                        id="sheet-search-mobile"
+                                        type="text"
+                                        placeholder="Search..."
+                                        className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
+                                        value={searchTag}
+                                        onChange={(e) => setSearchTag(e.target.value)}
+                                    />
+                                    {searchTag && (
+                                        <button onClick={() => setSearchTag('')} className="p-1 hover:bg-gray-200 rounded-full ml-1">
+                                            <X className="w-3 h-3 text-gray-400" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] scrollbar-hide relative z-[100]">
