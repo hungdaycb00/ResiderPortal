@@ -509,10 +509,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
-                    <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => handleTabClick('profile')}>
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap truncate max-w-[80px] sm:max-w-[100px] hidden sm:block">{currentProvince || 'Locating...'}</span>
-                    </div>
+
                     <button onClick={() => handleTabClick('profile')} className="ml-2 sm:ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img
                             src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
@@ -592,7 +589,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
             />
 
             <MapControls
-                isConnecting={isConnecting} isSidebarOpen={isSidebarOpen} weatherData={weatherData}
+                isConnecting={isConnecting} isSidebarOpen={isSidebarOpen} weatherData={weatherData} currentProvince={currentProvince}
                 myObfPos={myObfPos} friendLocInput={friendLocInput} filterDistance={filterDistance}
                 filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax} searchTag={searchTag} radius={radius}
                 scale={scale} ws={ws}

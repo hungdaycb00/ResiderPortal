@@ -6,6 +6,7 @@ interface MapControlsProps {
     isConnecting: boolean;
     isSidebarOpen: boolean;
     weatherData: { temp: number; desc: string; icon: string } | null;
+    currentProvince?: string | null;
     myObfPos: { lat: number; lng: number } | null;
     friendLocInput: string;
     filterDistance: number;
@@ -30,13 +31,14 @@ interface MapControlsProps {
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
-    isConnecting, isSidebarOpen, weatherData, myObfPos, friendLocInput,
+    isConnecting, isSidebarOpen, weatherData, currentProvince, myObfPos, friendLocInput,
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius
 }) => {
     const [copyToast, setCopyToast] = useState(false);
+    const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
 
     const handleCopyLocation = () => {
         if (!myObfPos) return;
@@ -91,87 +93,103 @@ const MapControls: React.FC<MapControlsProps> = ({
             </div>
 
             {/* Weather & Coordinates Widget - Top Right */}
-            <div className="absolute top-28 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px]">
-                {weatherData && (
-                    <div className="flex items-center gap-2 mb-1 px-1">
-                        <span className="text-xl">{weatherData.icon}</span>
-                        <div>
-                            <p className="text-[14px] font-black text-gray-900 leading-tight">{weatherData.temp}°C</p>
-                            <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase">{weatherData.desc}</p>
-                        </div>
+            <div 
+                className="absolute top-28 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
+                onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
+            >
+                <div className="flex items-center gap-2 px-1">
+                    {weatherData && <span className="text-xl">{weatherData.icon}</span>}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-black text-gray-900 leading-tight truncate">
+                            {currentProvince || (weatherData ? `${weatherData.temp}°C` : 'Location')}
+                        </p>
+                        <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase truncate">
+                            {weatherData ? weatherData.desc : 'Unknown Weather'}
+                        </p>
                     </div>
-                )}
-                {myObfPos && (
-                    <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full">
-                        <div className="relative">
-                            <div className="flex items-center justify-between">
-                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Location</p>
-                                <button
-                                    onClick={handleCopyLocation}
-                                    className="p-0.5 hover:bg-gray-200 rounded transition-colors active:scale-90"
-                                    title="Copy location"
-                                >
-                                    {copyToast ? (
-                                        <Check className="w-3 h-3 text-emerald-500" />
-                                    ) : (
-                                        <Copy className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                                    )}
-                                </button>
+                </div>
+
+                <AnimatePresence>
+                    {isWidgetExpanded && myObfPos && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                            onClick={(e) => e.stopPropagation()} // Prevent collapse when interacting with widget content
+                        >
+                            <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full mt-2">
+                                <div className="relative">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Location</p>
+                                        <button
+                                            onClick={handleCopyLocation}
+                                            className="p-0.5 hover:bg-gray-200 rounded transition-colors active:scale-90"
+                                            title="Copy location"
+                                        >
+                                            {copyToast ? (
+                                                <Check className="w-3 h-3 text-emerald-500" />
+                                            ) : (
+                                                <Copy className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
+                                        {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
+                                    </p>
+                                    <AnimatePresence>
+                                        {copyToast && (
+                                            <motion.p
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 4 }}
+                                                className="text-[9px] font-bold text-emerald-600 text-center mt-1"
+                                            >
+                                                ✓ Đã sao chép toạ độ
+                                            </motion.p>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                                <div className="flex flex-col gap-1 border-t border-gray-200 pt-1.5 mt-0.5">
+                                    <input 
+                                        type="text"
+                                        placeholder="Lat, Lng" 
+                                        value={friendLocInput}
+                                        onChange={e => setFriendLocInput(e.target.value)}
+                                        className="text-[10px] w-full bg-white border border-gray-200 rounded px-1.5 py-1 outline-none font-mono text-gray-800"
+                                    />
+                                    <div className="flex gap-1 w-full">
+                                        <button 
+                                            onClick={() => {
+                                                if(!friendLocInput) return;
+                                                const parts = friendLocInput.split(',');
+                                                const locLat = parseFloat(parts[0]);
+                                                const locLng = parseFloat(parts[1]);
+                                                if(!isNaN(locLat) && !isNaN(locLng)) {
+                                                    handleCenterTo(locLat, locLng);
+                                                }
+                                            }}
+                                            className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                        >Move</button>
+                                        <button 
+                                            onClick={() => {
+                                                if(!friendLocInput) return;
+                                                const parts = friendLocInput.split(',');
+                                                const locLat = parseFloat(parts[0]);
+                                                const locLng = parseFloat(parts[1]);
+                                                if(!isNaN(locLat) && !isNaN(locLng)) {
+                                                    setSearchMarkerPos({ lat: locLat, lng: locLng });
+                                                    handleCenterTo(locLat, locLng);
+                                                }
+                                            }}
+                                            className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                        >Search</button>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
-                                {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
-                            </p>
-                            <AnimatePresence>
-                                {copyToast && (
-                                    <motion.p
-                                        initial={{ opacity: 0, y: -4 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 4 }}
-                                        className="text-[9px] font-bold text-emerald-600 text-center mt-1"
-                                    >
-                                        ✓ Đã sao chép toạ độ
-                                    </motion.p>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                        <div className="flex flex-col gap-1 border-t border-gray-200 pt-1.5 mt-0.5">
-                            <input 
-                                type="text"
-                                placeholder="Lat, Lng" 
-                                value={friendLocInput}
-                                onChange={e => setFriendLocInput(e.target.value)}
-                                className="text-[10px] w-full bg-white border border-gray-200 rounded px-1.5 py-1 outline-none font-mono text-gray-800"
-                            />
-                            <div className="flex gap-1 w-full">
-                                <button 
-                                    onClick={() => {
-                                        if(!friendLocInput) return;
-                                        const parts = friendLocInput.split(',');
-                                        const locLat = parseFloat(parts[0]);
-                                        const locLng = parseFloat(parts[1]);
-                                        if(!isNaN(locLat) && !isNaN(locLng)) {
-                                            handleCenterTo(locLat, locLng);
-                                        }
-                                    }}
-                                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
-                                >Move</button>
-                                <button 
-                                    onClick={() => {
-                                        if(!friendLocInput) return;
-                                        const parts = friendLocInput.split(',');
-                                        const locLat = parseFloat(parts[0]);
-                                        const locLng = parseFloat(parts[1]);
-                                        if(!isNaN(locLat) && !isNaN(locLng)) {
-                                            setSearchMarkerPos({ lat: locLat, lng: locLng });
-                                            handleCenterTo(locLat, locLng);
-                                        }
-                                    }}
-                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
-                                >Search</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Sidebar (Map Filters) */}

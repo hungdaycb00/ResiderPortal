@@ -69,48 +69,62 @@ const SocialView: React.FC<SocialViewProps> = ({
             <div className="flex bg-gray-100 p-1 rounded-xl">
                 <button onClick={() => setSocialSection('friends')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Friends ({friends.length})</button>
                 <button onClick={() => setSocialSection('nearby')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'nearby' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Nearby ({nearbyUsers.length})</button>
-                <button onClick={() => setSocialSection('recent')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'recent' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Recent</button>
                 <button onClick={() => setSocialSection('blocked')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'blocked' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Blocked</button>
             </div>
 
             {/* Friends Section */}
             {socialSection === 'friends' && (
-                friends.length > 0 ? (
-                    <div className="divide-y divide-gray-50">
-                        {friends.map(f => (
-                            <div
-                                key={f.id}
-                                onClick={() => { setSelectedUser({ ...f, isFriend: true }); setActiveTab('info'); }}
-                                className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
-                            >
-                                <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
-                                    <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
-                                    <div className="flex items-center gap-1">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                                        <p className="text-[10px] text-emerald-500 font-bold uppercase">Online</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || ''); }}
-                                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
-                                >
-                                    <MessageCircle className="w-5 h-5" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="py-10 text-center bg-gray-50 rounded-[32px]">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
-                            <UserPlus className="w-6 h-6 text-gray-200" />
+                <div className="flex flex-col gap-6">
+                    {/* Recent Part */}
+                    <div>
+                        <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">Recent Interactions</h4>
+                        <div className="py-6 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            <RefreshCw className="w-5 h-5 text-gray-300 mx-auto mb-2" />
+                            <p className="text-gray-400 text-xs font-medium">No recent interactions</p>
                         </div>
-                        <p className="text-gray-400 text-xs font-medium">No friends added yet</p>
-                        <p className="text-gray-300 text-[11px] mt-1">Share your ID or add someone above</p>
                     </div>
-                )
+
+                    {/* Friends Part */}
+                    <div>
+                        <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">All Friends</h4>
+                        {friends.length > 0 ? (
+                            <div className="divide-y divide-gray-50 bg-white border border-gray-100 rounded-3xl p-1">
+                                {friends.map(f => (
+                                    <div
+                                        key={f.id}
+                                        onClick={() => { setSelectedUser({ ...f, isFriend: true }); setActiveTab('info'); }}
+                                        className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
+                                    >
+                                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0">
+                                            <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                                <p className="text-[10px] text-emerald-500 font-bold uppercase">Online</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || ''); }}
+                                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                                        >
+                                            <MessageCircle className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-10 text-center bg-gray-50 rounded-[32px]">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <UserPlus className="w-6 h-6 text-gray-200" />
+                                </div>
+                                <p className="text-gray-400 text-xs font-medium">No friends added yet</p>
+                                <p className="text-gray-300 text-[11px] mt-1">Share your ID or add someone above</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
 
             {/* Nearby People Section */}
@@ -148,16 +162,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                 )
             )}
 
-            {/* Recent Interactions */}
-            {socialSection === 'recent' && (
-                <div className="py-10 text-center bg-gray-50 rounded-[32px]">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
-                        <RefreshCw className="w-6 h-6 text-gray-200" />
-                    </div>
-                    <p className="text-gray-400 text-xs font-medium">No recent interactions</p>
-                    <p className="text-gray-300 text-[11px] mt-1">View profiles and chat to build history</p>
-                </div>
-            )}
+
 
             {/* Blocked Users */}
             {socialSection === 'blocked' && (
