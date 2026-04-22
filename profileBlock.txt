@@ -1,0 +1,295 @@
+                                {mainTab === 'profile' && !selectedUser && (
+                                    <div className="space-y-4 pt-16 md:pt-4">
+                                        <h3 className="text-lg font-black text-gray-900 px-1 mb-2">My Profile</h3>
+
+                                        {/* Avatar & Basic Info */}
+                                        <div className="flex items-start gap-4 mb-6 px-1">
+                                            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => alert("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!")}>
+                                                <img
+                                                    src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
+                                                    alt="Avatar"
+                                                    className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
+                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`; }}
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity justify-center items-center flex">
+                                                    <Edit className="w-6 h-6 text-white drop-shadow-md" />
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0 pt-1">
+                                                {isEditingName ? (
+                                                    <div className="flex gap-2 mb-2">
+                                                        <input
+                                                            autoFocus type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    setMyDisplayName(nameInput); setIsEditingName(false);
+                                                                    if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
+                                                                }
+                                                            }}
+                                                            className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 w-full outline-none focus:border-blue-500 transition-colors"
+                                                        />
+                                                        <button onClick={() => { setMyDisplayName(nameInput); setIsEditingName(false); if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } })); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="mb-1">
+                                                        <div className="group/name inline-flex items-center gap-2 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
+                                                            <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
+                                                            <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
+                                                        </div>
+                                                        {currentProvince && (
+                                                            <p className="text-sm text-gray-500 font-medium">📍 {currentProvince}</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* ID Copy placed here concisely */}
+                                                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => { navigator.clipboard.writeText(myUserId); alert("ID copied to clipboard!"); }}>
+                                                    <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 truncate max-w-[120px]">ID: {myUserId}</span>
+                                                    <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tab Toggle for Profile content */}
+                                        <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
+                                            <button
+                                                onClick={() => setActiveTab('info')}
+                                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                            >
+                                                Info
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('posts')}
+                                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                            >
+                                                Posts {galleryActive && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
+                                            </button>
+                                        </div>
+
+                                        {activeTab === 'info' ? (
+                                            <>
+                                                {isEditingStatus ? (
+                                                    <div className="bg-gray-100/80 p-3 rounded-xl mt-2 border border-gray-200 shadow-inner">
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                autoFocus type="text" value={statusInput}
+                                                                onChange={(e) => setStatusInput(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        setMyStatus(statusInput);
+                                                                        setIsEditingStatus(false);
+                                                                        if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
+                                                                    }
+                                                                }}
+                                                                placeholder="Update your status..."
+                                                                className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 w-full outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                                            />
+                                                            <button
+                                                                onClick={() => {
+                                                                    setMyStatus(statusInput);
+                                                                    setIsEditingStatus(false);
+                                                                    if (ws.current?.readyState === WebSocket.OPEN && myObfPos) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
+                                                                }}
+                                                                className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                                                            >
+                                                                Save
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="group/status inline-flex items-center gap-2 cursor-pointer mb-2" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
+                                                        <p className="text-gray-500 text-[13px] truncate">{myStatus || "Tap to add status..."}</p>
+                                                        <Edit className="w-3.5 h-3.5 text-gray-400 opacity-40 group-hover/status:opacity-100 transition-opacity" />
+                                                    </div>
+                                                )}
+
+                                                <div className="flex flex-wrap gap-1.5 mt-3 mb-4">
+                                                    {myStatus.split(' ').filter(w => w.startsWith('#')).map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')).map((tag) => (
+                                                        <span key={tag} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
+                                                            {tag.toUpperCase()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                <div className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
+                                                    <h4 className="text-[13px] font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                        <Compass className="w-4 h-4 text-blue-500" /> Privacy & Location
+                                                    </h4>
+                                                    
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <div className="flex justify-between mb-2">
+                                                                <span className="text-[11px] font-bold text-gray-500">Obfuscation Radius</span>
+                                                                <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                                                            </div>
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                value={radius}
+                                                                onChange={(e) => handleUpdateRadius(parseInt(e.target.value))}
+                                                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
+                                                            <div>
+                                                                <span className="text-[11px] font-bold text-gray-700 block">Visible on Map</span>
+                                                                <span className="text-[9px] font-medium text-gray-400">{isVisibleOnMap ? 'Others can see you' : 'Ghost mode'}</span>
+                                                            </div>
+                                                            <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
+                                                                const newVal = !isVisibleOnMap;
+                                                                setIsVisibleOnMap(newVal);
+                                                                if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                                                            }}>
+                                                                <div className={`w-9 h-5 rounded-full transition-colors ${isVisibleOnMap ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                                                    <div className={`w-4 h-4 bg-white rounded-full mt-0.5 ml-0.5 transition-transform shadow-sm flex items-center justify-center ${isVisibleOnMap ? 'translate-x-4' : 'translate-x-0'}`}>
+                                                                        {isVisibleOnMap && <div className="w-1 h-1 bg-blue-600 rounded-full" />}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* User Games Section */}
+                                                {games && games.length > 0 && (
+                                                    <div className="mt-2">
+                                                        <h4 className="text-[13px] font-bold text-gray-900 mb-3">🎮 My Games</h4>
+                                                        <div className="space-y-2">
+                                                            {games.filter((g) => g.creatorId === user?.uid || g.creatorId === myUserId).map((g) => (
+                                                                <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
+                                                                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                                                                        {g.thumbnail ? (
+                                                                            <img src={normalizeImageUrl(g.thumbnail)} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <span>🎮</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{g.name || g.title || 'Untitled Game'}</p>
+                                                                        <p className="text-[11px] text-gray-500">{g.type || 'Game'} {g.playCount ? `• ${g.playCount} plays` : ''}</p>
+                                                                    </div>
+                                                                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                                                                </div>
+                                                            ))}
+                                                            {games.filter((g) => g.creatorId === user?.uid || g.creatorId === myUserId).length === 0 && (
+                                                                <p className="text-[12px] text-gray-400 text-center py-4">No games created yet.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="pb-8">
+                                                {/* Create Post Form */}
+                                                <div className="mb-6">
+                                                    {!isCreatingPost ? (
+                                                        <button
+                                                            onClick={() => setIsCreatingPost(true)}
+                                                            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                                                        >
+                                                            <Edit className="w-4 h-4" /> Create Post
+                                                        </button>
+                                                    ) : (
+                                                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Post title..."
+                                                                value={postTitle}
+                                                                onChange={(e) => setPostTitle(e.target.value.substring(0, 50))}
+                                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
+                                                            />
+                                                            <p className="text-[10px] text-right text-gray-400">{postTitle.length}/50</p>
+                                                            <div className="flex gap-2">
+                                                                <label className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95">
+                                                                    <ImageIcon className="w-4 h-4" /> Add Photos & Post
+                                                                    <input
+                                                                        type="file"
+                                                                        hidden
+                                                                        accept="image/png,image/jpeg,image/webp"
+                                                                        multiple
+                                                                        onChange={(e) => {
+                                                                            const files = Array.from(e.target.files || []) as File[];
+                                                                            handleCreatePost(files);
+                                                                        }}
+                                                                    />
+                                                                </label>
+                                                                <button
+                                                                    onClick={() => handleCreatePost([])}
+                                                                    className="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                                >
+                                                                    Text Only
+                                                                </button>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => { setIsCreatingPost(false); setPostTitle(''); }}
+                                                                className="w-full text-gray-400 hover:text-gray-600 text-xs font-medium py-1 transition-colors"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            {isSavingPost && <p className="text-[10px] text-blue-500 text-center animate-pulse">Posting...</p>}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Posts Timeline */}
+                                                {userPosts.length > 0 ? (
+                                                    <div className="space-y-4">
+                                                        {userPosts.map((post) => (
+                                                            <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                                                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                        <p className="text-[10px] text-gray-400 mt-0.5">
+                                                                            {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                                                                        <button
+                                                                            onClick={() => handleStarPost(post.id)}
+                                                                            className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`}
+                                                                            title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}
+                                                                        >
+                                                                            <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeletePost(post.id)}
+                                                                            className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
+                                                                            title="Delete post"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                {post.images?.length > 0 && (
+                                                                    <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
+                                                                        {post.images.map((img, idx) => (
+                                                                            <div key={idx} className="snap-start shrink-0 w-full aspect-[16/10] bg-gray-100 overflow-hidden">
+                                                                                <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                {post.isStarred && (
+                                                                    <div className="px-4 py-2 bg-amber-50 border-t border-amber-100 flex items-center gap-1.5">
+                                                                        <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                                                                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">Active Billboard</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                            <Edit className="w-8 h-8 text-gray-200" />
+                                                        </div>
+                                                        <p className="text-gray-400 text-sm">No posts yet</p>
+                                                        <p className="text-[11px] text-gray-400 mt-1">Create your first post above!</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
