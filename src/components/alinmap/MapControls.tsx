@@ -25,6 +25,7 @@ interface MapControlsProps {
     setSearchTag: (v: string) => void;
     handleRefresh: () => void;
     handleCenter: () => void;
+    handleCenterTo: (lat: number, lng: number) => void;
     handleUpdateRadius: (v: number) => void;
 }
 
@@ -33,7 +34,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleUpdateRadius
+    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius
 }) => {
     const [copyToast, setCopyToast] = useState(false);
 
@@ -149,10 +150,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                                         const locLat = parseFloat(parts[0]);
                                         const locLng = parseFloat(parts[1]);
                                         if(!isNaN(locLat) && !isNaN(locLng)) {
-                                            setMyObfPos({ lat: locLat, lng: locLng });
-                                            if (ws.current?.readyState === WebSocket.OPEN) {
-                                                ws.current.send(JSON.stringify({ type: 'move', x: locLng, y: locLat }));
-                                            }
+                                            handleCenterTo(locLat, locLng);
                                         }
                                     }}
                                     className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
@@ -165,6 +163,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                                         const locLng = parseFloat(parts[1]);
                                         if(!isNaN(locLat) && !isNaN(locLng)) {
                                             setSearchMarkerPos({ lat: locLat, lng: locLng });
+                                            handleCenterTo(locLat, locLng);
                                         }
                                     }}
                                     className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"

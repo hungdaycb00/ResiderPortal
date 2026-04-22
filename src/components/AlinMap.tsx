@@ -8,7 +8,7 @@ import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab, handlePlayGame }) => {
     const API_BASE = getBaseUrl();
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
@@ -43,7 +43,6 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [reportReason, setReportReason] = useState("");
     const [reportStatus, setReportStatus] = useState("");
     const [friendLocInput, setFriendLocInput] = useState("");
-    const [searchMarkerPos, setSearchMarkerPos] = useState<{lat: number, lng: number}|null>(null);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
@@ -65,6 +64,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [galleryTitle, setGalleryTitle] = useState('');
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]);
+    const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
 
     const ws = useRef<WebSocket | null>(null);
     const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -425,6 +425,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     };
 
     const handleCenter = () => { panX.set(0); panY.set(0); scale.set(1); };
+    const handleCenterTo = (lat: number, lng: number) => {
+        if (!myObfPos) return;
+        const DEGREES_TO_PX = 11100;
+        const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
+        const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
+        panX.set(-pxX);
+        panY.set(-pxY);
+    };
 
     const handleUpdateRadius = (newRadius: number) => {
         setRadius(newRadius);
@@ -577,7 +585,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 isVisibleOnMap={isVisibleOnMap} isConnecting={isConnecting} isDesktop={isDesktop}
                 currentProvince={currentProvince} galleryActive={galleryActive} galleryTitle={galleryTitle}
                 galleryImages={galleryImages} searchTag={searchTag} filterDistance={filterDistance}
-                filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
+                filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax} searchMarkerPos={searchMarkerPos}
                 scale={scale} panX={panX} panY={panY} selfDragX={selfDragX} selfDragY={selfDragY} ws={ws}
                 requestLocation={requestLocation} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                 setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos} addLog={addLog} handleWheel={handleWheel}
@@ -591,7 +599,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 setIsSidebarOpen={setIsSidebarOpen} setFriendLocInput={setFriendLocInput} setMyObfPos={setMyObfPos}
                 setSearchMarkerPos={setSearchMarkerPos} setFilterDistance={setFilterDistance}
                 setFilterAgeMin={setFilterAgeMin} setFilterAgeMax={setFilterAgeMax} setSearchTag={setSearchTag}
-                handleRefresh={handleRefresh} handleCenter={handleCenter} handleUpdateRadius={handleUpdateRadius}
+                handleRefresh={handleRefresh} handleCenter={handleCenter} handleCenterTo={handleCenterTo} handleUpdateRadius={handleUpdateRadius}
             />
 
             <NavigationBar mainTab={mainTab} selectedUser={selectedUser} isDesktop={isDesktop} unreadCount={unreadCount} handleTabClick={handleTabClick} />

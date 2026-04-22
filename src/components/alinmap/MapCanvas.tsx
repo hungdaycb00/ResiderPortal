@@ -25,6 +25,7 @@ interface MapCanvasProps {
     filterDistance: number;
     filterAgeMin: number;
     filterAgeMax: number;
+    searchMarkerPos: { lat: number; lng: number } | null;
     scale: MotionValue<number>;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
@@ -43,7 +44,7 @@ interface MapCanvasProps {
 const MapCanvas: React.FC<MapCanvasProps> = ({
     position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myStatus,
     isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
-    searchTag, filterDistance, filterAgeMin, filterAgeMax,
+    searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel
 }) => {
@@ -228,6 +229,25 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         )}
                                     </div>
                                 </motion.div>
+
+                                {/* Search Marker Pin */}
+                                {searchMarkerPos && (
+                                    <div
+                                        className="absolute w-10 h-10 -ml-5 -mt-10 flex items-center justify-center pointer-events-none z-[105]"
+                                        style={{
+                                            top: `calc(50% + ${-(searchMarkerPos.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                            left: `calc(50% + ${(searchMarkerPos.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                        }}
+                                    >
+                                        <div className="relative flex flex-col items-center">
+                                            <div className="absolute -top-6 whitespace-nowrap bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">
+                                                Target
+                                            </div>
+                                            <MapPin className="w-8 h-8 text-red-500 fill-red-100" />
+                                            <div className="w-2 h-1 bg-black/30 rounded-[100%] blur-[1px] -mt-1" />
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Other Nodes */}
                                 {nearbyUsers.filter(u => {

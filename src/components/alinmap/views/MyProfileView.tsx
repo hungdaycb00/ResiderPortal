@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Copy, Compass, ChevronRight, Image as ImageIcon, X, Bookmark } from 'lucide-react';
+import { Edit, Copy, Compass, ChevronRight, Image as ImageIcon, X, Bookmark, Smile } from 'lucide-react';
 import { normalizeImageUrl } from '../../../services/externalApi';
 import PostCard from '../PostCard';
 
@@ -65,6 +65,19 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({
     // Missing states for post creation
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    
+    const quickEmojis = ['🎮', '🔥', '✨', '😂', '😎', '💀', '💯', '❤️', '🎉', '🌟'];
+    const popularTags = ['#game', '#shop', '#chill', '#event', '#trading', '#friends'];
+
+    const insertEmoji = (emoji: string) => {
+        setPostTitle(postTitle + emoji);
+        setShowEmojiPicker(false);
+    };
+
+    const insertTag = (tag: string) => {
+        setPostTitle(postTitle + (postTitle.endsWith(' ') || postTitle.length === 0 ? '' : ' ') + tag + ' ');
+    };
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -291,13 +304,48 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({
                             </button>
                         ) : (
                             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
-                                <input
-                                    type="text"
-                                    placeholder="Post title..."
-                                    value={postTitle}
-                                    onChange={(e) => setPostTitle(e.target.value.substring(0, 50))}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Post title..."
+                                        value={postTitle}
+                                        onChange={(e) => setPostTitle(e.target.value.substring(0, 50))}
+                                        className="w-full bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
+                                    />
+                                    <button 
+                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-amber-500 transition-colors"
+                                    >
+                                        <Smile className="w-5 h-5" />
+                                    </button>
+                                    
+                                    {showEmojiPicker && (
+                                        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-100 shadow-xl rounded-xl p-2 z-50 flex flex-wrap gap-1 w-[200px]">
+                                            {quickEmojis.map(emoji => (
+                                                <button 
+                                                    key={emoji} 
+                                                    onClick={() => insertEmoji(emoji)}
+                                                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg text-lg transition-colors"
+                                                >
+                                                    {emoji}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Popular Tags */}
+                                <div className="flex flex-wrap gap-1.5 px-1">
+                                    {popularTags.map(tag => (
+                                        <button 
+                                            key={tag}
+                                            onClick={() => insertTag(tag)}
+                                            className="text-[10px] font-bold bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 px-2.5 py-1 rounded-md transition-colors"
+                                        >
+                                            {tag}
+                                        </button>
+                                    ))}
+                                </div>
                                 
                                 {previewUrls.length > 0 && (
                                     <div className="flex gap-2 overflow-x-auto py-2 px-1">

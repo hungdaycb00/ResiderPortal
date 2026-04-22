@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { normalizeImageUrl, getBaseUrl } from '../../services/externalApi';
-import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw, Bell } from 'lucide-react';
+import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw, Bell, Gamepad2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DiscoverView from './views/DiscoverView';
 import SocialView from './views/SocialView';
@@ -52,6 +52,7 @@ interface BottomSheetProps {
     scale: any;
     externalApi: any;
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
+    handlePlayGame?: (game: any) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     setSentFriendRequests: (fn: (prev: string[]) => string[]) => void;
     handleUpdateRadius: (v: number) => void;
@@ -149,7 +150,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     };
 
     // Instant Search
-    const [searchResults, setSearchResults] = React.useState<{ posts: any[], users: any[] }>({ posts: [], users: [] });
+    const [searchResults, setSearchResults] = React.useState<{ posts: any[], users: any[], games?: any[] }>({ posts: [], users: [], games: [] });
     const [isSearching, setIsSearching] = React.useState(false);
     const [showSearchResults, setShowSearchResults] = React.useState(false);
     const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,7 +159,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     React.useEffect(() => {
         if (!searchTag || searchTag.trim().length < 2) {
-            setSearchResults({ posts: [], users: [] });
+            setSearchResults({ posts: [], users: [], games: [] });
             setShowSearchResults(false);
             return;
         }
@@ -182,7 +183,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         if (!allUsers.find((u: any) => u.id === lu.id)) allUsers.push(lu);
                     });
 
-                    setSearchResults({ posts: data.posts, users: allUsers.slice(0, 10) });
+                    setSearchResults({ posts: data.posts, users: allUsers.slice(0, 10), games: data.games || [] });
                 }
             } catch (err) {
                 console.error('[Search]', err);
@@ -272,7 +273,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                     </div>
                                 )}
 
-                                {!isSearching && searchResults.users.length === 0 && searchResults.posts.length === 0 && (
+                                {!isSearching && searchResults.users.length === 0 && searchResults.posts.length === 0 && (!searchResults.games || searchResults.games.length === 0) && (
                                     <div className="text-center py-6">
                                         <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                                         <p className="text-sm text-gray-400">Không tìm thấy kết quả cho "{searchTag}"</p>
@@ -352,6 +353,40 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Games Results */}
+                                {searchResults.games && searchResults.games.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Games</p>
+                                        <div className="space-y-1">
+                                            {searchResults.games.map((g: any) => (
+                                                <button
+                                                    key={g.id}
+                                                    onClick={() => {
+                                                        // Handle game click (for example, navigate or open game)
+                                                        window.location.href = `/play.html?id=${g.id}`;
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                                >
+                                                    {g.thumbnail ? (
+                                                        <img src={normalizeImageUrl(g.thumbnail)} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
+                                                    ) : (
+                                                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                                                            <Gamepad2 className="w-4 h-4 text-emerald-500" />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0 text-left">
+                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{g.title}</p>
+                                                        <p className="text-[11px] text-gray-500 truncate">
+                                                            {g.category || 'Game'} • {g.playCount || 0} plays
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {selectedUser ? (
@@ -367,7 +402,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         ) : (
                             <div className="pt-2">
                                 {mainTab === 'discover' && (
-                                    <DiscoverView games={games} nearbyUsers={nearbyUsers} setSearchTag={setSearchTag} />
+                                    <DiscoverView games={games} nearbyUsers={nearbyUsers} setSearchTag={setSearchTag} handlePlayGame={handlePlayGame} />
                                 )}
                                 {mainTab === 'friends' && (
                                     <SocialView

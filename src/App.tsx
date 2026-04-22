@@ -748,6 +748,7 @@ export default function App() {
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
             games={fetchedGames}
+            handlePlayGame={handlePlayGame}
             showNotification={showNotification}
             friends={fetchedFriends}
             initialMainTab={activeTab === 'notifications' ? 'notifications' : 'discover'}

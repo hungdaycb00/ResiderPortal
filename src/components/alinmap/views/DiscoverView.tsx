@@ -1,59 +1,120 @@
 import React from 'react';
-import { CloudSun, Diamond, MapPin } from 'lucide-react';
+import { Diamond, MapPin, Trophy, Plus, Brain, Zap, Sword } from 'lucide-react';
 import { normalizeImageUrl } from '../../../services/externalApi';
+import GameCard from '../../GameCard';
+import GameSlider from '../../GameSlider';
 
 interface DiscoverViewProps {
     games: any[];
     nearbyUsers: any[];
     setSearchTag: (tag: string) => void;
+    handlePlayGame?: (game: any) => void;
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame }) => {
+    const AVAILABLE_CATEGORIES = [
+        { id: 'puzzle', name: 'Puzzle & Logic', icon: <Brain className="w-5 h-5 text-pink-400" /> },
+        { id: 'action', name: 'Action & Arcade', icon: <Zap className="w-5 h-5 text-yellow-400" /> },
+        { id: 'strategy', name: 'Strategy', icon: <Sword className="w-5 h-5 text-blue-400" /> }
+    ];
+
+    const keywordsMap: Record<string, string[]> = {
+        puzzle: ['puzzle', 'quiz', 'brain', 'logic'],
+        action: ['action', 'sword', 'combat', 'battle'],
+        strategy: ['strategy', 'build', 'defense']
+    };
+
+    const uniqueHighRated = Array.from(new Map(games.filter(g => (g.score || 0) >= 8 || g.id === 'quiz-game-root').map(g => [g.id || g.title, g])).values())
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+
     return (
-        <>
-            <div className="flex justify-between items-center mb-5">
-                <h2 className="text-[22px] font-black text-gray-900 tracking-tight">Featured Games</h2>
-                <div className="bg-gray-100 rounded-full px-3 py-1 flex items-center gap-1.5 shrink-0">
-                    <CloudSun className="w-4 h-4 text-gray-500" />
-                    <span className="text-[11px] font-bold text-gray-700">28°</span>
-                </div>
-            </div>
-            <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                {(games && games.length > 0 ? games : [1, 2, 3]).slice(0, 5).map((game: any, idx: number) => {
-                    const isPlaceholder = typeof game === 'number';
-                    return (
-                        <div key={isPlaceholder ? idx : game.id} className="snap-start shrink-0 w-64 bg-[#eef5fa] rounded-3xl overflow-hidden border border-[#d6eaf3] flex flex-col active:scale-[0.98] transition-transform cursor-pointer">
-                            <div className="p-4 pb-3">
-                                <div className="flex items-start justify-between gap-2">
-                                    <h3 className="font-bold text-gray-900 text-[15px] leading-tight line-clamp-2">{isPlaceholder ? 'Explore a world of smooth gaming...' : game.title}</h3>
-                                    <Diamond className="w-5 h-5 text-blue-500 shrink-0 fill-blue-50 mt-0.5" />
-                                </div>
-                                <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-2">
-                                    <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>Alin Maps • {isPlaceholder ? 'Coming Soon' : (game.mode || 'Multiplayer')}</span>
-                                </div>
-                            </div>
-                            <div className="p-2 pt-0 flex-1 flex flex-col justify-end">
-                                <div className="w-full aspect-[4/3] bg-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                                    {!isPlaceholder && (
-                                        <img
-                                            src={normalizeImageUrl(game.image || '')}
-                                            alt={game.title}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                        />
-                                    )}
-                                    {isPlaceholder && <div className="w-full h-full bg-gradient-to-br from-blue-100 to-gray-200" />}
+        <div className="flex flex-col gap-6 pb-20">
+            {/* Hero Carousel */}
+            {uniqueHighRated.length > 0 && (
+                <section className="mb-2">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[20px] font-black flex items-center gap-2 uppercase tracking-tighter italic border-l-4 border-yellow-400 pl-3">
+                            <Trophy className="w-5 h-5 text-yellow-400" />
+                            Featured Games
+                        </h3>
+                    </div>
+                    <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
+                        {uniqueHighRated.map((game: any, idx: number) => (
+                            <div 
+                                key={idx} 
+                                onClick={() => handlePlayGame && handlePlayGame(game)}
+                                className="snap-start shrink-0 w-[280px] h-[160px] rounded-3xl overflow-hidden relative transition-transform active:scale-[0.98] bg-[#1a1d24] shadow-lg cursor-pointer"
+                            >
+                                {game.image ? (
+                                    <img src={normalizeImageUrl(game.image)} className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none" alt="" />
+                                ) : (
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#13151a] via-[#13151a]/20 to-transparent opacity-90 pointer-events-none" />
+                                <div className="absolute bottom-0 left-0 w-full p-4 z-10 pointer-events-none">
+                                    <div className="px-2 py-1 bg-yellow-400 text-black rounded-full text-[8px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 mb-1.5">
+                                        <Trophy className="w-2.5 h-2.5" /> Featured {game.score ? `• ${game.score}/10` : '🔥'}
+                                    </div>
+                                    <h1 className="text-xl font-black text-white tracking-tight leading-none drop-shadow-md truncate">
+                                        {game.title}
+                                    </h1>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* New Games */}
+            <GameSlider
+                title="New Games"
+                icon={<Plus className="w-5 h-5 text-purple-400" />}
+            >
+                {[...games].reverse().slice(0, 10).map((game, i) => (
+                    <div key={i} className="w-[180px] sm:w-[220px]">
+                        <GameCard
+                            title={game.title}
+                            image={normalizeImageUrl(game.image || '')}
+                            logoStyle={game.logoStyle || "text-white"}
+                            onClick={() => handlePlayGame && handlePlayGame(game)}
+                        />
+                    </div>
+                ))}
+            </GameSlider>
+
+            {/* Categories */}
+            {AVAILABLE_CATEGORIES.map((cat) => {
+                const catGames = games.filter(g =>
+                    ((g.category || '').toLowerCase().includes(cat.id)) ||
+                    (keywordsMap[cat.id] && keywordsMap[cat.id].some((k: string) => (g.title || '').toLowerCase().includes(k)))
+                );
+
+                if (catGames.length === 0) return null;
+
+                return (
+                    <div key={cat.id}>
+                        <GameSlider
+                            title={cat.name}
+                            icon={cat.icon}
+                        >
+                            {catGames.map((game, i) => (
+                                <div key={i} className="w-[180px] sm:w-[220px]">
+                                    <GameCard
+                                        title={game.title}
+                                        image={normalizeImageUrl(game.image || '')}
+                                        logoStyle={game.logoStyle || "text-white"}
+                                        onClick={() => handlePlayGame && handlePlayGame(game)}
+                                    />
+                                </div>
+                            ))}
+                        </GameSlider>
+                    </div>
+                );
+            })}
 
             {/* Trending Tags from nearby users */}
-            <div className="mt-4 space-y-4">
-                <div className="flex justify-between items-center px-1">
+            <div className="mt-2 space-y-4 px-1">
+                <div className="flex justify-between items-center">
                     <h3 className="text-lg font-black text-gray-900">Trending Tags</h3>
                     <span className="text-[11px] font-bold text-gray-400">{nearbyUsers.length} users nearby</span>
                 </div>
@@ -77,7 +138,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                     })()}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
