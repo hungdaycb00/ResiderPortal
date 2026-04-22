@@ -184,10 +184,10 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts 
 
             <div className="mx-2 py-1 flex items-center justify-between border-t border-gray-50">
                 <button onClick={toggleLike} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${liked ? 'text-red-500' : 'text-gray-500 hover:bg-gray-50'}`}>
-                    <Heart className={`w-4 h-4 ${liked ? 'fill-red-500' : ''}`} /> Thích
+                    <Heart className={`w-4 h-4 ${liked ? 'fill-red-500' : ''}`} /> Thích {likeCount > 0 && <span>({likeCount})</span>}
                 </button>
                 <button onClick={() => { setShowComments(!showComments); if (!showComments) fetchAllComments(); }} className="flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-colors active:scale-95">
-                    <MessageCircle className="w-4 h-4" /> Bình luận
+                    <MessageCircle className="w-4 h-4" /> Bình luận {commentCount > 0 && <span>({commentCount})</span>}
                 </button>
                 <button onClick={toggleArchive} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${archived ? 'text-blue-500' : 'text-gray-500 hover:bg-gray-50'}`}>
                     <Bookmark className={`w-4 h-4 ${archived ? 'fill-blue-500' : ''}`} /> Lưu trữ
