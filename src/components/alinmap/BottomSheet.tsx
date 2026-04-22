@@ -930,7 +930,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                 </button>
                                             </div>
                                             </>
-                                        ) : (
+                                        ) : activeTab === 'posts' ? (
                                             <div className="pb-8">
                                                 {/* Create Post Form */}
                                                 <div className="mb-6">
@@ -1001,6 +1001,29 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                         </div>
                                                         <p className="text-gray-400 text-sm">No posts yet</p>
                                                         <p className="text-[11px] text-gray-400 mt-1">Create your first post above!</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            /* Saved / Archived Posts Tab - No Create Post button */
+                                            <div className="pb-8">
+                                                {userPosts.length > 0 ? (
+                                                    <div className="space-y-0">
+                                                        {userPosts.map((post) => (
+                                                            <PostCard 
+                                                                key={post.id} post={{...post, isArchivedState: true}} isSelf={true} 
+                                                                onStar={handleStarPost} onDelete={handleDeletePost} 
+                                                                externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                                            <Bookmark className="w-8 h-8 text-gray-200" />
+                                                        </div>
+                                                        <p className="text-gray-400 text-sm">No saved posts</p>
+                                                        <p className="text-[11px] text-gray-400 mt-1">Bookmark posts to see them here.</p>
                                                     </div>
                                                 )}
                                             </div>
