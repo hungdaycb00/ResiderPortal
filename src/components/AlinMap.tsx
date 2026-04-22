@@ -125,6 +125,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string } | null>(null);
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
+    const [reportStatus, setReportStatus] = useState("");
+    const [friendLocInput, setFriendLocInput] = useState("");
+    const [searchMarkerPos, setSearchMarkerPos] = useState<{lat: number, lng: number}|null>(null);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [statusInput, setStatusInput] = useState("");
@@ -952,8 +955,8 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
             </div>
 
-            {/* Weather & Coordinates Widget */}
-            <div className="absolute bottom-[200px] md:bottom-12 left-4 md:left-[430px] z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[140px]">
+            {/* Weather & Coordinates Widget - Top Right */}
+            <div className="absolute top-28 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px]">
                 {weatherData && (
                     <div className="flex items-center gap-2 mb-1 px-1">
                         <span className="text-xl">{weatherData.icon}</span>
@@ -964,11 +967,51 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     </div>
                 )}
                 {myObfPos && (
-                    <div className="bg-gray-100 rounded-lg py-1 px-2 flex flex-col gap-0.5">
-                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Encrypted Location</p>
-                        <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
-                            {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
-                        </p>
+                    <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full">
+                        <div>
+                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Encrypted Location</p>
+                            <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
+                                {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-1 border-t border-gray-200 pt-1.5 mt-0.5">
+                            <input 
+                                type="text"
+                                placeholder="Lat, Lng" 
+                                value={friendLocInput}
+                                onChange={e => setFriendLocInput(e.target.value)}
+                                className="text-[10px] w-full bg-white border border-gray-200 rounded px-1.5 py-1 outline-none font-mono text-gray-800"
+                            />
+                            <div className="flex gap-1 w-full">
+                                <button 
+                                    onClick={() => {
+                                        if(!friendLocInput) return;
+                                        const parts = friendLocInput.split(',');
+                                        const locLat = parseFloat(parts[0]);
+                                        const locLng = parseFloat(parts[1]);
+                                        if(!isNaN(locLat) && !isNaN(locLng)) {
+                                            setMyObfPos({ lat: locLat, lng: locLng });
+                                            if (ws.current?.readyState === WebSocket.OPEN) {
+                                                ws.current.send(JSON.stringify({ type: 'move', x: locLng, y: locLat }));
+                                            }
+                                        }
+                                    }}
+                                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                >Move</button>
+                                <button 
+                                    onClick={() => {
+                                        if(!friendLocInput) return;
+                                        const parts = friendLocInput.split(',');
+                                        const locLat = parseFloat(parts[0]);
+                                        const locLng = parseFloat(parts[1]);
+                                        if(!isNaN(locLat) && !isNaN(locLng)) {
+                                            setSearchMarkerPos({ lat: locLat, lng: locLng });
+                                        }
+                                    }}
+                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
+                                >Search</button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -1250,12 +1293,15 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                 </button>
                                             ) : (
                                                 <div className="bg-red-50/50 border border-red-100 rounded-xl p-3">
-                                                    <p className="text-[10px] uppercase font-bold text-red-500 mb-2">Report Content/User</p>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <p className="text-[10px] uppercase font-bold text-red-500">Report Content/User</p>
+                                                        {reportStatus && <p className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{reportStatus}</p>}
+                                                    </div>
                                                     <textarea
                                                         value={reportReason}
                                                         onChange={e => setReportReason(e.target.value)}
                                                         placeholder="Why are you reporting this user?"
-                                                        className="w-full bg-white border border-red-200 rounded-lg p-2 text-xs outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 mb-2 resize-none h-16"
+                                                        className="w-full bg-white text-gray-900 border border-red-200 rounded-lg p-2 text-xs outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 mb-2 resize-none h-16"
                                                     />
                                                     <div className="flex justify-end gap-2">
                                                         <button onClick={() => { setIsReporting(false); setReportReason(""); }} className="px-3 py-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
@@ -1263,9 +1309,9 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                             onClick={() => {
                                                                 if (ws.current?.readyState === WebSocket.OPEN && reportReason.trim()) {
                                                                     ws.current.send(JSON.stringify({ type: 'REPORT_USER', payload: { reportedId: selectedUser.id, reason: reportReason.trim() } }));
-                                                                    setIsReporting(false);
                                                                     setReportReason("");
-                                                                    alert("Report submitted successfully.");
+                                                                    setReportStatus("Report submitted!");
+                                                                    setTimeout(() => { setReportStatus(""); setIsReporting(false); }, 2000);
                                                                 }
                                                             }}
                                                             className="px-3 py-1.5 text-[11px] font-bold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors active:scale-95 disabled:opacity-50"
@@ -1314,7 +1360,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                     <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                                         <div className="flex items-center justify-between px-4 pt-3 pb-2">
                                                             <div className="flex-1 min-w-0">
-                                                                <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {post.isStarred && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
+                                                                    <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                </div>
                                                                 <p className="text-[10px] text-gray-400 mt-0.5">
                                                                     {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                                 </p>
@@ -1818,7 +1867,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                                                             <div key={post.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                                                 <div className="flex items-center justify-between px-4 pt-3 pb-2">
                                                                     <div className="flex-1 min-w-0">
-                                                                        <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            {post.isStarred && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
+                                                                            <h4 className="text-[14px] font-bold text-gray-900 truncate">{post.title || 'Untitled Post'}</h4>
+                                                                        </div>
                                                                         <p className="text-[10px] text-gray-400 mt-0.5">
                                                                             {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                                         </p>
