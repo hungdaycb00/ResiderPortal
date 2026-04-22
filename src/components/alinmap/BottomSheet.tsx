@@ -75,7 +75,7 @@ interface BottomSheetProps {
 }
 
 const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts }: any) => {
-    const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://alin-api.alin.city';
+    const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
     const [liked, setLiked] = React.useState(post.isLiked);
     const [likeCount, setLikeCount] = React.useState(post.likeCount || 0);
     const [archived, setArchived] = React.useState(post.isArchived);
@@ -703,7 +703,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                             {notifications.filter((n: any) => !n.isRead).length > 0 && (
                                                 <button 
                                                     onClick={async () => {
-                                                        const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://alin-api.alin.city';
+                                                        const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
                                                         await fetch(`${API_BASE}/api/notifications/read-all`, { method: 'PUT', headers: { 'X-Device-Id': externalApi.getDeviceId() }});
                                                         if (fetchNotifications) fetchNotifications();
                                                     }} 

@@ -6,6 +6,16 @@ const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL;
 
 export const getBaseUrl = (urlOverride?: string): string => {
   let url = urlOverride || localStorage.getItem('cloudflareUrl') || EXTERNAL_API_URL || 'http://localhost:3001';
+  
+  // Auto-correct broken subdomains if necessary
+  if (url.includes('alin-api.alin.city')) {
+    url = url.replace('alin-api.alin.city', 'api.alin.city');
+    // If it was in localStorage, fix it there too
+    if (localStorage.getItem('cloudflareUrl')?.includes('alin-api.alin.city')) {
+      localStorage.setItem('cloudflareUrl', url);
+    }
+  }
+
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
