@@ -8,14 +8,16 @@ import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab }) => {
     const API_BASE = getBaseUrl();
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('info');
-    const [mainTab, setMainTab] = useState<'discover' | 'nearby' | 'friends' | 'profile'>('discover');
+    const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications'>(
+        (initialMainTab as any) || 'discover'
+    );
     const [userGames, setUserGames] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
     const [radius, setRadius] = useState(5);
@@ -31,6 +33,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [friendIdInput, setFriendIdInput] = useState('');
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
     const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
+    const [myAvatarUrl, setMyAvatarUrl] = useState(user?.photoURL || '');
     const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string } | null>(null);
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
@@ -60,7 +63,14 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [notifications, setNotifications] = useState<any[]>([]);
 
     const ws = useRef<WebSocket | null>(null);
-    const reconnectTimeout = useRef<any>(null);
+    const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (initialMainTab) {
+            setMainTab(initialMainTab as any);
+            setIsSheetExpanded(true);
+        }
+    }, [initialMainTab]);
     const isMounted = useRef(true);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
@@ -273,7 +283,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
     const handleMessage = () => {
         if (!selectedUser || !onOpenChat) return;
-        onOpenChat(selectedUser.id, selectedUser.username || 'User');
+        onOpenChat(selectedUser.id, selectedUser.username || 'User', selectedUser.avatar_url || selectedUser.photoURL || '');
     };
 
     const compressImage = (file: File): Promise<File> => {
@@ -471,10 +481,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                     </div>
                     <button onClick={() => handleTabClick('profile')} className="ml-2 sm:ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img
-                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
+                            src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
                             alt="Me"
                             className="w-7 h-7 object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`; }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`; }}
                         />
                     </button>
                 </div>
@@ -526,6 +536,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 setIsEditingStatus={setIsEditingStatus} setIsEditingName={setIsEditingName}
                 setStatusInput={setStatusInput} setNameInput={setNameInput} setMyStatus={setMyStatus}
                 setMyDisplayName={setMyDisplayName} setIsVisibleOnMap={setIsVisibleOnMap}
+                myAvatarUrl={myAvatarUrl} setMyAvatarUrl={setMyAvatarUrl}
                 setFriendIdInput={setFriendIdInput} setSocialSection={setSocialSection}
                 setIsCreatingPost={setIsCreatingPost} setPostTitle={setPostTitle}
                 handleAddFriend={handleAddFriend} handleMessage={handleMessage}

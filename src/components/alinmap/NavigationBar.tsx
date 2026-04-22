@@ -31,13 +31,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         <User className={`w-6 h-6 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Profile</span>
                     </button>
-                    <button onClick={() => handleTabClick('notifications')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all relative mt-2">
-                        <div className="relative">
-                            <Bell className={`w-6 h-6 ${mainTab === 'notifications' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
-                            {unreadCount > 0 && <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border-2 border-white" />}
-                        </div>
-                        <span className={`text-[9px] font-bold ${mainTab === 'notifications' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Alerts</span>
-                    </button>
                 </div>
             </div>
 
@@ -50,13 +43,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                 <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <UserPlus className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Social</span>
-                </button>
-                <button onClick={() => handleTabClick('notifications')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'notifications' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <div className="relative">
-                        <Bell className="w-5 h-5" />
-                        {unreadCount > 0 && <div className="absolute -top-1 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white" />}
-                    </div>
-                    <span className="text-[9px] font-black uppercase">Alerts</span>
                 </button>
                 <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <User className="w-5 h-5" />

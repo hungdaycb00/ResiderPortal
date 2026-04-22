@@ -10,7 +10,7 @@ interface ChatRoomProps {
     currentUserId?: string;
     userName?: string;
     userAvatar?: string;
-    targetUser?: { id: string, name: string } | null;
+    targetUser?: { id: string, name: string, avatarUrl?: string } | null;
     friends?: any[];
     onClose?: () => void;
 }
@@ -35,13 +35,15 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
     const [privateRooms, setPrivateRooms] = useState<RoomInfo[]>([]);
     const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
     const [activeRoomName, setActiveRoomName] = useState('World Chat');
+    const [activeRoomAvatar, setActiveRoomAvatar] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
     
     const activeRoomIdRef = useRef<number | null>(null);
 
-    const setActiveRoom = (id: number, name: string) => {
+    const setActiveRoom = (id: number, name: string, avatar: string | null = null) => {
         setActiveRoomId(id);
         setActiveRoomName(name);
+        setActiveRoomAvatar(avatar);
         activeRoomIdRef.current = id;
     };
 
@@ -81,7 +83,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
             .then((data) => {
                 if (!mounted) return;
                 if (data && data.roomId) {
-                    setActiveRoom(data.roomId, targetUser ? targetUser.name : 'World Chat');
+                    setActiveRoom(data.roomId, targetUser ? targetUser.name : 'World Chat', targetUser?.avatarUrl || null);
                 }
                 setIsLoading(false);
             })
@@ -139,15 +141,16 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         }
     };
 
-    const switchRoom = (type: 'global' | 'private', roomId: number | null, roomName: string) => {
+    const switchRoom = (type: 'global' | 'private', roomId: number | null, roomName: string, avatarUrl: string | null = null) => {
         setIsLoading(true);
         setActiveRoomName(roomName);
+        setActiveRoomAvatar(avatarUrl);
         setMobileView('chat');
         setMessages([]);
         
         joinRoom(type, roomId)
             .then((data) => {
-                setActiveRoom(data.roomId, roomName);
+                setActiveRoom(data.roomId, roomName, avatarUrl);
                 setIsLoading(false);
             })
             .catch(() => setIsLoading(false));
@@ -157,7 +160,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         setIsLoading(true);
         createOrGetPrivateRoom(friend.id)
             .then((data) => {
-                switchRoom('private', data.room_id, friend.displayName || friend.username || friend.id);
+                switchRoom('private', data.room_id, friend.displayName || friend.username || friend.id, friend.photoURL || friend.avatar_url || null);
             })
             .catch((err) => {
                 alert('Không thể bắt đầu chat: ' + err.message);
@@ -189,7 +192,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {/* World Chat Global Option */}
                     <button 
-                        onClick={() => switchRoom('global', null, 'World Chat')}
+                        onClick={() => switchRoom('global', null, 'World Chat', null)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors active:scale-95 ${activeRoomName === 'World Chat' ? 'bg-blue-600/20 shadow-inner' : 'hover:bg-gray-800/50'}`}
                     >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${activeRoomName === 'World Chat' ? 'bg-blue-600' : 'bg-gray-700'}`}>
@@ -256,7 +259,13 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                         
                         <div className="flex flex-col">
                             <h2 className="font-bold text-white text-lg flex items-center gap-2">
-                                {activeRoomName === 'World Chat' ? <Globe className="w-4 h-4 text-blue-400" /> : <User className="w-4 h-4 text-emerald-400" />}
+                                {activeRoomName === 'World Chat' ? (
+                                    <Globe className="w-4 h-4 text-blue-400" />
+                                ) : activeRoomAvatar ? (
+                                    <img src={normalizeImageUrl(activeRoomAvatar)} className="w-5 h-5 rounded-full object-cover border border-gray-700" alt="avatar" />
+                                ) : (
+                                    <User className="w-4 h-4 text-emerald-400" />
+                                )}
                                 {activeRoomName}
                             </h2>
                             <div className="flex items-center gap-1.5 mt-0.5">

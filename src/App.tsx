@@ -78,7 +78,7 @@ export default function App() {
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatTargetUser, setChatTargetUser] = useState<{id: string, name: string} | null>(null);
+  const [chatTargetUser, setChatTargetUser] = useState<{ id: string, name: string, avatarUrl?: string } | null>(null);
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [isMyGamesOverlayOpen, setIsMyGamesOverlayOpen] = useState(false);
@@ -742,7 +742,7 @@ export default function App() {
 
       {/* Final Checkpoint: MultiTask & Modals */}
       <AnimatePresence>
-        {activeTab === 'alin' && (
+        {(activeTab === 'alin' || activeTab === 'notifications') && (
           <AlinMap 
             user={user} 
             onClose={() => setActiveTab('home')} 
@@ -750,8 +750,9 @@ export default function App() {
             games={fetchedGames}
             showNotification={showNotification}
             friends={fetchedFriends}
-            onOpenChat={(id: string, name: string) => {
-              setChatTargetUser({ id, name });
+            initialMainTab={activeTab === 'notifications' ? 'notifications' : 'discover'}
+            onOpenChat={(id: string, name: string, avatar?: string) => {
+              setChatTargetUser({ id, name, avatarUrl: avatar });
               setIsChatOpen(true);
             }}
           />

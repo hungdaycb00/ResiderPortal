@@ -10,8 +10,9 @@ export interface AlinMapProps {
     externalApi: any;
     games: any[];
     friends?: any[];
-    onOpenChat?: (id: string, name: string) => void;
+    onOpenChat?: (id: string, name: string, avatar?: string) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
+    initialMainTab?: string;
 }
 
 export interface SpatialNodeProps {

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Users, Globe, MessageSquare, Plus, Home, Grid, Star, MapPin } from 'lucide-react';
+import { Users, Globe, MessageSquare, Plus, Home, Grid, Star, MapPin, Bell } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, animate, useDragControls } from 'motion/react';
 
 interface MultiTaskButtonProps {
@@ -27,6 +27,7 @@ export default function MultiTaskButton({ activeTab, setActiveTab, isInGame = fa
     { id: 'friends', icon: Users, label: 'Friends', color: 'bg-green-500' },
     {id: 'community', icon: Globe, label: 'Community', color: 'bg-purple-500'},
     {id: 'alin', icon: MapPin, label: 'Alin Map', color: 'bg-blue-600'},
+    {id: 'notifications', icon: Bell, label: 'Alerts', color: 'bg-red-500'},
     ...(isInGame && onFeedback ? [{id: 'feedback', icon: Star, label: 'Feedback', color: 'bg-amber-500'}] : []),
   ];
 

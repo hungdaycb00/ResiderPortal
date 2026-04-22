@@ -1,5 +1,5 @@
 import React from 'react';
-import { normalizeImageUrl } from '../../services/externalApi';
+import { normalizeImageUrl, getBaseUrl } from '../../services/externalApi';
 import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -45,7 +45,7 @@ interface BottomSheetProps {
     panY: any;
     scale: any;
     externalApi: any;
-    onOpenChat?: (id: string, name: string) => void;
+    onOpenChat?: (id: string, name: string, avatar?: string) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     setSentFriendRequests: (fn: (prev: string[]) => string[]) => void;
     handleUpdateRadius: (v: number) => void;
@@ -64,6 +64,8 @@ interface BottomSheetProps {
     setMyStatus: (v: string) => void;
     setMyDisplayName: (v: string) => void;
     setIsVisibleOnMap: (v: boolean) => void;
+    myAvatarUrl: string;
+    setMyAvatarUrl: (v: string) => void;
     setFriendIdInput: (v: string) => void;
     setSocialSection: (v: 'friends' | 'nearby' | 'recent' | 'blocked') => void;
     setIsCreatingPost: (v: boolean) => void;
@@ -240,8 +242,55 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsEditingStatus, setIsEditingName, setStatusInput, setNameInput, setMyStatus, setMyDisplayName,
         setIsVisibleOnMap, setFriendIdInput, setSocialSection, setSentFriendRequests,
         setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
-        handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius
+        handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
+        myAvatarUrl, setMyAvatarUrl
     } = props;
+
+    const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        if (file.size > 1024 * 1024) {
+            showNotification?.("Ảnh tải lên không được vượt quá 1MB", "error");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const res = await fetch(`${getBaseUrl()}/api/profile/upload-avatar`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${user?.uid || ''}` },
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok && data.imageUrl) {
+                setMyAvatarUrl(data.imageUrl);
+                if (ws.current?.readyState === WebSocket.OPEN) {
+                    ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: data.imageUrl } }));
+                }
+                showNotification?.("Cập nhật ảnh đại diện thành công", "success");
+            } else {
+                showNotification?.(data.error || "Lỗi tải ảnh", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification?.("Lỗi kết nối khi tải ảnh", "error");
+        }
+        setShowAvatarMenu(false);
+    };
+
+    const handleDefaultAvatar = () => {
+        setMyAvatarUrl('');
+        if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: '' } }));
+        }
+        showNotification?.("Đã đổi về ảnh mặc định", "success");
+        setShowAvatarMenu(false);
+    };
 
     const DEGREES_TO_PX = 11100;
 
@@ -621,7 +670,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                                 </div>
                                                             </div>
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username); }}
+                                                                onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || ''); }}
                                                                 className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
                                                             >
                                                                 <MessageCircle className="w-5 h-5" />
@@ -743,10 +792,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         <h3 className="text-lg font-black text-gray-900 px-1 mb-2">My Profile</h3>
 
                                         {/* Avatar & Basic Info */}
-                                        <div className="flex items-start gap-4 mb-6 px-1">
-                                            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => showNotification?.("Chức năng đổi ảnh đại diện sẽ sớm ra mắt!", "info")}>
+                                        <div className="flex items-start gap-4 mb-6 px-1 relative">
+                                            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => setShowAvatarMenu(!showAvatarMenu)}>
                                                 <img
-                                                    src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
+                                                    src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
                                                     alt="Avatar"
                                                     className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
                                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`; }}
@@ -755,6 +804,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                     <Edit className="w-6 h-6 text-white drop-shadow-md" />
                                                 </div>
                                             </div>
+                                            
+                                            {/* Avatar Menu */}
+                                            {showAvatarMenu && (
+                                                <div className="absolute top-20 left-1 bg-white shadow-xl rounded-xl border border-gray-200 p-1.5 z-50 flex flex-col min-w-[140px] animate-in fade-in zoom-in duration-200">
+                                                    <button onClick={() => avatarInputRef.current?.click()} className="text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">Tải ảnh lên</button>
+                                                    <button onClick={handleDefaultAvatar} className="text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">Ảnh mặc định</button>
+                                                </div>
+                                            )}
+                                            <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
+
                                             <div className="flex-1 min-w-0 pt-1">
                                                 {isEditingName ? (
                                                     <div className="flex gap-2 mb-2">
@@ -951,35 +1010,65 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                                 onChange={(e) => setPostTitle(e.target.value.substring(0, 50))}
                                                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 outline-none transition-all"
                                                             />
+                                                            
+                                                            {previewUrls.length > 0 && (
+                                                                <div className="flex gap-2 overflow-x-auto py-2 px-1">
+                                                                    {previewUrls.map((url, i) => (
+                                                                        <div key={i} className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-gray-200">
+                                                                            <img src={url} className="w-full h-full object-cover" />
+                                                                            <button onClick={() => {
+                                                                                const newImages = [...selectedImages];
+                                                                                newImages.splice(i, 1);
+                                                                                setSelectedImages(newImages);
+                                                                                const newUrls = [...previewUrls];
+                                                                                URL.revokeObjectURL(newUrls[i]);
+                                                                                newUrls.splice(i, 1);
+                                                                                setPreviewUrls(newUrls);
+                                                                            }} className="absolute top-1 right-1 bg-black/50 rounded-full p-0.5 text-white">
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
                                                             <p className="text-[10px] text-right text-gray-400">{postTitle.length}/50</p>
                                                             <div className="flex gap-2">
-                                                                <label className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95">
-                                                                    <ImageIcon className="w-4 h-4" /> Add Photos & Post
+                                                                <label className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 border border-gray-200">
+                                                                    <ImageIcon className="w-4 h-4" /> Add Photos
                                                                     <input
                                                                         type="file"
                                                                         hidden
                                                                         accept="image/png,image/jpeg,image/webp"
                                                                         multiple
-                                                                        onChange={(e) => {
-                                                                            const files = Array.from(e.target.files || []) as File[];
-                                                                            handleCreatePost(files);
-                                                                        }}
+                                                                        onChange={handleImageSelect}
                                                                     />
                                                                 </label>
+                                                            </div>
+                                                            <div className="flex gap-2 mt-3 pt-2 border-t border-gray-200/60">
                                                                 <button
-                                                                    onClick={() => handleCreatePost([])}
-                                                                    className="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                                                                    onClick={() => { 
+                                                                        setIsCreatingPost(false); 
+                                                                        setPostTitle(''); 
+                                                                        setSelectedImages([]);
+                                                                        setPreviewUrls([]);
+                                                                    }}
+                                                                    className="flex-1 text-gray-500 hover:bg-gray-200 bg-gray-100 rounded-xl text-xs font-bold py-2.5 transition-colors"
                                                                 >
-                                                                    Text Only
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        handleCreatePost(selectedImages);
+                                                                        setSelectedImages([]);
+                                                                        setPreviewUrls([]);
+                                                                    }}
+                                                                    disabled={!postTitle.trim() && selectedImages.length === 0}
+                                                                    className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                                                                >
+                                                                    {isSavingPost ? 'Posting...' : 'Post'}
                                                                 </button>
                                                             </div>
-                                                            <button
-                                                                onClick={() => { setIsCreatingPost(false); setPostTitle(''); }}
-                                                                className="w-full text-gray-400 hover:text-gray-600 text-xs font-medium py-1 transition-colors"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                            {isSavingPost && <p className="text-[10px] text-blue-500 text-center animate-pulse">Posting...</p>}
                                                         </div>
                                                     )}
                                                 </div>
