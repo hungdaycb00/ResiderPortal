@@ -616,6 +616,19 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
         }
     }, [user?.photoURL, user?.displayName, currentProvince]);
 
+    const handleTabClick = (tabId: string) => {
+        setSelectedUser(null);
+        if (tabId === 'profile') {
+            setActiveTab('info');
+        }
+        if (mainTab === tabId) {
+            setIsSheetExpanded(!isSheetExpanded);
+        } else {
+            setMainTab(tabId);
+            setIsSheetExpanded(true);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar (Mobile First & Sticky Header on PC) */}
@@ -635,12 +648,12 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         value={searchTag}
                         onChange={(e) => setSearchTag(e.target.value)}
                     />
-                    <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => { setSelectedUser(null); setMainTab('profile'); setActiveTab('info'); setIsSheetExpanded(true); }}>
+                    <div className="ml-2 pl-2 border-l border-gray-300 flex items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => handleTabClick('profile')}>
                         <MapPin className="w-4 h-4 text-blue-500" />
                         <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap truncate max-w-[80px] sm:max-w-[100px] hidden sm:block">{currentProvince || 'Locating...'}</span>
                     </div>
                     {/* User Avatar Inside Search */}
-                    <button onClick={() => { setSelectedUser(null); setMainTab('profile'); setActiveTab('info'); setIsSheetExpanded(true); }} className="ml-2 sm:ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
+                    <button onClick={() => handleTabClick('profile')} className="ml-2 sm:ml-3 shrink-0 active:scale-95 transition-transform overflow-hidden rounded-full border-2 border-blue-500 shadow-sm">
                         <img
                             src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
                             alt="Me"
@@ -1051,19 +1064,19 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 </div>
 
                 <div className="flex flex-col gap-6">
-                    <button onClick={() => { setSelectedUser(null); setMainTab('discover'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                    <button onClick={() => handleTabClick('discover')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <Navigation className={`w-6 h-6 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Explore</span>
                     </button>
-                    <button onClick={() => { setSelectedUser(null); setMainTab('nearby'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                    <button onClick={() => handleTabClick('nearby')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <Compass className={`w-6 h-6 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Nearby</span>
                     </button>
-                    <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                    <button onClick={() => handleTabClick('friends')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <UserPlus className={`w-6 h-6 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Social</span>
                     </button>
-                    <button onClick={() => { setSelectedUser(null); setMainTab('profile'); setActiveTab('info'); setIsSheetExpanded(true); }} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                    <button onClick={() => handleTabClick('profile')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <User className={`w-6 h-6 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Profile</span>
                     </button>
@@ -1072,19 +1085,19 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
             {/* Mobile Bottom Navigation */}
             <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pointer-events-auto">
-                <button onClick={() => { setSelectedUser(null); setMainTab('discover'); setIsSheetExpanded(false); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <Navigation className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Explore</span>
                 </button>
-                <button onClick={() => { setSelectedUser(null); setMainTab('nearby'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                <button onClick={() => handleTabClick('nearby')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <Compass className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Nearby</span>
                 </button>
-                <button onClick={() => { setSelectedUser(null); setMainTab('friends'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <UserPlus className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Social</span>
                 </button>
-                <button onClick={() => { setSelectedUser(null); setMainTab('profile'); setActiveTab('info'); setIsSheetExpanded(true); }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <User className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Profile</span>
                 </button>
