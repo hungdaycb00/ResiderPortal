@@ -752,6 +752,7 @@ export default function App() {
             showNotification={showNotification}
             friends={fetchedFriends}
             initialMainTab={activeTab === 'notifications' ? 'notifications' : 'discover'}
+            onTabChange={(tab) => setActiveTab(tab as any)}
             onOpenChat={(id: string, name: string, avatar?: string) => {
               setChatTargetUser({ id, name, avatarUrl: avatar });
               setIsChatOpen(true);

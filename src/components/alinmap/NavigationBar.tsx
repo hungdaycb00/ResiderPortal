@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell } from 'lucide-react';
+import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2 } from 'lucide-react';
 
 interface NavigationBarProps {
     mainTab: string;
@@ -31,6 +31,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         <User className={`w-6 h-6 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Profile</span>
                     </button>
+                    <button onClick={() => handleTabClick('creator')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <Gamepad2 className={`w-6 h-6 ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
+                        <span className={`text-[9px] font-bold ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Creator</span>
+                    </button>
                 </div>
             </div>
 
@@ -47,6 +51,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                 <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <User className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Profile</span>
+                </button>
+                <button onClick={() => handleTabClick('creator')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <Gamepad2 className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Creator</span>
                 </button>
             </div>
         </>

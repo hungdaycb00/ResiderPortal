@@ -8,7 +8,7 @@ import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab, handlePlayGame }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab, handlePlayGame, onTabChange }) => {
     const API_BASE = getBaseUrl();
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
@@ -463,6 +463,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
     const handleTabClick = (tabId: string) => {
         setSelectedUser(null);
+        if (tabId === 'creator') {
+            if (onTabChange) onTabChange('creator');
+            return;
+        }
         if (tabId === 'profile') { setActiveTab('info'); }
         if (mainTab === tabId) { setIsSheetExpanded(!isSheetExpanded); }
         else { setMainTab(tabId as any); setIsSheetExpanded(true); }
@@ -627,6 +631,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 setIsCreatingPost={setIsCreatingPost} setPostTitle={setPostTitle}
                 handleAddFriend={handleAddFriend} handleMessage={handleMessage}
                 handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
+                handlePlayGame={handlePlayGame}
             />
         </div>
     );

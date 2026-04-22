@@ -149,10 +149,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setShowAvatarMenu(false);
     };
 
-    // Instant Search
     const [searchResults, setSearchResults] = React.useState<{ posts: any[], users: any[], games?: any[] }>({ posts: [], users: [], games: [] });
     const [isSearching, setIsSearching] = React.useState(false);
     const [showSearchResults, setShowSearchResults] = React.useState(false);
+    const [panelWidth, setPanelWidth] = React.useState(400);
     const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const API_BASE_SEARCH = getBaseUrl();
@@ -197,7 +197,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     return (
         <>
-            <div className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 md:w-[400px] pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-20 bottom-[60px] overflow-hidden'}`}>
+            <div 
+                className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-20 bottom-[60px] overflow-hidden w-full'}`}
+                style={isDesktop ? { width: panelWidth } : {}}
+            >
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
@@ -228,6 +231,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     >
                         {isSheetExpanded ? <ChevronLeft className="w-4 h-4 ml-[-4px]" /> : <ChevronRight className="w-4 h-4 ml-[-4px]" />}
                     </button>
+
+                    {/* PC Resize Handle */}
+                    {isDesktop && isSheetExpanded && (
+                        <motion.div
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
+                            dragElastic={0}
+                            dragMomentum={false}
+                            onDrag={(e, info) => {
+                                setPanelWidth(prev => Math.min(Math.max(320, prev + info.delta.x), 800));
+                            }}
+                            className="absolute top-0 right-[-4px] bottom-0 w-2 cursor-col-resize hover:bg-blue-500/30 z-[160] transition-colors"
+                        />
+                    )}
 
                     {/* Header Part (Search & Handle) */}
                     <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
@@ -262,7 +279,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] scrollbar-hide relative z-[100]">
+                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar" style={{ direction: 'rtl' }}>
+                      <div style={{ direction: 'ltr' }}>
                         {/* Instant Search Results Dropdown */}
                         {showSearchResults && searchTag.trim().length >= 2 && !selectedUser && (
                             <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -432,6 +450,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 )}
                             </div>
                         )}
+                      </div>
                     </div>
                 </motion.div>
             </div>

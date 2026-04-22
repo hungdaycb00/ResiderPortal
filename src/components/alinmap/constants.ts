@@ -13,6 +13,8 @@ export interface AlinMapProps {
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     initialMainTab?: string;
+    handlePlayGame?: (game: any) => void;
+    onTabChange?: (tab: string) => void;
 }
 
 export interface SpatialNodeProps {

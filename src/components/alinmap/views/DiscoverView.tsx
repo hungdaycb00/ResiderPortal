@@ -33,7 +33,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
             {uniqueHighRated.length > 0 && (
                 <section className="mb-2">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[20px] font-black flex items-center gap-2 uppercase tracking-tighter italic border-l-4 border-yellow-400 pl-3">
+                        <h3 className="text-[20px] font-black text-gray-900 flex items-center gap-2 uppercase tracking-tighter italic border-l-4 border-yellow-400 pl-3">
                             <Trophy className="w-5 h-5 text-yellow-400" />
                             Featured Games
                         </h3>
@@ -43,19 +43,19 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                             <div 
                                 key={idx} 
                                 onClick={() => handlePlayGame && handlePlayGame(game)}
-                                className="snap-start shrink-0 w-[280px] h-[160px] rounded-3xl overflow-hidden relative transition-transform active:scale-[0.98] bg-[#1a1d24] shadow-lg cursor-pointer"
+                                className="snap-start shrink-0 w-[280px] h-[160px] rounded-3xl overflow-hidden relative transition-transform active:scale-[0.98] bg-gray-50 border border-gray-100 shadow-sm cursor-pointer"
                             >
                                 {game.image ? (
-                                    <img src={normalizeImageUrl(game.image)} className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none" alt="" />
+                                    <img src={normalizeImageUrl(game.image)} className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none" alt="" />
                                 ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10" />
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#13151a] via-[#13151a]/20 to-transparent opacity-90 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent opacity-100 pointer-events-none" />
                                 <div className="absolute bottom-0 left-0 w-full p-4 z-10 pointer-events-none">
                                     <div className="px-2 py-1 bg-yellow-400 text-black rounded-full text-[8px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 mb-1.5">
                                         <Trophy className="w-2.5 h-2.5" /> Featured {game.score ? `• ${game.score}/10` : '🔥'}
                                     </div>
-                                    <h1 className="text-xl font-black text-white tracking-tight leading-none drop-shadow-md truncate">
+                                    <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none truncate">
                                         {game.title}
                                     </h1>
                                 </div>
@@ -69,6 +69,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
             <GameSlider
                 title="New Games"
                 icon={<Plus className="w-5 h-5 text-purple-400" />}
+                lightMode
             >
                 {[...games].reverse().slice(0, 10).map((game, i) => (
                     <div key={i} className="w-[180px] sm:w-[220px]">
@@ -77,6 +78,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                             image={normalizeImageUrl(game.image || '')}
                             logoStyle={game.logoStyle || "text-white"}
                             onClick={() => handlePlayGame && handlePlayGame(game)}
+                            lightMode
                         />
                     </div>
                 ))}
@@ -96,6 +98,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                         <GameSlider
                             title={cat.name}
                             icon={cat.icon}
+                            lightMode
                         >
                             {catGames.map((game, i) => (
                                 <div key={i} className="w-[180px] sm:w-[220px]">
@@ -104,6 +107,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                                         image={normalizeImageUrl(game.image || '')}
                                         logoStyle={game.logoStyle || "text-white"}
                                         onClick={() => handlePlayGame && handlePlayGame(game)}
+                                        lightMode
                                     />
                                 </div>
                             ))}

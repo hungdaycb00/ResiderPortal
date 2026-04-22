@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check } from 'lucide-react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -97,15 +97,30 @@ const MapControls: React.FC<MapControlsProps> = ({
                 className="absolute top-28 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
                 onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
             >
-                <div className="flex items-center gap-2 px-1">
-                    {weatherData && <span className="text-xl">{weatherData.icon}</span>}
-                    <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-black text-gray-900 leading-tight truncate">
-                            {currentProvince || (weatherData ? `${weatherData.temp}°C` : 'Location')}
-                        </p>
-                        <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase truncate">
-                            {weatherData ? weatherData.desc : 'Unknown Weather'}
-                        </p>
+                <div className="flex items-center justify-between gap-2 px-1">
+                    <div className="flex items-center gap-2">
+                        {weatherData && <span className="text-xl">{weatherData.icon}</span>}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-black text-gray-900 leading-tight truncate">
+                                {currentProvince || (weatherData ? `${weatherData.temp}°C` : 'Location')}
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                                <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase truncate">
+                                    {weatherData ? weatherData.desc : 'Unknown Weather'}
+                                </p>
+                                {!isWidgetExpanded && myObfPos && (
+                                    <>
+                                        <span className="text-gray-300 text-[10px]">•</span>
+                                        <p className="text-[9px] font-mono font-bold text-gray-400">
+                                            {myObfPos.lat.toFixed(4)}, {myObfPos.lng.toFixed(4)}
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-gray-400">
+                        {isWidgetExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
                 </div>
 
