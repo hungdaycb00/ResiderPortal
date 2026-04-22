@@ -28,6 +28,15 @@ import AuthModal from './components/AuthModal';
 import RoomListModal from './components/RoomListModal';
 import AlinMap from './components/AlinMap';
 
+import AppHeader from './components/AppHeader';
+import HomeTab from './components/tabs/HomeTab';
+import CategoriesTab from './components/tabs/CategoriesTab';
+import CommunityTab from './components/tabs/CommunityTab';
+import SupportTab from './components/tabs/SupportTab';
+import ReviewModal from './components/ReviewModal';
+import GameIFrame from './components/GameIFrame';
+
+
 export type { User };
 
 export default function App() {
@@ -95,47 +104,6 @@ export default function App() {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   // Hero Carousel State
-  const heroScrollRef = useRef<HTMLDivElement>(null);
-  const heroDragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
-
-  const scrollHero = (direction: 'left' | 'right') => {
-    if (heroScrollRef.current) {
-      const { scrollLeft, clientWidth } = heroScrollRef.current;
-      const scrollTo = direction === 'left' 
-        ? scrollLeft - clientWidth * 0.8 
-        : scrollLeft + clientWidth * 0.8;
-      
-      heroScrollRef.current.scrollTo({
-        left: scrollTo,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleHeroPointerDown = (e: React.PointerEvent) => {
-    if (heroScrollRef.current) {
-      heroDragState.current = { 
-        isDown: true, 
-        startX: e.pageX, 
-        scrollLeft: heroScrollRef.current.scrollLeft,
-        moved: false
-      };
-    }
-  };
-
-  const handleHeroPointerMove = (e: React.PointerEvent) => {
-    if (!heroDragState.current.isDown || !heroScrollRef.current) return;
-    const x = e.pageX;
-    const walk = (heroDragState.current.startX - x) * 2;
-    if (Math.abs(walk) > 5) {
-      heroDragState.current.moved = true; 
-    }
-    heroScrollRef.current.scrollLeft = heroDragState.current.scrollLeft + walk;
-  };
-
-  const handleHeroPointerUpOrLeave = () => {
-    heroDragState.current.isDown = false;
-  };
 
   const AVAILABLE_CATEGORIES = [
     { id: 'puzzle', name: 'Puzzle', icon: <Brain className="w-3 h-3" /> },
@@ -685,558 +653,60 @@ export default function App() {
       </div>
 
       {/* Header */}
-      <header className="bg-[#1a1d24]/80 backdrop-blur-md border-b border-gray-800/60 sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* Left: Logo & Status */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
-              {/* Logo deleted by user request */}
-            </div>
-
-            {/* Alin Social Access */}
-            <button
-              onClick={() => setActiveTab('alin')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-[10px] sm:text-xs transition-all border active:scale-95 group ${
-                activeTab === 'alin' 
-                ? 'bg-blue-600 text-white border-blue-500' 
-                : 'bg-blue-600/10 hover:bg-blue-600/30 text-blue-400 border-blue-500/30'
-              }`}
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="hidden xs:inline text-[8px] font-black tracking-widest uppercase text-white">Alin Map</span>
-            </button>
-          </div>
-
-          {/* Middle: Search (Icon on Right) */}
-          <div className="flex-1 max-w-2xl relative">
-            <div className="relative group">
-              <input
-                type="text"
-                placeholder="Search for games..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#252830] text-white rounded-xl pl-4 pr-24 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-gray-500 border border-transparent hover:border-gray-700 focus:bg-[#2a2d36]"
-              />
-              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <button
-                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                  className={`p-1.5 rounded-lg transition-colors ${isFilterExpanded || selectedCategories.length > 0 ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
-                  title="Filters"
-                >
-                  <Filter className="w-4 h-4" />
-                </button>
-                <div className="w-px h-4 bg-gray-700 mx-0.5" />
-                <button className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
-                  <Search className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Expandable Filter Area - Absolute Dropdown */}
-            <AnimatePresence>
-              {isFilterExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-[#1a1d24] border border-gray-700/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-4 z-[60] backdrop-blur-xl"
-                >
-                  <div className="flex flex-wrap gap-2">
-                    {AVAILABLE_CATEGORIES.map(cat => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          setSelectedCategories(prev =>
-                            prev.includes(cat.id) ? prev.filter(c => c !== cat.id) : [...prev, cat.id]
-                          );
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${selectedCategories.includes(cat.id)
-                            ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20'
-                            : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:border-gray-600'
-                          }`}
-                      >
-                        {cat.icon}
-                        {cat.name.toUpperCase()}
-                      </button>
-                    ))}
-                    {isSearchActive && (
-                      <button
-                        onClick={() => {
-                          setSearchQuery('');
-                          setSelectedCategories([]);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-red-600/10 border border-red-500/20 text-red-400 hover:bg-red-600/20 transition-all"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        CLEAR
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Right: User Profile & Popover */}
-          <div className="flex items-center gap-4">
-            {user && (
-              <button
-                onClick={() => setActiveTab(prev => prev === 'creator' ? 'home' : 'creator')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-[10px] sm:text-xs transition-all border active:scale-95 group ${
-                  activeTab === 'creator' 
-                  ? 'bg-purple-600 text-white border-purple-500' 
-                  : 'bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border-purple-500/30'
-                }`}
-              >
-                <Plus className={`w-4 h-4 transition-transform ${activeTab === 'creator' ? 'rotate-45' : 'group-hover:rotate-90'}`} />
-                <span className="hidden xs:inline text-[8px] font-black tracking-widest uppercase">Create</span>
-              </button>
-            )}
-
-            <div className="relative flex flex-col items-center justify-center">
-              {!user ? (
-                <button 
-                  onClick={() => setIsAuthOpen(true)}
-                  className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-sm uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95 flex items-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" /> LOGIN
-                </button>
-              ) : (
-                <>
-                  <button 
-                    onClick={() => setIsUserInfoOpen(!isUserInfoOpen)}
-                    className="relative group transition-all active:scale-95"
-                  >
-                    <img 
-                      src={normalizeImageUrl(user.photoURL) || `https://i.pravatar.cc/150?u=${user.uid}`} 
-                      alt="Avatar" 
-                      className="w-10 h-10 rounded-2xl border-2 border-blue-500/20 group-hover:border-blue-500/50 transition-colors object-cover"
-                    />
-                  </button>
-                  
-                  {/* Gold Panel Below */}
-                  <div className="mt-1 flex items-center gap-1.5 bg-[#252830] border border-gray-800 rounded-full px-2.5 py-0.5 shadow-lg pointer-events-none translate-y-[-2px]">
-                    <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                    <span className="text-[9px] font-black text-white">{userStats?.gold || 0}</span>
-                  </div>
-
-                  {/* Popover Logic */}
-                  <UserInfoModal 
-                    isOpen={isUserInfoOpen} 
-                    onClose={() => setIsUserInfoOpen(false)}
-                    user={user}
-                    onLogin={() => setIsAuthOpen(true)}
-                    onLogout={logout}
-                    onManageGames={() => {
-                      setActiveTab('creator');
-                      setIsUserInfoOpen(false);
-                      setIsMyGamesOverlayOpen(true);
-                    }}
-                    userStats={userStats}
-                    onUpdateAvatar={handleUpdateAvatar}
-                  />
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+            <AppHeader
+        user={user}
+        userStats={userStats}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        isFilterExpanded={isFilterExpanded}
+        setIsFilterExpanded={setIsFilterExpanded}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+        isSearchActive={isSearchActive}
+        AVAILABLE_CATEGORIES={AVAILABLE_CATEGORIES}
+        isUserInfoOpen={isUserInfoOpen}
+        setIsUserInfoOpen={setIsUserInfoOpen}
+        setIsAuthOpen={setIsAuthOpen}
+        logout={logout}
+        handleUpdateAvatar={handleUpdateAvatar}
+        setIsMyGamesOverlayOpen={setIsMyGamesOverlayOpen}
+      />
 
       {/* Main Content */}
       <main className="max-w-[1400px] mx-auto px-4 py-4 md:py-8">
         {activeTab === 'home' && (
-          <div className="flex flex-col gap-3 md:gap-16 pb-20">
-            {/* Search Results Section */}
-            {isSearchActive && (
-              <section className="animate-in fade-in slide-in-from-top-4 duration-500">
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <h3 className="text-xl md:text-2xl font-black flex items-center gap-2 uppercase tracking-tighter italic">
-                    <Search className="w-6 h-6 text-blue-400" />
-                    Search Results ({filteredGames.length})
-                  </h3>
-                  {isSearchActive && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedCategories([]);
-                      }}
-                      className="text-xs font-bold text-gray-500 hover:text-red-400 transition-colors"
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
-                {filteredGames.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                    {filteredGames.map((game, i) => (
-                      <GameCard
-                        key={i}
-                        title={game.title}
-                        image={game.image}
-                        logoStyle={game.logoStyle || "text-white"}
-                        onClick={() => handlePlayGame(game)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-[#1a1d24] border border-gray-800 rounded-3xl p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-8 h-8 text-gray-600" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-300 mb-1">No games found</h4>
-                    <p className="text-sm text-gray-500">Try changing your search query or filters</p>
-                  </div>
-                )}
-                <div className="h-px bg-gray-800/50 mt-10 md:mt-16" />
-              </section>
-            )}
-
-            {/* Hero Carousel - Games with score > 8 */}
-            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 mb-8 md:mb-12">
-              {(() => {
-                const highRatedGames = [...fetchedGames, ...games].filter(g => (g.score || 0) >= 8 || g.id === 'quiz-game-root');
-                const uniqueHighRated = Array.from(new Map(highRatedGames.map(g => [g.id || g.title, g])).values())
-                  .sort((a, b) => (b.score || 0) - (a.score || 0));
-
-                const isSingleGame = uniqueHighRated.length === 1;
-
-                if (uniqueHighRated.length > 0) {
-                  return (
-                    <div className="relative group/carousel px-4 md:px-0">
-                      <div className="flex items-center justify-between mb-4 mt-2">
-                        <h3 className="text-xl md:text-2xl font-black flex items-center gap-2 uppercase tracking-tighter italic border-l-4 border-yellow-400 pl-3">
-                          <Trophy className="w-6 h-6 text-yellow-400" />
-                          Featured Games
-                        </h3>
-                        {!isSingleGame && (
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => scrollHero('left')}
-                              className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 transition-all active:scale-95"
-                            >
-                              <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            <button 
-                              onClick={() => scrollHero('right')}
-                              className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 transition-all active:scale-95"
-                            >
-                              <ChevronRight className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div 
-                        ref={heroScrollRef}
-                        onPointerDown={handleHeroPointerDown}
-                        onPointerMove={handleHeroPointerMove}
-                        onPointerUp={handleHeroPointerUpOrLeave}
-                        onPointerLeave={handleHeroPointerUpOrLeave}
-                        onPointerCancel={handleHeroPointerUpOrLeave}
-                        className={`overflow-x-auto flex gap-4 md:gap-6 pb-4 snap-x snap-mandatory custom-scrollbar select-none cursor-grab active:cursor-grabbing ${isSingleGame ? 'justify-center' : ''}`}
-                        style={{ scrollBehavior: 'smooth', touchAction: 'pan-y' }}
-                      >
-                        {uniqueHighRated.map((game, idx) => (
-                          <div
-                            key={idx}
-                            onClick={(e) => {
-                              if (heroDragState.current.moved) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                heroDragState.current.moved = false; // reset for next time
-                                return;
-                              }
-                              handlePlayGame(game);
-                            }}
-                            className={`shrink-0 snap-center ${isSingleGame ? 'w-full' : 'w-full md:w-[85%] lg:w-[70%]'} h-[200px] sm:h-[300px] md:h-[400px] rounded-3xl overflow-hidden relative transition-transform active:scale-[0.98] bg-[#1a1d24] shadow-2xl`}
-                          >
-                            {game.image ? (
-                              <img src={game.image} draggable={false} className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none" alt="" />
-                            ) : (
-                              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#13151a] via-[#13151a]/20 to-transparent opacity-90 pointer-events-none" />
-
-                            <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 z-10 pointer-events-none">
-                              <div className="flex items-center gap-4 pointer-events-auto">
-                                <button className="w-14 h-14 md:w-20 md:h-20 bg-white text-black rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-110 active:scale-90 flex-shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if(!heroDragState.current.moved) handlePlayGame(game);
-                                  }}
-                                >
-                                  <Play className="w-6 h-6 md:w-10 md:h-10 fill-current ml-1" />
-                                </button>
-                                <div className="min-w-0">
-                                  <div className="px-2 py-1 md:px-3 md:py-1 bg-yellow-400 text-black rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-wider shadow-lg shadow-yellow-400/20 inline-flex items-center gap-1.5 mb-2">
-                                    <Trophy className="w-3 h-3" /> Featured {game.score ? `• ${game.score}/10` : '🔥'}
-                                  </div>
-                                  <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-white tracking-tight leading-none drop-shadow-2xl truncate">
-                                    {game.title}
-                                  </h1>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-            </section>
-
-            {/* Recently Played */}
-            {recentlyPlayed.length > 0 && (
-              <GameSlider 
-                title="Recently Played" 
-                icon={<RefreshCw className="w-6 h-6 text-blue-400" />}
-              >
-                {recentlyPlayed.map((game, i) => (
-                  <div key={i} className="w-[200px] sm:w-[240px] md:w-[320px]">
-                    <GameCard
-                      title={game.title}
-                      image={game.image}
-                      logoStyle={game.logoStyle || "text-white"}
-                      onClick={() => handlePlayGame(game)}
-                    />
-                  </div>
-                ))}
-              </GameSlider>
-            )}
-
-            {/* New Games */}
-            <GameSlider 
-              title="New Games" 
-              icon={<Plus className="w-6 h-6 text-purple-400" />}
-            >
-              {[...fetchedGames].reverse().slice(0, 10).map((game, i) => (
-                <div key={i} className="w-[200px] sm:w-[240px] md:w-[320px]">
-                  <GameCard
-                    title={game.title}
-                    image={game.image}
-                    logoStyle={game.logoStyle || "text-white"}
-                    onClick={() => handlePlayGame(game)}
-                  />
-                </div>
-              ))}
-            </GameSlider>
-
-            {/* Categories Sections */}
-            {AVAILABLE_CATEGORIES.map((cat) => {
-              const keywordsMap: any = {
-                puzzle: ['puzzle', 'quiz', 'brain', 'logic'],
-                action: ['action', 'sword', 'combat', 'battle'],
-                strategy: ['strategy', 'build', 'defense']
-              };
-              const catId = cat.id;
-              const catGames = (fetchedGames || []).concat(games).filter(g =>
-                ((g.category || '').toLowerCase().includes(catId)) ||
-                (keywordsMap[catId] && keywordsMap[catId].some((k: string) => (g.title || '').toLowerCase().includes(k)))
-              );
-
-              if (catGames.length === 0) return null;
-
-              return (
-                <div key={cat.id} id={`cat-${cat.id}`}>
-                  <GameSlider 
-                    title={cat.name} 
-                    icon={cat.icon}
-                  >
-                    {catGames.map((game, i) => (
-                      <div key={i} className="w-[200px] sm:w-[240px] md:w-[320px]">
-                        <GameCard
-                          title={game.title}
-                          image={game.image}
-                          logoStyle={game.logoStyle || "text-white"}
-                          onClick={() => handlePlayGame(game)}
-                        />
-                      </div>
-                    ))}
-                  </GameSlider>
-                </div>
-              );
-            })}
-          </div>
+          <HomeTab
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            isSearchActive={isSearchActive}
+            filteredGames={filteredGames}
+            fetchedGames={fetchedGames}
+            recentlyPlayed={recentlyPlayed}
+            handlePlayGame={handlePlayGame}
+            AVAILABLE_CATEGORIES={AVAILABLE_CATEGORIES}
+          />
         )}
 
         {activeTab === 'categories' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            <h2 className="text-3xl font-black mb-8 flex items-center gap-2 uppercase tracking-tighter italic">
-              <Grid className="w-8 h-8 text-blue-400" />
-              Explore Categories
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {[
-                { name: 'Action', icon: <Sword className="w-8 h-8" />, color: 'from-orange-500 to-red-600', id: 'action' },
-                { name: 'Strategy', icon: <Shield className="w-8 h-8" />, color: 'from-blue-500 to-indigo-600', id: 'strategy' },
-                { name: 'Puzzle', icon: <Brain className="w-8 h-8" />, color: 'from-purple-500 to-pink-600', id: 'puzzle' },
-                { name: 'Racing', icon: <Zap className="w-8 h-8" />, color: 'from-yellow-500 to-orange-600', id: 'racing' },
-                { name: 'RPG', icon: <Trophy className="w-8 h-8" />, color: 'from-emerald-500 to-teal-600', id: 'rpg' },
-                { name: 'Multiplayer', icon: <Users className="w-8 h-8" />, color: 'from-cyan-500 to-blue-600', id: 'multiplayer' },
-              ].map((cat) => {
-                const keywordsMap: any = {
-                  puzzle: ['puzzle', 'quiz', 'brain', 'logic'],
-                  action: ['action', 'sword', 'combat', 'battle'],
-                  strategy: ['strategy', 'build', 'defense']
-                };
-                const catId = cat.id;
-                const catGames = (fetchedGames || []).concat(games).filter(g =>
-                  ((g.category || '').toLowerCase().includes(catId)) ||
-                  (keywordsMap[catId] && keywordsMap[catId].some((k: string) => (g.title || '').toLowerCase().includes(k)))
-                );
-                const count = catGames.length;
-                const displayGames = catGames.slice(0, 3);
-
-                return (
-                  <div
-                    key={cat.id}
-                    onClick={() => {
-                      setActiveTab('home');
-                      setTimeout(() => {
-                        document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' });
-                      }, 100);
-                    }}
-                    className="group cursor-pointer"
-                  >
-                    <div className={`aspect-square rounded-3xl bg-gradient-to-br ${cat.color} p-6 flex flex-col items-center justify-center transition-all group-hover:scale-[1.03] group-active:scale-95 shadow-2xl relative overflow-hidden`}>
-                      {/* Category Background Grid */}
-                      {displayGames.length > 0 && (
-                        <div className={`absolute inset-0 grid gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity category-grid-${displayGames.length}`}>
-                          {displayGames.map((g, i) => (
-                            <img key={i} src={g.image} className="w-full h-full object-cover" alt="" />
-                          ))}
-                        </div>
-                      )}
-                      
-                      {/* Glass Overlay */}
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] group-hover:bg-black/20 transition-colors" />
-                      
-                      <div className="relative z-10 flex flex-col items-center">
-                        <div className="bg-white/20 p-4 rounded-2xl mb-4 backdrop-blur-md shadow-lg">{cat.icon}</div>
-                        <h3 className="font-black text-xl uppercase tracking-tighter italic">{cat.name}</h3>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest">{count} Games</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <CategoriesTab
+            fetchedGames={fetchedGames}
+            setActiveTab={setActiveTab}
+          />
         )}
 
         {activeTab === 'community' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Users className="w-6 h-6 text-blue-400" />
-                Community Hub
-              </h2>
-              <button onClick={() => fetchExternalData()} className="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-white" title="Refresh">
-                <RefreshCw className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-4">
-                <div className="bg-[#1a1d24] border border-gray-800 rounded-2xl p-6">
-                  <h3 className="font-bold mb-4 flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-purple-400" />
-                    Recent Discussions
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { title: "Best strategy for Galaxy Runners?", author: "SpaceCadet", replies: 24, time: "2h ago" },
-                      { title: "New high score in Pixel Quest!", author: "RetroGamer", replies: 12, time: "5h ago" },
-                      { title: "Looking for a team for Dungeon Delve", author: "Knight99", replies: 8, time: "1d ago" },
-                    ].map((topic, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-800/50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-700">
-                        <div>
-                          <h4 className="font-medium text-blue-400">{topic.title}</h4>
-                          <p className="text-xs text-gray-500">by {topic.author} • {topic.time}</p>
-                        </div>
-                        <span className="text-xs font-bold text-gray-400 bg-gray-800 px-2 py-1 rounded-md">{topic.replies} replies</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-6">
-                <div className="bg-[#1a1d24] border border-gray-800 rounded-2xl p-6">
-                  <h3 className="font-bold mb-4">Online Now</h3>
-                  <div className="space-y-3">
-                    {fetchedFriends.length > 0 ? (
-                      fetchedFriends.map((friend, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="relative">
-                            <img src={friend.photoURL || `https://i.pravatar.cc/150?u=${i}`} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
-                            <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 ${friend.online ? 'bg-green-500' : 'bg-gray-500'} rounded-full border-2 border-[#1a1d24]`} />
-                          </div>
-                          <span className="text-sm font-medium text-gray-300">{friend.displayName || friend.name || `User_${i}`}</span>
-                        </div>
-                      ))
-                    ) : (
-                      [1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <div className="relative">
-                            <img src={`https://i.pravatar.cc/150?u=${i}`} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
-                            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1a1d24]" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-300">User_{i}42</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <CommunityTab
+            fetchedFriends={fetchedFriends}
+            fetchExternalData={fetchExternalData}
+          />
         )}
 
         {activeTab === 'support' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <HelpCircle className="w-6 h-6 text-blue-400" />
-              Help & Support
-            </h2>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#1a1d24] border border-gray-800 p-6 rounded-2xl text-center hover:border-blue-500/50 transition-colors cursor-pointer">
-                  <Mail className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-                  <h3 className="font-bold">Email Us</h3>
-                  <p className="text-xs text-gray-500 mt-1">support@resider.com</p>
-                </div>
-                <div className="bg-[#1a1d24] border border-gray-800 p-6 rounded-2xl text-center hover:border-purple-500/50 transition-colors cursor-pointer">
-                  <MessageCircle className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                  <h3 className="font-bold">Live Chat</h3>
-                  <p className="text-xs text-gray-500 mt-1">Available 24/7</p>
-                </div>
-              </div>
-              <div className="bg-[#1a1d24] border border-gray-800 rounded-2xl p-8">
-                <h3 className="text-lg font-bold mb-6">Send us a message</h3>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Name</label>
-                      <input type="text" className="w-full bg-[#252830] border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Your name" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Email</label>
-                      <input type="email" className="w-full bg-[#252830] border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Your email" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Message</label>
-                    <textarea className="w-full bg-[#252830] border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]" placeholder="How can we help?"></textarea>
-                  </div>
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-blue-500/20">
-                    Send Message
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
+          <SupportTab />
         )}
         {activeTab === 'creator' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1426,97 +896,13 @@ export default function App() {
       )}
 
 
-      {/* Review Modal */}
-      <AnimatePresence>
-        {showReviewModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setShowReviewModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#1a1d24] border border-gray-700/50 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
-            >
-              <h3 className="text-white font-bold text-lg text-center mb-1">Rate Game</h3>
-              <p className="text-gray-500 text-[11px] text-center mb-4">Your feedback helps improve game quality</p>
-
-              {/* Star Rating */}
-              <div className="flex justify-center gap-2 mb-4">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <button
-                    key={star}
-                    onMouseEnter={() => setReviewHover(star)}
-                    onMouseLeave={() => setReviewHover(0)}
-                    onClick={() => setReviewRating(star)}
-                    className="transition-transform hover:scale-125"
-                  >
-                    <Star
-                      className={`w-8 h-8 transition-colors ${star <= (reviewHover || reviewRating)
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-600'
-                        }`}
-                    />
-                  </button>
-                ))}
-              </div>
-
-              {/* Comment */}
-              <textarea
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                placeholder="Enter your feedback for this game (optional)..."
-                className="w-full bg-[#252830] border border-gray-700 rounded-xl p-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none h-20 mb-4"
-              />
-
-              {/* Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowReviewModal(false)}
-                  className="flex-1 py-2.5 bg-[#252830] text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-700 transition-colors"
-                >
-                  Skip
-                </button>
-                <button
-                  disabled={reviewRating === 0 || reviewSubmitting}
-                  onClick={async () => {
-                    if (reviewRating === 0 || !reviewGameId) return;
-                    setReviewSubmitting(true);
-                    try {
-                      await externalApi.request(`/api/games/${reviewGameId}/review`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                          rating: reviewRating,
-                          comment: reviewComment || null,
-                          playDuration: Math.floor((Date.now() - gameStartTime) / 1000)
-                        })
-                      });
-                      localStorage.setItem(`rated_game_${reviewGameId}`, 'true');
-                      showNotification('Thank you for your rating! ⭐', 'success');
-                    } catch (err: any) {
-                      showNotification(err.message || 'Error submitting rating', 'error');
-                    }
-                    setReviewSubmitting(false);
-                    setShowReviewModal(false);
-                  }}
-
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${reviewRating > 0
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }`}
-                >
-                  {reviewSubmitting ? 'Sending...' : 'Submit Rating'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        reviewGameId={reviewGameId}
+        gameStartTime={gameStartTime}
+        showNotification={showNotification}
+      />
 
       {/* Loading Overlay */}
       {isGameLoading && (
