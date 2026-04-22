@@ -93,7 +93,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         isReporting, reportReason, reportStatus, sentFriendRequests,
         isEditingStatus, isEditingName, statusInput, nameInput, isVisibleOnMap, friendIdInput, socialSection,
         isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
-        ws, panX, panY, scale, externalApi, onOpenChat, showNotification,
+        ws, panX, panY, scale, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setIsReporting, setReportReason, setReportStatus,
         setIsEditingStatus, setIsEditingName, setStatusInput, setNameInput, setMyStatus, setMyDisplayName,
