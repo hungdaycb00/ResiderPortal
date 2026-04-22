@@ -292,6 +292,50 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setShowAvatarMenu(false);
     };
 
+    // Instant Search
+    const [searchResults, setSearchResults] = React.useState<{ posts: any[], users: any[] }>({ posts: [], users: [] });
+    const [isSearching, setIsSearching] = React.useState(false);
+    const [showSearchResults, setShowSearchResults] = React.useState(false);
+    const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const API_BASE_SEARCH = getBaseUrl();
+
+    React.useEffect(() => {
+        if (!searchTag || searchTag.trim().length < 2) {
+            setSearchResults({ posts: [], users: [] });
+            setShowSearchResults(false);
+            return;
+        }
+        setIsSearching(true);
+        setShowSearchResults(true);
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(async () => {
+            try {
+                const resp = await fetch(`${API_BASE_SEARCH}/api/search?q=${encodeURIComponent(searchTag.trim())}`);
+                const data = await resp.json();
+                if (data.success) {
+                    // Merge nearby users matching tag
+                    const localUserMatches = nearbyUsers.filter(u =>
+                        (u.username || '').toLowerCase().includes(searchTag.toLowerCase()) ||
+                        (u.status || '').toLowerCase().includes(searchTag.toLowerCase())
+                    ).map(u => ({ id: u.id, displayName: u.username, avatar: u.avatar_url, status: u.status || '' }));
+
+                    // Deduplicate by id
+                    const allUsers = [...data.users];
+                    localUserMatches.forEach(lu => {
+                        if (!allUsers.find((u: any) => u.id === lu.id)) allUsers.push(lu);
+                    });
+
+                    setSearchResults({ posts: data.posts, users: allUsers.slice(0, 10) });
+                }
+            } catch (err) {
+                console.error('[Search]', err);
+            }
+            setIsSearching(false);
+        }, 300); // 300ms debounce like TikTok/FB
+        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    }, [searchTag]);
+
     const DEGREES_TO_PX = 11100;
 
     return (
@@ -362,6 +406,98 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] scrollbar-hide relative z-[100]">
+                        {/* Instant Search Results Dropdown */}
+                        {showSearchResults && searchTag.trim().length >= 2 && !selectedUser && (
+                            <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                {isSearching && (
+                                    <div className="flex items-center justify-center gap-2 py-4">
+                                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                                        <span className="text-xs text-gray-400 font-medium">Đang tìm kiếm...</span>
+                                    </div>
+                                )}
+
+                                {!isSearching && searchResults.users.length === 0 && searchResults.posts.length === 0 && (
+                                    <div className="text-center py-6">
+                                        <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                                        <p className="text-sm text-gray-400">Không tìm thấy kết quả cho "{searchTag}"</p>
+                                    </div>
+                                )}
+
+                                {/* Users Results */}
+                                {searchResults.users.length > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Users</p>
+                                        <div className="space-y-1">
+                                            {searchResults.users.map((u: any) => (
+                                                <button
+                                                    key={u.id}
+                                                    onClick={() => {
+                                                        // Try to find in nearbyUsers to select on map
+                                                        const mapUser = nearbyUsers.find(nu => nu.id === u.id);
+                                                        if (mapUser) {
+                                                            setSelectedUser(mapUser);
+                                                            setIsSheetExpanded(true);
+                                                        }
+                                                        setShowSearchResults(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                                >
+                                                    <img
+                                                        src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`}
+                                                        className="w-9 h-9 rounded-full object-cover bg-gray-100 shrink-0"
+                                                        alt=""
+                                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`; }}
+                                                    />
+                                                    <div className="flex-1 min-w-0 text-left">
+                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{u.displayName}</p>
+                                                        {u.status && <p className="text-[11px] text-gray-500 truncate">{u.status}</p>}
+                                                    </div>
+                                                    <User className="w-4 h-4 text-gray-300 shrink-0" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Posts Results */}
+                                {searchResults.posts.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Posts</p>
+                                        <div className="space-y-1">
+                                            {searchResults.posts.map((p: any) => (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => {
+                                                        // Navigate to the post author's profile
+                                                        if (p.author?.id) {
+                                                            const mapUser = nearbyUsers.find(nu => nu.id === p.author.id);
+                                                            if (mapUser) { setSelectedUser(mapUser); setActiveTab('posts'); }
+                                                        }
+                                                        setShowSearchResults(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                                >
+                                                    {p.images && p.images.length > 0 ? (
+                                                        <img src={normalizeImageUrl(p.images[0])} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
+                                                    ) : (
+                                                        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                                            <Edit className="w-4 h-4 text-blue-400" />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0 text-left">
+                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{p.title}</p>
+                                                        <p className="text-[11px] text-gray-500 truncate">
+                                                            {p.author?.name || 'User'} • {p.likeCount || 0} ❤️
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {selectedUser ? (
                             <div className="pt-2">
                                 <div className="flex items-start gap-4 mb-6">
@@ -960,9 +1096,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                 {/* User Games Section */}
                                                 {games && games.length > 0 && (
                                                     <div className="mt-2">
-                                                        <h4 className="text-[13px] font-bold text-gray-900 mb-3">🎮 My Games</h4>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="text-[13px] font-bold text-gray-900">🎮 My Games</h4>
+                                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{games.length}</span>
+                                                        </div>
                                                         <div className="space-y-2">
-                                                            {games.filter((g) => g.creatorId === user?.uid || g.creatorId === myUserId).map((g) => (
+                                                            {games.map((g) => (
                                                                 <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
                                                                     <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
                                                                         {g.thumbnail ? (
@@ -978,9 +1117,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                                     <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                                                 </div>
                                                             ))}
-                                                            {games.filter((g) => g.creatorId === user?.uid || g.creatorId === myUserId).length === 0 && (
-                                                                <p className="text-[12px] text-gray-400 text-center py-4">No games created yet.</p>
-                                                            )}
                                                         </div>
                                                     </div>
                                                 )}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -35,6 +35,17 @@ const MapControls: React.FC<MapControlsProps> = ({
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleUpdateRadius
 }) => {
+    const [copyToast, setCopyToast] = useState(false);
+
+    const handleCopyLocation = () => {
+        if (!myObfPos) return;
+        const text = `${myObfPos.lat.toFixed(5)}, ${myObfPos.lng.toFixed(5)}`;
+        navigator.clipboard.writeText(text).then(() => {
+            setCopyToast(true);
+            setTimeout(() => setCopyToast(false), 3000);
+        });
+    };
+
     return (
         <>
             {/* Floating Controls (Map Tools) */}
@@ -91,11 +102,36 @@ const MapControls: React.FC<MapControlsProps> = ({
                 )}
                 {myObfPos && (
                     <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full">
-                        <div>
-                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Encrypted Location</p>
+                        <div className="relative">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Location</p>
+                                <button
+                                    onClick={handleCopyLocation}
+                                    className="p-0.5 hover:bg-gray-200 rounded transition-colors active:scale-90"
+                                    title="Copy location"
+                                >
+                                    {copyToast ? (
+                                        <Check className="w-3 h-3 text-emerald-500" />
+                                    ) : (
+                                        <Copy className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                                    )}
+                                </button>
+                            </div>
                             <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
                                 {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
                             </p>
+                            <AnimatePresence>
+                                {copyToast && (
+                                    <motion.p
+                                        initial={{ opacity: 0, y: -4 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 4 }}
+                                        className="text-[9px] font-bold text-emerald-600 text-center mt-1"
+                                    >
+                                        ✓ Đã sao chép toạ độ
+                                    </motion.p>
+                                )}
+                            </AnimatePresence>
                         </div>
                         <div className="flex flex-col gap-1 border-t border-gray-200 pt-1.5 mt-0.5">
                             <input 

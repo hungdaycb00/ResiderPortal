@@ -34,6 +34,10 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
     const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
     const [myAvatarUrl, setMyAvatarUrl] = useState(user?.photoURL || '');
+    const [desktopSearchResults, setDesktopSearchResults] = useState<{ posts: any[], users: any[] }>({ posts: [], users: [] });
+    const [isSearchingDesktop, setIsSearchingDesktop] = useState(false);
+    const [showDesktopResults, setShowDesktopResults] = useState(false);
+    const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string } | null>(null);
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
@@ -458,6 +462,28 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
+    useEffect(() => {
+        if (!searchTag || searchTag.trim().length < 2 || !isDesktop) {
+            setDesktopSearchResults({ posts: [], users: [] });
+            setShowDesktopResults(false);
+            return;
+        }
+        setIsSearchingDesktop(true);
+        setShowDesktopResults(true);
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(async () => {
+            try {
+                const resp = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(searchTag.trim())}`);
+                const data = await resp.json();
+                if (data.success) {
+                    setDesktopSearchResults({ posts: data.posts, users: data.users });
+                }
+            } catch (err) { console.error('[Desktop Search]', err); }
+            setIsSearchingDesktop(false);
+        }, 300);
+        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    }, [searchTag, isDesktop]);
+
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
             {/* Header / Search Bar */}
@@ -488,6 +514,61 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                         />
                     </button>
                 </div>
+
+                {/* Desktop Search Results Dropdown */}
+                {showDesktopResults && isDesktop && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[70vh] overflow-y-auto z-[200]">
+                        {isSearchingDesktop ? (
+                            <div className="p-8 text-center">
+                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                <p className="text-xs text-gray-400 font-bold">Đang tìm kiếm...</p>
+                            </div>
+                        ) : (
+                            <div className="p-4">
+                                {desktopSearchResults.users.length === 0 && desktopSearchResults.posts.length === 0 ? (
+                                    <div className="py-8 text-center text-gray-400">
+                                        <p className="text-sm">Không tìm thấy kết quả nào</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {desktopSearchResults.users.length > 0 && (
+                                            <div className="mb-4">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Users</p>
+                                                {desktopSearchResults.users.map((u: any) => (
+                                                    <div key={u.id} onClick={() => { setSelectedUser(u); setShowDesktopResults(false); }} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group">
+                                                        <img src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${u.displayName}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-gray-900">{u.displayName}</p>
+                                                            <p className="text-[11px] text-gray-500 truncate">{u.status || 'No status'}</p>
+                                                        </div>
+                                                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {desktopSearchResults.posts.length > 0 && (
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Posts</p>
+                                                {desktopSearchResults.posts.map((p: any) => (
+                                                    <div key={p.id} onClick={() => { setSelectedUser(p.author); setActiveTab('posts'); setShowDesktopResults(false); }} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group">
+                                                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                                            {p.images?.[0] ? <img src={normalizeImageUrl(p.images[0])} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">📄</div>}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-bold text-gray-900 line-clamp-1">{p.title}</p>
+                                                            <p className="text-[11px] text-gray-500">{p.author?.name} • {p.likeCount} ❤️</p>
+                                                        </div>
+                                                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <MapCanvas
