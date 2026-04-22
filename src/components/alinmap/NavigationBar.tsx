@@ -23,10 +23,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         <Navigation className={`w-6 h-6 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Explore</span>
                     </button>
-                    <button onClick={() => handleTabClick('nearby')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
-                        <Compass className={`w-6 h-6 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
-                        <span className={`text-[9px] font-bold ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Nearby</span>
-                    </button>
                     <button onClick={() => handleTabClick('friends')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <UserPlus className={`w-6 h-6 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>Social</span>
@@ -50,10 +46,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                 <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <Navigation className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Explore</span>
-                </button>
-                <button onClick={() => handleTabClick('nearby')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'nearby' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <Compass className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Nearby</span>
                 </button>
                 <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                     <UserPlus className="w-5 h-5" />
