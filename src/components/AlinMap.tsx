@@ -494,6 +494,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 nameInput={nameInput} isVisibleOnMap={isVisibleOnMap} friendIdInput={friendIdInput}
                 socialSection={socialSection} isCreatingPost={isCreatingPost} postTitle={postTitle}
                 isSavingPost={isSavingPost} galleryActive={galleryActive} currentProvince={currentProvince}
+                radius={radius}
                 ws={ws} panX={panX} panY={panY} scale={scale} externalApi={externalApi} onOpenChat={onOpenChat}
                 setSentFriendRequests={setSentFriendRequests} handleUpdateRadius={handleUpdateRadius}
                 setIsSheetExpanded={setIsSheetExpanded} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}

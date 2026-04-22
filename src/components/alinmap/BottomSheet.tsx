@@ -36,6 +36,7 @@ interface BottomSheetProps {
     isSavingPost: boolean;
     galleryActive: boolean;
     currentProvince: string | null;
+    radius: number;
     ws: React.MutableRefObject<WebSocket | null>;
     panX: any;
     panY: any;
@@ -76,7 +77,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         myUserId, myDisplayName, myStatus, myObfPos, user, searchTag,
         isReporting, reportReason, reportStatus, sentFriendRequests,
         isEditingStatus, isEditingName, statusInput, nameInput, isVisibleOnMap, friendIdInput, socialSection,
-        isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince,
+        isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
         ws, panX, panY, scale, externalApi, onOpenChat,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setIsReporting, setReportReason, setReportStatus,
