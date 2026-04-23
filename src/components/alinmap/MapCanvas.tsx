@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { MapPin, RefreshCw, Diamond } from 'lucide-react';
-import { motion, MotionValue, useMotionValue } from 'framer-motion';
+import { motion, MotionValue, useMotionValue, animate } from 'framer-motion';
 import SpatialNode from './SpatialNode';
 import MapTiles from './MapTiles';
 import { DEGREES_TO_PX } from './constants';
@@ -55,6 +55,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
     mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx
 }) => {
+    const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     return (
         <div
             className="flex-1 relative overflow-hidden bg-[#001424]"
@@ -133,7 +134,20 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
                             const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
 
+                            // Calculate smooth animation duration based on distance
+                            const distLng = lng - (seaState.currentLng || myObfPos.lng);
+                            const distLat = lat - (seaState.currentLat || myObfPos.lat);
+                            const distDeg = Math.sqrt(distLng*distLng + distLat*distLat);
+                            const duration = Math.min(Math.max(distDeg * 2000, 1), 8); // 1 to 8 seconds max
+
+                            setBoatTargetPin({lat, lng});
                             seaGameCtx.moveBoat(lat, lng);
+                            
+                            const newPanX = panX.get() - (distLng * DEGREES_TO_PX * currentScale);
+                            const newPanY = panY.get() + (distLat * DEGREES_TO_PX * currentScale);
+
+                            animate(panX, newPanX, { duration: duration, ease: "easeInOut" });
+                            animate(panY, newPanY, { duration: duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
                         }}
                     >
                         {/* Grid styling */}
@@ -340,6 +354,18 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     </div>
                                 )}
 
+                                {isSeaGameMode && boatTargetPin && (
+                                    <div
+                                        className="absolute w-12 h-12 -ml-6 -mt-12 flex items-center justify-center pointer-events-none z-[85]"
+                                        style={{
+                                            top: `calc(50% + ${-(boatTargetPin.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                            left: `calc(50% + ${(boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                        }}
+                                    >
+                                        <span className="text-3xl animate-bounce drop-shadow-md">📍</span>
+                                    </div>
+                                )}
+
                                 {isSeaGameMode && seaGameCtx?.worldItems?.map((item: any) => (
                                     <motion.div
                                         key={item.spawnId}
@@ -355,12 +381,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         animate={{ y: [-3, 3, -3] }}
                                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: Math.random() }}
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-400/50 flex items-center justify-center backdrop-blur-sm shadow-[0_0_10px_rgba(59,130,246,0.3)]">
-                                            <span className="text-xl">
-                                                {item.minigameType === 'chest' ? '📦' :
-                                                 item.minigameType === 'fishing' ? '🐟' :
-                                                 item.minigameType === 'diving' ? '⚓' : '💎'}
-                                            </span>
+                                        <div className="w-10 h-10 rounded-full border-[1.5px] border-blue-400/50 flex items-center justify-center bg-[#1a1d24] shadow-[0_0_15px_rgba(59,130,246,0.4)] overflow-hidden">
+                                            {item.item?.icon ? (
+                                                <img src={normalizeImageUrl(item.item.icon)} alt={item.item.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-xl">
+                                                    {item.minigameType === 'chest' ? '📦' :
+                                                     item.minigameType === 'fishing' ? '🐟' :
+                                                     item.minigameType === 'diving' ? '⚓' : '💎'}
+                                                </span>
+                                            )}
                                         </div>
                                     </motion.div>
                                 ))}

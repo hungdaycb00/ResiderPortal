@@ -30,6 +30,7 @@ interface MapControlsProps {
     handleCenterTo: (lat: number, lng: number) => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
+    isSeaGameMode?: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -37,7 +38,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode
+    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode, isSeaGameMode
 }) => {
     const [copyToast, setCopyToast] = useState(false);
     const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
@@ -54,9 +55,10 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
-                <button
-                    onClick={handleRefresh}
+            {!isSeaGameMode && (
+                <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
+                    <button
+                        onClick={handleRefresh}
                     disabled={isConnecting}
                     className="w-8 h-8 md:w-10 md:h-10 bg-white/60 md:bg-white backdrop-blur-md rounded-[10px] md:rounded-xl shadow-md md:shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center text-gray-700 hover:text-blue-600 active:scale-95 transition-all disabled:opacity-50"
                     title="Refresh"
@@ -101,12 +103,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                     </button>
                 </div>
             </div>
+            )}
 
             {/* Weather & Coordinates Widget - Top Right */}
-            <div 
-                className="hidden md:flex absolute top-2 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
-                onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
-            >
+            {!isSeaGameMode && (
+                <div 
+                    className="hidden md:flex absolute top-2 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
+                    onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
+                >
                 <div className="flex items-center justify-between gap-2 px-1">
                     <div className="flex items-center gap-2">
                         {weatherData && <span className="text-xl">{weatherData.icon}</span>}
@@ -253,6 +257,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                     )}
                 </AnimatePresence>
             </div>
+            )}
 
             {/* Sidebar (Map Filters) */}
             <AnimatePresence>
