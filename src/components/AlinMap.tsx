@@ -71,7 +71,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // Sea Game Hooks
     const seaGame = useSeaGame();
-    const { setIsSeaGameMode, isSeaGameMode, state: seaState, initGame } = seaGame;
+    const { setIsSeaGameMode, isSeaGameMode, state: seaState, initGame, loadWorldItems } = seaGame;
 
     // Map Filters
     const [filterDistance, setFilterDistance] = useState(50);
@@ -504,7 +504,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             
             // Check initialization
             if (!seaState.initialized && myObfPos) {
-                initGame(myObfPos.lat, myObfPos.lng);
+                initGame(myObfPos.lat, myObfPos.lng).then(() => loadWorldItems());
+            } else {
+                loadWorldItems();
             }
             
             // Pan to current boat or current location

@@ -185,7 +185,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
                                 {/* Self Node */}
                                 <motion.div
-                                    drag
+                                    drag={!isSeaGameMode}
                                     dragMomentum={false}
                                     dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
                                     dragElastic={0}
@@ -228,7 +228,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         e.preventDefault();
                                         e.stopPropagation();
                                     }}
-                                    className={`absolute group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none ${isSeaGameMode ? 'w-16 h-16 -ml-8 -mt-8' : 'w-12 h-12 -ml-6 -mt-12'}`}
+                                    className={`absolute group pointer-events-auto z-[100] select-none ${isSeaGameMode ? 'w-16 h-16 -ml-8 -mt-8 cursor-default' : 'w-12 h-12 -ml-6 -mt-12 cursor-grab active:cursor-grabbing'}`}
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
                                     animate={isSeaGameMode ? {
                                         y: [-2, 2, -2],
@@ -248,11 +248,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                        <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
+                                        {!isSeaGameMode && <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />}
                                         
                                         {isSeaGameMode ? (
-                                            <div className="w-full h-full bg-[#1a1d24] rounded-full border-2 border-amber-500 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-                                                <span className="text-3xl">⛵</span>
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <span className="text-4xl drop-shadow-lg">⛵</span>
                                             </div>
                                         ) : (
                                             <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
@@ -307,11 +307,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         {myStatus && !isSeaGameMode && (
                                             <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
                                                 <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
-                                            </div>
-                                        )}
-                                        {isSeaGameMode && (
-                                            <div className="whitespace-nowrap bg-[#1a1d24]/90 backdrop-blur border border-amber-500/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
-                                                <span className="text-[10px] font-bold text-amber-400">Level {seaState?.worldTier || 1}</span>
                                             </div>
                                         )}
                                     </div>
@@ -435,6 +430,29 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         )}
                     </motion.div>
                 </motion.div>
+            )}
+
+            {/* Sea Game Curse Bar */}
+            {isSeaGameMode && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
+                    <div className="flex items-center gap-2 bg-[#0d0f13]/90 backdrop-blur-md rounded-full px-4 py-2 border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.15)]">
+                        <span className="text-red-400 text-xs font-bold shrink-0">☠️ Nguyền rủa</span>
+                        <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden relative">
+                            <motion.div
+                                className="h-full rounded-full relative"
+                                style={{
+                                    background: `linear-gradient(90deg, #7f1d1d, #dc2626 ${Math.min(seaState?.cursePercent || 0, 100)}%, #ef4444)`,
+                                    boxShadow: (seaState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
+                                }}
+                                animate={{ width: `${Math.min(seaState?.cursePercent || 0, 100)}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                            />
+                        </div>
+                        <span className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(seaState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}>
+                            {Math.round(seaState?.cursePercent || 0)}%
+                        </span>
+                    </div>
+                </div>
             )}
 
             {/* Connection Status Indicator */}
