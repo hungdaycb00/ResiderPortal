@@ -211,7 +211,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
-                        expanded: { y: 0, x: 0 },
+                        expanded: { y: isDesktop ? 0 : '60vh', x: 0 },
                         collapsed: {
                             y: isDesktop ? 0 : 'calc(100% - 40px)',
                             x: isDesktop ? '-100%' : 0
@@ -420,7 +420,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 handleAddFriend={handleAddFriend} handleMessage={handleMessage} myObfPos={myObfPos}
                                 panX={panX} panY={panY} scale={scale} isReporting={isReporting} setIsReporting={setIsReporting}
                                 reportStatus={reportStatus} setReportStatus={setReportStatus} reportReason={reportReason}
-                                setReportReason={setReportReason} ws={ws} games={games} userPosts={userPosts}
+                                setReportReason={setReportReason} ws={ws} games={userGames} userPosts={userPosts}
                                 handleStarPost={handleStarPost} handleDeletePost={handleDeletePost} externalApi={externalApi}
                             />
                         ) : (

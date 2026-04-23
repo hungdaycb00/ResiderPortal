@@ -4,7 +4,7 @@ import { Diamond } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DEGREES_TO_PX, SpatialNodeProps } from './constants';
 
-const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale }) => {
+const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
     const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
     const [hoverScale, setHoverScale] = useState(1.1);
@@ -14,6 +14,11 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
         <motion.div
             onPointerDown={(e) => e.stopPropagation()} // Prevent dragging the floor when clicking this
             onClick={(e) => { e.stopPropagation(); onClick(); }}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (onContextMenu) onContextMenu(e, user);
+            }}
             onPointerEnter={() => {
                 const s = mapScale.get();
                 setHoverScale(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1);

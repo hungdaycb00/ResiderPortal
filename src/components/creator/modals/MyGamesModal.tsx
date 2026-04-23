@@ -15,26 +15,11 @@ interface MyGamesModalProps {
 }
 
 export default function MyGamesModal({
-  isOpen, onClose, serverGames,
+  serverGames,
   onPlayGame, onUpdateGame, onEditInfo, onViewFeedback, onDeleteGame,
-}: MyGamesModalProps) {
+}: Omit<MyGamesModalProps, 'isOpen' | 'onClose'>) {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[400] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 lg:p-8"
-          onClick={onClose}
-        >
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="w-full max-w-6xl h-full max-h-[90vh] bg-[#1a1d24] border border-white/10 rounded-3xl flex flex-col shadow-2xl overflow-hidden relative"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="w-full h-full flex flex-col bg-[#1a1d24]">
             <div className="p-6 flex items-center justify-between bg-[#1a1d24] border-b border-white/5">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-600/20 rounded-xl">
@@ -45,12 +30,6 @@ export default function MyGamesModal({
                   <p className="text-xs text-gray-500 font-medium">Manage and monitor your uploaded projects</p>
                 </div>
               </div>
-              <button 
-                onClick={onClose}
-                className="p-2.5 hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10 group"
-              >
-                <X className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#14161c]/50">
@@ -91,7 +70,6 @@ export default function MyGamesModal({
                     <div className="grid grid-cols-5 gap-2 mt-2 relative z-10">
                       <button 
                         onClick={() => {
-                          onClose();
                           onPlayGame(game);
                         }}
                         className="flex items-center justify-center py-2.5 bg-green-600/10 hover:bg-green-600/20 border border-green-500/20 rounded-xl transition-all group/btn"
@@ -146,9 +124,6 @@ export default function MyGamesModal({
             <div className="p-4 bg-[#1a1d24] border-t border-white/5 text-center">
               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest tracking-widest">Resider Game Creator • Project Management v2.0</p>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
   );
 }

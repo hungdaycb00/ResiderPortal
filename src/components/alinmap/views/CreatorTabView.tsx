@@ -31,6 +31,7 @@ export default function CreatorTabView({
   const [serverGames, setServerGames] = useState<any[]>([]);
   const [isMyGamesListOpen, setIsMyGamesListOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [subTab, setSubTab] = useState<'creator' | 'manager'>('creator');
 
   // Device preview
   const [deviceType, setDeviceType] = useState<DeviceType>('pc');
@@ -99,15 +100,22 @@ export default function CreatorTabView({
   // Sync external open request
   useEffect(() => {
     if (externalOpenList) {
-      setIsMyGamesListOpen(true);
+      setSubTab('manager');
       gameManager.fetchMyGames();
     }
   }, [externalOpenList]);
 
   // Sync back to external if list is closed internally
   useEffect(() => {
-    if (!isMyGamesListOpen && onOpenListChange) {
+    if (subTab !== 'manager' && onOpenListChange) {
       onOpenListChange(false);
+    }
+  }, [subTab]);
+
+  // Sync isMyGamesListOpen to subTab
+  useEffect(() => {
+    if (!isMyGamesListOpen && subTab === 'manager') {
+      setSubTab('creator');
     }
   }, [isMyGamesListOpen]);
 
@@ -156,17 +164,34 @@ export default function CreatorTabView({
   return (
     <div className="w-full flex flex-col h-full bg-[#13151a]">
       {/* Scrollable Container */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {/* Creator Header */}
-        <div className="p-4 border-b border-gray-800 bg-[#1a1d24]">
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            Game Creator
+      <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+        {/* Creator Header & Tabs */}
+        <div className="p-4 pb-0 border-b border-gray-800 bg-[#1a1d24] shrink-0">
+          <h3 className="text-lg font-black text-white flex items-center gap-2 mb-1">
+            Game Studio
           </h3>
-          <p className="text-xs text-gray-400 mt-1">Upload and publish your games to Alin Map</p>
+          <p className="text-xs text-gray-400 mb-4">Upload and manage your games on Alin Map</p>
+          
+          <div className="flex gap-4">
+            <button
+              onClick={() => setSubTab('creator')}
+              className={`pb-2 text-sm font-bold border-b-2 transition-colors ${subTab === 'creator' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+            >
+              Creator
+            </button>
+            <button
+              onClick={() => { setSubTab('manager'); gameManager.fetchMyGames(); }}
+              className={`pb-2 text-sm font-bold border-b-2 transition-colors ${subTab === 'manager' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+            >
+              Game Manager
+            </button>
+          </div>
         </div>
 
-        {/* Sidebar Content (Integrated) */}
-        <div className="p-0">
+        {/* Tab Content */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {subTab === 'creator' ? (
+            <div className="p-0 flex-1">
           <CreatorSidebar
             gameName={gameName}
             selectedFiles={selectedFiles}
@@ -189,7 +214,7 @@ export default function CreatorTabView({
             onThumbnailClear={() => { setGameThumbnail(null); setThumbnailPreview(null); }}
             onPreview={() => gameManager.handleServerPreview(selectedFiles, gameBaseDir)}
             onPublish={() => gameManager.handlePublish(gameName, selectedFiles, gameBaseDir, selectedCategories, gameThumbnail, updatingGameId)}
-            onManageGamesClick={() => { gameManager.fetchMyGames(); setIsMyGamesListOpen(true); }}
+            onManageGamesClick={() => { gameManager.fetchMyGames(); setSubTab('manager'); }}
             onDownloadDoc={gameManager.handleDownloadDoc}
             showNotification={showNotification!}
             fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
@@ -198,23 +223,23 @@ export default function CreatorTabView({
             deviceType={deviceType}
             onDeviceTypeChange={setDeviceType}
             onExpand={() => setIsExpanded(true)}
+            onClose={() => {}}
           />
         </div>
-
-        {/* Preview removed here as it is now integrated into Thumbnail area */}
+      ) : (
+        <div className="flex-1 flex flex-col">
+          <MyGamesModal
+            serverGames={serverGames}
+            onPlayGame={onPlayGame!}
+            onUpdateGame={gameManager.handleUpdateMyGame}
+            onEditInfo={gameManager.handleEditInfoClick}
+            onViewFeedback={gameManager.handleViewFeedbackClick}
+            onDeleteGame={gameManager.handleDeleteMyGame}
+          />
+        </div>
+      )}
+        </div>
       </div>
-
-      {/* Modals (Integrated) */}
-      <MyGamesModal
-        isOpen={isMyGamesListOpen}
-        onClose={() => setIsMyGamesListOpen(false)}
-        serverGames={serverGames}
-        onPlayGame={onPlayGame!}
-        onUpdateGame={gameManager.handleUpdateMyGame}
-        onEditInfo={gameManager.handleEditInfoClick}
-        onViewFeedback={gameManager.handleViewFeedbackClick}
-        onDeleteGame={gameManager.handleDeleteMyGame}
-      />
 
       <AnimatePresence>
         {editingGame && (

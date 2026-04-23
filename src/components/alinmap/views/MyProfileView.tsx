@@ -152,19 +152,19 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({
                 </div>
             </div>
 
-            {/* Tab Toggle for Profile content */}
+            {/* Tab Toggle */}
             <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
-                <button
-                    onClick={() => setActiveTab('info')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-                >
-                    Info
-                </button>
                 <button
                     onClick={() => { setActiveTab('posts'); fetchUserPosts(myUserId || user?.uid); }}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                     Posts {galleryActive && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
+                </button>
+                <button
+                    onClick={() => setActiveTab('info')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                    Info
                 </button>
                 <button
                     onClick={() => { setActiveTab('saved'); fetchUserPosts('saved'); }}
@@ -311,14 +311,14 @@ const MyProfileView: React.FC<MyProfileViewProps> = ({
                     </div>
 
                     {/* User Games Section */}
-                    {games && games.length > 0 && (
+                    {games && games.filter(g => g.creatorId === myUserId).length > 0 && (
                         <div className="mt-2">
                             <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-[13px] font-bold text-gray-900">🎮 My Games</h4>
-                                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{games.length}</span>
+                                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{games.filter(g => g.creatorId === myUserId).length}</span>
                             </div>
                             <div className="space-y-2">
-                                {games.map((g) => (
+                                {games.filter(g => g.creatorId === myUserId).map((g) => (
                                     <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
                                         <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
                                             {g.thumbnail ? (

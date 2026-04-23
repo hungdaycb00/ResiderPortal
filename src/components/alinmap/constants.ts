@@ -26,6 +26,7 @@ export interface SpatialNodeProps {
     myPos: { lat: number; lng: number };
     onClick: () => void;
     mapScale: MotionValue<number>;
+    onContextMenu?: (e: React.MouseEvent, user: any) => void;
 }
 
 export function getWeatherInfo(code: number): { icon: string; desc: string } {

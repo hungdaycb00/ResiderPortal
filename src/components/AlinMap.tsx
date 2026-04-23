@@ -29,7 +29,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
-    const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
     const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications' | 'creator'>(
         (initialMainTab as any) || 'discover'
     );
@@ -49,6 +49,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
     const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
     const [myAvatarUrl, setMyAvatarUrl] = useState(user?.photoURL || '');
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
     const [desktopSearchResults, setDesktopSearchResults] = useState<{ posts: any[], users: any[] }>({ posts: [], users: [] });
     const [isSearchingDesktop, setIsSearchingDesktop] = useState(false);
     const [showDesktopResults, setShowDesktopResults] = useState(false);
@@ -290,10 +291,11 @@ const AlinMap: React.FC<AlinMapProps> = ({
         };
     }, [position]);
 
-    const handleAddFriend = async () => {
-        if (!selectedUser) return;
+    const handleAddFriend = async (targetUser?: any) => {
+        const userToAdd = targetUser || selectedUser;
+        if (!userToAdd) return;
         try {
-            showNotification?.(`Friend request sent to ${selectedUser.username || selectedUser.id}!`, 'success');
+            showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
             if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
                 showNotification?.("Request already sent or you are already friends!", 'info');
@@ -301,9 +303,10 @@ const AlinMap: React.FC<AlinMapProps> = ({
         }
     };
 
-    const handleMessage = () => {
-        if (!selectedUser || !onOpenChat) return;
-        onOpenChat(selectedUser.id, selectedUser.username || 'User', selectedUser.avatar_url || selectedUser.photoURL || '');
+    const handleMessage = (targetUser?: any) => {
+        const userToMsg = targetUser || selectedUser;
+        if (!userToMsg || !onOpenChat) return;
+        onOpenChat(userToMsg.id, userToMsg.username || 'User', userToMsg.avatar_url || userToMsg.photoURL || '');
     };
 
     const compressImage = (file: File): Promise<File> => {
@@ -395,6 +398,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     useEffect(() => {
         if (selectedUser) {
             setIsLoadingGames(true);
+            setUserPosts([]);
             externalApi.getUserGames(selectedUser.id)
                 .then((res: any) => { if (res.success) setUserGames(res.games); })
                 .catch(console.error)
@@ -517,7 +521,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     }, [searchTag, isDesktop]);
 
     return (
-        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
             {/* Header / Search Bar */}
             <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'}`}>
                 <div className={`flex-1 backdrop-blur-xl rounded-full flex items-center px-4 py-3 overflow-hidden transition-all duration-300 ${isDesktop && isSheetExpanded ? 'bg-white border border-gray-200 shadow-none' : 'bg-white/90 shadow-[0_4px_20px_rgba(0,0,0,0.15)]'}`}>
@@ -611,6 +615,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
                 requestLocation={requestLocation} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                 setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos} addLog={addLog} handleWheel={handleWheel}
                 mapMode={mapMode}
+                setContextMenu={setContextMenu}
             />
 
             <MapControls
@@ -660,6 +665,68 @@ const AlinMap: React.FC<AlinMapProps> = ({
                 onOpenListChange={onOpenListChange}
                 onPublishSuccess={handleRefresh}
             />
+
+            {/* Context Menu Overlay */}
+            {contextMenu && (
+                <>
+                    <div 
+                        className="fixed inset-0 z-[998]" 
+                        onClick={() => setContextMenu(null)} 
+                        onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} 
+                    />
+                    
+                    <div 
+                        className="fixed z-[999] bg-[#1a1d24] border border-gray-700/50 rounded-xl shadow-2xl py-2 min-w-[180px] overflow-hidden backdrop-blur-md"
+                        style={{ top: Math.min(contextMenu.y, window.innerHeight - 150), left: Math.min(contextMenu.x, window.innerWidth - 180) }}
+                    >
+                        {contextMenu.target === 'map' ? (
+                            <button 
+                                className="w-full text-left px-4 py-3 hover:bg-gray-800 text-sm text-gray-200 font-medium transition-colors flex items-center gap-3"
+                                onClick={() => {
+                                    setMyObfPos({ lat: contextMenu.data.lat, lng: contextMenu.data.lng });
+                                    panX.set(0);
+                                    panY.set(0);
+                                    if (ws.current?.readyState === WebSocket.OPEN) {
+                                        ws.current.send(JSON.stringify({
+                                            type: 'MAP_MOVE',
+                                            payload: { lat: contextMenu.data.lat, lng: contextMenu.data.lng, zoom: 13 }
+                                        }));
+                                    }
+                                    setContextMenu(null);
+                                }}
+                            >
+                                <span className="text-lg">📍</span> Dịch chuyển đến đây
+                            </button>
+                        ) : (
+                            <>
+                                <div className="px-4 py-2 border-b border-gray-800 mb-1">
+                                    <p className="text-xs font-bold text-gray-400 truncate w-full">{contextMenu.data.username}</p>
+                                </div>
+                                <button 
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-gray-200 font-medium transition-colors flex items-center gap-3"
+                                    onClick={() => {
+                                        setSelectedUser(contextMenu.data);
+                                        setContextMenu(null);
+                                        setTimeout(() => handleAddFriend(contextMenu.data), 100);
+                                    }}
+                                >
+                                    <span className="text-lg">👋</span> Kết bạn
+                                </button>
+                                <button 
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-800 text-sm text-gray-200 font-medium transition-colors flex items-center gap-3"
+                                    onClick={() => {
+                                        setSelectedUser(contextMenu.data);
+                                        setContextMenu(null);
+                                        setTimeout(() => handleMessage(contextMenu.data), 100);
+                                    }}
+                                >
+                                    <span className="text-lg">💬</span> Nhắn tin
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 };

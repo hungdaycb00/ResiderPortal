@@ -41,6 +41,7 @@ interface MapCanvasProps {
     addLog: (msg: string) => void;
     handleWheel: (e: React.WheelEvent) => void;
     mapMode: 'grid' | 'satellite';
+    setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -49,7 +50,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode
+    mapMode, setContextMenu
 }) => {
     return (
         <div
@@ -95,9 +96,27 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                     <motion.div
                         drag
                         style={{ x: panX, y: panY }}
-                        dragConstraints={{ left: -5000, right: 5000, top: -5000, bottom: 5000 }}
+                        dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
-                        className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
+                        className="absolute top-1/2 left-1/2 w-0 h-0 cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            if (!myObfPos) return;
+                            const currentScale = scale.get() || 1;
+                            const offsetX = e.clientX - window.innerWidth / 2;
+                            const offsetY = e.clientY - window.innerHeight / 2;
+                            const mapX = (offsetX - panX.get()) / currentScale;
+                            const mapY = (offsetY - panY.get()) / currentScale;
+                            const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+                            const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+                            
+                            setContextMenu({
+                                x: e.clientX,
+                                y: e.clientY,
+                                target: 'map',
+                                data: { lat, lng }
+                            });
+                        }}
                     >
                         {/* Grid styling */}
                         <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
@@ -289,10 +308,14 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         mapScale={scale}
                                         onClick={() => {
                                             setSelectedUser(u);
-                                            const pxX = (u.lng - myObfPos!.lng) * DEGREES_TO_PX;
-                                            const pxY = -(u.lat - myObfPos!.lat) * DEGREES_TO_PX;
-                                            panX.set(-pxX);
-                                            panY.set(-pxY);
+                                        }}
+                                        onContextMenu={(e, uData) => {
+                                            setContextMenu({
+                                                x: e.clientX,
+                                                y: e.clientY,
+                                                target: 'user',
+                                                data: uData
+                                            });
                                         }}
                                     />
                                 ))}
