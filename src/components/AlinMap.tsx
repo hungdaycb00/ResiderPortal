@@ -72,6 +72,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     // Sea Game Hooks
     const seaGame = useSeaGame();
     const { setIsSeaGameMode, isSeaGameMode, state: seaState, initGame, loadWorldItems } = seaGame;
+    const [isSeaLoading, setIsSeaLoading] = useState(false);
 
     // Map Filters
     const [filterDistance, setFilterDistance] = useState(50);
@@ -501,13 +502,20 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             setMainTab('backpack');
             setIsSeaGameMode(true);
             setIsSheetExpanded(false); // Mobile: tự hạ tab xuống
+            setIsSeaLoading(true);
             
-            // Check initialization
-            if (!seaState.initialized && myObfPos) {
-                initGame(myObfPos.lat, myObfPos.lng).then(() => loadWorldItems());
-            } else {
-                loadWorldItems();
-            }
+            const doLoad = async () => {
+                try {
+                    // Check initialization
+                    if (!seaState.initialized && myObfPos) {
+                        await initGame(myObfPos.lat, myObfPos.lng);
+                    }
+                    await loadWorldItems();
+                } finally {
+                    setIsSeaLoading(false);
+                }
+            };
+            doLoad();
             
             // Pan to current boat or current location
             const targetLat = seaState.currentLat || myObfPos?.lat;
@@ -660,6 +668,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSeaGameMode={isSeaGameMode}
                 seaState={seaState}
                 seaGameCtx={seaGame}
+                isSeaLoading={isSeaLoading}
             />
 
             <MapControls

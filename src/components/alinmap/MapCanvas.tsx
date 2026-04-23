@@ -45,6 +45,7 @@ interface MapCanvasProps {
     isSeaGameMode?: boolean;
     seaState?: any;
     seaGameCtx?: any;
+    isSeaLoading?: boolean;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -53,7 +54,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx
+    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading
 }) => {
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     return (
@@ -364,7 +365,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 {isSeaGameMode && seaGameCtx?.worldItems?.map((item: any) => (
                                     <motion.div
                                         key={item.spawnId}
-                                        className="absolute w-10 h-10 -ml-5 -mt-5 flex items-center justify-center cursor-pointer z-[95] hover:scale-110 transition-transform"
+                                        className="absolute w-7 h-7 -ml-3.5 -mt-3.5 flex flex-col items-center cursor-pointer z-[95] hover:scale-125 transition-transform"
                                         style={{
                                             top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                                             left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
@@ -373,20 +374,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                             e.stopPropagation();
                                             seaGameCtx.pickupItem(item.spawnId);
                                         }}
-                                        animate={{ y: [-3, 3, -3] }}
-                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: Math.random() }}
+                                        animate={{ y: [-2, 2, -2] }}
+                                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2 }}
                                     >
-                                        <div className="w-10 h-10 rounded-full border-[1.5px] border-blue-400/50 flex items-center justify-center bg-[#1a1d24] shadow-[0_0_15px_rgba(59,130,246,0.4)] overflow-hidden">
-                                            {item.item?.icon ? (
-                                                <img src={normalizeImageUrl(item.item.icon)} alt={item.item.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-xl">
-                                                    {item.minigameType === 'chest' ? '📦' :
-                                                     item.minigameType === 'fishing' ? '🐟' :
-                                                     item.minigameType === 'diving' ? '⚓' : '💎'}
-                                                </span>
-                                            )}
-                                        </div>
+                                        <span className="text-lg drop-shadow-md">{item.item?.icon || '💎'}</span>
+                                        <span className="text-[7px] font-bold text-cyan-300/80 whitespace-nowrap mt-0.5 drop-shadow-sm">{item.item?.name}</span>
                                     </motion.div>
                                 ))}
 
@@ -451,6 +443,24 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         <span className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(seaState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}>
                             {Math.round(seaState?.cursePercent || 0)}%
                         </span>
+                    </div>
+                </div>
+            )}
+
+            {/* Sea Game Loading Overlay */}
+            {isSeaGameMode && isSeaLoading && (
+                <div className="absolute inset-0 z-[200] bg-[#001424]/95 backdrop-blur-md flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative w-20 h-20">
+                            <div className="absolute inset-0 border-4 border-cyan-500/20 rounded-full" />
+                            <div className="absolute inset-0 border-4 border-transparent border-t-cyan-400 rounded-full animate-spin" />
+                            <div className="absolute inset-2 border-4 border-transparent border-b-amber-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                            <span className="absolute inset-0 flex items-center justify-center text-3xl">⛵</span>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-cyan-300 font-bold text-sm tracking-widest uppercase animate-pulse">Khởi tạo Thế Giới...</p>
+                            <p className="text-cyan-500/50 text-[10px] mt-1">Đang sinh vật phẩm và chuẩn bị hành trình</p>
+                        </div>
                     </div>
                 </div>
             )}
