@@ -18,6 +18,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     showNotification, 
     initialMainTab = 'discover',
     onTabChange,
+    handlePlayGame,
     cloudflareUrl,
     triggerAuth,
     externalOpenList,
