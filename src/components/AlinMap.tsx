@@ -54,7 +54,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     const [isSearchingDesktop, setIsSearchingDesktop] = useState(false);
     const [showDesktopResults, setShowDesktopResults] = useState(false);
     const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string } | null>(null);
+    const [weatherData, setWeatherData] = useState<{ temp: number, desc: string, icon: string, humidity?: number, feelsLike?: number } | null>(null);
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [reportStatus, setReportStatus] = useState("");
@@ -420,15 +420,21 @@ const AlinMap: React.FC<AlinMapProps> = ({
         if (wsStatus === 'OPEN') fetchNotifications();
     }, [wsStatus]);
 
-    // Fetch Weather Data
+    // Fetch Weather Data (temp, humidity, feels-like)
     useEffect(() => {
         if (myObfPos) {
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${myObfPos.lat}&longitude=${myObfPos.lng}&current_weather=true`)
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${myObfPos.lat}&longitude=${myObfPos.lng}&current_weather=true&current=relative_humidity_2m,apparent_temperature`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.current_weather) {
                         const { icon, desc } = getWeatherInfo(data.current_weather.weathercode);
-                        setWeatherData({ temp: data.current_weather.temperature, desc, icon });
+                        setWeatherData({
+                            temp: data.current_weather.temperature,
+                            desc,
+                            icon,
+                            humidity: data.current?.relative_humidity_2m,
+                            feelsLike: data.current?.apparent_temperature,
+                        });
                     }
                 }).catch(err => console.error('Weather fetch error:', err));
         }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 interface MapControlsProps {
     isConnecting: boolean;
     isSidebarOpen: boolean;
-    weatherData: { temp: number; desc: string; icon: string } | null;
+    weatherData: { temp: number; desc: string; icon: string; humidity?: number; feelsLike?: number } | null;
     currentProvince?: string | null;
     myObfPos: { lat: number; lng: number } | null;
     friendLocInput: string;
@@ -118,6 +118,22 @@ const MapControls: React.FC<MapControlsProps> = ({
                                 <p className="text-[9px] font-bold text-gray-400 tracking-wide uppercase truncate">
                                     {weatherData ? weatherData.desc : 'Unknown Weather'}
                                 </p>
+                                {weatherData && (
+                                    <>
+                                        <span className="text-gray-300 text-[10px]">•</span>
+                                        <p className="text-[9px] font-bold text-gray-500">
+                                            {weatherData.temp}°C
+                                        </p>
+                                        {weatherData.humidity != null && (
+                                            <>
+                                                <span className="text-gray-300 text-[10px]">•</span>
+                                                <p className="text-[9px] font-bold text-blue-500">
+                                                    💧{weatherData.humidity}%
+                                                </p>
+                                            </>
+                                        )}
+                                    </>
+                                )}
                                 {!isWidgetExpanded && myObfPos && (
                                     <>
                                         <span className="text-gray-300 text-[10px]">•</span>
@@ -144,6 +160,27 @@ const MapControls: React.FC<MapControlsProps> = ({
                             onClick={(e) => e.stopPropagation()} // Prevent collapse when interacting with widget content
                         >
                             <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full mt-2">
+                                {/* Weather Stats Row */}
+                                {weatherData && (
+                                    <div className="flex items-center gap-2 pb-1.5 border-b border-gray-200">
+                                        <div className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Temp</p>
+                                            <p className="text-[13px] font-black text-gray-800">{weatherData.temp}°C</p>
+                                        </div>
+                                        {weatherData.feelsLike != null && (
+                                            <div className="flex-1 flex flex-col items-center gap-0.5 py-1 border-x border-gray-200">
+                                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Feels</p>
+                                                <p className="text-[13px] font-black text-orange-600">{weatherData.feelsLike}°C</p>
+                                            </div>
+                                        )}
+                                        {weatherData.humidity != null && (
+                                            <div className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Humid</p>
+                                                <p className="text-[13px] font-black text-blue-600">{weatherData.humidity}%</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="relative">
                                     <div className="flex items-center justify-between">
                                         <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Location</p>

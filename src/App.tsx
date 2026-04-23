@@ -354,8 +354,33 @@ export default function App() {
     }
   };
 
+  // Close game overlay when browser Back is pressed
+  const closedViaBackRef = useRef(false);
   useEffect(() => {
-    if (activeTab === 'home' && playingGame) {
+    if (!playingGame) return;
+
+    closedViaBackRef.current = false;
+    // Push a duplicate history entry so Back closes game instead of navigating away
+    window.history.pushState({ gameOverlay: true }, '');
+
+    const handlePopState = () => {
+      closedViaBackRef.current = true;
+      setPlayingGame(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // Game was closed via MultiTaskButton (not Back) — pop the extra history entry
+      if (!closedViaBackRef.current) {
+        window.history.back();
+      }
+    };
+  }, [!!playingGame]);
+
+  // Also close game when route/tab changes (e.g. clicking nav while in-game)
+  useEffect(() => {
+    if (playingGame) {
       setPlayingGame(null);
     }
   }, [activeTab]);
