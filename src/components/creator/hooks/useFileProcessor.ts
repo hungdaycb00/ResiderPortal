@@ -7,7 +7,7 @@ const normalizePath = (path: string) => path.replace(/\\/g, '/');
 /**
  * Process index.html for Vite builds:
  * - Convert absolute assets to relative
- * - Inject Resider runtime fixes (localStorage mock, WebSocket mock)
+ * - Inject Alin.city runtime fixes (localStorage mock, WebSocket mock)
  */
 export function processIndexHtml(content: string, cloudflareUrl: string): string {
   const isViteBuild = content.includes('type="module"') && (content.includes('/assets/') || content.includes('src="/'));
@@ -30,19 +30,18 @@ export function processIndexHtml(content: string, cloudflareUrl: string): string
     content = content.replace(/<script[^>]*>[\s\S]*?(?:__vite_plugin_react_preamble_installed__|@react-refresh|RefreshRuntime|:24678)[\s\S]*?<\/script>/gi, '<!-- Vite Scrubbed (Inline) -->');
   }
 
-  // 2. Global Resider Injections (Always apply when on Portal)
-  if (!content.includes('window.__RESIDER_FREE_ZONE__')) {
-    const tunnelConfig = `<script id="resider-tunnel-config">window.__RESIDER_TUNNEL_URL__ = "${cloudflareUrl}";</script>`;
-    const residerFix = `
-<script>
-  window.__RESIDER_FREE_ZONE__ = true;
+  // 2. Global Alin.city Injections (Always apply when on Portal)
+  if (!content.includes('window.__ALIN_FREE_ZONE__')) {
+    const tunnelConfig = `<script id="alin-tunnel-config">window.__ALIN_TUNNEL_URL__ = "${cloudflareUrl}";</script>`;
+    const alinFix = `
+<script id="alin-runtime-fixes">
+  window.__ALIN_FREE_ZONE__ = true;
   
-  // A. Storage Mock: Handle Tracking Prevention blocking localStorage
-  (function() {
-    try {
-      localStorage.getItem('test');
-    } catch (e) {
-      console.warn('[Resider Fix] LocalStorage is blocked by browser tracking prevention. Injecting Memory Storage...');
+  // A. LocalStorage Mock: Prevent cross-origin iframe security errors
+  try {
+    localStorage.getItem('test');
+  } catch (e) {
+    console.warn('[Alin.city Fix] LocalStorage is blocked by browser tracking prevention. Injecting Memory Storage...');
       const store = {};
       const mockStorage = {
         getItem: (k) => store[k] || null,
@@ -54,13 +53,12 @@ export function processIndexHtml(content: string, cloudflareUrl: string): string
       };
       Object.defineProperty(window, 'localStorage', { value: mockStorage, writable: true });
     }
-  })();
 
   // B. WebSocket Mock: Suppress Vite HMR errors (only on Portal)
   const originalWebSocket = window.WebSocket;
   window.WebSocket = function(url, protocols) {
     if (url && url.includes(':24678')) {
-      console.warn('[Resider Fix] Suppressing HMR WebSocket for built game.');
+      console.warn('[Alin.city Fix] Suppressing HMR WebSocket for built game.');
       return { 
         send: () => {}, close: () => {}, addEventListener: () => {}, removeEventListener: () => {},
         binaryType: 'blob', url: url, readyState: 0, onopen: null, onmessage: null, onclose: null, onerror: null
@@ -70,7 +68,7 @@ export function processIndexHtml(content: string, cloudflareUrl: string): string
   };
 </script>`;
 
-    const combinedInjections = `\n    ${tunnelConfig}${residerFix}`;
+    const combinedInjections = `\n    ${tunnelConfig}${alinFix}`;
     const headMatch = content.match(/<head[^>]*>/i);
     if (headMatch) {
       content = content.replace(headMatch[0], headMatch[0] + combinedInjections);

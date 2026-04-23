@@ -122,7 +122,7 @@ export default function MyGamesModal({
             </div>
             
             <div className="p-4 bg-[#1a1d24] border-t border-white/5 text-center">
-              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest tracking-widest">Resider Game Creator • Project Management v2.0</p>
+              <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest tracking-widest">Alin.city Game Creator • Project Management v2.0</p>
             </div>
         </div>
   );

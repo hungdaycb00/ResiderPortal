@@ -13,7 +13,7 @@ const SupportTab: React.FC = () => {
                     <div className="bg-[#1a1d24] border border-gray-800 p-6 rounded-2xl text-center hover:border-blue-500/50 transition-colors cursor-pointer">
                         <Mail className="w-8 h-8 text-blue-400 mx-auto mb-3" />
                         <h3 className="font-bold">Email Us</h3>
-                        <p className="text-xs text-gray-500 mt-1">support@resider.com</p>
+                        <p className="text-xs text-gray-500 mt-1">support@alin.city</p>
                     </div>
                     <div className="bg-[#1a1d24] border border-gray-800 p-6 rounded-2xl text-center hover:border-purple-500/50 transition-colors cursor-pointer">
                         <MessageCircle className="w-8 h-8 text-purple-400 mx-auto mb-3" />

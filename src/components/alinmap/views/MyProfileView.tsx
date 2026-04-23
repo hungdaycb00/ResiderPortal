@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Copy, Compass, ChevronRight, Image as ImageIcon, X, Bookmark, Smile } from 'lucide-react';
+import { Edit, Copy, Compass, ChevronRight, Image as ImageIcon, X, Bookmark, Smile, Plus } from 'lucide-react';
 import { normalizeImageUrl } from '../../../services/externalApi';
 import PostCard from '../PostCard';
 

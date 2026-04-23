@@ -325,7 +325,7 @@ export function useGameManager(params: UseGameManagerParams) {
       const a = document.createElement('a');
       a.href = url;
       const suffix = `${docGraphics.toUpperCase()}-${docMode === 'multiplayer' ? 'Multi' : 'Offline'}`;
-      a.download = `Resider-Game-${suffix}.txt`;
+      a.download = `Alin.city-Game-${suffix}.txt`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

@@ -35,7 +35,7 @@ export default function PreviewArea({
           const title = iframeDoc.title;
           const bodyText = iframeDoc.body?.innerText?.toLowerCase() || '';
 
-          if (title.includes('Resider') || title.includes('Home') || 
+          if (title.includes('Alin.city') || title.includes('Home') || 
               bodyText.includes('không tìm thấy') || bodyText.includes('404') ||
               bodyText.includes('error') || bodyText.includes('not found')) {
             showNotification('Error: Server returned an error page instead of the game. Check console.', 'error');
