@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package } from 'lucide-react';
-import { useSeaGame } from './sea-game/SeaGameProvider';
 
 interface NavigationBarProps {
     mainTab: string;
@@ -11,8 +10,6 @@ interface NavigationBarProps {
 }
 
 const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, unreadCount, handleTabClick }) => {
-    const { isBackpackOpen, setIsBackpackOpen } = useSeaGame();
-
     return (
         <>
             {/* Global Left Navigation (PC Only) */}
@@ -40,9 +37,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     </button>
                     
                     {/* Balo Button */}
-                    <button onClick={() => setIsBackpackOpen(!isBackpackOpen)} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
-                        <Package className={`w-6 h-6 ${isBackpackOpen ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`} />
-                        <span className={`text-[9px] font-bold ${isBackpackOpen ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`}>Balo</span>
+                    <button onClick={() => handleTabClick('backpack')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
+                        <Package className={`w-6 h-6 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`} />
+                        <span className={`text-[9px] font-bold ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`}>Balo</span>
                     </button>
                 </div>
             </div>
@@ -67,7 +64,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                 </button>
                 
                 {/* Balo Button */}
-                <button onClick={() => setIsBackpackOpen(!isBackpackOpen)} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${isBackpackOpen ? 'text-amber-500' : 'text-gray-400'}`}>
+                <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
                     <Package className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Balo</span>
                 </button>

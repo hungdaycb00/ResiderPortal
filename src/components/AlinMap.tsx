@@ -32,7 +32,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
-    const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications' | 'creator'>(
+    const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications' | 'creator' | 'backpack'>(
         (initialMainTab as any) || 'discover'
     );
     const [userGames, setUserGames] = useState<any[]>([]);

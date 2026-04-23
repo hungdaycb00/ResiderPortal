@@ -8,6 +8,7 @@ import NotificationsView from './views/NotificationsView';
 import MyProfileView from './views/MyProfileView';
 import SelectedUserView from './views/SelectedUserView';
 import CreatorTabView from './views/CreatorTabView';
+import BackpackView from './views/BackpackView';
 
 
 interface BottomSheetProps {
@@ -465,6 +466,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         externalOpenList={externalOpenList}
                                         onOpenListChange={onOpenListChange}
                                     />
+                                )}
+                                {mainTab === 'backpack' && (
+                                    <BackpackView />
                                 )}
                             </div>
                         )}
