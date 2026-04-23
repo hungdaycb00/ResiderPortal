@@ -40,7 +40,7 @@ interface MapCanvasProps {
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     addLog: (msg: string) => void;
     handleWheel: (e: React.WheelEvent) => void;
-    mapMode: 'grid' | 'satellite' | 'streets';
+    mapMode: 'grid' | 'satellite';
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -53,7 +53,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
     return (
         <div
-            className={`flex-1 relative overflow-hidden transition-colors duration-700 ${mapMode === 'streets' ? 'bg-[#f8f9fa]' : 'bg-[#0c0d12]'}`}
+            className="flex-1 relative overflow-hidden bg-[#0c0d12]"
             onWheel={handleWheel}
         >
             {/* Glow Background Elements */}
@@ -99,8 +99,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
                     >
                         {/* Grid styling */}
-                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : mapMode === 'streets' ? 'opacity-5' : 'opacity-100'}`} style={{
-                            backgroundImage: `linear-gradient(${mapMode === 'streets' ? 'rgba(0,0,0,0.1)' : 'rgba(59, 130, 246, 0.05)'} 1px, transparent 1px), linear-gradient(90deg, ${mapMode === 'streets' ? 'rgba(0,0,0,0.1)' : 'rgba(59, 130, 246, 0.05)'} 1px, transparent 1px)`,
+                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
+                            backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
                             backgroundSize: "100px 100px",
                             backgroundPosition: "center center",
                         }} />

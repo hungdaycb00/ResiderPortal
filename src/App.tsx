@@ -64,7 +64,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [serverError, setServerError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin'>('alin');
+  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin'>('home');
   const [fetchedGames, setFetchedGames] = useState<any[]>([]);
   const [fetchedFriends, setFetchedFriends] = useState<any[]>([]);
   const [friendRequests, setFriendRequests] = useState<any[]>([]);

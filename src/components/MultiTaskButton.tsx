@@ -22,7 +22,7 @@ export default function MultiTaskButton({ activeTab, setActiveTab, isInGame = fa
   const mvY = useMotionValue(position.y);
 
   const menuItems = [
-    { id: 'home', icon: Home, label: 'Games', color: 'bg-indigo-500' },
+    { id: 'home', icon: Home, label: 'Home', color: 'bg-indigo-500' },
     { id: 'chat', icon: MessageSquare, label: 'Chat', color: 'bg-blue-500' },
     { id: 'friends', icon: Users, label: 'Friends', color: 'bg-green-500' },
     {id: 'community', icon: Globe, label: 'Community', color: 'bg-purple-500'},
