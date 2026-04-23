@@ -9,7 +9,7 @@ export interface AppHeaderProps {
     user: User | null;
     userStats: { gold: number, level: number, xp: number, rankScore: number } | null;
     activeTab: string;
-    setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin'>>;
+    setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile'>>;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     isFilterExpanded: boolean;

@@ -480,15 +480,16 @@ const AlinMap: React.FC<AlinMapProps> = ({
     const handleTabClick = (tabId: string) => {
         setSelectedUser(null);
         if (tabId === 'profile') { setActiveTab('info'); }
-        if (tabId === 'creator') { setActiveTab('info'); } // Or whatever is relevant for creator
         
         if (mainTab === tabId) { 
             setIsSheetExpanded(!isSheetExpanded); 
         } else { 
             setMainTab(tabId as any); 
             setIsSheetExpanded(true); 
-            if (onTabChange) onTabChange(tabId);
         }
+        
+        // Luôn đồng bộ với parent để đảm bảo activeTab ở App.tsx cũng được cập nhật
+        if (onTabChange) onTabChange(tabId);
     };
 
     const unreadCount = notifications.filter(n => !n.isRead).length;

@@ -64,7 +64,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [serverError, setServerError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile'>('home');
   const [fetchedGames, setFetchedGames] = useState<any[]>([]);
   const [fetchedFriends, setFetchedFriends] = useState<any[]>([]);
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
@@ -724,8 +724,9 @@ export default function App() {
 
       {/* Final Checkpoint: MultiTask & Modals */}
       <AnimatePresence>
-        {(activeTab === 'alin' || activeTab === 'notifications' || activeTab === 'creator') && (
+        {['alin', 'discover', 'friends', 'social', 'notifications', 'profile', 'creator'].includes(activeTab) && (
           <AlinMap 
+            key="alin-map-instance"
             user={user} 
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
@@ -733,7 +734,7 @@ export default function App() {
             handlePlayGame={handlePlayGame}
             showNotification={showNotification}
             friends={fetchedFriends}
-            initialMainTab={activeTab === 'notifications' ? 'notifications' : activeTab === 'creator' ? 'creator' : 'discover'}
+            initialMainTab={(['discover', 'friends', 'social', 'notifications', 'profile', 'creator'] as string[]).includes(activeTab) ? activeTab : 'discover'}
             onTabChange={(tab) => setActiveTab(tab as any)}
             cloudflareUrl={cloudflareUrl}
             triggerAuth={(callback) => {
