@@ -42,6 +42,9 @@ interface MapCanvasProps {
     handleWheel: (e: React.WheelEvent) => void;
     mapMode: 'grid' | 'satellite';
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
+    isSeaGameMode?: boolean;
+    seaState?: any;
+    seaGameCtx?: any;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -50,7 +53,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu
+    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx
 }) => {
     return (
         <div
@@ -117,6 +120,21 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 data: { lat, lng }
                             });
                         }}
+                        onDoubleClick={(e) => {
+                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const currentScale = scale.get() || 1;
+                            const offsetX = e.clientX - window.innerWidth / 2;
+                            const offsetY = e.clientY - window.innerHeight / 2;
+                            const mapX = (offsetX - panX.get()) / currentScale;
+                            const mapY = (offsetY - panY.get()) / currentScale;
+                            const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+                            const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+
+                            seaGameCtx.moveBoat(lat, lng);
+                        }}
                     >
                         {/* Grid styling */}
                         <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
@@ -158,7 +176,9 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
                                     dragElastic={0}
                                     onPointerDown={(e) => e.stopPropagation()}
+                                    onDoubleClick={(e) => e.stopPropagation()} // Prevent map double click
                                     onDragEnd={(e, info) => {
+                                        if (isSeaGameMode) return; // Prevent drag in Sea Game
                                         if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
                                             const currentScale = scale.get() || 1;
                                             const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
@@ -194,13 +214,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         e.preventDefault();
                                         e.stopPropagation();
                                     }}
-                                    className="absolute w-12 h-12 -ml-6 -mt-12 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
+                                    className={`absolute group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none ${isSeaGameMode ? 'w-16 h-16 -ml-8 -mt-8' : 'w-12 h-12 -ml-6 -mt-12'}`}
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
-                                    animate={{
+                                    animate={isSeaGameMode ? {
+                                        y: [-2, 2, -2],
+                                        rotateZ: [-2, 2, -2]
+                                    } : {
                                         y: [0, -6, 0]
                                     }}
                                     transition={{
-                                        duration: 4,
+                                        duration: isSeaGameMode ? 2 : 4,
                                         repeat: Infinity,
                                         ease: "easeInOut"
                                     }}
@@ -211,22 +234,29 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
-                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
-                                        <img
-                                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
-                                            className="w-full h-full object-cover pointer-events-none"
-                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
-                                        />
-                                        {!isVisibleOnMap && (
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                                <div className="w-5 h-5 border-2 border-emerald-400/40 border-dashed rounded-full animate-spin-slow" />
+                                        <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
+                                        
+                                        {isSeaGameMode ? (
+                                            <div className="w-full h-full bg-[#1a1d24] rounded-full border-2 border-amber-500 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                                                <span className="text-3xl">⛵</span>
+                                            </div>
+                                        ) : (
+                                            <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
+                                                <img
+                                                    src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
+                                                    className="w-full h-full object-cover pointer-events-none"
+                                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                                                />
+                                                {!isVisibleOnMap && (
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                        <div className="w-5 h-5 border-2 border-emerald-400/40 border-dashed rounded-full animate-spin-slow" />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
-                                    </div>
 
-                                    {/* Billboard for SELF NODE */}
-                                    {galleryActive && (
+                                        {/* Billboard for SELF NODE */}
+                                        {galleryActive && !isSeaGameMode && (
                                         <div
                                             onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('posts'); setIsSheetExpanded(true); }}
                                             className="absolute -top-24 left-1/2 -translate-x-1/2 w-44 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
@@ -260,9 +290,14 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
                                     {/* Labels under self avatar */}
                                     <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                                        {myStatus && (
+                                        {myStatus && !isSeaGameMode && (
                                             <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
                                                 <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
+                                            </div>
+                                        )}
+                                        {isSeaGameMode && (
+                                            <div className="whitespace-nowrap bg-[#1a1d24]/90 backdrop-blur border border-amber-500/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+                                                <span className="text-[10px] font-bold text-amber-400">Level {seaState?.worldTier || 1}</span>
                                             </div>
                                         )}
                                     </div>
@@ -287,8 +322,51 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     </div>
                                 )}
 
+                                {/* Sea Game Specific Entities */}
+                                {isSeaGameMode && seaState?.fortressLat && (
+                                    <div
+                                        className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-none z-[90]"
+                                        style={{
+                                            top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                            left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                        }}
+                                    >
+                                        <div className="relative flex flex-col items-center group">
+                                            <span className="text-6xl drop-shadow-lg">🏝️</span>
+                                            <div className="absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-emerald-400 border border-emerald-500/50 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+                                                Thành trì của bạn
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {isSeaGameMode && seaGameCtx?.worldItems?.map((item: any) => (
+                                    <motion.div
+                                        key={item.spawnId}
+                                        className="absolute w-10 h-10 -ml-5 -mt-5 flex items-center justify-center cursor-pointer z-[95] hover:scale-110 transition-transform"
+                                        style={{
+                                            top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                            left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                        }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            seaGameCtx.pickupItem(item.spawnId);
+                                        }}
+                                        animate={{ y: [-3, 3, -3] }}
+                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: Math.random() }}
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-400/50 flex items-center justify-center backdrop-blur-sm shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+                                            <span className="text-xl">
+                                                {item.minigameType === 'chest' ? '📦' :
+                                                 item.minigameType === 'fishing' ? '🐟' :
+                                                 item.minigameType === 'diving' ? '⚓' : '💎'}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+
                                 {/* Other Nodes */}
-                                {nearbyUsers.filter(u => {
+                                {!isSeaGameMode && nearbyUsers.filter(u => {
                                     if (u.id === myUserId || u.id === user?.uid) return false;
                                     if (searchTag) {
                                         const term = searchTag.toLowerCase();

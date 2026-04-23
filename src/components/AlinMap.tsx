@@ -7,7 +7,7 @@ import MapCanvas from './alinmap/MapCanvas';
 import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
-import SeaGameProvider from './alinmap/sea-game/SeaGameProvider';
+import SeaGameProvider, { useSeaGame } from './alinmap/sea-game/SeaGameProvider';
 import SeaGameUI from './alinmap/sea-game/SeaGameUI';
 
 const AlinMapInner: React.FC<AlinMapProps> = ({ 
@@ -68,6 +68,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
     const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
+
+    // Sea Game Hooks
+    const seaGame = useSeaGame();
+    const { setIsSeaGameMode, isSeaGameMode, state: seaState, initGame } = seaGame;
 
     // Map Filters
     const [filterDistance, setFilterDistance] = useState(50);
@@ -493,11 +497,30 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         setSelectedUser(null);
         if (tabId === 'profile') { setActiveTab('info'); }
         
-        if (mainTab === tabId) { 
-            setIsSheetExpanded(!isSheetExpanded); 
-        } else { 
-            setMainTab(tabId as any); 
-            setIsSheetExpanded(true); 
+        if (tabId === 'backpack') {
+            setMainTab('backpack');
+            setIsSeaGameMode(true);
+            setIsSheetExpanded(false); // Mobile: tự hạ tab xuống
+            
+            // Check initialization
+            if (!seaState.initialized && myObfPos) {
+                initGame(myObfPos.lat, myObfPos.lng);
+            }
+            
+            // Pan to current boat or current location
+            const targetLat = seaState.currentLat || myObfPos?.lat;
+            const targetLng = seaState.currentLng || myObfPos?.lng;
+            if (targetLat && targetLng) {
+                handleCenterTo(targetLat, targetLng);
+            }
+        } else {
+            setIsSeaGameMode(false);
+            if (mainTab === tabId) { 
+                setIsSheetExpanded(!isSheetExpanded); 
+            } else { 
+                setMainTab(tabId as any); 
+                setIsSheetExpanded(true); 
+            }
         }
         
         // Luôn đồng bộ với parent để đảm bảo activeTab ở App.tsx cũng được cập nhật
@@ -632,6 +655,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos} addLog={addLog} handleWheel={handleWheel}
                 mapMode={mapMode}
                 setContextMenu={setContextMenu}
+                isSeaGameMode={isSeaGameMode}
+                seaState={seaState}
+                seaGameCtx={seaGame}
             />
 
             <MapControls

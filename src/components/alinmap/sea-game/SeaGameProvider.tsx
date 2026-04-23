@@ -97,6 +97,8 @@ interface SeaGameContextType {
   setShowCurseModal: (v: boolean) => void;
   showMinigame: WorldItem | null;
   setShowMinigame: (item: WorldItem | null) => void;
+  isSeaGameMode: boolean;
+  setIsSeaGameMode: (v: boolean) => void;
   // Actions
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
@@ -144,6 +146,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
   const [showCurseModal, setShowCurseModal] = useState(false);
   const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
+  const [isSeaGameMode, setIsSeaGameMode] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const goldTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -327,6 +330,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     stagingItem, setStagingItem, encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
     showMinigame, setShowMinigame, isMoving,
+    isSeaGameMode, setIsSeaGameMode,
     initGame, loadState, moveBoat, pickupItem, saveInventory,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
   };
