@@ -98,7 +98,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         style={{ x: panX, y: panY }}
                         dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
-                        className="absolute top-1/2 left-1/2 w-0 h-0 cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
+                        className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
                         onContextMenu={(e) => {
                             e.preventDefault();
                             if (!myObfPos) return;
@@ -189,6 +189,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                                 return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '');
                                             })
                                         });
+                                    }}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
                                     }}
                                     className="absolute w-12 h-12 -ml-6 -mt-12 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
