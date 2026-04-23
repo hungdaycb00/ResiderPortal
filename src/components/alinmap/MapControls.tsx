@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Waves } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -64,10 +64,10 @@ const MapControls: React.FC<MapControlsProps> = ({
                 </button>
                 <button
                     onClick={() => setMapMode(mapMode === 'grid' ? 'satellite' : 'grid')}
-                    className={`w-10 h-10 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
-                    title={mapMode === 'satellite' ? 'Switch to Grid' : 'Switch to Satellite'}
+                    className={`w-10 h-10 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-700'}`}
+                    title={mapMode === 'satellite' ? 'Chuyển sang Lưới 3D' : 'Chuyển sang Bản đồ Biển'}
                 >
-                    <Layers className="w-5 h-5" />
+                    <Waves className="w-5 h-5" />
                 </button>
                 <button
                     onClick={() => setIsSidebarOpen(true)}

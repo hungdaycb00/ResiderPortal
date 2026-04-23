@@ -26,14 +26,10 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
 
   useEffect(() => {
     const checkViewport = () => {
-      // 1. Calculate dynamic Zoom Level (Z) based on scale
-      // scale 1.0 -> Z 14
       const currentScale = scale.get();
       const calculatedZ = Math.min(21, Math.max(2, 14 + Math.floor(Math.log2(currentScale))));
       setZLevel(calculatedZ);
 
-      // 2. Handle infinite panning by tracking how many tiles we've moved
-      // ratio: how many pixels per degree at this zoom level
       const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, calculatedZ)) / 360);
       const tileWidthPx = TILE_SIZE * ratio;
       
@@ -46,12 +42,10 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
       });
     };
 
-    // Listen to Framer Motion values
     const unsubscribeX = panX.on('change', checkViewport);
     const unsubscribeY = panY.on('change', checkViewport);
     const unsubscribeScale = scale.on('change', checkViewport);
 
-    // Initial run
     checkViewport();
 
     return () => {
@@ -61,20 +55,19 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     };
   }, [panX, panY, scale]);
 
-  if (mode === 'grid' || !myObfPos) return null;
+  if (!myObfPos) return null;
 
   // Use dynamic zLevel for projection
   const centerTile = project(myObfPos.lat, myObfPos.lng, zLevel);
   const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, zLevel)) / 360);
 
   const tiles = [];
-  // Render a 15x15 grid of tiles around the current offset
-  for (let i = -7 + tileOffset.x; i <= 7 + tileOffset.x; i++) {
-    for (let j = -7 + tileOffset.y; j <= 7 + tileOffset.y; j++) {
+  // Render a grid of tiles
+  for (let i = -6 + tileOffset.x; i <= 6 + tileOffset.x; i++) {
+    for (let j = -6 + tileOffset.y; j <= 6 + tileOffset.y; j++) {
       const tx = Math.floor(centerTile.x) + i;
       const ty = Math.floor(centerTile.y) + j;
       
-      // Calculate tile position relative to center
       const offsetX = (tx - centerTile.x) * TILE_SIZE * ratio;
       const offsetY = (ty - centerTile.y) * TILE_SIZE * ratio;
 
@@ -82,42 +75,61 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
         id: `${zLevel}-${tx}-${ty}`,
         x: offsetX,
         y: offsetY,
-        tx, 
-        ty, 
-        z: zLevel
       });
     }
   }
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-100">
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+      {/* Ocean SVG Filter for Ripple Effect */}
+      <svg className="hidden">
+        <filter id="ocean-noise">
+          <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise" seed="1">
+            <animate attributeName="baseFrequency" values="0.015;0.02;0.015" dur="15s" repeatCount="indefinite" />
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
+        </filter>
+      </svg>
+
+      <div className="absolute inset-0 bg-[#001424]" />
+
       {tiles.map((tile) => (
         <div
           key={tile.id}
-          className="absolute"
+          className="absolute overflow-hidden"
           style={{
-            width: TILE_SIZE * ratio + 1, // +1 to avoid tiny gaps between tiles
-            height: TILE_SIZE * ratio + 1,
+            width: TILE_SIZE * ratio + 2,
+            height: TILE_SIZE * ratio + 2,
             left: `calc(50% + ${tile.x}px)`,
             top: `calc(50% + ${tile.y}px)`,
+            background: mode === 'satellite' 
+              ? 'radial-gradient(circle at center, #004d7a 0%, #002b4d 70%, #001424 100%)'
+              : 'transparent',
+            opacity: mode === 'satellite' ? 1 : 0,
+            transition: 'opacity 0.5s ease-in-out',
           }}
         >
-          {/* Google Satellite Base Layer */}
-          <img
-            src={`https://mt1.google.com/vt/lyrs=s&x=${tile.tx}&y=${tile.ty}&z=${tile.z}`}
-            className="absolute inset-0 w-full h-full object-cover"
-            alt=""
-            loading="lazy"
-          />
-          {/* CartoDB Road Overlay (No Labels) */}
-          <img
-            src={`https://basemaps.cartocdn.com/rastertiles/light_nolabels/${tile.z}/${tile.tx}/${tile.ty}.png`}
-            className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 grayscale invert"
-            alt=""
-            loading="lazy"
-          />
+          {/* Water Surface Detail */}
+          {mode === 'satellite' && (
+            <>
+              <div className="absolute inset-0 opacity-30" style={{ 
+                backgroundImage: 'url("https://www.transparenttextures.com/patterns/carbon-fibre.png")',
+                filter: 'url(#ocean-noise)',
+                transform: 'scale(2)',
+              }} />
+              <div className="absolute inset-0 opacity-20 bg-gradient-to-tr from-cyan-500/20 to-transparent animate-pulse" />
+              
+              {/* Fake Depth Grid */}
+              <div className="absolute inset-0 border border-cyan-500/5" />
+            </>
+          )}
         </div>
       ))}
+      
+      {/* Overall Ocean Glow */}
+      {mode === 'satellite' && (
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-900/10 to-blue-900/20 pointer-events-none" />
+      )}
     </div>
   );
 };

@@ -23,10 +23,19 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                 left: `calc(50% + ${dx}px)`,
                 top: `calc(50% + ${dy}px)`
             }}
-            whileHover={{ scale: hoverScale }}
+            animate={{
+                y: [0, -5, 0],
+            }}
+            transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: Math.random() * 5
+            }}
+            whileHover={{ scale: hoverScale, y: -10 }}
             whileTap={{ scale: 0.95 }}
         >
-            <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_12px_rgba(59,130,246,0.5)] border-blue-500 bg-[#1a1d24]">
+            <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.4)] border-cyan-500 bg-[#1a1d24]">
                 <img
                     src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                     className="w-full h-full object-cover"

@@ -53,11 +53,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
     return (
         <div
-            className="flex-1 relative overflow-hidden bg-[#0c0d12]"
+            className="flex-1 relative overflow-hidden bg-[#001424]"
             onWheel={handleWheel}
         >
-            {/* Glow Background Elements */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
+            {/* Sea Glow Background Elements */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-cyan-500/5 blur-[120px] pointer-events-none rounded-full" />
+            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] pointer-events-none rounded-full" />
 
             {!position && isConsentOpen && (
                 <div className="absolute inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 pointer-events-auto">
@@ -172,6 +173,14 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     }}
                                     className="absolute w-12 h-12 -ml-6 -mt-12 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
+                                    animate={{
+                                        y: [0, -6, 0]
+                                    }}
+                                    transition={{
+                                        duration: 4,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
                                     onPointerEnter={() => {
                                         const s = scale.get();
                                         document.documentElement.style.setProperty('--self-hover-scale', String(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
@@ -179,8 +188,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
-                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
+                                    <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
+                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
                                         <img
                                             src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                                             className="w-full h-full object-cover pointer-events-none"
