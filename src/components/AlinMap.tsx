@@ -7,8 +7,10 @@ import MapCanvas from './alinmap/MapCanvas';
 import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
+import SeaGameProvider from './alinmap/sea-game/SeaGameProvider';
+import SeaGameUI from './alinmap/sea-game/SeaGameUI';
 
-const AlinMap: React.FC<AlinMapProps> = ({ 
+const AlinMapInner: React.FC<AlinMapProps> = ({ 
     user, 
     onClose, 
     externalApi, 
@@ -742,6 +744,15 @@ const AlinMap: React.FC<AlinMapProps> = ({
                 </>
             )}
         </div>
+    );
+};
+
+const AlinMap: React.FC<AlinMapProps> = (props) => {
+    return (
+        <SeaGameProvider deviceId={props.externalApi.getDeviceId()}>
+            <SeaGameUI />
+            <AlinMapInner {...props} />
+        </SeaGameProvider>
     );
 };
 
