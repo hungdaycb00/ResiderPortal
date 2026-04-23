@@ -53,57 +53,58 @@ const MapControls: React.FC<MapControlsProps> = ({
 
     return (
         <>
-            {/* Floating Controls (Map Tools) */}
-            <div className="absolute bottom-[200px] md:bottom-12 right-4 md:right-8 z-[120] flex flex-col gap-3 pointer-events-auto items-end">
+            {/* Floating Controls - Right Side */}
+            <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
                 <button
                     onClick={handleRefresh}
-                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    disabled={isConnecting}
+                    className="w-8 h-8 md:w-10 md:h-10 bg-white/60 md:bg-white backdrop-blur-md rounded-[10px] md:rounded-xl shadow-md md:shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center text-gray-700 hover:text-blue-600 active:scale-95 transition-all disabled:opacity-50"
                     title="Refresh"
                 >
-                    <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
                 </button>
                 <button
                     onClick={() => setMapMode(mapMode === 'grid' ? 'satellite' : 'grid')}
-                    className={`w-10 h-10 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-700'}`}
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-xl shadow-md backdrop-blur-md flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-cyan-600/80 md:bg-cyan-600 text-white' : 'bg-white/60 md:bg-white text-gray-700'}`}
                     title={mapMode === 'satellite' ? 'Chuyển sang Lưới 3D' : 'Chuyển sang Bản đồ Biển'}
                 >
-                    <Waves className="w-5 h-5" />
+                    <Waves className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
                 <button
                     onClick={() => setIsSidebarOpen(true)}
-                    className="w-10 h-10 bg-white text-gray-700 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all"
+                    className="w-8 h-8 md:w-10 md:h-10 bg-white/60 md:bg-white backdrop-blur-md text-gray-700 rounded-[10px] md:rounded-xl shadow-md flex items-center justify-center active:scale-95 transition-all"
                     title="Settings / Filters"
                 >
-                    <Filter className="w-5 h-5" />
+                    <Filter className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <div className="flex flex-col bg-white rounded-[14px] shadow-[0_4px_15px_rgba(0,0,0,0.1)] overflow-hidden mt-1 pointer-events-auto">
+                <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
                     <button
                         onClick={handleCenter}
-                        className="w-[42px] h-11 text-blue-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                         title="Your Position"
                     >
-                        <LocateFixed className="w-5 h-5" />
+                        <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                     <button
                         onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
-                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center border-b border-gray-200 active:bg-gray-100 transition-colors"
+                        className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                         title="Zoom In"
                     >
-                        <Plus className="w-6 h-6 stroke-[2.5]" />
+                        <Plus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
                     </button>
                     <button
                         onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
-                        className="w-[42px] h-11 text-gray-600 hover:bg-gray-50 flex items-center justify-center active:bg-gray-100 transition-colors"
+                        className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
                         title="Zoom Out"
                     >
-                        <Minus className="w-6 h-6 stroke-[2.5]" />
+                        <Minus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
                     </button>
                 </div>
             </div>
 
             {/* Weather & Coordinates Widget - Top Right */}
             <div 
-                className="absolute top-2 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
+                className="hidden md:flex absolute top-2 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors"
                 onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
             >
                 <div className="flex items-center justify-between gap-2 px-1">
