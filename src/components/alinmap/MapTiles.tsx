@@ -87,33 +87,51 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-100">
       {tiles.map(tile => (
         <React.Fragment key={tile.id}>
-          {/* Base Layer: Satellite */}
-          <img
-            src={`https://mt1.google.com/vt/lyrs=s&x=${tile.tx}&y=${tile.ty}&z=${tile.z}`}
-            alt=""
-            className="absolute"
-            style={{
-              width: TILE_SIZE * ratio + 1, // +1 to avoid gaps
-              height: TILE_SIZE * ratio + 1,
-              left: '50%',
-              top: '50%',
-              transform: `translate(calc(-50% + ${tile.x}px), calc(-50% + ${tile.y}px))`,
-            }}
-          />
-          {/* Overlay Layer: Roads (No Labels) */}
-          <img
-            src={`https://a.basemaps.cartocdn.com/light_nolabels/${tile.z}/${tile.tx}/${tile.ty}.png`}
-            alt=""
-            className="absolute mix-blend-overlay opacity-80"
-            style={{
-              width: TILE_SIZE * ratio + 1,
-              height: TILE_SIZE * ratio + 1,
-              left: '50%',
-              top: '50%',
-              transform: `translate(calc(-50% + ${tile.x}px), calc(-50% + ${tile.y}px))`,
-              filter: 'invert(1) brightness(2) contrast(1.2)', // Make roads glow on satellite
-            }}
-          />
+          {/* Street Layer: Roadmap (If mode is streets) */}
+          {mode === 'streets' ? (
+            <img
+              src={`https://mt1.google.com/vt/lyrs=m&x=${tile.tx}&y=${tile.ty}&z=${tile.z}`}
+              alt=""
+              className="absolute"
+              style={{
+                width: TILE_SIZE * ratio + 1,
+                height: TILE_SIZE * ratio + 1,
+                left: '50%',
+                top: '50%',
+                transform: `translate(calc(-50% + ${tile.x}px), calc(-50% + ${tile.y}px))`,
+              }}
+            />
+          ) : (
+            <>
+              {/* Base Layer: Satellite */}
+              <img
+                src={`https://mt1.google.com/vt/lyrs=s&x=${tile.tx}&y=${tile.ty}&z=${tile.z}`}
+                alt=""
+                className="absolute"
+                style={{
+                  width: TILE_SIZE * ratio + 1,
+                  height: TILE_SIZE * ratio + 1,
+                  left: '50%',
+                  top: '50%',
+                  transform: `translate(calc(-50% + ${tile.x}px), calc(-50% + ${tile.y}px))`,
+                }}
+              />
+              {/* Overlay Layer: Roads (No Labels) */}
+              <img
+                src={`https://a.basemaps.cartocdn.com/light_nolabels/${tile.z}/${tile.tx}/${tile.ty}.png`}
+                alt=""
+                className="absolute mix-blend-overlay opacity-80"
+                style={{
+                  width: TILE_SIZE * ratio + 1,
+                  height: TILE_SIZE * ratio + 1,
+                  left: '50%',
+                  top: '50%',
+                  transform: `translate(calc(-50% + ${tile.x}px), calc(-50% + ${tile.y}px))`,
+                  filter: 'invert(1) brightness(2) contrast(1.2)',
+                }}
+              />
+            </>
+          )}
         </React.Fragment>
       ))}
     </div>
@@ -130,8 +148,8 @@ function getTileUrl(z: number, x: number, y: number, mode: string) {
     return `https://mt1.google.com/vt/lyrs=y&x=${x}&y=${y}&z=${z}`;
   }
   if (mode === 'streets') {
-    // CartoDB Positron No Labels (Clean Roads/Boundaries)
-    return `https://a.basemaps.cartocdn.com/light_nolabels/${z}/${x}/${y}.png`;
+    // Google Roadmap (Clean, Fast, Google Maps look)
+    return `https://mt1.google.com/vt/lyrs=m&x=${x}&y=${y}&z=${z}`;
   }
   return `https://a.tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
