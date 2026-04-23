@@ -3,7 +3,7 @@ import { normalizeImageUrl } from '../../services/externalApi';
 import { MapPin, RefreshCw, Diamond } from 'lucide-react';
 import { motion, MotionValue, useMotionValue } from 'framer-motion';
 import SpatialNode from './SpatialNode';
-import MapCanvasEngine from './MapCanvasEngine';
+import MapTiles from './MapTiles';
 import { DEGREES_TO_PX } from './constants';
 
 interface MapCanvasProps {
@@ -53,9 +53,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
     return (
         <div
-            className="flex-1 relative overflow-hidden bg-[#f1f3f4]"
+            className="flex-1 relative overflow-hidden bg-[#0c0d12]"
             onWheel={handleWheel}
         >
+            {/* Glow Background Elements */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-blue-500/10 blur-[100px] pointer-events-none rounded-full" />
 
             {!position && isConsentOpen && (
                 <div className="absolute inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 pointer-events-auto">
@@ -96,8 +98,15 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         dragElastic={0.1}
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
                     >
+                        {/* Grid styling */}
+                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
+                            backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
+                            backgroundSize: "100px 100px",
+                            backgroundPosition: "center center",
+                        }} />
+
                         {/* Real Map Tiles */}
-                        <MapCanvasEngine panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
+                        <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
 
                         {!myObfPos && (
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -170,12 +179,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-ping shadow-lg" />
-                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-white relative z-10 transition-all shadow-xl ${isVisibleOnMap ? 'border-blue-500' : 'border-emerald-500 opacity-60'}`}>
+                                    <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
+                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
                                         <img
-                                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=f1f3f4&color=3b82f6&size=150&bold=true`}
+                                            src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                                             className="w-full h-full object-cover pointer-events-none"
-                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=f1f3f4&color=3b82f6&size=150&bold=true`; }}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                                         />
                                         {!isVisibleOnMap && (
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">

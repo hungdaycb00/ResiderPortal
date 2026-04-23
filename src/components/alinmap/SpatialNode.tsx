@@ -26,11 +26,11 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             whileHover={{ scale: hoverScale }}
             whileTap={{ scale: 0.95 }}
         >
-            <div className="w-full h-full rounded-full border-[2px] overflow-hidden shadow-lg border-white bg-white">
+            <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_12px_rgba(59,130,246,0.5)] border-blue-500 bg-[#1a1d24]">
                 <img
-                    src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=f1f3f4&color=3b82f6&size=150&bold=true`}
+                    src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                     className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=f1f3f4&color=3b82f6&size=150&bold=true`; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                 />
             </div>
 

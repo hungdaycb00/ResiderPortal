@@ -231,17 +231,17 @@ const MapControls: React.FC<MapControlsProps> = ({
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            className="absolute top-0 right-0 bottom-0 w-80 bg-white z-[160] p-6 shadow-2xl border-l border-gray-100"
+                            className="absolute top-0 right-0 bottom-0 w-80 bg-[#1a1d24] z-[160] p-6 shadow-2xl border-l border-white/10"
                         >
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-xl font-bold text-gray-900">Map Filters</h2>
-                                <X className="w-6 h-6 cursor-pointer text-gray-400 hover:text-gray-600" onClick={() => setIsSidebarOpen(false)} />
+                                <h2 className="text-xl font-bold">Map Filters</h2>
+                                <X className="w-6 h-6 cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
                             </div>
 
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Distance (km)</h3>
-                                    <div className="flex justify-between text-blue-600 font-bold mb-2">
+                                    <div className="flex justify-between text-blue-400 font-bold mb-2">
                                         <span>Within {filterDistance} km</span>
                                     </div>
                                     <input
@@ -250,11 +250,11 @@ const MapControls: React.FC<MapControlsProps> = ({
                                         max="500"
                                         value={filterDistance}
                                         onChange={(e) => setFilterDistance(parseInt(e.target.value))}
-                                        className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                                        className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
                                     />
                                 </div>
 
-                                <div className="pt-6 border-t border-gray-100">
+                                <div className="pt-6 border-t border-white/10">
                                     <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Age Range</h3>
                                     <div className="flex justify-between items-center gap-4">
                                         <div className="flex-1">
@@ -264,7 +264,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                                                 max="99"
                                                 value={filterAgeMin}
                                                 onChange={(e) => setFilterAgeMin(parseInt(e.target.value))}
-                                                className="w-full bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
                                             <span className="text-[10px] text-gray-500 block text-center mt-1">Min Age</span>
                                         </div>
@@ -276,21 +276,21 @@ const MapControls: React.FC<MapControlsProps> = ({
                                                 max="99"
                                                 value={filterAgeMax}
                                                 onChange={(e) => setFilterAgeMax(parseInt(e.target.value))}
-                                                className="w-full bg-gray-50 text-gray-900 rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+                                                className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
                                             <span className="text-[10px] text-gray-500 block text-center mt-1">Max Age</span>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div className="pt-6 border-t border-gray-100">
+                                <div className="pt-6 border-t border-white/10">
                                     <h3 className="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-3">Keywords / Tags</h3>
                                     <input
                                         type="text"
                                         placeholder="E.g. #GAMER or 'Looking for...'"
                                         value={searchTag}
                                         onChange={(e) => setSearchTag(e.target.value)}
-                                        className="w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                                     />
                                     <p className="text-[10px] text-gray-500 mt-2">Filters the map instantly as you type.</p>
                                 </div>
