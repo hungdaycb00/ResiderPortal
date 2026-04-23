@@ -222,10 +222,6 @@ export function useGameManager(params: UseGameManagerParams) {
       showNotification('Tên game không được chứa ký tự đặc biệt.', 'error');
       return;
     }
-    if (!gameThumbnail && !updatingGameId) {
-      showNotification('Please select background image.', 'error');
-      return;
-    }
     if (selectedCategories.length === 0) {
       showNotification('Please select at least 1 category.', 'error');
       return;

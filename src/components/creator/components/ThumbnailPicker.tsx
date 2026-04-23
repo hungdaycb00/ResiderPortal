@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
-import { Camera, Image } from 'lucide-react';
+import { Camera, Plus } from 'lucide-react';
 
 interface ThumbnailPickerProps {
   thumbnailPreview: string | null;
   onThumbnailSelect: (file: File) => void;
   onThumbnailClear: () => void;
   hasThumbnail: boolean;
+  previewUrl?: string | null;
 }
 
 export default function ThumbnailPicker({
@@ -13,6 +14,7 @@ export default function ThumbnailPicker({
   onThumbnailSelect,
   onThumbnailClear,
   hasThumbnail,
+  previewUrl
 }: ThumbnailPickerProps) {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,9 +29,6 @@ export default function ThumbnailPicker({
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center px-1">
         <label className="text-[10px] font-bold text-gray-500 uppercase">Game Thumbnail</label>
-        {!hasThumbnail && (
-          <span className="text-[9px] font-bold text-red-500 animate-pulse">* Required</span>
-        )}
       </div>
       <input 
         type="file" 
@@ -40,7 +39,7 @@ export default function ThumbnailPicker({
       />
       <div 
         onClick={() => thumbnailInputRef.current?.click()}
-        className="relative aspect-[16/9] w-full rounded-xl border border-gray-700 bg-gray-900/50 overflow-hidden cursor-pointer group hover:border-purple-500/50 transition-all"
+        className="relative aspect-[16/9] w-full rounded-xl border border-gray-700 bg-black overflow-hidden cursor-pointer group hover:border-purple-500/50 transition-all"
       >
         {thumbnailPreview ? (
           <>
@@ -49,10 +48,20 @@ export default function ThumbnailPicker({
               <Camera className="w-6 h-6 text-white shadow-lg" />
             </div>
           </>
+        ) : previewUrl ? (
+          <div className="w-full h-full pointer-events-none">
+            <iframe 
+              src={previewUrl} 
+              className="w-full h-full border-none pointer-events-none scale-[1.02]" 
+              title="Thumbnail Preview"
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all flex items-center justify-center">
+               <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-600 group-hover:text-gray-400 transition-colors">
-            <Image className="w-8 h-8" />
-            <span className="text-[10px] font-bold">Select background</span>
+            <Plus className="w-8 h-8" />
           </div>
         )}
       </div>

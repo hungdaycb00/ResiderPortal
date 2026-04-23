@@ -19,6 +19,7 @@ interface CreatorSidebarProps {
   uploadProgress: number;
   publishStatus: string | null;
   publishStatusType: PublishStatusType;
+  previewUrl?: string | null;
   // Handlers
   onGameNameChange: (name: string) => void;
   onFolderSelect: () => void;
@@ -44,7 +45,7 @@ export default function CreatorSidebar({
   onGameNameChange, onFolderSelect, onPasteCodeClick, onCategoryToggle,
   onCategoriesExpandToggle, onThumbnailSelect, onThumbnailClear,
   onPreview, onPublish, onManageGamesClick, onDownloadDoc,
-  showNotification, fileInputRef, onFolderInputChange,
+  showNotification, fileInputRef, onFolderInputChange, previewUrl
 }: CreatorSidebarProps) {
   return (
     <div className="w-full p-4 flex flex-col gap-4 bg-[#1a1d24] overflow-y-auto custom-scrollbar">
@@ -142,6 +143,7 @@ export default function CreatorSidebar({
         onThumbnailSelect={onThumbnailSelect}
         onThumbnailClear={onThumbnailClear}
         hasThumbnail={!!gameThumbnail}
+        previewUrl={previewUrl}
       />
 
       <div className="grid grid-cols-2 gap-2">

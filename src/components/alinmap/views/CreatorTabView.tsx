@@ -191,31 +191,11 @@ export default function CreatorTabView({
             showNotification={showNotification!}
             fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
             onFolderInputChange={handleFolderSelect}
+            previewUrl={serverPreviewUrl || (localGameUrl === 'server-preview' ? null : localGameUrl)}
           />
         </div>
 
-        {/* Preview Section (Simplified for Sidebar) */}
-        {(localGameUrl || serverPreviewUrl) && (
-          <div className="p-4 border-t border-gray-800">
-            <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Live Preview</h4>
-            <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-gray-800 group/preview">
-              <PreviewArea
-                serverPreviewUrl={serverPreviewUrl}
-                localGameUrl={localGameUrl}
-                isPreviewingOnServer={isPreviewingOnServer}
-                deviceType={deviceType}
-                orientation={orientation}
-                scale={scale}
-                containerRef={containerRef as React.RefObject<HTMLDivElement>}
-                onDeviceTypeChange={setDeviceType}
-                onOrientationToggle={() => setOrientation(prev => prev === 'landscape' ? 'portrait' : 'landscape')}
-                onIframeLoad={() => setIsPreviewingOnServer(false)}
-                showNotification={showNotification!}
-              />
-            </div>
-            <p className="text-[10px] text-gray-500 mt-2 text-center italic">Preview mode is optimized for the sidebar</p>
-          </div>
-        )}
+        {/* Preview removed here as it is now integrated into Thumbnail area */}
       </div>
 
       {/* Modals (Integrated) */}

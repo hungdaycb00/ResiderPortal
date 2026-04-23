@@ -64,7 +64,7 @@ const AlinMap: React.FC<AlinMapProps> = ({
     const [nameInput, setNameInput] = useState("");
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
-    const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('satellite');
+    const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
 
     // Map Filters
     const [filterDistance, setFilterDistance] = useState(50);
