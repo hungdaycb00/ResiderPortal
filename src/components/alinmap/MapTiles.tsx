@@ -21,25 +21,64 @@ function project(lat: number, lng: number, zoom: number) {
 }
 
 const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }) => {
+  const [zLevel, setZLevel] = React.useState(14);
+  const [tileOffset, setTileOffset] = React.useState({ x: 0, y: 0 });
+
+  React.useEffect(() => {
+    const checkViewport = () => {
+      // Calculate dynamic Z based on scale
+      const currentScale = scale.get();
+      const calculatedZ = 14 + Math.floor(Math.log2(currentScale));
+      // Restrict Z to valid Google Maps / Carto tile zoom levels (e.g., 2 to 21)
+      const newZ = Math.max(2, Math.min(21, calculatedZ));
+      
+      const ratio = DEGREES_TO_PX / ((256 * Math.pow(2, newZ)) / 360);
+      const tileWidthPx = TILE_SIZE * ratio;
+      
+      const offsetX = Math.round(-panX.get() / tileWidthPx);
+      const offsetY = Math.round(-panY.get() / tileWidthPx);
+      
+      setZLevel(newZ);
+      setTileOffset(prev => {
+        if (prev.x !== offsetX || prev.y !== offsetY) {
+          return { x: offsetX, y: offsetY };
+        }
+        return prev;
+      });
+    };
+
+    const unsubscribeX = panX.on('change', checkViewport);
+    const unsubscribeY = panY.on('change', checkViewport);
+    const unsubscribeScale = scale.on('change', checkViewport);
+    
+    // Initial check
+    checkViewport();
+
+    return () => {
+      unsubscribeX();
+      unsubscribeY();
+      unsubscribeScale();
+    };
+  }, [panX, panY, scale]);
+
   if (mode === 'grid' || !myObfPos) return null;
 
-  const z = 14;
-  const centerTile = project(myObfPos.lat, myObfPos.lng, z);
-  const ratio = DEGREES_TO_PX / ((256 * Math.pow(2, z)) / 360);
+  const centerTile = project(myObfPos.lat, myObfPos.lng, zLevel);
+  const ratio = DEGREES_TO_PX / ((256 * Math.pow(2, zLevel)) / 360);
   
   const tiles = [];
   for (let i = -7; i <= 7; i++) {
     for (let j = -7; j <= 7; j++) {
-      const tx = Math.floor(centerTile.x) + i;
-      const ty = Math.floor(centerTile.y) + j;
+      const tx = Math.floor(centerTile.x) + tileOffset.x + i;
+      const ty = Math.floor(centerTile.y) + tileOffset.y + j;
       const offsetX = (tx - centerTile.x) * TILE_SIZE * ratio;
       const offsetY = (ty - centerTile.y) * TILE_SIZE * ratio;
       
       tiles.push({
-        id: `${z}-${tx}-${ty}`,
+        id: `${zLevel}-${tx}-${ty}`,
         x: offsetX,
         y: offsetY,
-        tx, ty, z
+        tx, ty, z: zLevel
       });
     }
   }
