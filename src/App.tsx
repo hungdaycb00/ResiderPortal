@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { pathToTab, tabToPath, ALIN_MAP_TABS, AppTab } from './utils/routing';
 import { Search, Menu, Home, Grid, Users, HelpCircle, Play, ChevronDown, ChevronLeft, ChevronRight, X, LogIn, LogOut, Sword, Shield, Brain, Zap, Trophy, MessageSquare, Mail, MessageCircle, Layout, RefreshCw, Plus, Gamepad2, Filter, Trash2, Book, Star, Coins, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { externalApi, normalizeImageUrl } from './services/externalApi';
@@ -64,7 +66,18 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [serverError, setServerError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile'>('discover');
+  // Client-side routing: derive activeTab from URL
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activeTab = useMemo(() => pathToTab(location.pathname), [location.pathname]);
+  const setActiveTab = useCallback((tab: AppTab | ((prev: AppTab) => AppTab)) => {
+    if (typeof tab === 'function') {
+      const newTab = tab(pathToTab(location.pathname));
+      navigate(tabToPath(newTab));
+    } else {
+      navigate(tabToPath(tab));
+    }
+  }, [navigate, location.pathname]);
   const [fetchedGames, setFetchedGames] = useState<any[]>([]);
   const [fetchedFriends, setFetchedFriends] = useState<any[]>([]);
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
@@ -724,7 +737,7 @@ export default function App() {
 
       {/* Final Checkpoint: MultiTask & Modals */}
       <AnimatePresence>
-        {['alin', 'discover', 'friends', 'social', 'notifications', 'profile', 'creator'].includes(activeTab) && (
+        {ALIN_MAP_TABS.includes(activeTab) && (
           <AlinMap 
             key="alin-map-instance"
             user={user} 
@@ -734,7 +747,7 @@ export default function App() {
             handlePlayGame={handlePlayGame}
             showNotification={showNotification}
             friends={fetchedFriends}
-            initialMainTab={(['discover', 'friends', 'social', 'notifications', 'profile', 'creator'] as string[]).includes(activeTab) ? activeTab : 'discover'}
+            initialMainTab={ALIN_MAP_TABS.includes(activeTab) ? activeTab : 'discover'}
             onTabChange={(tab) => setActiveTab(tab as any)}
             cloudflareUrl={cloudflareUrl}
             triggerAuth={(callback) => {

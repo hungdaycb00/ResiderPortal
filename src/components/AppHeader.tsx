@@ -9,7 +9,7 @@ export interface AppHeaderProps {
     user: User | null;
     userStats: { gold: number, level: number, xp: number, rankScore: number } | null;
     activeTab: string;
-    setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'admin' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile'>>;
+    setActiveTab: (tab: any) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     isFilterExpanded: boolean;
@@ -143,7 +143,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <div className="flex items-center gap-4">
                     {user && (
                         <button
-                            onClick={() => setActiveTab(prev => prev === 'creator' ? 'home' : 'creator')}
+                            onClick={() => setActiveTab(activeTab === 'creator' ? 'home' : 'creator')}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-[10px] sm:text-xs transition-all border active:scale-95 group ${activeTab === 'creator'
                                     ? 'bg-purple-600 text-white border-purple-500'
                                     : 'bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border-purple-500/30'
