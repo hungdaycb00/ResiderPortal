@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -16,6 +16,7 @@ interface MapControlsProps {
     radius: number;
     scale: MotionValue<number>;
     ws: React.MutableRefObject<WebSocket | null>;
+    mapMode: 'grid' | 'satellite';
     setIsSidebarOpen: (v: boolean) => void;
     setFriendLocInput: (v: string) => void;
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
@@ -28,14 +29,15 @@ interface MapControlsProps {
     handleCenter: () => void;
     handleCenterTo: (lat: number, lng: number) => void;
     handleUpdateRadius: (v: number) => void;
+    setMapMode: (v: 'grid' | 'satellite') => void;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
     isConnecting, isSidebarOpen, weatherData, currentProvince, myObfPos, friendLocInput,
-    filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws,
+    filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius
+    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode
 }) => {
     const [copyToast, setCopyToast] = useState(false);
     const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
@@ -59,6 +61,13 @@ const MapControls: React.FC<MapControlsProps> = ({
                     title="Refresh"
                 >
                     <RefreshCw className={`w-5 h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
+                </button>
+                <button
+                    onClick={() => setMapMode(mapMode === 'grid' ? 'satellite' : 'grid')}
+                    className={`w-10 h-10 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+                    title={mapMode === 'satellite' ? 'Switch to Grid' : 'Switch to Satellite'}
+                >
+                    <Layers className="w-5 h-5" />
                 </button>
                 <button
                     onClick={() => setIsSidebarOpen(true)}

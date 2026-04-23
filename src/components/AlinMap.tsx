@@ -49,6 +49,7 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
     const [nameInput, setNameInput] = useState("");
     const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
     const [currentProvince, setCurrentProvince] = useState<string | null>(null);
+    const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('satellite');
 
     // Map Filters
     const [filterDistance, setFilterDistance] = useState(50);
@@ -590,17 +591,19 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 scale={scale} panX={panX} panY={panY} selfDragX={selfDragX} selfDragY={selfDragY} ws={ws}
                 requestLocation={requestLocation} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                 setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos} addLog={addLog} handleWheel={handleWheel}
+                mapMode={mapMode}
             />
 
             <MapControls
                 isConnecting={isConnecting} isSidebarOpen={isSidebarOpen} weatherData={weatherData} currentProvince={currentProvince}
                 myObfPos={myObfPos} friendLocInput={friendLocInput} filterDistance={filterDistance}
                 filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax} searchTag={searchTag} radius={radius}
-                scale={scale} ws={ws}
+                scale={scale} ws={ws} mapMode={mapMode}
                 setIsSidebarOpen={setIsSidebarOpen} setFriendLocInput={setFriendLocInput} setMyObfPos={setMyObfPos}
                 setSearchMarkerPos={setSearchMarkerPos} setFilterDistance={setFilterDistance}
                 setFilterAgeMin={setFilterAgeMin} setFilterAgeMax={setFilterAgeMax} setSearchTag={setSearchTag}
                 handleRefresh={handleRefresh} handleCenter={handleCenter} handleCenterTo={handleCenterTo} handleUpdateRadius={handleUpdateRadius}
+                setMapMode={setMapMode}
             />
 
             <NavigationBar mainTab={mainTab} selectedUser={selectedUser} isDesktop={isDesktop} unreadCount={unreadCount} handleTabClick={handleTabClick} />

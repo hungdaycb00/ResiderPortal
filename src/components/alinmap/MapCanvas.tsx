@@ -3,6 +3,7 @@ import { normalizeImageUrl } from '../../services/externalApi';
 import { MapPin, RefreshCw, Diamond } from 'lucide-react';
 import { motion, MotionValue, useMotionValue } from 'framer-motion';
 import SpatialNode from './SpatialNode';
+import MapTiles from './MapTiles';
 import { DEGREES_TO_PX } from './constants';
 
 interface MapCanvasProps {
@@ -39,6 +40,7 @@ interface MapCanvasProps {
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     addLog: (msg: string) => void;
     handleWheel: (e: React.WheelEvent) => void;
+    mapMode: 'grid' | 'satellite';
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -46,7 +48,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
-    requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel
+    requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
+    mapMode
 }) => {
     return (
         <div
@@ -96,11 +99,14 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10"
                     >
                         {/* Grid styling */}
-                        <div className="absolute inset-0 pointer-events-none" style={{
+                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
                             backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
                             backgroundSize: "100px 100px",
                             backgroundPosition: "center center",
                         }} />
+
+                        {/* Real Map Tiles */}
+                        <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
 
                         {!myObfPos && (
                             <div className="absolute inset-0 flex items-center justify-center">
