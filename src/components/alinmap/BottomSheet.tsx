@@ -388,8 +388,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                                 <button
                                                     key={g.id}
                                                     onClick={() => {
-                                                        // Handle game click (for example, navigate or open game)
-                                                        window.location.href = `/play.html?id=${g.id}`;
+                                                        if (handlePlayGame) handlePlayGame(g);
                                                     }}
                                                     className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
                                                 >

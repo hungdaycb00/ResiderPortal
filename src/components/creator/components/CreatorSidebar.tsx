@@ -3,7 +3,7 @@ import { Download, Play, Loader2, Send, Folder, Database, FileCode } from 'lucid
 import { motion, AnimatePresence } from 'motion/react';
 import CategorySelector from './CategorySelector';
 import ThumbnailPicker from './ThumbnailPicker';
-import { PublishStatusType } from '../types';
+import { PublishStatusType, DeviceType } from '../types';
 
 interface CreatorSidebarProps {
   // State
@@ -20,6 +20,9 @@ interface CreatorSidebarProps {
   publishStatus: string | null;
   publishStatusType: PublishStatusType;
   previewUrl?: string | null;
+  deviceType?: DeviceType;
+  onDeviceTypeChange?: (type: DeviceType) => void;
+  onExpand?: () => void;
   // Handlers
   onGameNameChange: (name: string) => void;
   onFolderSelect: () => void;
@@ -45,7 +48,8 @@ export default function CreatorSidebar({
   onGameNameChange, onFolderSelect, onPasteCodeClick, onCategoryToggle,
   onCategoriesExpandToggle, onThumbnailSelect, onThumbnailClear,
   onPreview, onPublish, onManageGamesClick, onDownloadDoc,
-  showNotification, fileInputRef, onFolderInputChange, previewUrl
+  showNotification, fileInputRef, onFolderInputChange, previewUrl,
+  deviceType, onDeviceTypeChange, onExpand
 }: CreatorSidebarProps) {
   return (
     <div className="w-full p-4 flex flex-col gap-4 bg-[#1a1d24] overflow-y-auto custom-scrollbar">
@@ -144,6 +148,9 @@ export default function CreatorSidebar({
         onThumbnailClear={onThumbnailClear}
         hasThumbnail={!!gameThumbnail}
         previewUrl={previewUrl}
+        deviceType={deviceType}
+        onDeviceTypeChange={onDeviceTypeChange}
+        onExpand={onExpand}
       />
 
       <div className="grid grid-cols-2 gap-2">
