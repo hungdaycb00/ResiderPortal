@@ -7,6 +7,7 @@ import SocialView from './views/SocialView';
 import NotificationsView from './views/NotificationsView';
 import MyProfileView from './views/MyProfileView';
 import SelectedUserView from './views/SelectedUserView';
+import CreatorTabView from './views/CreatorTabView';
 
 
 interface BottomSheetProps {
@@ -82,6 +83,11 @@ interface BottomSheetProps {
     handleCreatePost: (files: File[]) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
+    cloudflareUrl?: string;
+    triggerAuth?: (callback: () => void) => void;
+    externalOpenList?: boolean;
+    onOpenListChange?: (v: boolean) => void;
+    onPublishSuccess?: () => void;
 }
 
 
@@ -100,7 +106,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsVisibleOnMap, setFriendIdInput, setSocialSection, setSentFriendRequests,
         setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
         handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
-        myAvatarUrl, setMyAvatarUrl
+        myAvatarUrl, setMyAvatarUrl,
+        cloudflareUrl, triggerAuth, externalOpenList, onOpenListChange, onPublishSuccess
     } = props;
 
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -446,6 +453,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         setMainTab={setMainTab} handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi} showAvatarMenu={showAvatarMenu} setShowAvatarMenu={setShowAvatarMenu}
                                         avatarInputRef={avatarInputRef} handleAvatarUpload={handleAvatarUpload} handleDefaultAvatar={handleDefaultAvatar}
+                                    />
+                                )}
+                                {mainTab === 'creator' && (
+                                    <CreatorTabView
+                                        user={user}
+                                        showNotification={showNotification}
+                                        onPublishSuccess={onPublishSuccess}
+                                        onPlayGame={handlePlayGame}
+                                        cloudflareUrl={cloudflareUrl}
+                                        triggerAuth={triggerAuth}
+                                        externalOpenList={externalOpenList}
+                                        onOpenListChange={onOpenListChange}
                                     />
                                 )}
                             </div>

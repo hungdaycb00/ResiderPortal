@@ -15,6 +15,10 @@ export interface AlinMapProps {
     initialMainTab?: string;
     handlePlayGame?: (game: any) => void;
     onTabChange?: (tab: string) => void;
+    cloudflareUrl?: string;
+    triggerAuth?: (callback: () => void) => void;
+    externalOpenList?: boolean;
+    onOpenListChange?: (v: boolean) => void;
 }
 
 export interface SpatialNodeProps {

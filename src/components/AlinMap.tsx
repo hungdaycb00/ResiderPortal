@@ -8,14 +8,28 @@ import MapControls from './alinmap/MapControls';
 import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 
-const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, friends = [], onOpenChat, showNotification, initialMainTab, handlePlayGame, onTabChange }) => {
+const AlinMap: React.FC<AlinMapProps> = ({ 
+    user, 
+    onClose, 
+    externalApi, 
+    games, 
+    friends = [], 
+    onOpenChat, 
+    showNotification, 
+    initialMainTab = 'discover',
+    onTabChange,
+    cloudflareUrl,
+    triggerAuth,
+    externalOpenList,
+    onOpenListChange
+}) => {
     const API_BASE = getBaseUrl();
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [myObfPos, setMyObfPos] = useState<{ lat: number, lng: number } | null>(null);
     const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('info');
-    const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications'>(
+    const [mainTab, setMainTab] = useState<'discover' | 'friends' | 'profile' | 'notifications' | 'creator'>(
         (initialMainTab as any) || 'discover'
     );
     const [userGames, setUserGames] = useState<any[]>([]);
@@ -464,13 +478,16 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
 
     const handleTabClick = (tabId: string) => {
         setSelectedUser(null);
-        if (tabId === 'creator') {
-            if (onTabChange) onTabChange('creator');
-            return;
-        }
         if (tabId === 'profile') { setActiveTab('info'); }
-        if (mainTab === tabId) { setIsSheetExpanded(!isSheetExpanded); }
-        else { setMainTab(tabId as any); setIsSheetExpanded(true); }
+        if (tabId === 'creator') { setActiveTab('info'); } // Or whatever is relevant for creator
+        
+        if (mainTab === tabId) { 
+            setIsSheetExpanded(!isSheetExpanded); 
+        } else { 
+            setMainTab(tabId as any); 
+            setIsSheetExpanded(true); 
+            if (onTabChange) onTabChange(tabId);
+        }
     };
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -635,6 +652,11 @@ const AlinMap: React.FC<AlinMapProps> = ({ user, onClose, externalApi, games, fr
                 handleAddFriend={handleAddFriend} handleMessage={handleMessage}
                 handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
                 handlePlayGame={handlePlayGame}
+                cloudflareUrl={cloudflareUrl}
+                triggerAuth={triggerAuth}
+                externalOpenList={externalOpenList}
+                onOpenListChange={onOpenListChange}
+                onPublishSuccess={handleRefresh}
             />
         </div>
     );

@@ -53,7 +53,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
     return (
         <div
-            className="flex-1 relative overflow-hidden bg-[#0a0a0f]"
+            className="flex-1 relative overflow-hidden bg-[#0c0d12]"
             onWheel={handleWheel}
         >
             {/* Glow Background Elements */}
@@ -170,7 +170,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                             })
                                         });
                                     }}
-                                    className="absolute w-16 h-16 -ml-8 -mt-16 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
+                                    className="absolute w-12 h-12 -ml-6 -mt-12 group pointer-events-auto z-[100] cursor-grab active:cursor-grabbing select-none"
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
                                     onPointerEnter={() => {
                                         const s = scale.get();
@@ -180,7 +180,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileTap={{ scale: 0.95 }}
                                 >
                                     <div className="absolute inset-0 rounded-full bg-blue-500/30 animate-ping shadow-[0_0_20px_rgba(59,130,246,0.6)]" />
-                                    <div className={`w-full h-full rounded-full border-[3px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_30px_rgba(59,130,246,0.9)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
+                                    <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(59,130,246,0.8)] ${isVisibleOnMap ? 'border-blue-400' : 'border-emerald-500 opacity-60'}`}>
                                         <img
                                             src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                                             className="w-full h-full object-cover pointer-events-none"
@@ -197,7 +197,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     {galleryActive && (
                                         <div
                                             onClick={(e) => { e.stopPropagation(); setSelectedUser({ ...myObfPos, isSelf: true, username: myDisplayName }); setActiveTab('posts'); setIsSheetExpanded(true); }}
-                                            className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
+                                            className="absolute -top-24 left-1/2 -translate-x-1/2 w-44 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-amber-400/30 shadow-2xl shadow-amber-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                                         >
                                             <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
                                                 <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">

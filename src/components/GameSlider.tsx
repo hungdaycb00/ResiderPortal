@@ -11,6 +11,20 @@ interface GameSliderProps {
 
 export default function GameSlider({ children, title, icon, lightMode = false }: GameSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showButtons, setShowButtons] = React.useState(false);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollWidth, clientWidth } = scrollRef.current;
+      setShowButtons(scrollWidth > clientWidth);
+    }
+  };
+
+  React.useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [children]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -34,20 +48,22 @@ export default function GameSlider({ children, title, icon, lightMode = false }:
             {icon}
             {title}
           </h3>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => scroll('left')}
-              className={`p-2 rounded-full transition-all active:scale-95 ${lightMode ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600' : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50'}`}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => scroll('right')}
-              className={`p-2 rounded-full transition-all active:scale-95 ${lightMode ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600' : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50'}`}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          {showButtons && (
+            <div className="flex gap-2">
+              <button 
+                onClick={() => scroll('left')}
+                className={`p-2 rounded-full transition-all active:scale-95 ${lightMode ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600' : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50'}`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => scroll('right')}
+                className={`p-2 rounded-full transition-all active:scale-95 ${lightMode ? 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600' : 'bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50'}`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
       )}
       

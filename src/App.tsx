@@ -18,7 +18,6 @@ import MultiTaskButton from './components/MultiTaskButton';
 import ConfirmModal from './components/ConfirmModal';
 import GameListModal from './components/GameListModal';
 import ImageGeneratorModal from './components/ImageGeneratorModal';
-import CreatorView from './components/CreatorView';
 import AdminView from './components/AdminView';
 import FriendsModal from './components/FriendsModal';
 import ChatRoom from './components/ChatRoom';
@@ -708,23 +707,6 @@ export default function App() {
         {activeTab === 'support' && (
           <SupportTab />
         )}
-        {activeTab === 'creator' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <CreatorView 
-              user={user} 
-              showNotification={showNotification} 
-              onPublishSuccess={fetchExternalData} 
-              onPlayGame={handlePlayGame}
-              cloudflareUrl={cloudflareUrl}
-              triggerAuth={(callback) => {
-                setAuthCallbackQueue(() => callback);
-                setIsAuthOpen(true);
-              }}
-              externalOpenList={isMyGamesOverlayOpen}
-              onOpenListChange={setIsMyGamesOverlayOpen}
-            />
-          </div>
-        )}
 
         {activeTab === 'chat' && null}
 
@@ -742,7 +724,7 @@ export default function App() {
 
       {/* Final Checkpoint: MultiTask & Modals */}
       <AnimatePresence>
-        {(activeTab === 'alin' || activeTab === 'notifications') && (
+        {(activeTab === 'alin' || activeTab === 'notifications' || activeTab === 'creator') && (
           <AlinMap 
             user={user} 
             onClose={() => setActiveTab('home')} 
@@ -751,8 +733,15 @@ export default function App() {
             handlePlayGame={handlePlayGame}
             showNotification={showNotification}
             friends={fetchedFriends}
-            initialMainTab={activeTab === 'notifications' ? 'notifications' : 'discover'}
+            initialMainTab={activeTab === 'notifications' ? 'notifications' : activeTab === 'creator' ? 'creator' : 'discover'}
             onTabChange={(tab) => setActiveTab(tab as any)}
+            cloudflareUrl={cloudflareUrl}
+            triggerAuth={(callback) => {
+              setAuthCallbackQueue(() => callback);
+              setIsAuthOpen(true);
+            }}
+            externalOpenList={isMyGamesOverlayOpen}
+            onOpenListChange={setIsMyGamesOverlayOpen}
             onOpenChat={(id: string, name: string, avatar?: string) => {
               setChatTargetUser({ id, name, avatarUrl: avatar });
               setIsChatOpen(true);

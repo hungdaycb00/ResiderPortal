@@ -78,10 +78,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                     {/* Recent Part */}
                     <div>
                         <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">Recent Interactions</h4>
-                        <div className="py-6 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                            <RefreshCw className="w-5 h-5 text-gray-300 mx-auto mb-2" />
-                            <p className="text-gray-400 text-xs font-medium">No recent interactions</p>
-                        </div>
+                        {/* Recent users will be listed here when available */}
                     </div>
 
                     {/* Friends Part */}

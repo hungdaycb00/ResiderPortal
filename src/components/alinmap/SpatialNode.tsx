@@ -18,7 +18,7 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                 const s = mapScale.get();
                 setHoverScale(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1);
             }}
-            className="absolute w-12 h-12 -ml-6 -mt-12 cursor-pointer group hover:z-50 pointer-events-auto"
+            className="absolute w-10 h-10 -ml-5 -mt-10 cursor-pointer group hover:z-50 pointer-events-auto"
             style={{
                 left: `calc(50% + ${dx}px)`,
                 top: `calc(50% + ${dy}px)`
@@ -26,7 +26,7 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             whileHover={{ scale: hoverScale }}
             whileTap={{ scale: 0.95 }}
         >
-            <div className="w-full h-full rounded-full border-[3px] overflow-hidden shadow-[0_0_15px_rgba(59,130,246,0.6)] border-blue-500 bg-[#1a1d24]">
+            <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_12px_rgba(59,130,246,0.5)] border-blue-500 bg-[#1a1d24]">
                 <img
                     src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                     className="w-full h-full object-cover"
@@ -35,13 +35,13 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             </div>
 
             {/* Hologram base shadow/glow */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-2 bg-blue-500/50 blur-sm rounded-full -z-10" />
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-blue-500/50 blur-sm rounded-full -z-10" />
 
             {/* Billboard Container (Positioned Above Avatar) */}
             {user.gallery?.active && (
                 <div
                     onClick={(e) => { e.stopPropagation(); onClick(); }}
-                    className="absolute -top-28 left-1/2 -translate-x-1/2 w-48 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
+                    className="absolute -top-24 left-1/2 -translate-x-1/2 w-44 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                 >
                     {/* Header */}
                     <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">

@@ -28,8 +28,8 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
   const ratio = DEGREES_TO_PX / ((256 * Math.pow(2, z)) / 360);
   
   const tiles = [];
-  for (let i = -2; i <= 2; i++) {
-    for (let j = -2; j <= 2; j++) {
+  for (let i = -7; i <= 7; i++) {
+    for (let j = -7; j <= 7; j++) {
       const tx = Math.floor(centerTile.x) + i;
       const ty = Math.floor(centerTile.y) + j;
       const offsetX = (tx - centerTile.x) * TILE_SIZE * ratio;
@@ -45,7 +45,7 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
   }
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-80">
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-100">
       {tiles.map(tile => (
         <React.Fragment key={tile.id}>
           {/* Base Layer: Satellite */}

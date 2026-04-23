@@ -47,7 +47,7 @@ export default function CreatorSidebar({
   showNotification, fileInputRef, onFolderInputChange,
 }: CreatorSidebarProps) {
   return (
-    <div className="w-72 p-4 flex flex-col gap-4 bg-[#1a1d24] overflow-y-auto custom-scrollbar">
+    <div className="w-full p-4 flex flex-col gap-4 bg-[#1a1d24] overflow-y-auto custom-scrollbar">
       
       <button 
         onClick={onDownloadDoc}
