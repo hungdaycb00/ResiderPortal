@@ -58,15 +58,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 }) => {
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     const pickingItemsRef = React.useRef(new Set<string>());
+    const boatOffsetX = useMotionValue(0);
+    const boatOffsetY = useMotionValue(0);
     const PICKUP_RADIUS_DEG = 0.001; // ~100m auto pickup radius
 
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
         
-        const currentScale = scale.get() || 1;
-        // Vị trí thuyền = myObfPos + selfDragX/Y offset (thuyền di chuyển bằng selfDrag)
-        const currentLng = myObfPos.lng + selfDragX.get() / DEGREES_TO_PX;
-        const currentLat = myObfPos.lat - selfDragY.get() / DEGREES_TO_PX;
+        // Vị trí thuyền = myObfPos + boatOffset (thuyền di chuyển bằng boatOffset)
+        const currentLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
+        const currentLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
 
         seaGameCtx.worldItems.forEach((item: any) => {
             if (pickingItemsRef.current.has(item.spawnId)) return;
@@ -77,7 +78,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 pickingItemsRef.current.add(item.spawnId);
                 seaGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
                     if (!success) {
-                        setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000); // Retry later if failed
+                        setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000);
                     }
                 });
             }
@@ -162,9 +163,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
                             const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
 
-                            // Calculate smooth animation duration based on distance
-                            const distLng = lng - (seaState.currentLng || myObfPos.lng);
-                            const distLat = lat - (seaState.currentLat || myObfPos.lat);
+                            // Tính khoảng cách từ vị trí hiện tại của thuyền (có tính offset)
+                            const boatLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
+                            const boatLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
+                            const distLng = lng - boatLng;
+                            const distLat = lat - boatLat;
                             const distDeg = Math.sqrt(distLng*distLng + distLat*distLat);
                             
                             const multiplier = seaGameCtx?.globalSettings?.speedMultiplier || 1.0;
@@ -174,22 +177,19 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             setBoatTargetPin({lat, lng});
                             seaGameCtx.moveBoat(lat, lng);
                             
-                            // Animate the BOAT icon across the map (not the camera)
-                            const targetPxX = distLng * DEGREES_TO_PX;
-                            const targetPxY = -distLat * DEGREES_TO_PX;
+                            // Tính pixel offset MỚI cho thuyền (từ myObfPos gốc)
+                            const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
+                            const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
 
-                            animate(selfDragX, targetPxX, { duration, ease: "easeInOut" });
-                            animate(selfDragY, targetPxY, { 
-                                duration, ease: "easeInOut",
-                                onComplete: () => {
-                                    // Transfer boat offset to camera pan, reset boat to center
-                                    panX.set(panX.get() + targetPxX);
-                                    panY.set(panY.get() + targetPxY);
-                                    selfDragX.set(0);
-                                    selfDragY.set(0);
-                                    setBoatTargetPin(null);
-                                }
-                            });
+                            // Di chuyển thuyền đến vị trí mới
+                            animate(boatOffsetX, newBoatPxX, { duration, ease: "easeInOut" });
+                            animate(boatOffsetY, newBoatPxY, { duration, ease: "easeInOut" });
+
+                            // Camera đuổi theo thuyền
+                            const newPanX = -newBoatPxX;
+                            const newPanY = -newBoatPxY;
+                            animate(panX, newPanX, { duration, ease: "easeInOut" });
+                            animate(panY, newPanY, { duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
                         }}
                     >
                         {/* Grid styling */}
@@ -225,16 +225,36 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     </div>
                                 )}
 
-                                {/* Self Node */}
+                                {/* Self Node - Sea Game: outer div for position, inner for bobbing */}
+                                {isSeaGameMode ? (
+                                    <motion.div
+                                        className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
+                                        style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                        }}
+                                        onDoubleClick={(e) => e.stopPropagation()}
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                    >
+                                        <motion.div
+                                            className="w-full h-full"
+                                            animate={{ y: [-2, 2, -2], rotateZ: [-2, 2, -2] }}
+                                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                        >
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <span className="text-4xl drop-shadow-lg">⛵</span>
+                                            </div>
+                                        </motion.div>
+                                    </motion.div>
+                                ) : (
                                 <motion.div
-                                    drag={!isSeaGameMode}
+                                    drag
                                     dragMomentum={false}
                                     dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}
                                     dragElastic={0}
                                     onPointerDown={(e) => e.stopPropagation()}
-                                    onDoubleClick={(e) => e.stopPropagation()} // Prevent map double click
+                                    onDoubleClick={(e) => e.stopPropagation()}
                                     onDragEnd={(e, info) => {
-                                        if (isSeaGameMode) return; // Prevent drag in Sea Game
                                         if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
                                             const currentScale = scale.get() || 1;
                                             const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
@@ -270,19 +290,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         e.preventDefault();
                                         e.stopPropagation();
                                     }}
-                                    className={`absolute group pointer-events-auto z-[100] select-none ${isSeaGameMode ? 'w-16 h-16 -ml-8 -mt-8 cursor-default' : 'w-12 h-12 -ml-6 -mt-12 cursor-grab active:cursor-grabbing'}`}
+                                    className="absolute group pointer-events-auto z-[100] select-none w-12 h-12 -ml-6 -mt-12 cursor-grab active:cursor-grabbing"
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
-                                    animate={isSeaGameMode ? {
-                                        y: [-2, 2, -2],
-                                        rotateZ: [-2, 2, -2]
-                                    } : {
-                                        y: [0, -6, 0]
-                                    }}
-                                    transition={{
-                                        duration: isSeaGameMode ? 2 : 4,
-                                        repeat: Infinity,
-                                        ease: "easeInOut"
-                                    }}
+                                    animate={{ y: [0, -6, 0] }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                     onPointerEnter={() => {
                                         const s = scale.get();
                                         document.documentElement.style.setProperty('--self-hover-scale', String(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
@@ -290,13 +301,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                        {!isSeaGameMode && <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />}
+                                        <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
                                         
-                                        {isSeaGameMode ? (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-4xl drop-shadow-lg">⛵</span>
-                                            </div>
-                                        ) : (
                                             <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
                                                 <img
                                                     src={normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`}
@@ -309,7 +315,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                                     </div>
                                                 )}
                                             </div>
-                                        )}
+
 
                                         {/* Billboard for SELF NODE */}
                                         {galleryActive && !isSeaGameMode && (
@@ -353,6 +359,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         )}
                                     </div>
                                 </motion.div>
+                                )}
 
                                 {/* Search Marker Pin */}
                                 {searchMarkerPos && (
