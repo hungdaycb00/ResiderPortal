@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { MapPin, RefreshCw, Diamond } from 'lucide-react';
-import { motion, MotionValue, useMotionValue, animate } from 'framer-motion';
+import { motion, MotionValue, useMotionValue, animate, useAnimationFrame } from 'framer-motion';
 import SpatialNode from './SpatialNode';
 import MapTiles from './MapTiles';
 import { DEGREES_TO_PX } from './constants';
@@ -57,6 +57,33 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading
 }) => {
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
+    const pickingItemsRef = React.useRef(new Set<string>());
+    const PICKUP_RADIUS_DEG = 0.001; // ~100m auto pickup radius
+
+    useAnimationFrame(() => {
+        if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
+        
+        const currentScale = scale.get() || 1;
+        // Tọa độ hiện tại của tâm màn hình (thuyền)
+        const currentLng = myObfPos.lng - panX.get() / (DEGREES_TO_PX * currentScale);
+        const currentLat = myObfPos.lat + panY.get() / (DEGREES_TO_PX * currentScale);
+
+        seaGameCtx.worldItems.forEach((item: any) => {
+            if (pickingItemsRef.current.has(item.spawnId)) return;
+            const dLat = item.lat - currentLat;
+            const dLng = item.lng - currentLng;
+            const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+            if (dist < PICKUP_RADIUS_DEG) {
+                pickingItemsRef.current.add(item.spawnId);
+                seaGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
+                    if (!success) {
+                        setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000); // Retry later if failed
+                    }
+                });
+            }
+        });
+    });
+
     return (
         <div
             className="flex-1 relative overflow-hidden bg-[#001424]"
@@ -139,7 +166,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             const distLng = lng - (seaState.currentLng || myObfPos.lng);
                             const distLat = lat - (seaState.currentLat || myObfPos.lat);
                             const distDeg = Math.sqrt(distLng*distLng + distLat*distLat);
-                            const duration = Math.min(Math.max(distDeg * 2000, 1), 8); // 1 to 8 seconds max
+                            
+                            const multiplier = seaGameCtx?.globalSettings?.speedMultiplier || 1.0;
+                            const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
+                            const duration = baseDuration / multiplier;
 
                             setBoatTargetPin({lat, lng});
                             seaGameCtx.moveBoat(lat, lng);
@@ -369,10 +399,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         style={{
                                             top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                                             left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            seaGameCtx.pickupItem(item.spawnId);
                                         }}
                                         animate={{ y: [-2, 2, -2] }}
                                         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2 }}

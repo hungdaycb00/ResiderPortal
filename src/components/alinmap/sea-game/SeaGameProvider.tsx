@@ -99,6 +99,7 @@ interface SeaGameContextType {
   setShowMinigame: (item: WorldItem | null) => void;
   isSeaGameMode: boolean;
   setIsSeaGameMode: (v: boolean) => void;
+  globalSettings: any;
   // Actions
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
@@ -147,6 +148,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [showCurseModal, setShowCurseModal] = useState(false);
   const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
   const [isSeaGameMode, setIsSeaGameMode] = useState(false);
+  const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const goldTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -177,6 +179,9 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           inventory: JSON.parse(s.inventory_json || '[]'), storage: JSON.parse(s.storage_json || '[]'),
           distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
         });
+        if (data.settings) {
+          setGlobalSettings(data.settings);
+        }
       }
     } catch (err) { console.error('[SeaGame] loadState error:', err); }
   }, [deviceId, API]);
@@ -330,7 +335,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     stagingItem, setStagingItem, encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
     showMinigame, setShowMinigame, isMoving,
-    isSeaGameMode, setIsSeaGameMode,
+    isSeaGameMode, setIsSeaGameMode, globalSettings,
     initGame, loadState, moveBoat, pickupItem, saveInventory,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
   };
