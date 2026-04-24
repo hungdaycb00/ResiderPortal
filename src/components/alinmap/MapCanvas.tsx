@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { MapPin, RefreshCw, Diamond } from 'lucide-react';
 import { motion, MotionValue, useMotionValue, animate, useAnimationFrame } from 'framer-motion';
@@ -96,6 +96,53 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             }
         });
     });
+ 
+    const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
+        if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+
+        const currentScale = scale.get() || 1;
+        const offsetX = clientX - window.innerWidth / 2;
+        const offsetY = clientY - window.innerHeight / 2;
+        const mapX = (offsetX - panX.get()) / currentScale;
+        const mapY = (offsetY - panY.get()) / currentScale;
+        const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+        const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+
+        // Tính khoảng cách từ vị trí hiện tại của thuyền (có tính offset)
+        const boatLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
+        const boatLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
+        const distLng = lng - boatLng;
+        const distLat = lat - boatLat;
+        const distDeg = Math.sqrt(distLng * distLng + distLat * distLat);
+
+        const multiplier = seaGameCtx?.globalSettings?.speedMultiplier || 1.0;
+        const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
+        const duration = baseDuration / multiplier;
+
+        const hasFloatingItems = (seaGameCtx.state.inventory.some(i => i.gridX < 0) || !!seaGameCtx.stagingItem);
+
+        if (hasFloatingItems) {
+            seaGameCtx.setShowDiscardModal(true);
+            return;
+        }
+
+        setBoatTargetPin({ lat, lng });
+        seaGameCtx.moveBoat(lat, lng);
+
+        // Tính pixel offset MỚI cho thuyền (từ myObfPos gốc)
+        const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
+        const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
+
+        // Di chuyển thuyền đến vị trí mới
+        animate(boatOffsetX, newBoatPxX, { duration, ease: "easeInOut" });
+        animate(boatOffsetY, newBoatPxY, { duration, ease: "easeInOut" });
+
+        // Camera đuổi theo thuyền
+        const newPanX = -newBoatPxX;
+        const newPanY = -newBoatPxY;
+        animate(panX, newPanX, { duration, ease: "easeInOut" });
+        animate(panY, newPanY, { duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
+    }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, DEGREES_TO_PX]);
 
     return (
         <div
@@ -170,22 +217,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             if (now - lastTapRef.current < 300) {
                                 // Double tap detected
                                 const touch = e.changedTouches[0];
-                                const currentScale = scale.get() || 1;
-                                const offsetX = touch.clientX - window.innerWidth / 2;
-                                const offsetY = touch.clientY - window.innerHeight / 2;
-                                const mapX = (offsetX - panX.get()) / currentScale;
-                                const mapY = (offsetY - panY.get()) / currentScale;
-                                const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
-                                const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
-
-                                setBoatTargetPin({ lat, lng });
-                                seaGameCtx.moveBoat(lat, lng);
-
-                                animate(boatOffsetX, mapX, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
-                                animate(boatOffsetY, mapY, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
-
-                                animate(panX, -mapX, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
-                                animate(panY, -mapY, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
+                                handleMapDoubleClick(touch.clientX, touch.clientY);
                             }
                             lastTapRef.current = now;
                         }}
@@ -193,49 +225,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
                             e.preventDefault();
                             e.stopPropagation();
-                            
-                            const currentScale = scale.get() || 1;
-                            const offsetX = e.clientX - window.innerWidth / 2;
-                            const offsetY = e.clientY - window.innerHeight / 2;
-                            const mapX = (offsetX - panX.get()) / currentScale;
-                            const mapY = (offsetY - panY.get()) / currentScale;
-                            const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
-                            const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
-
-                            // Tính khoảng cách từ vị trí hiện tại của thuyền (có tính offset)
-                            const boatLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
-                            const boatLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
-                            const distLng = lng - boatLng;
-                            const distLat = lat - boatLat;
-                            const distDeg = Math.sqrt(distLng*distLng + distLat*distLat);
-                            
-                            const multiplier = seaGameCtx?.globalSettings?.speedMultiplier || 1.0;
-                            const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
-                            const duration = baseDuration / multiplier;
-
-                            const hasFloatingItems = (seaGameCtx.state.inventory.some(i => i.gridX < 0) || !!seaGameCtx.stagingItem);
-                            
-                            if (hasFloatingItems) {
-                              seaGameCtx.setShowDiscardModal(true);
-                              return;
-                            }
-
-                            setBoatTargetPin({lat, lng});
-                            seaGameCtx.moveBoat(lat, lng);
-                            
-                            // Tính pixel offset MỚI cho thuyền (từ myObfPos gốc)
-                            const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
-                            const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
-
-                            // Di chuyển thuyền đến vị trí mới
-                            animate(boatOffsetX, newBoatPxX, { duration, ease: "easeInOut" });
-                            animate(boatOffsetY, newBoatPxY, { duration, ease: "easeInOut" });
-
-                            // Camera đuổi theo thuyền
-                            const newPanX = -newBoatPxX;
-                            const newPanY = -newBoatPxY;
-                            animate(panX, newPanX, { duration, ease: "easeInOut" });
-                            animate(panY, newPanY, { duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
+                            handleMapDoubleClick(e.clientX, e.clientY);
                         }}
                     >
                         {/* Grid styling */}
