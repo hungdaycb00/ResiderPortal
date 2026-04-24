@@ -505,10 +505,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         if (tabId === 'profile') { setActiveTab('info'); }
         
         if (tabId === 'backpack') {
-            setMainTab('backpack');
-            setIsSeaGameMode(true);
-            setIsSheetExpanded(false); // Mobile: tự hạ tab xuống
-            setIsSeaLoading(true);
+            if (mainTab === 'backpack') {
+                setIsSheetExpanded(!isSheetExpanded);
+            } else {
+                setMainTab('backpack');
+                setIsSeaGameMode(true);
+                setIsSheetExpanded(true); // Mở tab lên để hiển thị Balo
+                setIsSeaLoading(true);
             
             const doLoad = async () => {
                 try {
@@ -528,6 +531,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             const targetLng = seaState.currentLng || myObfPos?.lng;
             if (targetLat && targetLng) {
                 handleCenterTo(targetLat, targetLng);
+            }
             }
         } else {
             setIsSeaGameMode(false);
