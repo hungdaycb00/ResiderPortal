@@ -213,6 +213,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
                             const duration = baseDuration / multiplier;
 
+                            const hasFloatingItems = (seaGameCtx.state.inventory.some(i => i.gridX < 0) || !!seaGameCtx.stagingItem);
+                            
+                            if (hasFloatingItems) {
+                              seaGameCtx.setShowDiscardModal(true);
+                              return;
+                            }
+
                             setBoatTargetPin({lat, lng});
                             seaGameCtx.moveBoat(lat, lng);
                             

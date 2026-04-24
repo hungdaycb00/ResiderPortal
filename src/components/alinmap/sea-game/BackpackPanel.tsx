@@ -13,11 +13,24 @@ const TIER_LABELS = [
 ];
 
 const BackpackPanel: React.FC = () => {
-  const { state, isBackpackOpen, setIsBackpackOpen, stagingItem, setStagingItem, saveInventory, setWorldTier, sellItems } = useSeaGame();
+  const { 
+    state, isBackpackOpen, setIsBackpackOpen, stagingItem, setStagingItem, 
+    saveInventory, setWorldTier, sellItems, showDiscardModal, setShowDiscardModal, confirmDiscard 
+  } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [sellMode, setSellMode] = useState(false);
   const [selectedSell, setSelectedSell] = useState<string[]>([]);
+
+  const hasFloatingItems = state.inventory.some(i => i.gridX < 0) || !!stagingItem;
+
+  const handleClose = () => {
+    if (hasFloatingItems) {
+      setShowDiscardModal(true);
+    } else {
+      setIsBackpackOpen(false);
+    }
+  };
 
   if (!isBackpackOpen) return null;
 
@@ -55,7 +68,7 @@ const BackpackPanel: React.FC = () => {
               <Coins className="w-4 h-4 text-amber-400" />
               <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
             </div>
-            <button onClick={() => setIsBackpackOpen(false)} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+            <button onClick={handleClose} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -102,6 +115,42 @@ const BackpackPanel: React.FC = () => {
                 onStagingDiscarded={() => setStagingItem(null)}
                 cellSize={Math.min(48, (window.innerWidth - 48) / state.inventoryWidth)}
               />
+
+              {/* Floating Items Section (Vật phẩm chưa xếp) */}
+              {(state.inventory.some(i => i.gridX < 0) || stagingItem) && (
+                <div className="w-full mt-4 p-4 rounded-xl bg-amber-900/10 border border-amber-900/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-black text-amber-300 uppercase tracking-wider">Vật phẩm lơ lửng</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-red-400/80 animate-pulse">SẼ BỊ MẤT KHI RỜI ĐI</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {/* Items from inventory that were moved out */}
+                    {state.inventory.filter(i => i.gridX < 0).map(item => (
+                      <div
+                        key={item.uid}
+                        className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 bg-gray-900/40 ${RARITY_COLORS[item.rarity] || ''}`}
+                        title={item.name}
+                        onPointerDown={(e) => {
+                          // Dragging back logic can be added here
+                        }}
+                      >
+                        <span className="text-xl">{item.icon}</span>
+                      </div>
+                    ))}
+                    
+                    {/* The current staging item */}
+                    {stagingItem && (
+                      <div className={`w-12 h-12 rounded-lg border-2 border-dashed border-cyan-400/50 flex items-center justify-center bg-cyan-900/20`}>
+                        <span className="text-xl animate-bounce">{stagingItem.icon}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Actions at fortress */}
               {isAtFortress && (
@@ -202,6 +251,52 @@ const BackpackPanel: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Confirm Modal */}
+        <AnimatePresence>
+          {showDiscardModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="w-full max-w-sm bg-[#0d2137] border border-cyan-800/50 rounded-2xl p-6 shadow-2xl"
+              >
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-red-900/20 border border-red-500/30 flex items-center justify-center">
+                    <Skull className="w-8 h-8 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white mb-2">Xóa vật phẩm?</h3>
+                    <p className="text-sm text-gray-400">Bạn đang có vật phẩm chưa được xếp vào kho. Nếu rời đi bây giờ, chúng sẽ biến mất vĩnh viễn!</p>
+                  </div>
+                  <div className="w-full flex flex-col gap-3 mt-2">
+                    <button
+                      onClick={() => {
+                        confirmDiscard();
+                        setIsBackpackOpen(false);
+                      }}
+                      className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all active:scale-95"
+                    >
+                      Tôi đồng ý xóa
+                    </button>
+                    <button
+                      onClick={() => setShowDiscardModal(false)}
+                      className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 font-bold rounded-xl transition-all"
+                    >
+                      Quay lại sắp xếp
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   );

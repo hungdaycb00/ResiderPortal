@@ -102,10 +102,16 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   }, [dragItem, isDraggingStaging, cellSize]);
 
   const handlePointerUp = useCallback(() => {
-    if (dragItem && hoverCell) {
-      if (canPlace(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
+    if (dragItem) {
+      if (hoverCell && canPlace(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         const newItems = items.map(i =>
           i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
+        );
+        onLayoutChange?.(newItems);
+      } else {
+        // Nếu thả ra ngoài hoặc không hợp lệ, chuyển thành floating
+        const newItems = items.map(i =>
+          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
         );
         onLayoutChange?.(newItems);
       }
@@ -126,25 +132,18 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     if (readOnly) return;
     const rotated = !item.rotated;
     
-    // Nếu đang kéo, cho phép xoay tự do (vì ta sẽ đặt nó ở vị trí mới)
+    // Luôn cho phép xoay (yêu cầu mới: không cần biết có đủ ô hay không)
     if (dragItem?.uid === item.uid) {
       setDragItem({ ...dragItem, rotated });
-      // Cập nhật cả trong danh sách items nếu nó đã ở trong grid
-      if (item.gridX >= 0) {
-        const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
-        onLayoutChange?.(newItems);
-      }
-      return;
     }
+    
+    // Cập nhật trạng thái trong danh sách items
+    const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
+    onLayoutChange?.(newItems);
 
-    // Nếu không phải đang kéo, kiểm tra xem có khớp vị trí hiện tại không
-    const testItem = { ...item, rotated };
-    if (item.gridX >= 0 && canPlace(testItem, item.gridX, item.gridY, item.uid)) {
-      const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
-      onLayoutChange?.(newItems);
-    } else if (stagingItem && item.uid === stagingItem.uid) {
-      // Xoay item đang đợi (staging)
-      onStagingPlaced?.({ ...item, rotated }); // Giả định parent xử lý
+    // Nếu là staging item
+    if (stagingItem && item.uid === stagingItem.uid) {
+      onStagingPlaced?.({ ...item, rotated });
     }
   };
 

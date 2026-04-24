@@ -113,6 +113,9 @@ interface SeaGameContextType {
   setWorldTier: (tier: number) => Promise<void>;
   loadWorldItems: () => Promise<void>;
   isMoving: boolean;
+  showDiscardModal: boolean;
+  setShowDiscardModal: (v: boolean) => void;
+  confirmDiscard: () => void;
 }
 
 const defaultState: SeaGameState = {
@@ -150,6 +153,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [isSeaGameMode, setIsSeaGameMode] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const goldTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const API = getBaseUrl();
@@ -262,6 +266,14 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     } catch (err) { console.error('[SeaGame] saveInventory error:', err); }
   }, [deviceId, API]);
 
+  const confirmDiscard = useCallback(async () => {
+    // Delete floating items
+    const validItems = state.inventory.filter(i => i.gridX >= 0);
+    await saveInventory(validItems);
+    setStagingItem(null);
+    setShowDiscardModal(false);
+  }, [state.inventory, saveInventory]);
+
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => {
     if (!deviceId) throw new Error('No device');
     const res = await fetch(`${API}/api/sea/combat`, {
@@ -334,7 +346,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     state, worldItems, isBackpackOpen, setIsBackpackOpen,
     stagingItem, setStagingItem, encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
-    showMinigame, setShowMinigame, isMoving,
+    showMinigame, setShowMinigame, isMoving, showDiscardModal, setShowDiscardModal,
+    confirmDiscard,
     isSeaGameMode, setIsSeaGameMode, globalSettings,
     initGame, loadState, moveBoat, pickupItem, saveInventory,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
