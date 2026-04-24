@@ -1,3 +1,4 @@
+import React from 'react';
 import { MotionValue } from 'framer-motion';
 
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
