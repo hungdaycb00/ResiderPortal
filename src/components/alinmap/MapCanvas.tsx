@@ -479,11 +479,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                                     <span className="text-[7px] font-black text-cyan-200 uppercase tracking-tighter whitespace-nowrap leading-none">{item.item?.name}</span>
                                                     <span className="text-[6px] font-bold text-white/60 tabular-nums">{distMeters}m</span>
                                                 </div>
-                                                <div className={`absolute -top-1 -right-1 w-2 h-2 rounded-full border border-white/20 shadow-sm ${
-                                                    item.rarity >= 4 ? 'bg-orange-500 shadow-orange-500/50' : 
-                                                    (item.rarity >= 3 ? 'bg-purple-500 shadow-purple-500/50' : 
-                                                    (item.rarity >= 2 ? 'bg-blue-500 shadow-blue-500/50' : 'bg-gray-400'))
-                                                }`} />
                                             </div>
                                         </motion.div>
                                     );

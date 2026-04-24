@@ -79,8 +79,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const rect = gridRef.current?.getBoundingClientRect();
     if (!rect) return;
     setDragItem(item);
-    // Luôn đặt offset về 0 để góc trái trên cùng của item dính vào con trỏ chuột
-    setDragOffset({ x: 0, y: 0 });
+    // Đặt offset vào chính giữa item
+    const w = item.rotated ? item.gridH : item.gridW;
+    const h = item.rotated ? item.gridW : item.gridH;
+    setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
     setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
@@ -123,21 +125,26 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const handleRotate = (item: SeaItem) => {
     if (readOnly) return;
     const rotated = !item.rotated;
+    
+    // Nếu đang kéo, cho phép xoay tự do (vì ta sẽ đặt nó ở vị trí mới)
+    if (dragItem?.uid === item.uid) {
+      setDragItem({ ...dragItem, rotated });
+      // Cập nhật cả trong danh sách items nếu nó đã ở trong grid
+      if (item.gridX >= 0) {
+        const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
+        onLayoutChange?.(newItems);
+      }
+      return;
+    }
+
+    // Nếu không phải đang kéo, kiểm tra xem có khớp vị trí hiện tại không
     const testItem = { ...item, rotated };
-    // Check if still fits after rotation
     if (item.gridX >= 0 && canPlace(testItem, item.gridX, item.gridY, item.uid)) {
       const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
       onLayoutChange?.(newItems);
-      // Update drag item if rotating while dragging
-      if (dragItem?.uid === item.uid) setDragItem({ ...dragItem, rotated });
-    } else if (item.uid === stagingItem?.uid) {
-      onStagingPlaced?.({ ...item, rotated }); // This might not be right, let's just update the local state if it's staging
-    }
-    
-    // If it's the staging item, we just update it
-    if (stagingItem && item.uid === stagingItem.uid) {
-      // Logic for staging item rotation is usually handled by parent, but we can update local drag state
-      if (isDraggingStaging) setDragItem(prev => prev ? { ...prev, rotated } : null);
+    } else if (stagingItem && item.uid === stagingItem.uid) {
+      // Xoay item đang đợi (staging)
+      onStagingPlaced?.({ ...item, rotated }); // Giả định parent xử lý
     }
   };
 
@@ -183,6 +190,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         onPointerLeave={handlePointerUp}
         onContextMenu={(e) => {
           if (dragItem) {
+            e.preventDefault();
+            handleRotate(dragItem);
+          }
+        }}
+        onAuxClick={(e) => {
+          if (e.button === 2 && dragItem) {
             e.preventDefault();
             handleRotate(dragItem);
           }
