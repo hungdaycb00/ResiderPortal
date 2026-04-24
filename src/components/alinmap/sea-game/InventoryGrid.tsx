@@ -244,8 +244,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           <div
             className="fixed z-[9999] pointer-events-none opacity-90 scale-110 origin-center"
             style={{
-              left: dragPos.x - (dragOffset?.x || cellSize / 2),
-              top: dragPos.y - (dragOffset?.y || cellSize / 2),
+              left: dragPos.x - (dragItem ? dragOffset.x : (stagingItem!.gridW * cellSize) / 2),
+              top: dragPos.y - (dragItem ? dragOffset.y : (stagingItem!.gridH * cellSize) / 2),
               width: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridH : (dragItem || stagingItem)!.gridW) * cellSize,
               height: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize,
             }}
