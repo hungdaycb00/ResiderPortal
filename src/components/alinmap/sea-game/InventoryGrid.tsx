@@ -188,11 +188,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onContextMenu={(e) => {
-          if (dragItem) {
+        onMouseDown={(e) => {
+          // Button 2 is Right Click
+          if (e.button === 2 && dragItem) {
             e.preventDefault();
+            e.stopPropagation();
             handleRotate(dragItem);
           }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (dragItem) handleRotate(dragItem);
         }}
         onAuxClick={(e) => {
           if (e.button === 2 && dragItem) {
