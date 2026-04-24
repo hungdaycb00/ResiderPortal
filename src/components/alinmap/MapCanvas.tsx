@@ -98,7 +98,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     });
  
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+        if (!isSeaGameMode || !seaGameCtx || !myObfPos) {
+            console.log('[MapMove] Pre-conditions failed:', { isSeaGameMode, hasCtx: !!seaGameCtx, hasPos: !!myObfPos });
+            return;
+        }
 
         const currentScale = scale.get() || 1;
         const offsetX = clientX - window.innerWidth / 2;
@@ -107,6 +110,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         const mapY = (offsetY - panY.get()) / currentScale;
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+
+        console.log('[MapMove] Target Coordinates:', { lat, lng });
 
         // Tính khoảng cách từ vị trí hiện tại của thuyền (có tính offset)
         const boatLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
@@ -122,10 +127,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         const hasFloatingItems = (seaGameCtx.state.inventory.some(i => i.gridX < 0) || !!seaGameCtx.stagingItem);
 
         if (hasFloatingItems) {
+            console.log('[MapMove] Blocked by floating items');
             seaGameCtx.setShowDiscardModal(true);
             return;
         }
 
+        console.log('[MapMove] Executing move...', { duration });
         setBoatTargetPin({ lat, lng });
         seaGameCtx.moveBoat(lat, lng);
 
@@ -192,10 +199,23 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
+                        onPointerUp={(e) => {
+                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+                            const now = Date.now();
+                            // Custom double click/tap detection
+                            if (now - lastTapRef.current < 300) {
+                                console.log('[MapClick] Double Click/Tap detected');
+                                handleMapDoubleClick(e.clientX, e.clientY);
+                            } else {
+                                console.log('[MapClick] Single Click/Tap at', now);
+                            }
+                            lastTapRef.current = now;
+                        }}
                         onContextMenu={(e) => {
                             e.preventDefault();
                             if (isSeaGameMode) return;
                             if (!myObfPos) return;
+                            console.log('[MapClick] Right Click for Context Menu');
                             const currentScale = scale.get() || 1;
                             const offsetX = e.clientX - window.innerWidth / 2;
                             const offsetY = e.clientY - window.innerHeight / 2;
@@ -210,22 +230,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 target: 'map',
                                 data: { lat, lng }
                             });
-                        }}
-                        onTouchEnd={(e) => {
-                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-                            const now = Date.now();
-                            if (now - lastTapRef.current < 300) {
-                                // Double tap detected
-                                const touch = e.changedTouches[0];
-                                handleMapDoubleClick(touch.clientX, touch.clientY);
-                            }
-                            lastTapRef.current = now;
-                        }}
-                        onDoubleClick={(e) => {
-                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleMapDoubleClick(e.clientX, e.clientY);
                         }}
                     >
                         {/* Grid styling */}
