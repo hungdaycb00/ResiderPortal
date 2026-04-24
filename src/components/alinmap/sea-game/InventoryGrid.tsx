@@ -167,6 +167,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onContextMenu={(e) => {
+          if (dragItem) {
+            e.preventDefault();
+            handleRotate(dragItem);
+          }
+        }}
       >
         {/* Grid lines */}
         {Array.from({ length: gridHeight }).map((_, r) =>
@@ -199,10 +205,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           const glowClass = RARITY_GLOW[item.rarity] || '';
 
           return (
-            <div
+            <motion.div
               key={item.uid}
-              className={`absolute z-20 rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow ${colorClass} ${glowClass} ${
-                isDragging ? 'opacity-40' : 'opacity-100 hover:brightness-110'
+              className={`absolute z-20 rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow origin-center ${colorClass} ${glowClass} ${
+                isDragging ? 'opacity-40 scale-110' : 'opacity-100 hover:brightness-110'
               }`}
               style={{
                 left: item.gridX * cellSize + 1,
@@ -210,22 +216,32 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
                 width: w * cellSize - 2,
                 height: h * cellSize - 2,
               }}
-              onPointerDown={(e) => handleItemPointerDown(e, item)}
-              onContextMenu={(e) => handleContextMenu(e, item)}
+              whileTap={{ scale: 1.1 }}
+              onPointerDown={(e) => {
+                if (e.button === 2) {
+                  e.preventDefault();
+                  handleRotate(item);
+                  return;
+                }
+                handleItemPointerDown(e, item);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (!dragItem) handleRotate(item);
+              }}
               title={`${item.name}\n⚔️ ${item.weight} DMG | ❤️ +${item.hpBonus} HP\n💰 ${item.price}g | ${item.gridW}×${item.gridH}`}
             >
               <span className="text-lg leading-none">{item.icon}</span>
               {(w * cellSize > 50 || h * cellSize > 50) && (
                 <span className="text-[8px] font-bold text-gray-700 leading-tight truncate max-w-full px-0.5">{item.name}</span>
               )}
-            </div>
+            </motion.div>
           );
         })}
 
-        {/* Dragging ghost */}
         {(dragItem || (isDraggingStaging && stagingItem)) && (
           <div
-            className="fixed z-[9999] pointer-events-none opacity-80"
+            className="fixed z-[9999] pointer-events-none opacity-90 scale-110 origin-center"
             style={{
               left: dragPos.x - (dragOffset?.x || cellSize / 2),
               top: dragPos.y - (dragOffset?.y || cellSize / 2),
@@ -233,7 +249,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               height: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize,
             }}
           >
-            <div className={`w-full h-full rounded-md border-2 flex items-center justify-center ${RARITY_COLORS[(dragItem || stagingItem)!.rarity] || ''}`}>
+            <div className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-2xl ${RARITY_COLORS[(dragItem || stagingItem)!.rarity] || ''}`}>
               <span className="text-2xl">{(dragItem || stagingItem)!.icon}</span>
             </div>
           </div>
