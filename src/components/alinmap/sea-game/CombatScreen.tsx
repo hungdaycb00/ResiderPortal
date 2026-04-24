@@ -34,8 +34,17 @@ const CombatScreen: React.FC = () => {
   const maxHpB = encounter.totalHp;
   const maxManaB = 100;
 
+  const manaARef = useRef(0);
+  const manaBRef = useRef(0);
+  const hpARef = useRef(0);
+  const hpBRef = useRef(0);
+
   const handleStart = async () => {
     setPhase('fighting');
+    hpARef.current = maxHpA;
+    hpBRef.current = maxHpB;
+    manaARef.current = 0;
+    manaBRef.current = 0;
     setHpA(maxHpA);
     setHpB(maxHpB);
     setManaA(0);
@@ -76,31 +85,33 @@ const CombatScreen: React.FC = () => {
       const side = entry.attacker;
 
       if (side === 'A') {
-        setManaA(prev => {
-          const next = prev + (15 + myStats.eRegen) * (dt / 1000) * 10; 
-          if (next >= maxManaA) {
-            // Attack!
-            setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
-            setHpB(Math.max(0, entry.targetHp));
-            currentIdxRef.current++;
-            setTimeout(() => setFlyingItem(null), 800);
-            return 0; // Reset mana
-          }
-          return next;
-        });
+        const manaGain = (15 + myStats.eRegen) * (dt / 1000) * 10;
+        manaARef.current = Math.min(manaARef.current + manaGain, maxManaA);
+        
+        if (manaARef.current >= maxManaA) {
+          // Trigger attack
+          setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
+          hpBRef.current = Math.max(0, entry.targetHp);
+          setHpB(hpBRef.current);
+          currentIdxRef.current++;
+          setTimeout(() => setFlyingItem(null), 800);
+          manaARef.current = 0;
+        }
+        setManaA(manaARef.current);
       } else {
-        setManaB(prev => {
-          const next = prev + 20 * (dt / 1000) * 10; 
-          if (next >= maxManaB) {
-            // Attack!
-            setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
-            setHpA(Math.max(0, entry.targetHp));
-            currentIdxRef.current++;
-            setTimeout(() => setFlyingItem(null), 800);
-            return 0; // Reset mana
-          }
-          return next;
-        });
+        const manaGain = 20 * (dt / 1000) * 10;
+        manaBRef.current = Math.min(manaBRef.current + manaGain, maxManaB);
+        
+        if (manaBRef.current >= maxManaB) {
+          // Trigger attack
+          setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
+          hpARef.current = Math.max(0, entry.targetHp);
+          setHpA(hpARef.current);
+          currentIdxRef.current++;
+          setTimeout(() => setFlyingItem(null), 800);
+          manaBRef.current = 0;
+        }
+        setManaB(manaBRef.current);
       }
 
       frameRef.current = requestAnimationFrame(loop);
