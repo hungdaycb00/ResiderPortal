@@ -215,7 +215,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         }}
                         onPointerUp={(e) => {
                             if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-                            if (e.pointerType === 'mouse') return;
 
                             const currentPoint = { x: e.clientX, y: e.clientY };
                             if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
@@ -237,11 +236,6 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 lastTapRef.current = now;
                                 lastTapPosRef.current = currentPoint;
                             }
-                        }}
-                        onDoubleClick={(e) => {
-                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-                            console.log('[MapClick] Native double click detected');
-                            handleMapDoubleClick(e.clientX, e.clientY);
                         }}
                         onContextMenu={(e) => {
                             e.preventDefault();
