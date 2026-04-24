@@ -4,15 +4,15 @@ import { Swords, Wind, Heart, Shield } from 'lucide-react';
 import { useSeaGame } from './SeaGameProvider';
 
 const CurseModal: React.FC = () => {
-  const { showCurseModal, setShowCurseModal, encounter, curseChoice, setEncounter } = useSeaGame();
+  const { showCurseModal, setShowCurseModal, encounter, curseChoice, setEncounter, state } = useSeaGame();
 
   if (!showCurseModal || !encounter) return null;
 
-  const myStats = useSeaGame().state.inventory.filter(i => i.gridX >= 0).reduce(
+  const myStats = state.inventory.filter(i => i.gridX >= 0).reduce(
     (a, i) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight }),
     { hp: 0, weight: 0 }
   );
-  const myTotalHp = useSeaGame().state.baseMaxHp + myStats.hp;
+  const myTotalHp = state.baseMaxHp + myStats.hp;
 
   return (
     <motion.div

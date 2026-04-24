@@ -16,6 +16,11 @@ const CombatScreen: React.FC = () => {
   const currentIdxRef = useRef(0);
   const frameRef = useRef<number>();
 
+  const manaARef = useRef(0);
+  const manaBRef = useRef(0);
+  const hpARef = useRef(0);
+  const hpBRef = useRef(0);
+
   useEffect(() => {
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
@@ -33,11 +38,6 @@ const CombatScreen: React.FC = () => {
   const maxManaA = 100 + myStats.eMax;
   const maxHpB = encounter.totalHp;
   const maxManaB = 100;
-
-  const manaARef = useRef(0);
-  const manaBRef = useRef(0);
-  const hpARef = useRef(0);
-  const hpBRef = useRef(0);
 
   const handleStart = async () => {
     setPhase('fighting');
@@ -78,6 +78,12 @@ const CombatScreen: React.FC = () => {
 
       if (currentIdxRef.current >= combatLogRef.current.length) {
         setPhase('result');
+        return;
+      }
+
+      if (flyingItem) {
+        lastTime = now;
+        frameRef.current = requestAnimationFrame(loop);
         return;
       }
 

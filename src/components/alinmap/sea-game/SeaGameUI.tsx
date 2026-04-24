@@ -17,10 +17,9 @@ const SeaGameUI: React.FC = () => {
                     difficulty={(() => {
                         if (showMinigame.isExpander) return 3;
                         const r = (showMinigame.item as any).rarity;
-                        if (r === 'common') return 1;
-                        if (r === 'uncommon') return 2;
-                        if (r === 'rare') return 3;
                         if (r === 'legendary') return 4;
+                        if (r === 'rare') return 3;
+                        if (r === 'uncommon') return 2;
                         return 1;
                     })()}
                     onWin={() => {

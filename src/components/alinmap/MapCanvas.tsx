@@ -63,7 +63,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     const pickingItemsRef = React.useRef(new Set<string>());
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
-    const PICKUP_RADIUS_DEG = 0.001; // ~100m auto pickup radius
+    const PICKUP_RADIUS_DEG = 0.0004; // ~45m pickup radius
 
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
@@ -101,6 +101,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         <div
             className="flex-1 relative overflow-hidden bg-[#001424]"
             onWheel={handleWheel}
+            onContextMenu={(e) => e.preventDefault()}
         >
             {/* Sea Glow Background Elements */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-cyan-500/5 blur-[120px] pointer-events-none rounded-full" />
@@ -315,6 +316,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     }}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        if (isSeaGameMode) {
+                                            setMainTab?.('backpack');
+                                            setIsSheetExpanded(true);
+                                            return;
+                                        }
                                         setSelectedUser({
                                             id: user?.uid || myUserId || 'self',
                                             username: myDisplayName,
@@ -330,10 +336,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         e.preventDefault();
                                         e.stopPropagation();
                                     }}
-                                    className="absolute group pointer-events-auto z-[100] select-none w-12 h-12 -ml-6 -mt-12 cursor-grab active:cursor-grabbing"
+                                    className={`absolute group pointer-events-auto z-[100] select-none w-12 h-12 cursor-grab active:cursor-grabbing ${isSeaGameMode ? '-ml-6 -mt-6' : '-ml-6 -mt-12'}`}
                                     style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
-                                    animate={{ y: [0, -6, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                    animate={isSeaGameMode ? { y: [0, -4, 0], rotate: [0, 2, -2, 0] } : { y: [0, -6, 0] }}
+                                    transition={{ duration: isSeaGameMode ? 6 : 4, repeat: Infinity, ease: "easeInOut" }}
                                     onPointerEnter={() => {
                                         const s = scale.get();
                                         document.documentElement.style.setProperty('--self-hover-scale', String(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
@@ -450,21 +456,39 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     </div>
                                 )}
 
-                                {isSeaGameMode && seaGameCtx?.worldItems?.map((item: any) => (
-                                    <motion.div
-                                        key={item.spawnId}
-                                        className="absolute w-7 h-7 -ml-3.5 -mt-3.5 flex flex-col items-center cursor-pointer z-[95] hover:scale-125 transition-transform"
-                                        style={{
-                                            top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                                            left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                                        }}
-                                        animate={{ y: [-2, 2, -2] }}
-                                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2 }}
-                                    >
-                                        <span className="text-lg drop-shadow-md">{item.item?.icon || '💎'}</span>
-                                        <span className="text-[7px] font-bold text-cyan-300/80 whitespace-nowrap mt-0.5 drop-shadow-sm">{item.item?.name}</span>
-                                    </motion.div>
-                                ))}
+                                {isSeaGameMode && seaGameCtx?.worldItems?.map((item: any) => {
+                                    const dLat = item.lat - (myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX);
+                                    const dLng = item.lng - (myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX);
+                                    const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
+                                    const distMeters = Math.round(distDeg * 111000);
+
+                                    return (
+                                        <motion.div
+                                            key={item.spawnId}
+                                            className="absolute w-10 h-10 -ml-5 -mt-5 flex flex-col items-center cursor-pointer z-[95] hover:scale-125 transition-transform"
+                                            style={{
+                                                top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                                left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                            }}
+                                            animate={{ y: [-2, 2, -2] }}
+                                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 2 }}
+                                        >
+                                            <div className="relative group flex flex-col items-center">
+                                                <span className="text-2xl drop-shadow-md group-hover:animate-bounce">{item.item?.icon || '💎'}</span>
+                                                <div className="flex flex-col items-center bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-white/10 mt-0.5">
+                                                    <span className="text-[7px] font-black text-cyan-200 uppercase tracking-tighter whitespace-nowrap leading-none">{item.item?.name}</span>
+                                                    <span className="text-[6px] font-bold text-white/60 tabular-nums">{distMeters}m</span>
+                                                </div>
+                                                <div className={`absolute -top-1 -right-1 w-2 h-2 rounded-full border border-white/20 shadow-sm ${
+                                                    item.rarity >= 4 ? 'bg-orange-500 shadow-orange-500/50' : 
+                                                    (item.rarity >= 3 ? 'bg-purple-500 shadow-purple-500/50' : 
+                                                    (item.rarity >= 2 ? 'bg-blue-500 shadow-blue-500/50' : 'bg-gray-400'))
+                                                }`} />
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+
 
                                 {/* Other Nodes */}
                                 {!isSeaGameMode && nearbyUsers.filter(u => {
