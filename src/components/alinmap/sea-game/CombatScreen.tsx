@@ -16,6 +16,12 @@ const CombatScreen: React.FC = () => {
   const currentIdxRef = useRef(0);
   const frameRef = useRef<number>();
 
+  useEffect(() => {
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
   if (!encounter) return null;
 
   const myStats = state.inventory.filter(i => i.gridX >= 0).reduce(
@@ -102,12 +108,6 @@ const CombatScreen: React.FC = () => {
 
     frameRef.current = requestAnimationFrame(loop);
   };
-
-  useEffect(() => {
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, []);
 
   const handleClose = () => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);

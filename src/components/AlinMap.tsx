@@ -99,6 +99,12 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             setIsSheetExpanded(true);
         }
     }, [initialMainTab]);
+
+    useEffect(() => {
+        if (mainTab === 'backpack' && seaState.initialized && !isSeaGameMode) {
+            setIsSeaGameMode(true);
+        }
+    }, [mainTab, seaState.initialized, isSeaGameMode, setIsSeaGameMode]);
     const isMounted = useRef(true);
     const selfDragX = useMotionValue(0);
     const selfDragY = useMotionValue(0);
