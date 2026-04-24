@@ -58,12 +58,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab
 }) => {
     const lastTapRef = React.useRef<number>(0);
+    const lastTapPosRef = React.useRef<{ x: number; y: number } | null>(null);
+    const pointerDownRef = React.useRef<{ x: number; y: number } | null>(null);
 
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     const pickingItemsRef = React.useRef(new Set<string>());
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
     const PICKUP_RADIUS_DEG = 0.0004; // ~45m pickup radius
+    const DOUBLE_TAP_DELAY_MS = 450;
+    const TAP_MOVE_TOLERANCE_PX = 16;
 
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
@@ -151,6 +155,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         animate(panY, newPanY, { duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
     }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, DEGREES_TO_PX]);
 
+    const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
+        if (!start) return true;
+        const deltaX = end.x - start.x;
+        const deltaY = end.y - start.y;
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY) <= TAP_MOVE_TOLERANCE_PX;
+    };
+
     return (
         <div
             className="flex-1 relative overflow-hidden bg-[#001424]"
@@ -199,17 +210,38 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
+                        onPointerDown={(e) => {
+                            pointerDownRef.current = { x: e.clientX, y: e.clientY };
+                        }}
                         onPointerUp={(e) => {
                             if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+                            if (e.pointerType === 'mouse') return;
+
+                            const currentPoint = { x: e.clientX, y: e.clientY };
+                            if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
+                                lastTapRef.current = 0;
+                                lastTapPosRef.current = null;
+                                return;
+                            }
+
                             const now = Date.now();
                             // Custom double click/tap detection
-                            if (now - lastTapRef.current < 300) {
+                            const isCloseToLastTap = isTapWithinTolerance(lastTapPosRef.current, currentPoint);
+                            if (now - lastTapRef.current < DOUBLE_TAP_DELAY_MS && isCloseToLastTap) {
                                 console.log('[MapClick] Double Click/Tap detected');
                                 handleMapDoubleClick(e.clientX, e.clientY);
+                                lastTapRef.current = 0;
+                                lastTapPosRef.current = null;
                             } else {
                                 console.log('[MapClick] Single Click/Tap at', now);
+                                lastTapRef.current = now;
+                                lastTapPosRef.current = currentPoint;
                             }
-                            lastTapRef.current = now;
+                        }}
+                        onDoubleClick={(e) => {
+                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+                            console.log('[MapClick] Native double click detected');
+                            handleMapDoubleClick(e.clientX, e.clientY);
                         }}
                         onContextMenu={(e) => {
                             e.preventDefault();
