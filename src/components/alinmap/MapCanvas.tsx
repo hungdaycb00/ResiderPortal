@@ -64,9 +64,9 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
         
         const currentScale = scale.get() || 1;
-        // Tọa độ hiện tại của tâm màn hình (thuyền)
-        const currentLng = myObfPos.lng - panX.get() / (DEGREES_TO_PX * currentScale);
-        const currentLat = myObfPos.lat + panY.get() / (DEGREES_TO_PX * currentScale);
+        // Vị trí thuyền = myObfPos + selfDragX/Y offset (thuyền di chuyển bằng selfDrag)
+        const currentLng = myObfPos.lng + selfDragX.get() / DEGREES_TO_PX;
+        const currentLat = myObfPos.lat - selfDragY.get() / DEGREES_TO_PX;
 
         seaGameCtx.worldItems.forEach((item: any) => {
             if (pickingItemsRef.current.has(item.spawnId)) return;
@@ -183,8 +183,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 duration, ease: "easeInOut",
                                 onComplete: () => {
                                     // Transfer boat offset to camera pan, reset boat to center
-                                    panX.set(panX.get() - targetPxX);
-                                    panY.set(panY.get() - targetPxY);
+                                    panX.set(panX.get() + targetPxX);
+                                    panY.set(panY.get() + targetPxY);
                                     selfDragX.set(0);
                                     selfDragY.set(0);
                                     setBoatTargetPin(null);
