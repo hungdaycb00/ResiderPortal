@@ -88,11 +88,16 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragItem && !isDraggingStaging) return;
-    setDragPos({ x: e.clientX, y: e.clientY });
     const rect = gridRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const cellX = Math.floor((e.clientX - rect.left) / cellSize);
-    const cellY = Math.floor((e.clientY - rect.top) / cellSize);
+    
+    // Calculate position relative to grid
+    const relX = e.clientX - rect.left;
+    const relY = e.clientY - rect.top;
+    
+    setDragPos({ x: relX, y: relY });
+    const cellX = Math.floor(relX / cellSize);
+    const cellY = Math.floor(relY / cellSize);
     setHoverCell({ x: cellX, y: cellY });
   }, [dragItem, isDraggingStaging, cellSize]);
 
@@ -125,6 +130,16 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     if (item.gridX >= 0 && canPlace(testItem, item.gridX, item.gridY, item.uid)) {
       const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
       onLayoutChange?.(newItems);
+      // Update drag item if rotating while dragging
+      if (dragItem?.uid === item.uid) setDragItem({ ...dragItem, rotated });
+    } else if (item.uid === stagingItem?.uid) {
+      onStagingPlaced?.({ ...item, rotated }); // This might not be right, let's just update the local state if it's staging
+    }
+    
+    // If it's the staging item, we just update it
+    if (stagingItem && item.uid === stagingItem.uid) {
+      // Logic for staging item rotation is usually handled by parent, but we can update local drag state
+      if (isDraggingStaging) setDragItem(prev => prev ? { ...prev, rotated } : null);
     }
   };
 
@@ -163,7 +178,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       {/* Grid */}
       <div
         ref={gridRef}
-        className="relative border-2 border-cyan-600/40 rounded-lg bg-[#0a1929]/80 overflow-hidden select-none"
+        className="relative border-2 border-cyan-600/40 rounded-lg bg-[#0a1929]/80 select-none"
         style={{ width: gridWidth * cellSize, height: gridHeight * cellSize }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -240,12 +255,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           );
         })}
 
+        {/* Dragging ghost - now using absolute to avoid BottomSheet transform issues */}
         {(dragItem || (isDraggingStaging && stagingItem)) && (
           <div
-            className="fixed z-[9999] pointer-events-none opacity-90 scale-110 origin-center"
+            className="absolute z-[9999] pointer-events-none opacity-90 scale-110 origin-center"
             style={{
-              left: dragPos.x - (dragItem ? dragOffset.x : (stagingItem!.gridW * cellSize) / 2),
-              top: dragPos.y - (dragItem ? dragOffset.y : (stagingItem!.gridH * cellSize) / 2),
+              left: dragPos.x - (dragItem ? dragOffset.x : ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridH : (dragItem || stagingItem)!.gridW) * cellSize / 2),
+              top: dragPos.y - (dragItem ? dragOffset.y : ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize / 2),
               width: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridH : (dragItem || stagingItem)!.gridW) * cellSize,
               height: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize,
             }}
