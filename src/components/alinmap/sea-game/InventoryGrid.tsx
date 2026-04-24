@@ -79,11 +79,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const rect = gridRef.current?.getBoundingClientRect();
     if (!rect) return;
     setDragItem(item);
-    setDragOffset({
-      x: e.clientX - rect.left - item.gridX * cellSize,
-      y: e.clientY - rect.top - item.gridY * cellSize,
-    });
-    setDragPos({ x: e.clientX, y: e.clientY });
+    // Luôn đặt offset về 0 để góc trái trên cùng của item dính vào con trỏ chuột
+    setDragOffset({ x: 0, y: 0 });
+    setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -224,7 +222,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             <motion.div
               key={item.uid}
               className={`absolute z-20 rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow origin-center ${colorClass} ${glowClass} ${
-                isDragging ? 'opacity-40 scale-110' : 'opacity-100 hover:brightness-110'
+                isDragging ? 'opacity-0' : 'opacity-100 hover:brightness-110'
               }`}
               style={{
                 left: item.gridX * cellSize + 1,
