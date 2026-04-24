@@ -174,11 +174,22 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             setBoatTargetPin({lat, lng});
                             seaGameCtx.moveBoat(lat, lng);
                             
-                            const newPanX = panX.get() - (distLng * DEGREES_TO_PX * currentScale);
-                            const newPanY = panY.get() + (distLat * DEGREES_TO_PX * currentScale);
+                            // Animate the BOAT icon across the map (not the camera)
+                            const targetPxX = distLng * DEGREES_TO_PX;
+                            const targetPxY = -distLat * DEGREES_TO_PX;
 
-                            animate(panX, newPanX, { duration: duration, ease: "easeInOut" });
-                            animate(panY, newPanY, { duration: duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
+                            animate(selfDragX, targetPxX, { duration, ease: "easeInOut" });
+                            animate(selfDragY, targetPxY, { 
+                                duration, ease: "easeInOut",
+                                onComplete: () => {
+                                    // Transfer boat offset to camera pan, reset boat to center
+                                    panX.set(panX.get() - targetPxX);
+                                    panY.set(panY.get() - targetPxY);
+                                    selfDragX.set(0);
+                                    selfDragY.set(0);
+                                    setBoatTargetPin(null);
+                                }
+                            });
                         }}
                     >
                         {/* Grid styling */}
