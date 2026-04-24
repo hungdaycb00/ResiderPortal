@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { normalizeImageUrl, getBaseUrl } from '../../services/externalApi';
-import { Search, MapPin, X, UserPlus, MessageCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Heart, Star, Bookmark, PlusCircle, Diamond, Edit, Image as ImageIcon, User, Flag, Copy, AlertTriangle, Trash2, Navigation, CloudSun, Compass, Plus, RefreshCw, Bell, Gamepad2 } from 'lucide-react';
+import React from 'react';
+import { Search, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DiscoverView from './views/DiscoverView';
 import SocialView from './views/SocialView';
@@ -9,6 +8,8 @@ import MyProfileView from './views/MyProfileView';
 import SelectedUserView from './views/SelectedUserView';
 import CreatorTabView from './views/CreatorTabView';
 import BackpackView from './views/BackpackView';
+import SheetSearchResults from './SheetSearchResults';
+import { useAvatarUpload } from './hooks/useAvatarUpload';
 
 
 interface BottomSheetProps {
@@ -91,8 +92,6 @@ interface BottomSheetProps {
     onPublishSuccess?: () => void;
 }
 
-
-
 const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const {
         isDesktop, isSheetExpanded, selectedUser, activeTab, mainTab, nearbyUsers, friends, games, userGames, userPosts,
@@ -111,101 +110,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         cloudflareUrl, triggerAuth, externalOpenList, onOpenListChange, onPublishSuccess
     } = props;
 
-    const [showAvatarMenu, setShowAvatarMenu] = useState(false);
-    const avatarInputRef = useRef<HTMLInputElement>(null);
-
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        const file = e.target.files[0];
-        if (file.size > 1024 * 1024) {
-            showNotification?.("Ảnh tải lên không được vượt quá 1MB", "error");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        try {
-            const res = await fetch(`${getBaseUrl()}/api/profile/upload-avatar`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${user?.uid || ''}` },
-                body: formData
-            });
-            const data = await res.json();
-            if (res.ok && data.imageUrl) {
-                setMyAvatarUrl(data.imageUrl);
-                if (ws.current?.readyState === WebSocket.OPEN) {
-                    ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: data.imageUrl } }));
-                }
-                showNotification?.("Cập nhật ảnh đại diện thành công", "success");
-            } else {
-                showNotification?.(data.error || "Lỗi tải ảnh", "error");
-            }
-        } catch (err) {
-            console.error(err);
-            showNotification?.("Lỗi kết nối khi tải ảnh", "error");
-        }
-        setShowAvatarMenu(false);
-    };
-
-    const handleDefaultAvatar = () => {
-        setMyAvatarUrl('');
-        if (ws.current?.readyState === WebSocket.OPEN) {
-            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: '' } }));
-        }
-        showNotification?.("Đã đổi về ảnh mặc định", "success");
-        setShowAvatarMenu(false);
-    };
-
-    const [searchResults, setSearchResults] = React.useState<{ posts: any[], users: any[], games?: any[] }>({ posts: [], users: [], games: [] });
-    const [isSearching, setIsSearching] = React.useState(false);
-    const [showSearchResults, setShowSearchResults] = React.useState(false);
+    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
     const [panelWidth, setPanelWidth] = React.useState(400);
-    const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const API_BASE_SEARCH = getBaseUrl();
-
-    React.useEffect(() => {
-        if (!searchTag || searchTag.trim().length < 2) {
-            setSearchResults({ posts: [], users: [], games: [] });
-            setShowSearchResults(false);
-            return;
-        }
-        setIsSearching(true);
-        setShowSearchResults(true);
-        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-        searchTimerRef.current = setTimeout(async () => {
-            try {
-                const resp = await fetch(`${API_BASE_SEARCH}/api/search?q=${encodeURIComponent(searchTag.trim())}`);
-                const data = await resp.json();
-                if (data.success) {
-                    // Merge nearby users matching tag
-                    const localUserMatches = nearbyUsers.filter(u =>
-                        (u.username || '').toLowerCase().includes(searchTag.toLowerCase()) ||
-                        (u.status || '').toLowerCase().includes(searchTag.toLowerCase())
-                    ).map(u => ({ id: u.id, displayName: u.username, avatar: u.avatar_url, status: u.status || '' }));
-
-                    // Deduplicate by id
-                    const allUsers = [...data.users];
-                    localUserMatches.forEach(lu => {
-                        if (!allUsers.find((u: any) => u.id === lu.id)) allUsers.push(lu);
-                    });
-
-                    setSearchResults({ posts: data.posts, users: allUsers.slice(0, 10), games: data.games || [] });
-                }
-            } catch (err) {
-                console.error('[Search]', err);
-            }
-            setIsSearching(false);
-        }, 300); // 300ms debounce like TikTok/FB
-        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
-    }, [searchTag]);
-
-    const DEGREES_TO_PX = 11100;
 
     return (
         <>
-            <div 
+            <div
                 className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-0 bottom-0 overflow-hidden w-full'}`}
                 style={isDesktop ? { width: panelWidth } : {}}
             >
@@ -232,7 +142,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     }}
                 >
                     {/* PC Hinge Toggle Button */}
-                    <button 
+                    <button
                         onClick={() => setIsSheetExpanded(!isSheetExpanded)}
                         className="hidden md:flex absolute top-1/2 -right-[23px] -translate-y-1/2 w-6 h-14 bg-white border border-l-0 border-gray-200 rounded-r-[10px] shadow-[4px_0_10px_rgba(0,0,0,0.05)] items-center justify-center cursor-pointer hover:bg-gray-50 z-50 text-gray-500 hover:text-gray-700 transition-colors"
                         title={isSheetExpanded ? "Collapse panel" : "Expand panel"}
@@ -289,131 +199,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
                     <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar" style={{ direction: 'rtl' }}>
                       <div style={{ direction: 'ltr' }}>
-                        {/* Instant Search Results Dropdown */}
-                        {showSearchResults && searchTag.trim().length >= 2 && !selectedUser && (
-                            <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {isSearching && (
-                                    <div className="flex items-center justify-center gap-2 py-4">
-                                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                                        <span className="text-xs text-gray-400 font-medium">Đang tìm kiếm...</span>
-                                    </div>
-                                )}
-
-                                {!isSearching && searchResults.users.length === 0 && searchResults.posts.length === 0 && (!searchResults.games || searchResults.games.length === 0) && (
-                                    <div className="text-center py-6">
-                                        <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                                        <p className="text-sm text-gray-400">Không tìm thấy kết quả cho "{searchTag}"</p>
-                                    </div>
-                                )}
-
-                                {/* Users Results */}
-                                {searchResults.users.length > 0 && (
-                                    <div className="mb-4">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Users</p>
-                                        <div className="space-y-1">
-                                            {searchResults.users.map((u: any) => (
-                                                <button
-                                                    key={u.id}
-                                                    onClick={() => {
-                                                        // Try to find in nearbyUsers to select on map
-                                                        const mapUser = nearbyUsers.find(nu => nu.id === u.id);
-                                                        if (mapUser) {
-                                                            setSelectedUser(mapUser);
-                                                            setIsSheetExpanded(true);
-                                                        }
-                                                        setShowSearchResults(false);
-                                                    }}
-                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
-                                                >
-                                                    <img
-                                                        src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`}
-                                                        className="w-9 h-9 rounded-full object-cover bg-gray-100 shrink-0"
-                                                        alt=""
-                                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`; }}
-                                                    />
-                                                    <div className="flex-1 min-w-0 text-left">
-                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{u.displayName}</p>
-                                                        {u.status && <p className="text-[11px] text-gray-500 truncate">{u.status}</p>}
-                                                    </div>
-                                                    <User className="w-4 h-4 text-gray-300 shrink-0" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Posts Results */}
-                                {searchResults.posts.length > 0 && (
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Posts</p>
-                                        <div className="space-y-1">
-                                            {searchResults.posts.map((p: any) => (
-                                                <button
-                                                    key={p.id}
-                                                    onClick={() => {
-                                                        // Navigate to the post author's profile
-                                                        if (p.author?.id) {
-                                                            const mapUser = nearbyUsers.find(nu => nu.id === p.author.id);
-                                                            if (mapUser) { setSelectedUser(mapUser); setActiveTab('posts'); }
-                                                        }
-                                                        setShowSearchResults(false);
-                                                    }}
-                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
-                                                >
-                                                    {p.images && p.images.length > 0 ? (
-                                                        <img src={normalizeImageUrl(p.images[0])} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
-                                                    ) : (
-                                                        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                                                            <Edit className="w-4 h-4 text-blue-400" />
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0 text-left">
-                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{p.title}</p>
-                                                        <p className="text-[11px] text-gray-500 truncate">
-                                                            {p.author?.name || 'User'} • {p.likeCount || 0} ❤️
-                                                        </p>
-                                                    </div>
-                                                    <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Games Results */}
-                                {searchResults.games && searchResults.games.length > 0 && (
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Games</p>
-                                        <div className="space-y-1">
-                                            {searchResults.games.map((g: any) => (
-                                                <button
-                                                    key={g.id}
-                                                    onClick={() => {
-                                                        if (handlePlayGame) handlePlayGame(g);
-                                                    }}
-                                                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
-                                                >
-                                                    {g.thumbnail ? (
-                                                        <img src={normalizeImageUrl(g.thumbnail)} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
-                                                    ) : (
-                                                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                                                            <Gamepad2 className="w-4 h-4 text-emerald-500" />
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0 text-left">
-                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{g.title}</p>
-                                                        <p className="text-[11px] text-gray-500 truncate">
-                                                            {g.category || 'Game'} • {g.playCount || 0} plays
-                                                        </p>
-                                                    </div>
-                                                    <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                        {/* Instant Search Results */}
+                        {!selectedUser && (
+                            <SheetSearchResults
+                                searchTag={searchTag}
+                                nearbyUsers={nearbyUsers}
+                                setSelectedUser={setSelectedUser}
+                                setActiveTab={setActiveTab}
+                                setIsSheetExpanded={setIsSheetExpanded}
+                                handlePlayGame={handlePlayGame}
+                            />
                         )}
+
                         {selectedUser ? (
                             <SelectedUserView
                                 selectedUser={selectedUser} setSelectedUser={setSelectedUser} activeTab={activeTab as any} setActiveTab={setActiveTab as any}
@@ -451,8 +248,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle} isSavingPost={isSavingPost}
                                         ws={ws} myObfPos={myObfPos} user={user} showNotification={showNotification} setIsSheetExpanded={setIsSheetExpanded}
                                         setMainTab={setMainTab} handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
-                                        fetchUserPosts={fetchUserPosts} externalApi={externalApi} showAvatarMenu={showAvatarMenu} setShowAvatarMenu={setShowAvatarMenu}
-                                        avatarInputRef={avatarInputRef} handleAvatarUpload={handleAvatarUpload} handleDefaultAvatar={handleDefaultAvatar}
+                                        fetchUserPosts={fetchUserPosts} externalApi={externalApi}
+                                        showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
+                                        avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
                                     />
                                 )}
                                 {mainTab === 'creator' && (
