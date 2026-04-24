@@ -11,9 +11,10 @@ const CombatScreen: React.FC = () => {
   const [manaB, setManaB] = useState(0);
   const [hpA, setHpA] = useState(0);
   const [hpB, setHpB] = useState(0);
-  const [logIndex, setLogIndex] = useState(0);
   const [flyingItem, setFlyingItem] = useState<{ item: SeaItem; from: 'A' | 'B'; damage: number } | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const combatLogRef = useRef<any[]>([]);
+  const currentIdxRef = useRef(0);
+  const frameRef = useRef<number>();
 
   if (!encounter) return null;
 
@@ -21,6 +22,7 @@ const CombatScreen: React.FC = () => {
     (a, i) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight, eMax: a.eMax + i.energyMax, eRegen: a.eRegen + i.energyRegen }),
     { hp: 0, weight: 0, eMax: 0, eRegen: 0 }
   );
+
   const maxHpA = state.baseMaxHp + myStats.hp;
   const maxManaA = 100 + myStats.eMax;
   const maxHpB = encounter.totalHp;
@@ -32,6 +34,7 @@ const CombatScreen: React.FC = () => {
     setHpB(maxHpB);
     setManaA(0);
     setManaB(0);
+    currentIdxRef.current = 0;
 
     try {
       const result = await executeCombat(
@@ -40,30 +43,9 @@ const CombatScreen: React.FC = () => {
         encounter.isBot ? encounter.baseMaxHp : undefined
       );
 
-      // Animate combat log
       if (result.combatLog?.length) {
-        let idx = 0;
-        timerRef.current = setInterval(() => {
-          if (idx >= result.combatLog.length) {
-            clearInterval(timerRef.current);
-            setPhase('result');
-            return;
-          }
-          const entry = result.combatLog[idx];
-          if (entry.attacker === 'A') {
-            setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
-            setHpB(Math.max(0, entry.targetHp));
-            setManaA(0);
-          } else {
-            setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
-            setHpA(Math.max(0, entry.targetHp));
-            setManaB(0);
-          }
-          setTimeout(() => setFlyingItem(null), 800);
-          setManaA(prev => Math.min(prev + 15, maxManaA));
-          setManaB(prev => Math.min(prev + 15, maxManaB));
-          idx++;
-        }, 1200);
+        combatLogRef.current = result.combatLog;
+        startCombatLoop();
       } else {
         setPhase('result');
       }
@@ -72,15 +54,70 @@ const CombatScreen: React.FC = () => {
     }
   };
 
+  const startCombatLoop = () => {
+    let lastTime = performance.now();
+    
+    const loop = (now: number) => {
+      const dt = now - lastTime;
+      lastTime = now;
+
+      if (currentIdxRef.current >= combatLogRef.current.length) {
+        setPhase('result');
+        return;
+      }
+
+      const entry = combatLogRef.current[currentIdxRef.current];
+      const side = entry.attacker;
+
+      if (side === 'A') {
+        setManaA(prev => {
+          const next = prev + (15 + myStats.eRegen) * (dt / 1000) * 10; 
+          if (next >= maxManaA) {
+            // Attack!
+            setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
+            setHpB(Math.max(0, entry.targetHp));
+            currentIdxRef.current++;
+            setTimeout(() => setFlyingItem(null), 800);
+            return 0; // Reset mana
+          }
+          return next;
+        });
+      } else {
+        setManaB(prev => {
+          const next = prev + 20 * (dt / 1000) * 10; 
+          if (next >= maxManaB) {
+            // Attack!
+            setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
+            setHpA(Math.max(0, entry.targetHp));
+            currentIdxRef.current++;
+            setTimeout(() => setFlyingItem(null), 800);
+            return 0; // Reset mana
+          }
+          return next;
+        });
+      }
+
+      frameRef.current = requestAnimationFrame(loop);
+    };
+
+    frameRef.current = requestAnimationFrame(loop);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
   const handleClose = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setEncounter(null);
     setCombatResult(null);
     setPhase('ready');
     loadState();
   };
 
-  const cellSize = Math.min(36, (window.innerWidth / 2 - 40) / state.inventoryWidth);
+  const cellSize = Math.min(40, (window.innerWidth / 2 - 20) / Math.max(state.inventoryWidth, 6));
 
   return (
     <motion.div
@@ -90,8 +127,7 @@ const CombatScreen: React.FC = () => {
       className="fixed inset-0 z-[400] bg-[#040e1a] flex flex-col"
     >
       {/* Top: Ocean scene with boats */}
-      <div className="relative h-[35vh] min-h-[180px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden">
-        {/* Waves */}
+      <div className="relative h-[28vh] min-h-[160px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0">
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a1929] to-transparent" />
         <svg className="absolute bottom-0 w-full h-8 text-[#0a1929]" viewBox="0 0 1200 40" preserveAspectRatio="none">
           <path d="M0,20 Q150,0 300,20 Q450,40 600,20 Q750,0 900,20 Q1050,40 1200,20 L1200,40 L0,40 Z" fill="currentColor" />
@@ -99,22 +135,22 @@ const CombatScreen: React.FC = () => {
 
         {/* Player A (left) */}
         <motion.div
-          className="absolute left-[15%] bottom-[30%] flex flex-col items-center"
+          className="absolute left-[15%] bottom-[25%] flex flex-col items-center"
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         >
           <span className="text-4xl md:text-5xl">🚢</span>
-          <span className="text-[10px] font-black text-cyan-200 bg-black/40 px-2 py-0.5 rounded-full mt-1 truncate max-w-[100px]">Bạn</span>
+          <span className="text-[10px] font-black text-cyan-200 bg-black/40 px-2 py-0.5 rounded-full mt-1">Bạn</span>
         </motion.div>
 
         {/* Player B (right) */}
         <motion.div
-          className="absolute right-[15%] bottom-[30%] flex flex-col items-center"
+          className="absolute right-[15%] bottom-[25%] flex flex-col items-center"
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         >
           <span className="text-4xl md:text-5xl" style={{ transform: 'scaleX(-1)' }}>🚢</span>
-          <span className="text-[10px] font-black text-red-200 bg-black/40 px-2 py-0.5 rounded-full mt-1 truncate max-w-[100px]">{encounter.name}</span>
+          <span className="text-[10px] font-black text-red-200 bg-black/40 px-2 py-0.5 rounded-full mt-1">{encounter.name}</span>
         </motion.div>
 
         {/* Flying item animation */}
@@ -122,24 +158,24 @@ const CombatScreen: React.FC = () => {
           {flyingItem && (
             <motion.div
               key={Math.random()}
-              initial={{ x: flyingItem.from === 'A' ? '20vw' : '80vw', y: '-10vh', opacity: 1, scale: 1.5 }}
-              animate={{ x: flyingItem.from === 'A' ? '75vw' : '20vw', y: '15vh', opacity: 0.3, scale: 0.8 }}
+              initial={{ x: flyingItem.from === 'A' ? '20vw' : '80vw', y: '-5vh', opacity: 1, scale: 1.5 }}
+              animate={{ x: flyingItem.from === 'A' ? '75vw' : '20vw', y: '10vh', opacity: 0.3, scale: 0.8 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.7, ease: 'easeIn' }}
+              transition={{ duration: 0.6, ease: 'easeIn' }}
               className="absolute z-50 flex flex-col items-center"
             >
-              <span className="text-3xl">{flyingItem.item.icon}</span>
-              <span className="text-xs font-black text-red-400 bg-black/60 px-1.5 rounded">-{flyingItem.damage}</span>
+              <span className="text-4xl">{flyingItem.item.icon}</span>
+              <span className="text-xl font-black text-red-500 bg-black/60 px-2 rounded">-{flyingItem.damage}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Center buttons */}
         <div className="absolute top-3 right-3">
           <button onClick={handleClose} className="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors">
             Rời Khỏi
           </button>
         </div>
+        
         {phase === 'ready' && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <button
@@ -153,65 +189,47 @@ const CombatScreen: React.FC = () => {
       </div>
 
       {/* Bottom: Stats + Inventories */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden p-2 gap-2">
         {/* Player A side */}
-        <div className="flex-1 flex flex-col p-2 border-r border-cyan-800/30 overflow-y-auto">
-          <div className="mb-2">
+        <div className="flex-1 flex flex-col bg-[#0d2137]/30 rounded-2xl p-3 border border-cyan-800/20">
+          <div className="mb-3">
+            <div className="flex justify-between items-end mb-1">
+               <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">⚔️ DMG: {myStats.weight}</span>
+               <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpA))}/{maxHpA}</span>
+            </div>
             {/* HP Bar */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <Heart className="w-3 h-3 text-red-400 shrink-0" />
-              <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-red-500 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
-              </div>
-              <span className="text-[10px] font-bold text-red-300 w-12 text-right">{Math.max(0, Math.round(hpA))}</span>
+            <div className="h-4 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
+              <motion.div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-blue-400 shrink-0" />
-              <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-blue-500 rounded-full" animate={{ width: `${(manaA / maxManaA) * 100}%` }} />
-              </div>
-              <span className="text-[10px] font-bold text-blue-300 w-12 text-right">{Math.round(manaA)}</span>
+            <div className="h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(manaA / maxManaA) * 100}%` }} transition={{ duration: 0.1 }} />
             </div>
           </div>
-          <InventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={cellSize} />
-        </div>
-
-        {/* Center stats */}
-        <div className="w-16 md:w-20 flex flex-col items-center justify-center gap-2 bg-[#0d2137]/50 shrink-0">
-          <Shield className="w-5 h-5 text-cyan-500" />
-          <div className="text-center">
-            <p className="text-[9px] text-gray-500">DMG</p>
-            <p className="text-xs font-black text-cyan-300">{myStats.weight}</p>
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
+            <InventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={cellSize} />
           </div>
-          <div className="w-6 h-px bg-gray-700" />
-          <div className="text-center">
-            <p className="text-[9px] text-gray-500">DMG</p>
-            <p className="text-xs font-black text-red-300">{encounter.totalWeight}</p>
-          </div>
-          <Shield className="w-5 h-5 text-red-500" />
-          {phase === 'fighting' && <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />}
         </div>
 
         {/* Player B side */}
-        <div className="flex-1 flex flex-col p-2 overflow-y-auto">
-          <div className="mb-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Heart className="w-3 h-3 text-red-400 shrink-0" />
-              <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-red-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
-              </div>
-              <span className="text-[10px] font-bold text-red-300 w-12 text-right">{Math.max(0, Math.round(hpB))}</span>
+        <div className="flex-1 flex flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
+          <div className="mb-3">
+            <div className="flex justify-between items-end mb-1">
+               <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
+               <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-blue-400 shrink-0" />
-              <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-blue-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} />
-              </div>
-              <span className="text-[10px] font-bold text-blue-300 w-12 text-right">{Math.round(manaB)}</span>
+            {/* HP Bar */}
+            <div className="h-4 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
+              <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
+            </div>
+            {/* Mana Bar */}
+            <div className="h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
             </div>
           </div>
-          <InventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={cellSize} />
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
+            <InventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={cellSize} />
+          </div>
         </div>
       </div>
 
@@ -221,38 +239,42 @@ const CombatScreen: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-black/70 flex items-center justify-center z-50"
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.5 }}
-              animate={{ scale: 1 }}
-              className={`p-8 rounded-3xl text-center max-w-sm mx-4 ${
-                combatResult.result === 'win' ? 'bg-gradient-to-b from-amber-900/90 to-amber-950/90 border border-amber-500/40' : 'bg-gradient-to-b from-red-900/90 to-red-950/90 border border-red-500/40'
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className={`p-8 rounded-[40px] text-center max-w-sm mx-4 shadow-2xl ${
+                combatResult.result === 'win' ? 'bg-gradient-to-b from-amber-800 to-amber-950 border-2 border-amber-500/50' : 'bg-gradient-to-b from-red-900 to-red-950 border-2 border-red-500/50'
               }`}
             >
-              <span className="text-5xl block mb-3">{combatResult.result === 'win' ? '🏆' : '💀'}</span>
-              <h3 className="text-2xl font-black mb-2">{combatResult.result === 'win' ? 'CHIẾN THẮNG!' : 'THẤT BẠI'}</h3>
+              <span className="text-6xl block mb-4">{combatResult.result === 'win' ? '🏆' : '💀'}</span>
+              <h3 className="text-3xl font-black mb-3 text-white tracking-tighter">{combatResult.result === 'win' ? 'CHIẾN THẮNG!' : 'THẤT BẠI'}</h3>
+              
               {combatResult.result === 'win' && combatResult.loot?.length ? (
-                <div className="mb-4">
-                  <p className="text-sm text-amber-300 mb-2">Chiến lợi phẩm:</p>
-                  <div className="flex flex-wrap gap-1 justify-center">
+                <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
+                  <p className="text-xs font-bold text-amber-300 uppercase tracking-widest mb-3">Vật phẩm thu được</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {combatResult.loot.map(item => (
-                      <span key={item.uid} className="text-xl" title={item.name}>{item.icon}</span>
+                      <div key={item.uid} className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-2xl" title={item.name}>{item.icon}</div>
                     ))}
                   </div>
                 </div>
               ) : combatResult.result === 'lose' && combatResult.droppedItems?.length ? (
-                <div className="mb-4">
-                  <p className="text-sm text-red-300 mb-2">Đồ rơi (75%):</p>
-                  <div className="flex flex-wrap gap-1 justify-center">
+                <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
+                  <p className="text-xs font-bold text-red-300 uppercase tracking-widest mb-3">Vật phẩm bị mất (75%)</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {combatResult.droppedItems.map(item => (
-                      <span key={item.uid} className="text-xl opacity-50" title={item.name}>{item.icon}</span>
+                      <div key={item.uid} className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xl opacity-40" title={item.name}>{item.icon}</div>
                     ))}
                   </div>
                 </div>
-              ) : null}
-              <button onClick={handleClose} className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-colors">
-                Đóng
+              ) : (
+                <div className="mb-6 min-h-[40px]" />
+              )}
+              
+              <button onClick={handleClose} className="w-full py-4 bg-white text-black rounded-2xl font-black hover:bg-gray-200 transition-colors active:scale-95 shadow-xl">
+                TIẾP TỤC
               </button>
             </motion.div>
           </motion.div>

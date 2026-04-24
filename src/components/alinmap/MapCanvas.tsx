@@ -46,6 +46,7 @@ interface MapCanvasProps {
     seaState?: any;
     seaGameCtx?: any;
     isSeaLoading?: boolean;
+    setMainTab?: (tab: string) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -54,8 +55,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading
+    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab
 }) => {
+    const lastTapRef = React.useRef<number>(0);
+
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     const pickingItemsRef = React.useRef(new Set<string>());
     const boatOffsetX = useMotionValue(0);
@@ -75,9 +78,18 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             const dLng = item.lng - currentLng;
             const dist = Math.sqrt(dLat * dLat + dLng * dLng);
             if (dist < PICKUP_RADIUS_DEG) {
+                if (item.rarity >= 2) { // Rare items need minigame
+                    seaGameCtx.setShowMinigame(item);
+                    pickingItemsRef.current.add(item.spawnId);
+                    return;
+                }
+                
                 pickingItemsRef.current.add(item.spawnId);
                 seaGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
-                    if (!success) {
+                    if (success) {
+                        setMainTab?.('backpack');
+                        setIsSheetExpanded(true);
+                    } else {
                         setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000);
                     }
                 });
@@ -134,6 +146,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
                         onContextMenu={(e) => {
                             e.preventDefault();
+                            if (isSeaGameMode) return;
                             if (!myObfPos) return;
                             const currentScale = scale.get() || 1;
                             const offsetX = e.clientX - window.innerWidth / 2;
@@ -149,6 +162,31 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 target: 'map',
                                 data: { lat, lng }
                             });
+                        }}
+                        onTouchEnd={(e) => {
+                            if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+                            const now = Date.now();
+                            if (now - lastTapRef.current < 300) {
+                                // Double tap detected
+                                const touch = e.changedTouches[0];
+                                const currentScale = scale.get() || 1;
+                                const offsetX = touch.clientX - window.innerWidth / 2;
+                                const offsetY = touch.clientY - window.innerHeight / 2;
+                                const mapX = (offsetX - panX.get()) / currentScale;
+                                const mapY = (offsetY - panY.get()) / currentScale;
+                                const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+                                const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+
+                                setBoatTargetPin({ lat, lng });
+                                seaGameCtx.moveBoat(lat, lng);
+
+                                animate(boatOffsetX, mapX, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
+                                animate(boatOffsetY, mapY, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
+
+                                animate(panX, -mapX, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
+                                animate(panY, -mapY, { duration: 15 / (seaGameCtx.globalSettings?.speedMultiplier || 1), ease: "linear" });
+                            }
+                            lastTapRef.current = now;
                         }}
                         onDoubleClick={(e) => {
                             if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
@@ -232,6 +270,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY }}
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            setMainTab?.('backpack');
+                                            setIsSheetExpanded(true);
                                         }}
                                         onDoubleClick={(e) => e.stopPropagation()}
                                         onPointerDown={(e) => e.stopPropagation()}
