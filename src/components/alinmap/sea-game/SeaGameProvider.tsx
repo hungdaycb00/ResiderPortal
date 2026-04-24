@@ -21,6 +21,8 @@ export interface SeaItem {
   rotated: boolean;
   gridX: number;
   gridY: number;
+  floatX?: number;
+  floatY?: number;
 }
 
 export interface GridExpander {

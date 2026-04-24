@@ -111,7 +111,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       } else {
         // Nếu thả ra ngoài hoặc không hợp lệ, chuyển thành floating
         const newItems = items.map(i =>
-          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
+          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1, floatX: dragPos.x - dragOffset.x, floatY: dragPos.y - dragOffset.y } : i
         );
         onLayoutChange?.(newItems);
       }
@@ -228,23 +228,29 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           />
         ))}
 
-        {/* Placed items */}
-        {items.filter(i => i.gridX >= 0 && i.gridY >= 0).map(item => {
+        {/* Render Items */}
+        {items.map(item => {
+          if (item.gridX < 0 && item.floatX == null) return null; // Old items that were floating before this feature
+          const isFloating = item.gridX < 0;
+
           const w = item.rotated ? item.gridH : item.gridW;
           const h = item.rotated ? item.gridW : item.gridH;
           const isDragging = dragItem?.uid === item.uid;
           const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
           const glowClass = RARITY_GLOW[item.rarity] || '';
+          
+          const left = isFloating ? (item.floatX || 0) : item.gridX * cellSize;
+          const top = isFloating ? (item.floatY || 0) : item.gridY * cellSize;
 
           return (
             <motion.div
               key={item.uid}
-              className={`absolute z-20 rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow origin-center ${colorClass} ${glowClass} ${
+              className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow origin-center ${colorClass} ${glowClass} ${
                 isDragging ? 'opacity-0' : 'opacity-100 hover:brightness-110'
-              }`}
+              } ${isFloating ? 'z-[100] ring-4 ring-red-500/80 shadow-2xl animate-pulse' : 'z-20'}`}
               style={{
-                left: item.gridX * cellSize + 1,
-                top: item.gridY * cellSize + 1,
+                left: left + 1,
+                top: top + 1,
                 width: w * cellSize - 2,
                 height: h * cellSize - 2,
               }}
@@ -263,7 +269,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               }}
               title={`${item.name}\n⚔️ ${item.weight} DMG | ❤️ +${item.hpBonus} HP\n💰 ${item.price}g | ${item.gridW}×${item.gridH}`}
             >
-              <span className="text-lg leading-none">{item.icon}</span>
+              <span className="text-lg leading-none drop-shadow-md">{item.icon}</span>
               {(w * cellSize > 50 || h * cellSize > 50) && (
                 <span className="text-[8px] font-bold text-gray-700 leading-tight truncate max-w-full px-0.5">{item.name}</span>
               )}
