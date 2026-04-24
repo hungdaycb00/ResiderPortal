@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { RotateCw } from 'lucide-react';
 import type { SeaItem } from './SeaGameProvider';
 
