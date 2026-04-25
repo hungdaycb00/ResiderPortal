@@ -209,6 +209,7 @@ export default function App() {
 
       <MultiTaskButton 
         className="z-[9999]"
+        user={user}
         activeTab={activeTab} 
         isInGame={!!playingGame}
         onFeedback={() => setShowReviewModal(true)}

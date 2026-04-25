@@ -47,6 +47,7 @@ export function useAuth(
                     email: result.user.email,
                     displayName: result.user.display_name || result.user.displayName,
                     photoURL: normalizeImageUrl(result.user.photoURL || result.user.avatar_url),
+                    isAdmin: !!result.user.is_admin,
                 };
                 setUser(loggedInUser);
                 localStorage.setItem('user', JSON.stringify(loggedInUser));

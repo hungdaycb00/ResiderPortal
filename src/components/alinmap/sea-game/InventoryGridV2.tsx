@@ -357,23 +357,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
           );
         })}
 
-        {/* Layer 2.5: Bag icon overlay (top-left of each bag) */}
-        {bags.filter(b => b.gridX >= 0).map(bag => {
-          const isDragging = dragBag?.uid === bag.uid;
-          return (
-            <div
-              key={`bag-icon-${bag.uid}`}
-              className={`absolute pointer-events-none z-[5] text-[10px] font-bold flex items-center gap-0.5 px-0.5 rounded transition-opacity ${isDragging ? 'opacity-0' : 'opacity-70'}`}
-              style={{
-                left: bag.gridX * cellSize + 2,
-                top: bag.gridY * cellSize + 1,
-                color: 'rgba(150, 200, 255, 0.7)',
-              }}
-            >
-              <span>{bag.icon}</span>
-            </div>
-          );
-        })}
+        {/* Layer 2.5: Bag icon overlay removed as requested */}
 
         {/* Drag highlight */}
         {highlightCells.map(({ x, y, valid }) => (
@@ -447,7 +431,6 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
             {dragBag && !dragItem && (
               <div className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-2xl ${BAG_COLORS[dragBag.rarity] || BAG_COLORS.common}`}
                 style={{ background: BAG_BG[dragBag.rarity] || BAG_BG.common }}>
-                <span className="text-xl">{dragBag.icon}</span>
               </div>
             )}
           </div>
@@ -500,11 +483,10 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 }}
                 onPointerDown={handleStagingBagDown}
               >
-                <span className="text-sm">{stagingBag.icon}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-cyan-200 truncate">{stagingBag.name}</p>
-                <p className="text-[9px] text-cyan-300/60">{stagingBag.width}×{stagingBag.height} ({stagingBag.width * stagingBag.height} ô)</p>
+                <p className="text-[10px] font-bold text-cyan-200 truncate">Mảnh ghép Balo</p>
+                <p className="text-[9px] text-cyan-300/60">{stagingBag.width}×{stagingBag.height} ô</p>
               </div>
               <button
                 onClick={() => handleRotateBag(stagingBag)}

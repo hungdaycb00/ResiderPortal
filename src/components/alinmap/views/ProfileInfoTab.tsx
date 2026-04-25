@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, X, Compass, ChevronRight, Plus } from 'lucide-react';
+import { Edit, X, Compass, ChevronRight, Plus, LogOut } from 'lucide-react';
 import { normalizeImageUrl } from '../../../services/externalApi';
 
 interface ProfileInfoTabProps {
@@ -19,13 +19,15 @@ interface ProfileInfoTabProps {
     myObfPos: any;
     setIsSheetExpanded: (v: boolean) => void;
     setMainTab: (tab: any) => void;
+    logout?: () => void;
+    user: any;
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     myUserId, myStatus, setMyStatus, isEditingStatus, setIsEditingStatus,
     statusInput, setStatusInput, radius, handleUpdateRadius,
     isVisibleOnMap, setIsVisibleOnMap, games, ws, myObfPos,
-    setIsSheetExpanded, setMainTab,
+    setIsSheetExpanded, setMainTab, logout, user,
 }) => {
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
@@ -183,12 +185,14 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                 </div>
             )}
 
-            {/* Close Profile Button */}
-            <div className="pt-4 pb-4">
-                <button onClick={() => { setIsSheetExpanded(false); setMainTab('discover'); }} className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm">
-                    <X className="w-5 h-5" /> Close Profile
-                </button>
-            </div>
+            {/* Logout Button */}
+            {user && (
+                <div className="pt-4 pb-4">
+                    <button onClick={() => logout?.()} className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm border border-red-100">
+                        <LogOut className="w-5 h-5" /> Đăng xuất
+                    </button>
+                </div>
+            )}
         </>
     );
 };

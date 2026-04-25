@@ -160,9 +160,12 @@ export const externalApi = {
       url += `?deviceId=${encodeURIComponent(deviceId)}`;
     }
     
+    const adminKey = import.meta.env.VITE_ADMIN_KEY;
+    
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'X-Device-Id': deviceId,
+      ...(adminKey ? { 'Authorization': `Bearer ${adminKey}` } : {}),
       ...options.headers,
     };
 
@@ -588,5 +591,31 @@ export const externalApi = {
     return this.request(`/api/rooms/p2p/${roomId}/leave`, {
       method: 'POST',
     });
+  },
+
+  /**
+   * ADMIN SEA GAME API
+   */
+  adminSea: {
+    async listPlayers(params: { page?: number; limit?: number; search?: string } = {}): Promise<any> {
+      const query = new URLSearchParams();
+      if (params.page) query.append('page', params.page.toString());
+      if (params.limit) query.append('limit', params.limit.toString());
+      if (params.search) query.append('search', params.search);
+      
+      return externalApi.request(`/api/admin/sea?${query.toString()}`);
+    },
+    
+    async resetPlayer(saveId: string | number): Promise<any> {
+      return externalApi.request(`/api/admin/sea/${saveId}/reset`, {
+        method: 'POST'
+      });
+    },
+
+    async resetAllPlayers(): Promise<any> {
+      return externalApi.request('/api/admin/sea/reset-all', {
+        method: 'POST'
+      });
+    }
   },
 };
