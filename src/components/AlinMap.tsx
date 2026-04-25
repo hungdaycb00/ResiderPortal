@@ -30,6 +30,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     handlePlayGame,
     cloudflareUrl,
     triggerAuth,
+    logout,
     externalOpenList,
     onOpenListChange
 }) => {
@@ -245,6 +246,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handlePlayGame={handlePlayGame}
                 cloudflareUrl={cloudflareUrl}
                 triggerAuth={triggerAuth}
+                logout={logout}
                 externalOpenList={externalOpenList}
                 onOpenListChange={onOpenListChange}
                 onPublishSuccess={handleRefresh}

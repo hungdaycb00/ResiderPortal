@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Bookmark } from 'lucide-react';
+import { Edit, Bookmark, LogIn, LogOut } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
 import CreatePostForm from './CreatePostForm';
@@ -51,6 +51,8 @@ interface MyProfileViewProps {
     avatarInputRef: React.RefObject<HTMLInputElement>;
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDefaultAvatar: () => void;
+    triggerAuth?: (callback: () => void) => void;
+    logout?: () => void;
 }
 
 const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
@@ -63,12 +65,32 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, isSavingPost,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleCreatePost, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
-        showAvatarMenu, setShowAvatarMenu, avatarInputRef, handleAvatarUpload, handleDefaultAvatar
+        showAvatarMenu, setShowAvatarMenu, avatarInputRef, handleAvatarUpload, handleDefaultAvatar,
+        triggerAuth, logout
     } = props;
 
     return (
         <div className="space-y-4 pt-16 md:pt-4">
-            <h3 className="text-lg font-black text-gray-900 px-1 mb-2">My Profile</h3>
+            <div className="flex items-center justify-between px-1 mb-2">
+                <h3 className="text-lg font-black text-gray-900">My Profile</h3>
+                {user ? (
+                    <button
+                        onClick={() => logout?.()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Đăng xuất
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => triggerAuth?.(() => {})}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                    >
+                        <LogIn className="w-3.5 h-3.5" />
+                        Đăng nhập
+                    </button>
+                )}
+            </div>
 
             <ProfileHeader
                 myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl}

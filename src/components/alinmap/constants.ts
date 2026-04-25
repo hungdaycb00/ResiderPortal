@@ -18,6 +18,7 @@ export interface AlinMapProps {
     onTabChange?: (tab: string) => void;
     cloudflareUrl?: string;
     triggerAuth?: (callback: () => void) => void;
+    logout?: () => void;
     externalOpenList?: boolean;
     onOpenListChange?: (v: boolean) => void;
 }

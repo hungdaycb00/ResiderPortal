@@ -87,6 +87,7 @@ interface BottomSheetProps {
     handleDeletePost: (postId: string) => void;
     cloudflareUrl?: string;
     triggerAuth?: (callback: () => void) => void;
+    logout?: () => void;
     externalOpenList?: boolean;
     onOpenListChange?: (v: boolean) => void;
     onPublishSuccess?: () => void;
@@ -107,7 +108,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
         handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
-        cloudflareUrl, triggerAuth, externalOpenList, onOpenListChange, onPublishSuccess
+        cloudflareUrl, triggerAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess
     } = props;
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
@@ -251,6 +252,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi}
                                         showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
                                         avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
+                                        triggerAuth={triggerAuth} logout={logout}
                                     />
                                 )}
                                 {mainTab === 'creator' && (
