@@ -101,7 +101,7 @@ const BackpackView: React.FC = () => {
             </div>
 
             {/* Actions at fortress */}
-            {isAtFortress && (
+            {false && (
               <div className="w-full max-w-sm flex gap-3 mt-2">
                 <button
                   onClick={() => setSellMode(!sellMode)}
@@ -117,7 +117,7 @@ const BackpackView: React.FC = () => {
               </div>
             )}
 
-            {sellMode && (
+            {false && (
               <div className="w-full max-w-sm bg-amber-950/40 border border-amber-700/40 rounded-xl p-4 shadow-lg">
                 <p className="text-xs font-bold text-amber-300 mb-3 flex items-center gap-1.5"><Coins className="w-3.5 h-3.5"/> Chọn items để bán:</p>
                 <div className="flex flex-wrap gap-2 mb-4">

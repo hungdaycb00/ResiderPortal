@@ -99,7 +99,7 @@ const BackpackPanel: React.FC = () => {
           {tab === 'inventory' && (
             <div className="flex flex-col items-center gap-4">
               <div className="text-[10px] text-cyan-500/60 font-bold uppercase tracking-widest">
-                Grid 7×8 • {state.bags.length} túi • {state.inventory.filter(i => i.gridX >= 0).length} items
+                Grid 7×8 • {state.bags[0]?.cells || 0} ô • {state.inventory.filter(i => i.gridX >= 0).length} items
               </div>
 
               <InventoryGridV2
@@ -114,7 +114,7 @@ const BackpackPanel: React.FC = () => {
                   setStagingItem(null);
                 }}
                 onStagingBagPlaced={(placed) => {
-                  saveBags([...state.bags, placed]);
+                  saveBags([placed]); // Single bag slot replaces the current bag
                   setStagingBag(null);
                 }}
                 onStagingItemDiscarded={() => setStagingItem(null)}
@@ -123,7 +123,7 @@ const BackpackPanel: React.FC = () => {
               />
 
               {/* Actions at fortress */}
-              {isAtFortress && (
+              {false && (
                 <div className="w-full flex gap-2 mt-2">
                   <button
                     onClick={() => setSellMode(!sellMode)}
@@ -139,7 +139,7 @@ const BackpackPanel: React.FC = () => {
                 </div>
               )}
 
-              {sellMode && (
+              {false && (
                 <div className="w-full bg-amber-900/20 border border-amber-700/30 rounded-lg p-3">
                   <p className="text-xs text-amber-300 mb-2">Chọn items để bán:</p>
                   <div className="flex flex-wrap gap-2 mb-3">

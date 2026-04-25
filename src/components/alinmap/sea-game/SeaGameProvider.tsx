@@ -46,6 +46,7 @@ export interface BagItem {
   shape: boolean[][];
   width: number;
   height: number;
+  cells?: number;
   type?: 'bag';
 }
 

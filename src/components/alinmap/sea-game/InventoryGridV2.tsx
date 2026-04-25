@@ -371,8 +371,16 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
               </div>
             )}
             {dragBag && !dragItem && (
-              <div className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-2xl ${BAG_COLORS[dragBag.rarity] || BAG_COLORS.common}`}
-                style={{ background: BAG_BG[dragBag.rarity] || BAG_BG.common }}>
+              <div className="relative w-full h-full">
+                {(dragBag.shape || []).map((row, r) =>
+                  row.map((cell, c) => cell ? (
+                    <div key={`${r}-${c}`} className={`absolute border-2 ${BAG_COLORS[dragBag.rarity] || BAG_COLORS.common}`}
+                      style={{
+                        left: c * cellSize, top: r * cellSize, width: cellSize, height: cellSize,
+                        background: BAG_BG[dragBag.rarity] || BAG_BG.common,
+                      }} />
+                  ) : null)
+                )}
               </div>
             )}
           </div>
@@ -411,14 +419,23 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
           {stagingBag && (
             <div className="flex items-center gap-2 bg-cyan-900/30 border border-cyan-500/30 rounded-lg p-2">
               <div
-                className={`shrink-0 rounded-md border-2 flex items-center justify-center cursor-grab ${BAG_COLORS[stagingBag.rarity] || BAG_COLORS.common}`}
+                className="shrink-0 relative cursor-grab"
                 style={{
-                  width: stagingBag.width * cellSize * 0.6,
-                  height: stagingBag.height * cellSize * 0.6,
-                  background: BAG_BG[stagingBag.rarity] || BAG_BG.common,
+                  width: stagingBag.width * (cellSize * 0.4),
+                  height: stagingBag.height * (cellSize * 0.4),
                 }}
                 onPointerDown={handleStagingBagDown}
               >
+                {(stagingBag.shape || []).map((row, r) =>
+                  row.map((cell, c) => cell ? (
+                    <div key={`stg-${r}-${c}`} className={`absolute border ${BAG_COLORS[stagingBag.rarity] || BAG_COLORS.common}`}
+                      style={{
+                        left: c * (cellSize * 0.4), top: r * (cellSize * 0.4),
+                        width: cellSize * 0.4, height: cellSize * 0.4,
+                        background: BAG_BG[stagingBag.rarity] || BAG_BG.common,
+                      }} />
+                  ) : null)
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-cyan-200 truncate">{stagingBag.name || 'Balo Mới'}</p>
