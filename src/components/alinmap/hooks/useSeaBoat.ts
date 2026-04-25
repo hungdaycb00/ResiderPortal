@@ -43,7 +43,17 @@ export function useSeaBoat({
             const dLng = item.lng - currentLng;
             const dist = Math.sqrt(dLat * dLat + dLng * dLng);
             if (dist < PICKUP_RADIUS_DEG) {
-                if (item.rarity >= 2) {
+                // Dừng thuyền khi va chạm
+                boatOffsetX.stop();
+                boatOffsetY.stop();
+                panX.stop();
+                panY.stop();
+                setBoatTargetPin(null);
+
+                const rarityStr = item.item?.rarity || '';
+                const isRare = rarityStr === 'rare' || rarityStr === 'legendary' || item.isExpander;
+
+                if (isRare) {
                     seaGameCtx.setShowMinigame(item);
                     pickingItemsRef.current.add(item.spawnId);
                     return;
@@ -71,8 +81,8 @@ export function useSeaBoat({
         const currentScale = scale.get() || 1;
         const offsetX = clientX - window.innerWidth / 2;
         const offsetY = clientY - window.innerHeight / 2;
-        const mapX = (offsetX - panX.get()) / currentScale;
-        const mapY = (offsetY - panY.get()) / currentScale;
+        const mapX = offsetX / currentScale - panX.get();
+        const mapY = offsetY / currentScale - panY.get();
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
 

@@ -112,8 +112,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             const currentScale = scale.get() || 1;
                             const offsetX = e.clientX - window.innerWidth / 2;
                             const offsetY = e.clientY - window.innerHeight / 2;
-                            const mapX = (offsetX - panX.get()) / currentScale;
-                            const mapY = (offsetY - panY.get()) / currentScale;
+                            const mapX = offsetX / currentScale - panX.get();
+                            const mapY = offsetY / currentScale - panY.get();
                             const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
                             const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
                             setContextMenu({ x: e.clientX, y: e.clientY, target: 'map', data: { lat, lng } });

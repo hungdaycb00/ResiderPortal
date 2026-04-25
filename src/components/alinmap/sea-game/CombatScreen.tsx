@@ -71,6 +71,7 @@ const CombatScreen: React.FC = () => {
 
   const startCombatLoop = () => {
     let lastTime = performance.now();
+    let isAnimating = false;
     
     const loop = (now: number) => {
       const dt = now - lastTime;
@@ -81,8 +82,7 @@ const CombatScreen: React.FC = () => {
         return;
       }
 
-      if (flyingItem) {
-        lastTime = now;
+      if (isAnimating) {
         frameRef.current = requestAnimationFrame(loop);
         return;
       }
@@ -95,12 +95,15 @@ const CombatScreen: React.FC = () => {
         manaARef.current = Math.min(manaARef.current + manaGain, maxManaA);
         
         if (manaARef.current >= maxManaA) {
-          // Trigger attack
+          isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
           hpBRef.current = Math.max(0, entry.targetHp);
           setHpB(hpBRef.current);
           currentIdxRef.current++;
-          setTimeout(() => setFlyingItem(null), 800);
+          setTimeout(() => {
+              setFlyingItem(null);
+              isAnimating = false;
+          }, 800);
           manaARef.current = 0;
         }
         setManaA(manaARef.current);
@@ -109,12 +112,15 @@ const CombatScreen: React.FC = () => {
         manaBRef.current = Math.min(manaBRef.current + manaGain, maxManaB);
         
         if (manaBRef.current >= maxManaB) {
-          // Trigger attack
+          isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
           hpARef.current = Math.max(0, entry.targetHp);
           setHpA(hpARef.current);
           currentIdxRef.current++;
-          setTimeout(() => setFlyingItem(null), 800);
+          setTimeout(() => {
+              setFlyingItem(null);
+              isAnimating = false;
+          }, 800);
           manaBRef.current = 0;
         }
         setManaB(manaBRef.current);
