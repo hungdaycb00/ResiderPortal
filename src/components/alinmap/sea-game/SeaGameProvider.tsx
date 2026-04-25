@@ -137,7 +137,7 @@ interface SeaGameContextType {
   sellItems: (itemUids: string[]) => Promise<void>;
   storeItems: (itemUids: string[], action: 'store' | 'retrieve') => Promise<void>;
   setWorldTier: (tier: number) => Promise<void>;
-  loadWorldItems: () => Promise<void>;
+  loadWorldItems: (forceActive?: boolean) => Promise<void>;
   isMoving: boolean;
   showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
@@ -375,22 +375,30 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const setWorldTier = useCallback(async (tier: number) => {
     if (!deviceId) return;
-    await fetch(`${API}/api/sea/set-tier`, {
+    const res = await fetch(`${API}/api/sea/set-tier`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId, tier }),
     });
-    setIsChallengeActive(true);
+    const data = await res.json();
+    if (!data.success) {
+      console.error('[SeaGame] setWorldTier failed:', data.error);
+      return;
+    }
     await loadState();
-  }, [deviceId, API, loadState]);
+    // Force challenge active AFTER loadState (loadState resets it based on position)
+    setIsChallengeActive(true);
+    // Load world items for the new tier (force=true to bypass stale closure)
+    await loadWorldItems(true);
+  }, [deviceId, API, loadState, loadWorldItems]);
 
-  const loadWorldItems = useCallback(async () => {
+  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
     if (!deviceId) return;
     try {
       const res = await fetch(`${API}/api/sea/world-items?deviceId=${encodeURIComponent(deviceId)}`);
       const data = await res.json();
       if (data.success) {
           let items = data.items;
-          if (!isChallengeActive) {
+          if (!forceActive && !isChallengeActive) {
               items = items.slice(0, 3);
           }
           setWorldItems(items);
