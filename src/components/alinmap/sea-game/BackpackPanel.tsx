@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSeaGame } from './SeaGameProvider';
-import InventoryGrid from './InventoryGrid';
+import { useSeaGame, MAX_GRID_W } from './SeaGameProvider';
+import InventoryGridV2 from './InventoryGridV2';
 
 const TIER_LABELS = [
   { tier: 1, cost: 10, label: '10' },
@@ -14,8 +14,8 @@ const TIER_LABELS = [
 
 const BackpackPanel: React.FC = () => {
   const { 
-    state, isBackpackOpen, setIsBackpackOpen, stagingItem, setStagingItem, 
-    saveInventory, setWorldTier, sellItems, showDiscardModal, setShowDiscardModal, confirmDiscard 
+    state, isBackpackOpen, setIsBackpackOpen, stagingItem, setStagingItem, stagingBag, setStagingBag,
+    saveInventory, saveBags, setWorldTier, sellItems, showDiscardModal, setShowDiscardModal, confirmDiscard 
   } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
@@ -99,21 +99,27 @@ const BackpackPanel: React.FC = () => {
           {tab === 'inventory' && (
             <div className="flex flex-col items-center gap-4">
               <div className="text-[10px] text-cyan-500/60 font-bold uppercase tracking-widest">
-                Grid {state.inventoryWidth}×{state.inventoryHeight} • {state.inventory.filter(i => i.gridX >= 0).length} items
+                Grid 7×8 • {state.bags.length} túi • {state.inventory.filter(i => i.gridX >= 0).length} items
               </div>
 
-              <InventoryGrid
+              <InventoryGridV2
                 items={state.inventory}
-                gridWidth={state.inventoryWidth}
-                gridHeight={state.inventoryHeight}
+                bags={state.bags}
                 stagingItem={stagingItem}
-                onLayoutChange={(newItems) => saveInventory(newItems)}
-                onStagingPlaced={(placed) => {
+                stagingBag={stagingBag}
+                onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                onBagLayoutChange={(newBags) => saveBags(newBags)}
+                onStagingItemPlaced={(placed) => {
                   saveInventory([...state.inventory, placed]);
                   setStagingItem(null);
                 }}
-                onStagingDiscarded={() => setStagingItem(null)}
-                cellSize={Math.min(48, (window.innerWidth - 48) / state.inventoryWidth)}
+                onStagingBagPlaced={(placed) => {
+                  saveBags([...state.bags, placed]);
+                  setStagingBag(null);
+                }}
+                onStagingItemDiscarded={() => setStagingItem(null)}
+                onStagingBagDiscarded={() => setStagingBag(null)}
+                cellSize={Math.min(44, (window.innerWidth - 48) / MAX_GRID_W)}
               />
 
               {/* Actions at fortress */}

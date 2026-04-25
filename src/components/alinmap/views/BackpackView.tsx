@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
 import { useSeaGame } from '../sea-game/SeaGameProvider';
-import InventoryGrid from '../sea-game/InventoryGrid';
+import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
+import InventoryGridV2 from '../sea-game/InventoryGridV2';
 
 const TIER_LABELS = [
   { tier: 1, cost: 10, label: '10' },
@@ -12,7 +13,7 @@ const TIER_LABELS = [
 ];
 
 const BackpackView: React.FC = () => {
-  const { state, stagingItem, setStagingItem, saveInventory, setWorldTier, sellItems } = useSeaGame();
+  const { state, stagingItem, setStagingItem, stagingBag, setStagingBag, saveInventory, saveBags, setWorldTier, sellItems } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [sellMode, setSellMode] = useState(false);
@@ -73,23 +74,29 @@ const BackpackView: React.FC = () => {
         {tab === 'inventory' && (
           <div className="flex flex-col items-center gap-6">
             <div className="w-full flex justify-between items-center bg-cyan-950/30 px-4 py-2 rounded-xl border border-cyan-900/30">
-              <span className="text-xs text-cyan-500 font-bold uppercase tracking-widest">Kích thước: {state.inventoryWidth}×{state.inventoryHeight}</span>
+              <span className="text-xs text-cyan-500 font-bold uppercase tracking-widest">Grid 7×8 • {state.bags.length} túi</span>
               <span className="text-xs text-cyan-300 font-bold bg-cyan-900/50 px-2 py-0.5 rounded-md">{state.inventory.filter(i => i.gridX >= 0).length} items</span>
             </div>
 
             <div className="p-2 bg-[#06111a] rounded-xl shadow-inner border border-cyan-900/20">
-              <InventoryGrid
+              <InventoryGridV2
                 items={state.inventory}
-                gridWidth={state.inventoryWidth}
-                gridHeight={state.inventoryHeight}
+                bags={state.bags}
                 stagingItem={stagingItem}
-                onLayoutChange={(newItems) => saveInventory(newItems)}
-                onStagingPlaced={(placed) => {
+                stagingBag={stagingBag}
+                onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                onBagLayoutChange={(newBags) => saveBags(newBags)}
+                onStagingItemPlaced={(placed) => {
                   saveInventory([...state.inventory, placed]);
                   setStagingItem(null);
                 }}
-                onStagingDiscarded={() => setStagingItem(null)}
-                cellSize={Math.min(48, (window.innerWidth - 64) / state.inventoryWidth)}
+                onStagingBagPlaced={(placed) => {
+                  saveBags([...state.bags, placed]);
+                  setStagingBag(null);
+                }}
+                onStagingItemDiscarded={() => setStagingItem(null)}
+                onStagingBagDiscarded={() => setStagingBag(null)}
+                cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>
 
