@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCw } from 'lucide-react';
 import type { SeaItem, BagItem } from './SeaGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './SeaGameProvider';
 
@@ -65,11 +64,14 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     const grid: (string | null)[][] = Array.from({ length: MAX_GRID_H }, () => Array(MAX_GRID_W).fill(null));
     for (const bag of bags) {
       if (bag.gridX < 0 || (excludeUid && bag.uid === excludeUid)) continue;
-      const w = bag.rotated ? bag.height : bag.width;
-      const h = bag.rotated ? bag.width : bag.height;
-      for (let r = bag.gridY; r < bag.gridY + h && r < MAX_GRID_H; r++) {
-        for (let c = bag.gridX; c < bag.gridX + w && c < MAX_GRID_W; c++) {
-          grid[r][c] = bag.uid;
+      const w = bag.width;
+      const h = bag.height;
+      const shape = bag.shape || [];
+      for (let r = 0; r < h && (bag.gridY + r) < MAX_GRID_H; r++) {
+        for (let c = 0; c < w && (bag.gridX + c) < MAX_GRID_W; c++) {
+          if (shape[r] && shape[r][c]) {
+            grid[bag.gridY + r][bag.gridX + c] = bag.uid;
+          }
         }
       }
     }
@@ -80,8 +82,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     const grid: (string | null)[][] = Array.from({ length: MAX_GRID_H }, () => Array(MAX_GRID_W).fill(null));
     for (const item of items) {
       if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
-      const w = item.rotated ? item.gridH : item.gridW;
-      const h = item.rotated ? item.gridW : item.gridH;
+      const w = item.gridW;
+      const h = item.gridH;
       for (let r = item.gridY; r < item.gridY + h && r < MAX_GRID_H; r++) {
         for (let c = item.gridX; c < item.gridX + w && c < MAX_GRID_W; c++) {
           grid[r][c] = item.uid;
@@ -95,8 +97,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   const canPlaceItem = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
     const bagOcc = buildBagOccupancy();
     const itemOcc = buildItemOccupancy(excludeUid);
-    const w = item.rotated ? item.gridH : item.gridW;
-    const h = item.rotated ? item.gridW : item.gridH;
+    const w = item.gridW;
+    const h = item.gridH;
     if (x < 0 || y < 0 || x + w > MAX_GRID_W || y + h > MAX_GRID_H) return false;
     for (let r = y; r < y + h; r++) {
       for (let c = x; c < x + w; c++) {
@@ -107,19 +109,11 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     return true;
   }, [buildBagOccupancy, buildItemOccupancy]);
 
-  // Can place bag: all cells must be within grid and not overlap another bag
-  const canPlaceBag = useCallback((bag: BagItem, x: number, y: number, excludeUid?: string) => {
-    const bagOcc = buildBagOccupancy(excludeUid);
-    const w = bag.rotated ? bag.height : bag.width;
-    const h = bag.rotated ? bag.width : bag.height;
-    if (x < 0 || y < 0 || x + w > MAX_GRID_W || y + h > MAX_GRID_H) return false;
-    for (let r = y; r < y + h; r++) {
-      for (let c = x; c < x + w; c++) {
-        if (bagOcc[r][c] !== null) return false;
-      }
-    }
-    return true;
-  }, [buildBagOccupancy]);
+  // Bags are single-slot centered, no longer placed on arbitrary grid positions.
+  // We allow drop anywhere to just "equip" it.
+  const canPlaceBag = useCallback((bag: BagItem) => {
+    return true; // Always allowed, it will replace current bag
+  }, []);
 
   // ==========================================
   // Drag Handlers
@@ -130,8 +124,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     e.stopPropagation();
     const rect = gridRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const w = item.rotated ? item.gridH : item.gridW;
-    const h = item.rotated ? item.gridW : item.gridH;
+    const w = item.gridW;
+    const h = item.gridH;
     setDragMode('item');
     setDragItem(item);
     setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
@@ -139,17 +133,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   };
 
   const handleBagPointerDown = (e: React.PointerEvent, bag: BagItem) => {
-    if (readOnly) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const w = bag.rotated ? bag.height : bag.width;
-    const h = bag.rotated ? bag.width : bag.height;
-    setDragMode('bag');
-    setDragBag(bag);
-    setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
-    setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    // Bags are now static (cannot be dragged around the grid)
+    // We only drag items.
   };
 
   const handleStagingItemDown = (e: React.PointerEvent) => {
@@ -159,8 +144,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     if (!rect) return;
     setDragMode('staging-item');
     setDragItem(stagingItem);
-    const w = stagingItem.rotated ? stagingItem.gridH : stagingItem.gridW;
-    const h = stagingItem.rotated ? stagingItem.gridW : stagingItem.gridH;
+    const w = stagingItem.gridW;
+    const h = stagingItem.gridH;
     setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
     setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
@@ -172,8 +157,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     if (!rect) return;
     setDragMode('staging-bag');
     setDragBag(stagingBag);
-    const w = stagingBag.rotated ? stagingBag.height : stagingBag.width;
-    const h = stagingBag.rotated ? stagingBag.width : stagingBag.height;
+    const w = stagingBag.width;
+    const h = stagingBag.height;
     setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
     setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
@@ -197,13 +182,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
         onItemLayoutChange?.(newItems);
       }
     }
-    if (dragMode === 'bag' && dragBag && hoverCell) {
-      if (canPlaceBag(dragBag, hoverCell.x, hoverCell.y, dragBag.uid)) {
-        const newBags = bags.map(b =>
-          b.uid === dragBag.uid ? { ...b, gridX: hoverCell.x, gridY: hoverCell.y } : b
-        );
-        onBagLayoutChange?.(newBags);
-      }
+    if (dragMode === 'bag' && dragBag) {
+      // Not draggable
     }
     if (dragMode === 'staging-item' && dragItem && hoverCell) {
       if (canPlaceItem(dragItem, hoverCell.x, hoverCell.y)) {
@@ -211,8 +191,11 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
       }
     }
     if (dragMode === 'staging-bag' && dragBag && hoverCell) {
-      if (canPlaceBag(dragBag, hoverCell.x, hoverCell.y)) {
-        onStagingBagPlaced?.({ ...dragBag, gridX: hoverCell.x, gridY: hoverCell.y });
+      if (canPlaceBag(dragBag)) {
+        // Calculate center position
+        const gridX = Math.floor((MAX_GRID_W - dragBag.width) / 2);
+        const gridY = Math.floor((MAX_GRID_H - dragBag.height) / 2);
+        onStagingBagPlaced?.({ ...dragBag, gridX, gridY });
       }
     }
     setDragMode(null);
@@ -222,32 +205,13 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   }, [dragMode, dragItem, dragBag, hoverCell, items, bags, canPlaceItem, canPlaceBag, onItemLayoutChange, onBagLayoutChange, onStagingItemPlaced, onStagingBagPlaced]);
 
   // ==========================================
-  // Rotate
-  // ==========================================
-  const handleRotateItem = (item: SeaItem) => {
-    if (readOnly) return;
-    const rotated = !item.rotated;
-    if (dragItem?.uid === item.uid) setDragItem({ ...dragItem, rotated });
-    const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
-    onItemLayoutChange?.(newItems);
-  };
-
-  const handleRotateBag = (bag: BagItem) => {
-    if (readOnly) return;
-    const rotated = !bag.rotated;
-    if (dragBag?.uid === bag.uid) setDragBag({ ...dragBag, rotated });
-    const newBags = bags.map(b => b.uid === bag.uid ? { ...b, rotated } : b);
-    onBagLayoutChange?.(newBags);
-  };
-
-  // ==========================================
   // Highlight
   // ==========================================
   const highlightCells: { x: number; y: number; valid: boolean }[] = [];
   if (hoverCell && dragMode) {
     if ((dragMode === 'item' || dragMode === 'staging-item') && dragItem) {
-      const w = dragItem.rotated ? dragItem.gridH : dragItem.gridW;
-      const h = dragItem.rotated ? dragItem.gridW : dragItem.gridH;
+      const w = dragItem.gridW;
+      const h = dragItem.gridH;
       const valid = canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragMode === 'item' ? dragItem.uid : undefined);
       for (let r = hoverCell.y; r < hoverCell.y + h; r++) {
         for (let c = hoverCell.x; c < hoverCell.x + w; c++) {
@@ -256,12 +220,10 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
       }
     }
     if ((dragMode === 'bag' || dragMode === 'staging-bag') && dragBag) {
-      const w = dragBag.rotated ? dragBag.height : dragBag.width;
-      const h = dragBag.rotated ? dragBag.width : dragBag.height;
-      const valid = canPlaceBag(dragBag, hoverCell.x, hoverCell.y, dragMode === 'bag' ? dragBag.uid : undefined);
-      for (let r = hoverCell.y; r < hoverCell.y + h; r++) {
-        for (let c = hoverCell.x; c < hoverCell.x + w; c++) {
-          highlightCells.push({ x: c, y: r, valid });
+      // Just highlight the whole grid to show it will be equipped
+      for (let r = 0; r < MAX_GRID_H; r++) {
+        for (let c = 0; c < MAX_GRID_W; c++) {
+          highlightCells.push({ x: c, y: r, valid: true });
         }
       }
     }
@@ -271,14 +233,14 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
 
   // Ghost dimensions
   const ghostW = dragItem
-    ? (dragItem.rotated ? dragItem.gridH : dragItem.gridW) * cellSize
+    ? dragItem.gridW * cellSize
     : dragBag
-    ? (dragBag.rotated ? dragBag.height : dragBag.width) * cellSize
+    ? dragBag.width * cellSize
     : 0;
   const ghostH = dragItem
-    ? (dragItem.rotated ? dragItem.gridW : dragItem.gridH) * cellSize
+    ? dragItem.gridH * cellSize
     : dragBag
-    ? (dragBag.rotated ? dragBag.width : dragBag.height) * cellSize
+    ? dragBag.height * cellSize
     : 0;
 
   return (
@@ -296,11 +258,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (dragItem) handleRotateItem(dragItem);
-          if (dragBag) handleRotateBag(dragBag);
-        }}
+        onContextMenu={(e) => e.preventDefault()}
       >
         {/* Layer 1: Background grid cells */}
         {Array.from({ length: MAX_GRID_H }).map((_, r) =>
@@ -320,41 +278,35 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
           ))
         )}
 
-        {/* Layer 2: Bag cells (brighter overlay) */}
+        {/* Layer 2: Bag cells (brighter overlay) using shape */}
         {bags.filter(b => b.gridX >= 0).map(bag => {
-          const w = bag.rotated ? bag.height : bag.width;
-          const h = bag.rotated ? bag.width : bag.height;
-          const isDragging = dragBag?.uid === bag.uid;
+          const w = bag.width;
+          const h = bag.height;
+          const shape = bag.shape || [];
           const bgColor = BAG_BG[bag.rarity] || BAG_BG.common;
 
-          return Array.from({ length: h }).map((_, r) =>
-            Array.from({ length: w }).map((_, c) => (
-              <div
-                key={`bag-${bag.uid}-${r}-${c}`}
-                className={`absolute transition-opacity ${isDragging ? 'opacity-30' : 'opacity-100'}`}
-                style={{
-                  left: (bag.gridX + c) * cellSize,
-                  top: (bag.gridY + r) * cellSize,
-                  width: cellSize,
-                  height: cellSize,
-                  background: bgColor,
-                  border: '1px solid rgba(60, 130, 200, 0.3)',
-                }}
-                onPointerDown={(e) => {
-                  if (e.button === 2) {
-                    e.preventDefault();
-                    handleRotateBag(bag);
-                    return;
-                  }
-                  // Only start bag drag if no item is at this cell
-                  const itemOcc = buildItemOccupancy();
-                  if (itemOcc[bag.gridY + r][bag.gridX + c] === null) {
-                    handleBagPointerDown(e, bag);
-                  }
-                }}
-              />
-            ))
-          );
+          const bagCells = [];
+          for (let r = 0; r < h; r++) {
+            for (let c = 0; c < w; c++) {
+              if (shape[r] && shape[r][c]) {
+                bagCells.push(
+                  <div
+                    key={`bag-${bag.uid}-${r}-${c}`}
+                    className="absolute opacity-100"
+                    style={{
+                      left: (bag.gridX + c) * cellSize,
+                      top: (bag.gridY + r) * cellSize,
+                      width: cellSize,
+                      height: cellSize,
+                      background: bgColor,
+                      border: '1px solid rgba(60, 130, 200, 0.3)',
+                    }}
+                  />
+                );
+              }
+            }
+          }
+          return bagCells;
         })}
 
         {/* Layer 2.5: Bag icon overlay removed as requested */}
@@ -372,8 +324,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
 
         {/* Layer 3: Items */}
         {items.filter(i => i.gridX >= 0).map(item => {
-          const w = item.rotated ? item.gridH : item.gridW;
-          const h = item.rotated ? item.gridW : item.gridH;
+          const w = item.gridW;
+          const h = item.gridH;
           const isDragging = dragItem?.uid === item.uid;
           const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
 
@@ -390,18 +342,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 height: h * cellSize - 2,
               }}
               whileTap={{ scale: 1.08 }}
-              onPointerDown={(e) => {
-                if (e.button === 2) {
-                  e.preventDefault();
-                  handleRotateItem(item);
-                  return;
-                }
-                handleItemPointerDown(e, item);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                if (!dragItem) handleRotateItem(item);
-              }}
+              onPointerDown={(e) => handleItemPointerDown(e, item)}
+              onContextMenu={(e) => e.preventDefault()}
               title={`${item.name}\n⚔️ ${item.weight} DMG | ❤️ +${item.hpBonus} HP\n💰 ${item.price}g | ${item.gridW}×${item.gridH}`}
             >
               <span className="text-base leading-none drop-shadow-md">{item.icon}</span>
@@ -447,7 +389,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
             <div className="flex items-center gap-2 bg-amber-900/30 border border-amber-500/30 rounded-lg p-2">
               <div
                 className={`shrink-0 rounded-md border-2 flex items-center justify-center cursor-grab ${RARITY_COLORS[stagingItem.rarity] || ''}`}
-                style={{ width: (stagingItem.rotated ? stagingItem.gridH : stagingItem.gridW) * cellSize * 0.6, height: (stagingItem.rotated ? stagingItem.gridW : stagingItem.gridH) * cellSize * 0.6 }}
+                style={{ width: stagingItem.gridW * cellSize * 0.6, height: stagingItem.gridH * cellSize * 0.6 }}
                 onPointerDown={handleStagingItemDown}
               >
                 <span className="text-sm">{stagingItem.icon}</span>
@@ -456,12 +398,6 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 <p className="text-[10px] font-bold text-amber-200 truncate">{stagingItem.name}</p>
                 <p className="text-[9px] text-amber-300/60">⚔️{stagingItem.weight} ❤️+{stagingItem.hpBonus} 💰{stagingItem.price}</p>
               </div>
-              <button
-                onClick={() => handleRotateItem(stagingItem)}
-                className="p-1 bg-amber-700/40 rounded hover:bg-amber-600/40 transition-colors"
-              >
-                <RotateCw className="w-3.5 h-3.5 text-amber-200" />
-              </button>
               <button
                 onClick={onStagingItemDiscarded}
                 className="text-[9px] text-red-400 font-bold px-2 py-1 bg-red-900/30 rounded hover:bg-red-800/40 transition-colors"
@@ -477,23 +413,17 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
               <div
                 className={`shrink-0 rounded-md border-2 flex items-center justify-center cursor-grab ${BAG_COLORS[stagingBag.rarity] || BAG_COLORS.common}`}
                 style={{
-                  width: (stagingBag.rotated ? stagingBag.height : stagingBag.width) * cellSize * 0.6,
-                  height: (stagingBag.rotated ? stagingBag.width : stagingBag.height) * cellSize * 0.6,
+                  width: stagingBag.width * cellSize * 0.6,
+                  height: stagingBag.height * cellSize * 0.6,
                   background: BAG_BG[stagingBag.rarity] || BAG_BG.common,
                 }}
                 onPointerDown={handleStagingBagDown}
               >
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-cyan-200 truncate">Mảnh ghép Balo</p>
-                <p className="text-[9px] text-cyan-300/60">{stagingBag.width}×{stagingBag.height} ô</p>
+                <p className="text-[10px] font-bold text-cyan-200 truncate">{stagingBag.name || 'Balo Mới'}</p>
+                <p className="text-[9px] text-cyan-300/60">{stagingBag.cells} ô | Thay thế balo hiện tại</p>
               </div>
-              <button
-                onClick={() => handleRotateBag(stagingBag)}
-                className="p-1 bg-cyan-700/40 rounded hover:bg-cyan-600/40 transition-colors"
-              >
-                <RotateCw className="w-3.5 h-3.5 text-cyan-200" />
-              </button>
               <button
                 onClick={onStagingBagDiscarded}
                 className="text-[9px] text-red-400 font-bold px-2 py-1 bg-red-900/30 rounded hover:bg-red-800/40 transition-colors"
