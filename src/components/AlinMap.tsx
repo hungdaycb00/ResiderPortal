@@ -200,6 +200,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 seaGameCtx={seaGame}
                 isSeaLoading={nav.isSeaLoading}
                 setMainTab={nav.setMainTab}
+                showNotification={showNotification}
             />
 
             <MapControls

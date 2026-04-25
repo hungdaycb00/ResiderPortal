@@ -49,6 +49,7 @@ interface MapCanvasProps {
     seaGameCtx?: any;
     isSeaLoading?: boolean;
     setMainTab?: (tab: string) => void;
+    showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -57,14 +58,14 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab
+    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab, showNotification
 }) => {
     const seaBoat = useSeaBoat({
         isSeaGameMode: !!isSeaGameMode,
         seaGameCtx,
         myObfPos,
         scale, panX, panY,
-        setMainTab, setIsSheetExpanded,
+        setMainTab, setIsSheetExpanded, showNotification
     });
 
     return (

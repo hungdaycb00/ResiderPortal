@@ -11,6 +11,7 @@ interface UseSeaBoatParams {
     panY: MotionValue<number>;
     setMainTab?: (tab: string) => void;
     setIsSheetExpanded: (v: boolean) => void;
+    showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
 const PICKUP_RADIUS_DEG = 0.0004; // ~45m pickup radius
@@ -19,7 +20,7 @@ const TAP_MOVE_TOLERANCE_PX = 16;
 
 export function useSeaBoat({
     isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY,
-    setMainTab, setIsSheetExpanded,
+    setMainTab, setIsSheetExpanded, showNotification
 }: UseSeaBoatParams) {
     const lastTapRef = useRef<number>(0);
     const lastTapPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -79,7 +80,7 @@ export function useSeaBoat({
         }
 
         if (!seaGameCtx.isChallengeActive) {
-            seaGameCtx.showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
+            showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
             return;
         }
 
