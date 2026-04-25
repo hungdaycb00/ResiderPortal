@@ -29,7 +29,6 @@ export default function MultiTaskButton({ activeTab, setActiveTab, isInGame = fa
     {id: 'community', icon: Globe, label: 'Community', color: 'bg-purple-500'},
     {id: 'alin', icon: MapPin, label: 'Alin Map', color: 'bg-blue-600'},
     {id: 'notifications', icon: Bell, label: 'Alerts', color: 'bg-red-500'},
-    ...(user?.isAdmin ? [{ id: 'admin', icon: Shield, label: 'Admin', color: 'bg-[#DC143C]' }] : []),
     ...(isInGame && onFeedback ? [{id: 'feedback', icon: Star, label: 'Feedback', color: 'bg-amber-500'}] : []),
   ];
 

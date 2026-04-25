@@ -17,7 +17,6 @@ import { useFriendActions } from './hooks/useFriendActions';
 
 // Components
 import MultiTaskButton from './components/MultiTaskButton';
-import AdminView from './components/AdminView';
 import AlinMap from './components/AlinMap';
 import AppHeader from './components/AppHeader';
 import HomeTab from './components/tabs/HomeTab';
@@ -181,7 +180,6 @@ export default function App() {
         {activeTab === 'categories' && <CategoriesTab fetchedGames={fetchedGames} setActiveTab={setActiveTab} />}
         {activeTab === 'community' && <CommunityTab fetchedFriends={fetchedFriends} fetchExternalData={fetchExternalData} />}
         {activeTab === 'support' && <SupportTab />}
-        {activeTab === 'admin' && <AdminView games={fetchedGames} onDeleteGame={handleDeleteGame} onPlayGame={handlePlayGame} onRefresh={fetchExternalData} />}
       </main>
 
       <AnimatePresence>

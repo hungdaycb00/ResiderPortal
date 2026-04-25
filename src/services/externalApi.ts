@@ -519,16 +519,6 @@ export const externalApi = {
   },
 
   /**
-   * Update the score of a game (Admin).
-   */
-  async updateGameScore(gameId: number | string, score: number): Promise<any> {
-    return externalApi.request(`/api/games/${gameId}/score`, {
-      method: 'POST',
-      body: JSON.stringify({ score }),
-    });
-  },
-
-  /**
    * Upload user avatar photo
    */
   async uploadAvatar(file: File): Promise<{ success: boolean; url: string }> {
@@ -591,31 +581,5 @@ export const externalApi = {
     return this.request(`/api/rooms/p2p/${roomId}/leave`, {
       method: 'POST',
     });
-  },
-
-  /**
-   * ADMIN SEA GAME API
-   */
-  adminSea: {
-    async listPlayers(params: { page?: number; limit?: number; search?: string } = {}): Promise<any> {
-      const query = new URLSearchParams();
-      if (params.page) query.append('page', params.page.toString());
-      if (params.limit) query.append('limit', params.limit.toString());
-      if (params.search) query.append('search', params.search);
-      
-      return externalApi.request(`/api/admin/sea?${query.toString()}`);
-    },
-    
-    async resetPlayer(saveId: string | number): Promise<any> {
-      return externalApi.request(`/api/admin/sea/${saveId}/reset`, {
-        method: 'POST'
-      });
-    },
-
-    async resetAllPlayers(): Promise<any> {
-      return externalApi.request('/api/admin/sea/reset-all', {
-        method: 'POST'
-      });
-    }
   },
 };
