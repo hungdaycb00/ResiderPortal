@@ -34,13 +34,31 @@ export interface GridExpander {
   type: 'grid_expander';
 }
 
+export interface BagItem {
+  uid: string;
+  id: string;
+  name: string;
+  icon: string;
+  rarity: string;
+  gridX: number;
+  gridY: number;
+  rotated: boolean;
+  shape: boolean[][];
+  width: number;
+  height: number;
+  type?: 'bag';
+}
+
+export const MAX_GRID_W = 7;
+export const MAX_GRID_H = 8;
+
 export interface WorldItem {
   spawnId: string;
   lat: number;
   lng: number;
   isExpander: boolean;
   minigameType: 'fishing' | 'diving' | 'chest';
-  item: SeaItem | GridExpander;
+  item: SeaItem | GridExpander | BagItem;
 }
 
 export interface Encounter {
@@ -79,6 +97,7 @@ export interface SeaGameState {
   worldTier: number;
   inventory: SeaItem[];
   storage: SeaItem[];
+  bags: BagItem[];
   distance: number;
   energyMax: number;
   energyCurrent: number;
@@ -101,6 +120,8 @@ interface SeaGameContextType {
   setShowMinigame: (item: WorldItem | null) => void;
   isSeaGameMode: boolean;
   setIsSeaGameMode: (v: boolean) => void;
+  isChallengeActive: boolean;
+  setIsChallengeActive: (v: boolean) => void;
   globalSettings: any;
   // Actions
   initGame: (lat: number, lng: number) => Promise<void>;
@@ -108,6 +129,9 @@ interface SeaGameContextType {
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
   pickupItem: (spawnId: string) => Promise<void>;
   saveInventory: (inventory: SeaItem[]) => Promise<void>;
+  saveBags: (bags: BagItem[]) => Promise<void>;
+  stagingBag: BagItem | null;
+  setStagingBag: (bag: BagItem | null) => void;
   executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
@@ -123,7 +147,7 @@ interface SeaGameContextType {
 const defaultState: SeaGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
-  cursePercent: 0, seaGold: 0, worldTier: 1, inventory: [], storage: [], distance: 0,
+  cursePercent: 0, seaGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100,
 };
 
@@ -148,11 +172,13 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [isBackpackOpen, setIsBackpackOpen] = useState(false);
   const [stagingItem, setStagingItem] = useState<SeaItem | null>(null);
+  const [stagingBag, setStagingBag] = useState<BagItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
   const [showCurseModal, setShowCurseModal] = useState(false);
   const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
   const [isSeaGameMode, setIsSeaGameMode] = useState(false);
+  const [isChallengeActive, setIsChallengeActive] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -183,10 +209,18 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
           cursePercent: s.curse_percent || 0, seaGold: s.sea_gold || 0, worldTier: s.world_tier || 1,
           inventory: JSON.parse(s.inventory_json || '[]'), storage: JSON.parse(s.storage_json || '[]'),
+          bags: s.bags || [],
           distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
         });
         if (data.settings) {
           setGlobalSettings(data.settings);
+        }
+        
+        const isAtFortress = s.current_lat === s.fortress_lat && s.current_lng === s.fortress_lng;
+        if (!isAtFortress) {
+            setIsChallengeActive(true);
+        } else {
+            setIsChallengeActive(false);
         }
       }
     } catch (err) { console.error('[SeaGame] loadState error:', err); }
@@ -249,6 +283,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
         if (data.type === 'grid_expander') {
           setState(prev => ({ ...prev, inventoryWidth: data.newWidth, inventoryHeight: data.newHeight }));
+        } else if (data.type === 'bag') {
+          setStagingBag(data.bag);
         } else if (data.type === 'item') {
           setStagingItem(data.item);
         }
@@ -266,6 +302,17 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       setState(prev => ({ ...prev, inventory }));
     } catch (err) { console.error('[SeaGame] saveInventory error:', err); }
+  }, [deviceId, API]);
+
+  const saveBags = useCallback(async (bags: BagItem[]) => {
+    if (!deviceId) return;
+    try {
+      await fetch(`${API}/api/sea/bags`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, bags }),
+      });
+      setState(prev => ({ ...prev, bags }));
+    } catch (err) { console.error('[SeaGame] saveBags error:', err); }
   }, [deviceId, API]);
 
   const confirmDiscard = useCallback(async () => {
@@ -286,6 +333,9 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     if (data.success) {
       await loadState();
       const result: CombatResult = { result: data.result, combatLog: data.combatLog, loot: data.loot, droppedItems: data.droppedItems, finalHp: data.finalHp };
+      if (result.result === 'lose') {
+          setIsChallengeActive(false);
+      }
       setCombatResult(result);
       return result;
     }
@@ -329,6 +379,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId, tier }),
     });
+    setIsChallengeActive(true);
     await loadState();
   }, [deviceId, API, loadState]);
 
@@ -337,21 +388,28 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     try {
       const res = await fetch(`${API}/api/sea/world-items?deviceId=${encodeURIComponent(deviceId)}`);
       const data = await res.json();
-      if (data.success) setWorldItems(data.items);
+      if (data.success) {
+          let items = data.items;
+          if (!isChallengeActive) {
+              items = items.slice(0, 3);
+          }
+          setWorldItems(items);
+      }
     } catch (err) { console.error('[SeaGame] loadWorldItems error:', err); }
-  }, [deviceId, API]);
+  }, [deviceId, API, isChallengeActive]);
 
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
 
   const value: SeaGameContextType = {
     state, worldItems, isBackpackOpen, setIsBackpackOpen,
-    stagingItem, setStagingItem, encounter, setEncounter,
+    stagingItem, setStagingItem, stagingBag, setStagingBag,
+    encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
-    showMinigame, setShowMinigame, isMoving, showDiscardModal, setShowDiscardModal,
-    confirmDiscard,
-    isSeaGameMode, setIsSeaGameMode, globalSettings,
-    initGame, loadState, moveBoat, pickupItem, saveInventory,
+    showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,
+    isChallengeActive, setIsChallengeActive, globalSettings,
+    isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
+    initGame, loadState, moveBoat, pickupItem, saveInventory, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
   };
 

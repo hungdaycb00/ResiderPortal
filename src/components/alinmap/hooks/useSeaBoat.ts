@@ -78,6 +78,11 @@ export function useSeaBoat({
             return;
         }
 
+        if (!seaGameCtx.isChallengeActive) {
+            seaGameCtx.showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
+            return;
+        }
+
         const currentScale = scale.get() || 1;
         const offsetX = clientX - window.innerWidth / 2;
         const offsetY = clientY - window.innerHeight / 2;

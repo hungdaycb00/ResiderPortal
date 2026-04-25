@@ -99,7 +99,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             {position && (
                 <motion.div style={{ scale }} className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div
-                        drag
+                        drag={!(isSeaGameMode && seaGameCtx && !seaGameCtx.isChallengeActive)}
                         style={{ x: panX, y: panY }}
                         dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
