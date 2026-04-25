@@ -373,6 +373,21 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadState();
   }, [deviceId, API, loadState]);
 
+  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/sea/world-items?deviceId=${encodeURIComponent(deviceId)}`);
+      const data = await res.json();
+      if (data.success) {
+          let items = data.items;
+          if (!forceActive && !isChallengeActive) {
+              items = items.slice(0, 3);
+          }
+          setWorldItems(items);
+      }
+    } catch (err) { console.error('[SeaGame] loadWorldItems error:', err); }
+  }, [deviceId, API, isChallengeActive]);
+
   const setWorldTier = useCallback(async (tier: number) => {
     if (!deviceId) return;
     const res = await fetch(`${API}/api/sea/set-tier`, {
@@ -390,21 +405,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     // Load world items for the new tier (force=true to bypass stale closure)
     await loadWorldItems(true);
   }, [deviceId, API, loadState, loadWorldItems]);
-
-  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/sea/world-items?deviceId=${encodeURIComponent(deviceId)}`);
-      const data = await res.json();
-      if (data.success) {
-          let items = data.items;
-          if (!forceActive && !isChallengeActive) {
-              items = items.slice(0, 3);
-          }
-          setWorldItems(items);
-      }
-    } catch (err) { console.error('[SeaGame] loadWorldItems error:', err); }
-  }, [deviceId, API, isChallengeActive]);
 
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
