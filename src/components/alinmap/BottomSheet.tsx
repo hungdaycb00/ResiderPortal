@@ -80,13 +80,14 @@ interface BottomSheetProps {
     setSocialSection: (v: 'friends' | 'nearby' | 'recent' | 'blocked') => void;
     setIsCreatingPost: (v: boolean) => void;
     setPostTitle: (v: string) => void;
-    handleAddFriend: () => void;
-    handleMessage: () => void;
+    handleAddFriend: (targetUser?: any) => void | Promise<void>;
+    handleMessage: (targetUser?: any) => void;
     handleCreatePost: (files: File[]) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
     cloudflareUrl?: string;
     triggerAuth?: (callback: () => void) => void;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     logout?: () => void;
     externalOpenList?: boolean;
     onOpenListChange?: (v: boolean) => void;
@@ -108,7 +109,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
         handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
-        cloudflareUrl, triggerAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess
+        cloudflareUrl, triggerAuth, requireAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess
     } = props;
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
@@ -250,6 +251,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 reportStatus={reportStatus} setReportStatus={setReportStatus} reportReason={reportReason}
                                 setReportReason={setReportReason} ws={ws} games={userGames} userPosts={userPosts}
                                 handleStarPost={handleStarPost} handleDeletePost={handleDeletePost} externalApi={externalApi}
+                                requireAuth={requireAuth}
                             />
                         ) : (
                             <div className="pt-2">
@@ -262,6 +264,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         ws={ws} setSentFriendRequests={setSentFriendRequests as any} socialSection={socialSection}
                                         setSocialSection={setSocialSection} friends={friends} nearbyUsers={nearbyUsers}
                                         setSelectedUser={setSelectedUser} setActiveTab={setActiveTab as any} onOpenChat={onOpenChat}
+                                        requireAuth={requireAuth}
+                                        handleAddFriendById={(targetId) => handleAddFriend({ id: targetId, username: targetId })}
                                     />
                                 )}
                                 {mainTab === 'notifications' && (
@@ -281,7 +285,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi}
                                         showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
                                         avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
-                                        triggerAuth={triggerAuth} logout={logout}
+                                        triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
                                     />
                                 )}
                                 {mainTab === 'creator' && (

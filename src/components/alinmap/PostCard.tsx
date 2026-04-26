@@ -2,7 +2,7 @@ import React from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Edit } from 'lucide-react';
 
-const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts }: any) => {
+const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts, requireAuth }: any) => {
     const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
     const [liked, setLiked] = React.useState(post.isLiked);
     const [likeCount, setLikeCount] = React.useState(post.likeCount || 0);
@@ -14,6 +14,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts 
     const [loadingCmt, setLoadingCmt] = React.useState(false);
 
     const toggleLike = async () => {
+        if (requireAuth && !requireAuth('thich bai viet')) return;
         setLiked(!liked);
         setLikeCount(liked ? likeCount - 1 : likeCount + 1);
         try {
@@ -25,6 +26,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts 
     };
 
     const toggleArchive = async () => {
+        if (requireAuth && !requireAuth('luu bai viet')) return;
         setArchived(!archived);
         try {
             await fetch(`${API_BASE}/api/user/post/${post.id}/archive`, { method: 'POST', headers: { 'X-Device-Id': externalApi.getDeviceId() } });
@@ -43,6 +45,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts 
 
     const submitComment = async () => {
         if (!newCmt.trim()) return;
+        if (requireAuth && !requireAuth('binh luan bai viet')) return;
         setLoadingCmt(true);
         try {
             const r = await fetch(`${API_BASE}/api/user/post/${post.id}/comment`, {

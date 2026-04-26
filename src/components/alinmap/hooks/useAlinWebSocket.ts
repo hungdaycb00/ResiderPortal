@@ -41,6 +41,7 @@ export function useAlinWebSocket({
 
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+  const reconnectEnabled = useRef(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function useAlinWebSocket({
 
   const connectWS = useCallback(() => {
     if (!user || !position || isConnecting) return;
+    reconnectEnabled.current = true;
     setIsConnecting(true);
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -140,7 +142,7 @@ export function useAlinWebSocket({
     };
 
     socket.onclose = () => {
-      if (!isMounted.current) return;
+      if (!isMounted.current || !reconnectEnabled.current) return;
       addLog('🔌 Disconnected, retrying in 3s...');
       setIsConnecting(false);
       setWsStatus('CLOSED');
@@ -158,6 +160,7 @@ export function useAlinWebSocket({
   useEffect(() => {
     connectWS();
     return () => {
+      reconnectEnabled.current = false;
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       if (ws.current) ws.current.close();
     };

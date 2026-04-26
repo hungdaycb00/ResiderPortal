@@ -15,12 +15,14 @@ interface SocialViewProps {
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    handleAddFriendById?: (targetId: string) => Promise<void> | void;
 }
 
 const SocialView: React.FC<SocialViewProps> = ({
     myUserId, friendIdInput, setFriendIdInput, ws, setSentFriendRequests,
     socialSection, setSocialSection, friends, nearbyUsers,
-    setSelectedUser, setActiveTab, onOpenChat
+    setSelectedUser, setActiveTab, onOpenChat, requireAuth, handleAddFriendById
 }) => {
     return (
         <div className="space-y-5">
@@ -33,7 +35,13 @@ const SocialView: React.FC<SocialViewProps> = ({
                     <p className="text-[13px] font-mono font-bold text-gray-900 truncate">{myUserId || '...'}</p>
                 </div>
                 <button 
-                    onClick={() => { if (myUserId) { navigator.clipboard.writeText(myUserId); } }}
+                    onClick={() => {
+                        if (!myUserId) {
+                            requireAuth?.('lay User ID');
+                            return;
+                        }
+                        navigator.clipboard.writeText(myUserId);
+                    }}
                     className="p-2.5 bg-white hover:bg-blue-50 border border-gray-200 rounded-xl transition-colors active:scale-95 shrink-0"
                     title="Copy ID"
                 >
@@ -51,13 +59,13 @@ const SocialView: React.FC<SocialViewProps> = ({
                     className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-gray-900 font-medium placeholder:text-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
                 <button
-                    onClick={() => {
-                        if (friendIdInput.trim() && ws.current?.readyState === WebSocket.OPEN) {
-                            ws.current.send(JSON.stringify({ type: 'FRIEND_REQUEST_BY_ID', payload: { targetId: friendIdInput.trim() } }));
-                            // This cast is a bit hacky, but matches original behavior where setSentFriendRequests could take a callback
-                            setSentFriendRequests(prev => [...prev, friendIdInput.trim()]);
-                            setFriendIdInput('');
-                        }
+                    onClick={async () => {
+                        const targetId = friendIdInput.trim();
+                        if (!targetId) return;
+                        if (requireAuth && !requireAuth('ket ban')) return;
+                        await handleAddFriendById?.(targetId);
+                        setSentFriendRequests(prev => prev.includes(targetId) ? prev : [...prev, targetId]);
+                        setFriendIdInput('');
                     }}
                     className="px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition-colors active:scale-95 shrink-0"
                 >
@@ -103,7 +111,11 @@ const SocialView: React.FC<SocialViewProps> = ({
                                             </div>
                                         </div>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || ''); }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (requireAuth && !requireAuth('nhan tin')) return;
+                                                onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || '');
+                                            }}
                                             className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
                                         >
                                             <MessageCircle className="w-5 h-5" />

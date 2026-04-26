@@ -19,15 +19,17 @@ interface ProfileHeaderProps {
     avatarInputRef: React.RefObject<HTMLInputElement>;
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDefaultAvatar: () => void;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     myUserId, myDisplayName, myAvatarUrl, currentProvince,
     isEditingName, setIsEditingName, nameInput, setNameInput, setMyDisplayName,
     ws, showNotification, showAvatarMenu, setShowAvatarMenu,
-    avatarInputRef, handleAvatarUpload, handleDefaultAvatar,
+    avatarInputRef, handleAvatarUpload, handleDefaultAvatar, requireAuth,
 }) => {
     const saveName = () => {
+        if (requireAuth && !requireAuth('doi ten hien thi')) return;
         setMyDisplayName(nameInput);
         setIsEditingName(false);
         if (ws.current?.readyState === WebSocket.OPEN) {
@@ -37,7 +39,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     return (
         <div className="flex items-start gap-4 mb-6 px-1 relative">
-            <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer" onClick={() => setShowAvatarMenu(!showAvatarMenu)}>
+            <div
+                className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer"
+                onClick={() => {
+                    if (requireAuth && !requireAuth('cap nhat avatar')) return;
+                    setShowAvatarMenu(!showAvatarMenu);
+                }}
+            >
                 <img
                     src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
                     alt="Avatar"
@@ -70,7 +78,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                 ) : (
                     <div className="mb-1">
-                        <div className="group/name inline-flex items-center gap-2 cursor-pointer" onClick={() => { setNameInput(myDisplayName); setIsEditingName(true); }}>
+                        <div
+                            className="group/name inline-flex items-center gap-2 cursor-pointer"
+                            onClick={() => {
+                                if (requireAuth && !requireAuth('doi ten hien thi')) return;
+                                setNameInput(myDisplayName);
+                                setIsEditingName(true);
+                            }}
+                        >
                             <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
                             <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
                         </div>
@@ -81,7 +96,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 )}
 
                 {/* ID Copy */}
-                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => { navigator.clipboard.writeText(myUserId || ""); showNotification?.("ID copied to clipboard!", "success"); }}>
+                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => {
+                    if (!myUserId) {
+                        requireAuth?.('lay User ID');
+                        return;
+                    }
+                    navigator.clipboard.writeText(myUserId);
+                    showNotification?.("ID copied to clipboard!", "success");
+                }}>
                     <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 truncate max-w-[120px]">ID: {myUserId}</span>
                     <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500" />
                 </div>

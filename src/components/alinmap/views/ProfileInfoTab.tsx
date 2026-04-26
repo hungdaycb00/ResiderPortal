@@ -21,18 +21,20 @@ interface ProfileInfoTabProps {
     setMainTab: (tab: any) => void;
     logout?: () => void;
     user: any;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     myUserId, myStatus, setMyStatus, isEditingStatus, setIsEditingStatus,
     statusInput, setStatusInput, radius, handleUpdateRadius,
     isVisibleOnMap, setIsVisibleOnMap, games, ws, myObfPos,
-    setIsSheetExpanded, setMainTab, logout, user,
+    setIsSheetExpanded, setMainTab, logout, user, requireAuth,
 }) => {
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
 
     const saveStatus = () => {
+        if (requireAuth && !requireAuth('cap nhat trang thai')) return;
         setMyStatus(statusInput);
         setIsEditingStatus(false);
         if (ws.current?.readyState === WebSocket.OPEN && myObfPos) {
@@ -41,6 +43,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     };
 
     const removeTag = (tag: string) => {
+        if (requireAuth && !requireAuth('cap nhat tag')) return;
         const cleanTag = '#' + tag.toLowerCase();
         const newStatus = myStatus.replace(new RegExp(cleanTag + '\\b', 'g'), '').replace(/\s+/g, ' ').trim();
         setMyStatus(newStatus);
@@ -50,6 +53,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     };
 
     const addTag = (rawTag: string) => {
+        if (requireAuth && !requireAuth('cap nhat tag')) return;
         const newTag = '#' + rawTag.trim();
         if (!myStatus.includes(newTag)) {
             const newStatus = (myStatus.trim() + ' ' + newTag).trim();
@@ -85,7 +89,11 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                     </div>
                 </div>
             ) : (
-                <div className="group/status inline-flex items-center gap-2 cursor-pointer mb-2" onClick={() => { setStatusInput(myStatus); setIsEditingStatus(true); }}>
+                <div className="group/status inline-flex items-center gap-2 cursor-pointer mb-2" onClick={() => {
+                    if (requireAuth && !requireAuth('cap nhat trang thai')) return;
+                    setStatusInput(myStatus);
+                    setIsEditingStatus(true);
+                }}>
                     <p className="text-gray-500 text-[13px] truncate">{myStatus || "Tap to add status..."}</p>
                     <Edit className="w-3.5 h-3.5 text-gray-400 opacity-40 group-hover/status:opacity-100 transition-opacity" />
                 </div>
@@ -135,7 +143,10 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                             <span className="text-[11px] font-bold text-gray-500">Obfuscation Radius</span>
                             <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
                         </div>
-                        <input type="range" min="0" max="100" value={radius} onChange={(e) => handleUpdateRadius(parseInt(e.target.value))} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none" />
+                        <input type="range" min="0" max="100" value={radius} onChange={(e) => {
+                            if (requireAuth && !requireAuth('cap nhat quyen rieng tu')) return;
+                            handleUpdateRadius(parseInt(e.target.value));
+                        }} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none" />
                     </div>
                     <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
                         <div>
@@ -143,6 +154,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                             <span className="text-[9px] font-medium text-gray-400">{isVisibleOnMap ? 'Others can see you' : 'Ghost mode'}</span>
                         </div>
                         <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
+                            if (requireAuth && !requireAuth('cap nhat hien thi tren map')) return;
                             const newVal = !isVisibleOnMap;
                             setIsVisibleOnMap(newVal);
                             if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));

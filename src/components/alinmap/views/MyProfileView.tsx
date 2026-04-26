@@ -52,6 +52,7 @@ interface MyProfileViewProps {
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDefaultAvatar: () => void;
     triggerAuth?: (callback: () => void) => void;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     logout?: () => void;
 }
 
@@ -66,8 +67,18 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleCreatePost, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
         showAvatarMenu, setShowAvatarMenu, avatarInputRef, handleAvatarUpload, handleDefaultAvatar,
-        triggerAuth, logout
+        triggerAuth, requireAuth, logout
     } = props;
+
+    const openCreatePost = (open: boolean) => {
+        if (open && requireAuth && !requireAuth('dang bai viet')) return;
+        setIsCreatingPost(open);
+    };
+
+    const submitPost = (files: File[]) => {
+        if (requireAuth && !requireAuth('dang bai viet')) return;
+        handleCreatePost(files);
+    };
 
     return (
         <div className="space-y-4 pt-16 md:pt-4">
@@ -91,12 +102,17 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 ws={ws} showNotification={showNotification}
                 showAvatarMenu={showAvatarMenu} setShowAvatarMenu={setShowAvatarMenu}
                 avatarInputRef={avatarInputRef} handleAvatarUpload={handleAvatarUpload} handleDefaultAvatar={handleDefaultAvatar}
+                requireAuth={requireAuth}
             />
 
             {/* Tab Toggle */}
             <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
                 <button
-                    onClick={() => { setActiveTab('posts'); fetchUserPosts(myUserId || user?.uid); }}
+                    onClick={() => {
+                        if (!user && requireAuth && !requireAuth('xem bai viet cua ban')) return;
+                        setActiveTab('posts');
+                        fetchUserPosts(myUserId || user?.uid);
+                    }}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                     Posts {galleryActive && <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full ml-1 animate-pulse" />}
@@ -108,7 +124,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     Info
                 </button>
                 <button
-                    onClick={() => { setActiveTab('saved'); fetchUserPosts('saved'); }}
+                    onClick={() => {
+                        if (requireAuth && !requireAuth('xem bai viet da luu')) return;
+                        setActiveTab('saved');
+                        fetchUserPosts('saved');
+                    }}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'saved' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                     Saved
@@ -124,15 +144,15 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     isVisibleOnMap={isVisibleOnMap} setIsVisibleOnMap={setIsVisibleOnMap}
                     games={games} ws={ws} myObfPos={myObfPos}
                     setIsSheetExpanded={setIsSheetExpanded} setMainTab={setMainTab}
-                    logout={logout} user={user}
+                    logout={logout} user={user} requireAuth={requireAuth}
                 />
             ) : activeTab === 'posts' ? (
                 <div className="pb-8">
                     <div className="mb-6">
                         <CreatePostForm
-                            isCreatingPost={isCreatingPost} setIsCreatingPost={setIsCreatingPost}
+                            isCreatingPost={isCreatingPost} setIsCreatingPost={openCreatePost}
                             postTitle={postTitle} setPostTitle={setPostTitle}
-                            isSavingPost={isSavingPost} handleCreatePost={handleCreatePost}
+                            isSavingPost={isSavingPost} handleCreatePost={submitPost}
                         />
                     </div>
                     {userPosts.length > 0 ? (
@@ -142,6 +162,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                                     key={post.id} post={post} isSelf={true}
                                     onStar={handleStarPost} onDelete={handleDeletePost}
                                     externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                    requireAuth={requireAuth}
                                 />
                             ))}
                         </div>
@@ -164,6 +185,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                                     key={post.id} post={{...post, isArchivedState: true}} isSelf={true}
                                     onStar={handleStarPost} onDelete={handleDeletePost}
                                     externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                    requireAuth={requireAuth}
                                 />
                             ))}
                         </div>

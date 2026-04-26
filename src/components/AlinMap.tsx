@@ -87,6 +87,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         fetchNotifications,
     });
 
+    const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
+        if (user) return true;
+        showNotification?.(`Dang nhap de ${actionLabel}. Du lieu se duoc dong bo voi tai khoan Gmail.`, 'info');
+        triggerAuth?.(afterLogin || (() => {}));
+        return false;
+    }, [user, showNotification, triggerAuth]);
+
     // --- Map Navigation ---
     const nav = useMapNavigation({
         initialMainTab,
@@ -96,6 +103,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         seaGame,
         onTabChange,
         handleRefresh: wsCtx.handleRefresh,
+        requireAuth,
     });
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
@@ -139,9 +147,18 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Social actions ---
     const handleAddFriend = async (targetUser?: any) => {
+        if (!requireAuth('ket ban')) return;
         const userToAdd = targetUser || nav.selectedUser;
         if (!userToAdd) return;
         try {
+            const resp = await fetch(`${API_BASE}/api/friends/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId: externalApi.getDeviceId(), targetId: userToAdd.id }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok || !data.success) throw new Error(data.error || 'Failed to send friend request.');
+            setSentFriendRequests(prev => prev.includes(userToAdd.id) ? prev : [...prev, userToAdd.id]);
             showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
             if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
@@ -151,6 +168,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     };
 
     const handleMessage = (targetUser?: any) => {
+        if (!requireAuth('nhan tin')) return;
         const userToMsg = targetUser || nav.selectedUser;
         if (!userToMsg || !onOpenChat) return;
         onOpenChat(userToMsg.id, userToMsg.username || 'User', userToMsg.avatar_url || userToMsg.photoURL || '');
@@ -255,6 +273,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handlePlayGame={handlePlayGame}
                 cloudflareUrl={cloudflareUrl}
                 triggerAuth={triggerAuth}
+                requireAuth={requireAuth}
                 logout={logout}
                 externalOpenList={externalOpenList}
                 onOpenListChange={onOpenListChange}

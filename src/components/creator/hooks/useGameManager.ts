@@ -70,15 +70,7 @@ export function useGameManager(params: UseGameManagerParams) {
         console.error('Failed to load user games:', err);
       });
     } else {
-      externalApi.listServer().then(res => {
-        if (res.success) {
-          const myDeviceId = externalApi.getDeviceId();
-          const myGames = res.games.filter((g: any) => g.deviceId === myDeviceId);
-          setServerGames(processGames(myGames));
-        }
-      }).catch(err => {
-        console.error('Failed to load server games:', err);
-      });
+      setServerGames([]);
     }
   };
 
@@ -214,6 +206,11 @@ export function useGameManager(params: UseGameManagerParams) {
     gameThumbnail: File | null,
     updatingGameId: string | null
   ) => {
+    if (!user) {
+      showNotification('Dang nhap de publish game.', 'info');
+      triggerAuth(() => {});
+      return;
+    }
     if (!gameName) {
       showNotification('Please enter game title.', 'error');
       return;

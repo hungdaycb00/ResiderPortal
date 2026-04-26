@@ -31,6 +31,7 @@ interface SelectedUserViewProps {
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
     externalApi: any;
+    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
 
 const SelectedUserView: React.FC<SelectedUserViewProps> = ({
@@ -38,7 +39,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     sentFriendRequests, friends, handleAddFriend, handleMessage,
     myObfPos, panX, panY, scale, isReporting, setIsReporting,
     reportStatus, setReportStatus, reportReason, setReportReason, ws,
-    games, userPosts, handleStarPost, handleDeletePost, externalApi
+    games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth
 }) => {
     return (
         <div className="pt-2">
@@ -115,7 +116,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                     {/* Report User Section */}
                     <div className="mt-2 mb-6">
                         {!isReporting ? (
-                            <button onClick={() => setIsReporting(true)} className="flex items-center gap-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors px-2 py-1">
+                            <button onClick={() => { if (requireAuth && !requireAuth('bao cao nguoi dung')) return; setIsReporting(true); }} className="flex items-center gap-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors px-2 py-1">
                                 <Flag className="w-3.5 h-3.5" /> Report User
                             </button>
                         ) : (
@@ -134,6 +135,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                                     <button onClick={() => { setIsReporting(false); setReportReason(""); }} className="px-3 py-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
                                     <button 
                                         onClick={() => {
+                                            if (requireAuth && !requireAuth('bao cao nguoi dung')) return;
                                             if (ws.current?.readyState === WebSocket.OPEN && reportReason.trim()) {
                                                 ws.current.send(JSON.stringify({ type: 'REPORT_USER', payload: { reportedId: selectedUser.id, reason: reportReason.trim() } }));
                                                 setReportReason("");
@@ -188,6 +190,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                                     key={post.id} post={post} isSelf={false} 
                                     onStar={handleStarPost} onDelete={handleDeletePost} 
                                     externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                    requireAuth={requireAuth}
                                 />
                             ))}
                         </div>

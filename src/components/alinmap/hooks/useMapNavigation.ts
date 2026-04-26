@@ -9,12 +9,13 @@ interface UseMapNavigationParams {
   seaGame: any;
   onTabChange?: (tab: string) => void;
   handleRefresh: () => void;
+  requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
 
 export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'creator' | 'backpack';
 
 export function useMapNavigation({
-  initialMainTab, myObfPos, ws, seaState, seaGame, onTabChange, handleRefresh,
+  initialMainTab, myObfPos, ws, seaState, seaGame, onTabChange, handleRefresh, requireAuth,
 }: UseMapNavigationParams) {
   const { setIsSeaGameMode, isSeaGameMode, initGame, loadWorldItems } = seaGame;
 
@@ -41,10 +42,15 @@ export function useMapNavigation({
 
   useEffect(() => {
     if (initialMainTab) {
+      if (initialMainTab === 'backpack' && requireAuth && !requireAuth('su dung Balo va Sea Game')) {
+        setMainTab('discover');
+        setIsSheetExpanded(false);
+        return;
+      }
       setMainTab(initialMainTab as MainTab);
       setIsSheetExpanded(true);
     }
-  }, [initialMainTab]);
+  }, [initialMainTab, requireAuth]);
 
   useEffect(() => {
     if (mainTab === 'backpack' && seaState.initialized && !isSeaGameMode) {
@@ -83,6 +89,8 @@ export function useMapNavigation({
     if (tabId === 'profile') { setActiveTab('info'); }
 
     if (tabId === 'backpack') {
+      if (requireAuth && !requireAuth('su dung Balo va Sea Game')) return;
+
       if (mainTab === 'backpack') {
         setIsSheetExpanded(prev => !prev);
       } else {
@@ -116,7 +124,7 @@ export function useMapNavigation({
     }
 
     if (onTabChange) onTabChange(tabId);
-  }, [mainTab, seaState, myObfPos, isSeaGameMode, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo, onTabChange]);
+  }, [mainTab, seaState, myObfPos, isSeaGameMode, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo, onTabChange, requireAuth]);
 
   return {
     panX, panY, scale, selfDragX, selfDragY,

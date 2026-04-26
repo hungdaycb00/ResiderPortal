@@ -13,6 +13,10 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification }: 
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!user) {
+            showNotification?.("Dang nhap de cap nhat avatar", "info");
+            return;
+        }
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
         if (file.size > 1024 * 1024) {
@@ -30,10 +34,11 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification }: 
                 body: formData
             });
             const data = await res.json();
-            if (res.ok && data.imageUrl) {
-                setMyAvatarUrl(data.imageUrl);
+            const imageUrl = data.imageUrl || data.url;
+            if (res.ok && imageUrl) {
+                setMyAvatarUrl(imageUrl);
                 if (ws.current?.readyState === WebSocket.OPEN) {
-                    ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: data.imageUrl } }));
+                    ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: imageUrl } }));
                 }
                 showNotification?.("Cập nhật ảnh đại diện thành công", "success");
             } else {
@@ -47,6 +52,10 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification }: 
     };
 
     const handleDefaultAvatar = () => {
+        if (!user) {
+            showNotification?.("Dang nhap de cap nhat avatar", "info");
+            return;
+        }
         setMyAvatarUrl('');
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: '' } }));

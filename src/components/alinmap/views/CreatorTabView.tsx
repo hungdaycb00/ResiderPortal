@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Minimize2, X } from 'lucide-react';
 import { CreatorViewProps, DeviceType, Orientation, DocGraphics, DocMode } from '../../creator/types';
@@ -97,13 +97,27 @@ export default function CreatorTabView({
     createZipBlob, fileInputRef,
   });
 
+  const requireCreatorAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
+    if (user) return true;
+    showNotification?.(`Dang nhap de ${actionLabel}. Du lieu se duoc dong bo voi tai khoan Gmail.`, 'info');
+    triggerAuth?.(afterLogin || (() => {}));
+    return false;
+  }, [user, showNotification, triggerAuth]);
+
   // Sync external open request
   useEffect(() => {
     if (externalOpenList) {
+      if (!requireCreatorAuth('quan ly game', () => {
+        setSubTab('manager');
+        gameManager.fetchMyGames();
+      })) {
+        onOpenListChange?.(false);
+        return;
+      }
       setSubTab('manager');
       gameManager.fetchMyGames();
     }
-  }, [externalOpenList]);
+  }, [externalOpenList, requireCreatorAuth]);
 
   // Sync back to external if list is closed internally
   useEffect(() => {
@@ -128,8 +142,12 @@ export default function CreatorTabView({
 
   // Initial fetch
   useEffect(() => {
-    gameManager.fetchMyGames();
-  }, []);
+    if (user) {
+      gameManager.fetchMyGames();
+    } else {
+      setServerGames([]);
+    }
+  }, [user?.uid, user?.email]);
 
   // Thumbnail handler
   const handleThumbnailSelect = (file: File) => {
@@ -180,7 +198,11 @@ export default function CreatorTabView({
               Creator
             </button>
             <button
-              onClick={() => { setSubTab('manager'); gameManager.fetchMyGames(); }}
+              onClick={() => {
+                if (!requireCreatorAuth('quan ly game')) return;
+                setSubTab('manager');
+                gameManager.fetchMyGames();
+              }}
               className={`pb-2 text-sm font-bold border-b-2 transition-colors ${subTab === 'manager' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
             >
               Game Manager
@@ -213,8 +235,15 @@ export default function CreatorTabView({
             onThumbnailSelect={handleThumbnailSelect}
             onThumbnailClear={() => { setGameThumbnail(null); setThumbnailPreview(null); }}
             onPreview={() => gameManager.handleServerPreview(selectedFiles, gameBaseDir)}
-            onPublish={() => gameManager.handlePublish(gameName, selectedFiles, gameBaseDir, selectedCategories, gameThumbnail, updatingGameId)}
-            onManageGamesClick={() => { gameManager.fetchMyGames(); setSubTab('manager'); }}
+            onPublish={() => {
+              if (!requireCreatorAuth('publish game')) return;
+              gameManager.handlePublish(gameName, selectedFiles, gameBaseDir, selectedCategories, gameThumbnail, updatingGameId);
+            }}
+            onManageGamesClick={() => {
+              if (!requireCreatorAuth('quan ly game')) return;
+              gameManager.fetchMyGames();
+              setSubTab('manager');
+            }}
             onDownloadDoc={gameManager.handleDownloadDoc}
             showNotification={showNotification!}
             fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}

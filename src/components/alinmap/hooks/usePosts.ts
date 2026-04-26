@@ -69,6 +69,10 @@ export function usePosts({
 
   const handleCreatePost = async (files: File[]) => {
     if (files.length === 0 && !postTitle.trim()) return;
+    if (!user) {
+      showNotification?.('Dang nhap de dang bai viet.', 'info');
+      return;
+    }
     setIsSavingPost(true);
     try {
       const compressedFiles = files.length > 0 ? await Promise.all(files.map(f => compressImage(f))) : [];
@@ -93,6 +97,10 @@ export function usePosts({
   };
 
   const handleStarPost = async (postId: string) => {
+    if (!user) {
+      showNotification?.('Dang nhap de chon billboard.', 'info');
+      return;
+    }
     const deviceId = externalApi.getDeviceId();
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, { method: 'PUT', headers: { 'X-Device-Id': deviceId } });
@@ -102,6 +110,10 @@ export function usePosts({
   };
 
   const handleDeletePost = async (postId: string) => {
+    if (!user) {
+      showNotification?.('Dang nhap de xoa bai viet.', 'info');
+      return;
+    }
     if (!confirm('Xoá bài viết này?')) return;
     const deviceId = externalApi.getDeviceId();
     try {
