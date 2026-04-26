@@ -158,6 +158,71 @@ const defaultState: SeaGameState = {
   energyMax: 100, energyCurrent: 100,
 };
 
+const countBagCells = (shape: unknown): number => {
+  if (!Array.isArray(shape)) return 0;
+  return shape.reduce<number>((sum, row) => {
+    if (!Array.isArray(row)) return sum;
+    return sum + row.filter(Boolean).length;
+  }, 0);
+};
+
+const createStarterBag = (existing?: Partial<BagItem>): BagItem => ({
+  uid: existing?.uid || Math.random().toString(36).substring(2, 10),
+  id: 'basic_bag',
+  name: existing?.name || 'Balo Cơ Bản',
+  icon: existing?.icon || '🎒',
+  rarity: existing?.rarity || 'common',
+  gridX: Math.floor((MAX_GRID_W - 3) / 2),
+  gridY: Math.floor((MAX_GRID_H - 3) / 2),
+  rotated: existing?.rotated ?? false,
+  shape: [[true, true, true], [true, true, true], [true, true, true]],
+  width: 3,
+  height: 3,
+  cells: 9,
+  type: 'bag',
+});
+
+const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boolean } => {
+  if (!rawBag) return { bag: createStarterBag(), repaired: true };
+
+  const bag: BagItem = { ...rawBag };
+  let repaired = false;
+  const width = Number(bag.width) || 3;
+  const height = Number(bag.height) || 3;
+
+  if (!Array.isArray(bag.shape) || bag.shape.length === 0) {
+    bag.shape = Array.from({ length: height }, () => Array(width).fill(true));
+    bag.width = width;
+    bag.height = height;
+    repaired = true;
+  }
+
+  const shapeCells = countBagCells(bag.shape);
+  if (width === 3 && height === 3 && shapeCells !== 9) {
+    return { bag: createStarterBag(bag), repaired: true };
+  }
+
+  if (bag.width !== width) { bag.width = width; repaired = true; }
+  if (bag.height !== height) { bag.height = height; repaired = true; }
+  const currentCells = countBagCells(bag.shape);
+  if (bag.cells !== currentCells) { bag.cells = currentCells; repaired = true; }
+
+  const correctX = Math.floor((MAX_GRID_W - bag.width) / 2);
+  const correctY = Math.floor((MAX_GRID_H - bag.height) / 2);
+  if (bag.gridX !== correctX || bag.gridY !== correctY) {
+    bag.gridX = correctX;
+    bag.gridY = correctY;
+    repaired = true;
+  }
+  if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
+  if (!bag.id) { bag.id = 'basic_bag'; repaired = true; }
+  if (!bag.name) { bag.name = 'Balo Cơ Bản'; repaired = true; }
+  if (!bag.icon) { bag.icon = '🎒'; repaired = true; }
+  if (!bag.rarity) { bag.rarity = 'common'; repaired = true; }
+
+  return { bag, repaired };
+};
+
 const SeaGameContext = createContext<SeaGameContextType | null>(null);
 
 export function useSeaGame() {
@@ -200,50 +265,28 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       if (data.success && data.state) {
         const s = data.state;
         // Repair bag data from older server versions
-        let bags: BagItem[] = s.bags || [];
+        let bags: BagItem[] = Array.isArray(s.bags) ? s.bags : [];
+        let didRepairBags = false;
         if (bags.length > 0) {
-          const bag = bags[0];
-          let repaired = false;
-          if (!bag.shape || !Array.isArray(bag.shape) || bag.shape.length === 0) {
-            const w = bag.width || 3;
-            const h = bag.height || 3;
-            bag.shape = Array.from({ length: h }, () => Array(w).fill(true));
-            bag.width = w;
-            bag.height = h;
-            repaired = true;
+          const { bag, repaired } = repairBagData(bags[0]);
+          bags = [bag, ...bags.slice(1)];
+          if (repaired) {
+            didRepairBags = true;
+            console.log('[SeaGame] Repaired bag data:', bag);
           }
-          // Always recalculate center position based on bag dimensions
-          const correctX = Math.floor((MAX_GRID_W - (bag.width || 3)) / 2);
-          const correctY = Math.floor((MAX_GRID_H - (bag.height || 3)) / 2);
-          if (bag.gridX !== correctX || bag.gridY !== correctY) {
-            bag.gridX = correctX;
-            bag.gridY = correctY;
-            repaired = true;
-          }
-          if (bag.cells == null) {
-            bag.cells = bag.shape.reduce((sum: number, row: boolean[]) => sum + row.filter((v: boolean) => !!v).length, 0);
-            repaired = true;
-          }
-          if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
-          if (!bag.id) { bag.id = 'basic_bag'; repaired = true; }
-          if (!bag.name) { bag.name = 'Balo Cơ Bản'; repaired = true; }
-          if (!bag.icon) { bag.icon = '🎒'; repaired = true; }
-          if (!bag.rarity) { bag.rarity = 'common'; repaired = true; }
-          bags[0] = bag;
-          if (repaired) console.log('[SeaGame] Repaired bag data:', bag);
         } else {
           // No bags at all — create a default starter bag client-side
-          const defaultBag: BagItem = {
-            uid: Math.random().toString(36).substring(2, 10),
-            id: 'basic_bag', name: 'Balo Cơ Bản', icon: '🎒', rarity: 'common',
-            gridX: Math.floor((MAX_GRID_W - 3) / 2),
-            gridY: Math.floor((MAX_GRID_H - 3) / 2),
-            rotated: false,
-            shape: [[true,true,true],[true,true,true],[true,true,true]],
-            width: 3, height: 3, cells: 9,
-          };
-          bags = [defaultBag];
-          console.log('[SeaGame] Created default starter bag:', defaultBag);
+          const bag = createStarterBag();
+          bags = [bag];
+          didRepairBags = true;
+          console.log('[SeaGame] Created default starter bag:', bag);
+        }
+        if (didRepairBags) {
+          void fetch(`${API}/api/sea/bags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, bags }),
+          }).catch(err => console.error('[SeaGame] save repaired bag error:', err));
         }
         setState({
           initialized: s.fortress_lat != null,
