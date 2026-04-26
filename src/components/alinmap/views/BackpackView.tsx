@@ -78,11 +78,12 @@ const BackpackView: React.FC = () => {
               <span className="text-xs text-cyan-500 font-bold uppercase tracking-widest flex items-center">
                 {(() => {
                   const bag = state.bags[0];
-                  const upgradeCost = bag ? 50 + (bag.cells - 9) * 50 : 0;
+                  const bagCells = bag?.cells || 9;
+                  const upgradeCost = bag ? 50 + Math.max(0, bagCells - 9) * 50 : 0;
                   return (
                     <button 
                       onClick={() => upgradeBag()} 
-                      disabled={!bag || bag.cells >= 42 || state.seaGold < upgradeCost}
+                      disabled={!bag || bagCells >= 42 || state.seaGold < upgradeCost}
                       className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
                       Nâng cấp ({upgradeCost} <Coins className="w-3 h-3 inline"/>)

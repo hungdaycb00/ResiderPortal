@@ -199,6 +199,49 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       const data = await res.json();
       if (data.success && data.state) {
         const s = data.state;
+        // Repair bag data from older server versions
+        let bags: BagItem[] = s.bags || [];
+        if (bags.length > 0) {
+          const bag = bags[0];
+          let repaired = false;
+          if (!bag.shape || !Array.isArray(bag.shape) || bag.shape.length === 0) {
+            const w = bag.width || 3;
+            const h = bag.height || 3;
+            bag.shape = Array.from({ length: h }, () => Array(w).fill(true));
+            bag.width = w;
+            bag.height = h;
+            repaired = true;
+          }
+          if (bag.gridX == null || bag.gridY == null) {
+            bag.gridX = Math.floor((MAX_GRID_W - (bag.width || 3)) / 2);
+            bag.gridY = Math.floor((MAX_GRID_H - (bag.height || 3)) / 2);
+            repaired = true;
+          }
+          if (bag.cells == null) {
+            bag.cells = bag.shape.reduce((sum: number, row: boolean[]) => sum + row.filter((v: boolean) => !!v).length, 0);
+            repaired = true;
+          }
+          if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
+          if (!bag.id) { bag.id = 'basic_bag'; repaired = true; }
+          if (!bag.name) { bag.name = 'Balo Cơ Bản'; repaired = true; }
+          if (!bag.icon) { bag.icon = '🎒'; repaired = true; }
+          if (!bag.rarity) { bag.rarity = 'common'; repaired = true; }
+          bags[0] = bag;
+          if (repaired) console.log('[SeaGame] Repaired bag data:', bag);
+        } else {
+          // No bags at all — create a default starter bag client-side
+          const defaultBag: BagItem = {
+            uid: Math.random().toString(36).substring(2, 10),
+            id: 'basic_bag', name: 'Balo Cơ Bản', icon: '🎒', rarity: 'common',
+            gridX: Math.floor((MAX_GRID_W - 3) / 2),
+            gridY: Math.floor((MAX_GRID_H - 3) / 2),
+            rotated: false,
+            shape: [[true,true,true],[true,true,true],[true,true,true]],
+            width: 3, height: 3, cells: 9,
+          };
+          bags = [defaultBag];
+          console.log('[SeaGame] Created default starter bag:', defaultBag);
+        }
         setState({
           initialized: s.fortress_lat != null,
           fortressLat: s.fortress_lat, fortressLng: s.fortress_lng,
@@ -207,7 +250,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
           cursePercent: s.curse_percent || 0, seaGold: s.sea_gold || 0, worldTier: s.world_tier || 1,
           inventory: JSON.parse(s.inventory_json || '[]'), storage: JSON.parse(s.storage_json || '[]'),
-          bags: s.bags || [],
+          bags,
           distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
         });
         if (data.settings) {
