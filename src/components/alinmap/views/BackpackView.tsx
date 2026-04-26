@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
 import { getBagBonuses, useSeaGame } from '../sea-game/SeaGameProvider';
+import type { SeaItem } from '../sea-game/SeaGameProvider';
 import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
 import InventoryGridV2 from '../sea-game/InventoryGridV2';
 
@@ -29,12 +30,25 @@ const BackpackView: React.FC = () => {
   const { state, saveInventory, setWorldTier, openFortressStorage } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
+  const [selectedItem, setSelectedItem] = useState<SeaItem | null>(null);
   const activeBag = state.bags[0];
   const bagStats = getBagBonuses(activeBag);
 
   useEffect(() => {
     setSelectedTier(state.worldTier);
   }, [state.worldTier]);
+
+  useEffect(() => {
+    if (!selectedItem) return;
+    const nextSelectedItem = state.inventory.find((item) => item.uid === selectedItem.uid) || null;
+    setSelectedItem(nextSelectedItem);
+  }, [selectedItem, state.inventory]);
+
+  const handleDiscardItem = async (itemUid: string) => {
+    const newInventory = state.inventory.filter((item) => item.uid !== itemUid);
+    await saveInventory(newInventory);
+    setSelectedItem((current) => (current?.uid === itemUid ? null : current));
+  };
 
   const totalStats = state.inventory.filter((item) => item.gridX >= 0).reduce(
     (acc, item) => ({
@@ -91,15 +105,9 @@ const BackpackView: React.FC = () => {
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a1929] to-[#040b12] px-4 py-6">
         {tab === 'inventory' && (
           <div className="flex flex-col items-center gap-6">
-            <div className="flex w-full items-center justify-between rounded-xl border border-cyan-900/30 bg-cyan-950/30 px-4 py-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-cyan-500">
-                Balo dang lap
-              </span>
-              <span className="rounded-md bg-cyan-900/50 px-2 py-0.5 text-xs font-bold text-cyan-300">{state.inventory.filter((item) => item.gridX >= 0).length} items</span>
-            </div>
-
-            <div className="flex w-full items-center gap-3 rounded-2xl border border-cyan-900/30 bg-[#08131d] px-4 py-3">
+            <div className="flex w-full items-center justify-between gap-3 rounded-2xl border border-cyan-900/30 bg-[#08131d] px-4 py-3">
               <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Slot balo</div>
+              <span className="rounded-md bg-cyan-900/50 px-2 py-0.5 text-xs font-bold text-cyan-300">{state.inventory.filter((item) => item.gridX >= 0).length} items</span>
               <button
                 type="button"
                 title={formatBagTooltip(activeBag)}
@@ -131,9 +139,40 @@ const BackpackView: React.FC = () => {
                 items={state.inventory}
                 bags={state.bags}
                 onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                onItemClick={setSelectedItem}
                 cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>
+
+            {selectedItem && (
+              <div className="w-full rounded-2xl border border-cyan-900/30 bg-[#08131d] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-700/40 bg-[#0d2137] text-4xl shadow-inner">
+                    {selectedItem.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-cyan-100">{selectedItem.name}</p>
+                    <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-400/70">{selectedItem.rarity}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-cyan-100/85">
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">DMG: {selectedItem.weight || 0}</div>
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">HP: {selectedItem.hpBonus || 0}</div>
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">EN: {selectedItem.energyMax || 0}</div>
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Regen: {selectedItem.energyRegen || 0}</div>
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Vang: {selectedItem.price || 0}</div>
+                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Kich thuoc: {selectedItem.gridW}x{selectedItem.gridH}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDiscardItem(selectedItem.uid)}
+                  className="mt-4 w-full rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm font-black text-red-200 transition-colors hover:bg-red-900/40"
+                >
+                  Vut bo
+                </button>
+              </div>
+            )}
           </div>
         )}
 

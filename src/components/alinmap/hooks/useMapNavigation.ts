@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useMotionValue, animate, MotionValue } from 'framer-motion';
+import { useMotionValue, animate } from 'framer-motion';
 
 interface UseMapNavigationParams {
   initialMainTab: string;
@@ -33,7 +33,7 @@ export function useMapNavigation({
   const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isSeaLoading, setIsSeaLoading] = useState(false);
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(50);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -68,10 +68,14 @@ export function useMapNavigation({
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     const currentScale = scale.get();
     const newScale = Math.min(Math.max(0.02, currentScale + delta * currentScale), 5);
-    animate(scale, newScale, { type: "spring", damping: 25, stiffness: 200, restDelta: 0.001 });
+    animate(scale, newScale, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [scale]);
 
-  const handleCenter = useCallback(() => { panX.set(0); panY.set(0); scale.set(1); }, [panX, panY, scale]);
+  const handleCenter = useCallback(() => {
+    panX.set(0);
+    panY.set(0);
+    scale.set(1);
+  }, [panX, panY, scale]);
 
   const handleCenterTo = useCallback((lat: number, lng: number) => {
     if (!myObfPos) return;
@@ -92,51 +96,47 @@ export function useMapNavigation({
 
   const handleTabClick = useCallback((tabId: string) => {
     setSelectedUser(null);
-    if (tabId === 'profile') { setActiveTab('info'); }
+    if (tabId === 'profile') setActiveTab('info');
+
+    if (mainTab === tabId) {
+      setIsSheetExpanded((prev) => !prev);
+      onTabChange?.(tabId);
+      return;
+    }
+
     if (tabId === 'creator' && !user) {
       setMainTab('discover');
       setIsSheetExpanded(true);
-      if (onTabChange) onTabChange('discover');
+      onTabChange?.('discover');
       return;
     }
 
     if (tabId === 'backpack') {
       if (requireAuth && !requireAuth('su dung Balo va Sea Game')) return;
 
-      if (mainTab === 'backpack') {
-        setIsSheetExpanded(prev => !prev);
-      } else {
-        setMainTab('backpack');
-        setIsSeaGameMode(true);
-        setIsSheetExpanded(true);
+      setMainTab('backpack');
+      setIsSeaGameMode(true);
+      setIsSheetExpanded(true);
 
-        const doLoad = async () => {
-          if (!seaState.initialized && myObfPos) {
-            await initGame(myObfPos.lat, myObfPos.lng);
-          }
-          await loadWorldItems();
-        };
-        doLoad();
-
-        // Trỏ camera về thuyền
-        const targetLat = myObfPos?.lat || seaState.currentLat;
-        const targetLng = myObfPos?.lng || seaState.currentLng;
-        if (targetLat && targetLng) {
-          handleCenterTo(targetLat, targetLng);
+      const doLoad = async () => {
+        if (!seaState.initialized && myObfPos) {
+          await initGame(myObfPos.lat, myObfPos.lng);
         }
-      }
+        await loadWorldItems();
+      };
+      void doLoad();
+
+      const targetLat = myObfPos?.lat || seaState.currentLat;
+      const targetLng = myObfPos?.lng || seaState.currentLng;
+      if (targetLat && targetLng) handleCenterTo(targetLat, targetLng);
     } else {
       setIsSeaGameMode(false);
-      if (mainTab === tabId) {
-        setIsSheetExpanded(prev => !prev);
-      } else {
-        setMainTab(tabId as MainTab);
-        setIsSheetExpanded(true);
-      }
+      setMainTab(tabId as MainTab);
+      setIsSheetExpanded(true);
     }
 
-    if (onTabChange) onTabChange(tabId);
-  }, [mainTab, seaState, myObfPos, isSeaGameMode, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo, onTabChange, requireAuth, user]);
+    onTabChange?.(tabId);
+  }, [mainTab, myObfPos, seaState, requireAuth, user, onTabChange, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo]);
 
   return {
     panX, panY, scale, selfDragX, selfDragY,

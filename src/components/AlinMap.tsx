@@ -66,7 +66,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Sea Game ---
     const seaGame = useSeaGame();
-    const { isSeaGameMode, state: seaState } = seaGame;
+    const { isSeaGameMode, state: seaState, pickupRewardItem, setPickupRewardItem } = seaGame;
 
     // --- Notifications ---
     const fetchNotifications = useCallback(async () => {
@@ -196,6 +196,20 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         // Placeholder
     };
 
+    const handleOpenBackpackFromPickup = () => {
+        seaGame.setIsSeaGameMode(true);
+        nav.setMainTab('backpack');
+        nav.setIsSheetExpanded(true);
+        setPickupRewardItem(null);
+    };
+
+    const handleDiscardPickupItem = async () => {
+        if (!pickupRewardItem) return;
+        const newInventory = seaGame.state.inventory.filter((item) => item.uid !== pickupRewardItem.uid);
+        await seaGame.saveInventory(newInventory);
+        setPickupRewardItem(null);
+    };
+
     return (
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
             {/* Header / Search Bar */}
@@ -304,6 +318,34 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                     handleAddFriend={handleAddFriend}
                     handleMessage={handleMessage}
                 />
+            )}
+
+            {pickupRewardItem && (
+                <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm">
+                    <div className="w-full max-w-xs rounded-3xl border border-cyan-700/40 bg-[#08131d] p-6 text-center shadow-2xl">
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-cyan-700/40 bg-[#0d2137] text-5xl shadow-inner">
+                            {pickupRewardItem.icon}
+                        </div>
+                        <p className="mt-4 text-lg font-black text-cyan-100">{pickupRewardItem.name}</p>
+
+                        <div className="mt-5 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { void handleDiscardPickupItem(); }}
+                                className="flex-1 rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm font-black text-red-200 transition-colors hover:bg-red-900/40"
+                            >
+                                Vut bo
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleOpenBackpackFromPickup}
+                                className="flex-1 rounded-2xl border border-cyan-500/40 bg-cyan-950/30 px-4 py-3 text-sm font-black text-cyan-100 transition-colors hover:bg-cyan-900/40"
+                            >
+                                Mo balo
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

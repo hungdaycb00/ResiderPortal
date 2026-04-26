@@ -97,7 +97,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 )}
 
                 {/* ID Copy */}
-                <div className="group/id inline-flex items-center gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => {
+                <div className="group/id inline-flex max-w-full items-start gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => {
                     if (!myUserId) {
                         requireAuth?.('lay User ID');
                         return;
@@ -105,8 +105,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     navigator.clipboard.writeText(myUserId);
                     showNotification?.("ID copied to clipboard!", "success");
                 }}>
-                    <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 truncate max-w-[120px]">ID: {myUserId}</span>
-                    <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500" />
+                    <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 break-all">ID: {myUserId}</span>
+                    <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500 shrink-0 mt-0.5" />
                 </div>
                 {userEmail && (
                     <p className="text-[10px] font-semibold text-gray-400 mt-1 truncate max-w-[220px]">

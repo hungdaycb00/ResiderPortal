@@ -35,7 +35,15 @@ export function useSeaBoat({
 
     // Auto-pickup loop
     useAnimationFrame(() => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos || !seaGameCtx.worldItems?.length) return;
+        if (
+            !isSeaGameMode ||
+            !seaGameCtx ||
+            !myObfPos ||
+            !seaGameCtx.worldItems?.length ||
+            seaGameCtx.pickupRewardItem ||
+            seaGameCtx.pendingBagSwap ||
+            seaGameCtx.showMinigame
+        ) return;
 
         const currentLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
         const currentLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
@@ -78,10 +86,7 @@ export function useSeaBoat({
 
                 pickingItemsRef.current.add(item.spawnId);
                 seaGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
-                    if (success) {
-                        setMainTab?.('backpack');
-                        setIsSheetExpanded(true);
-                    } else {
+                    if (!success) {
                         setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000);
                     }
                 });

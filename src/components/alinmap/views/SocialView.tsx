@@ -4,6 +4,7 @@ import { normalizeImageUrl } from '../../../services/externalApi';
 
 interface SocialViewProps {
     myUserId: string | null;
+    myObfPos: { lat: number; lng: number } | null;
     friendIdInput: string;
     setFriendIdInput: (val: string) => void;
     ws: React.MutableRefObject<WebSocket | null>;
@@ -17,13 +18,23 @@ interface SocialViewProps {
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     handleAddFriendById?: (targetId: string) => Promise<void> | void;
+    radius: number;
+    handleUpdateRadius: (radius: number) => void;
 }
 
 const SocialView: React.FC<SocialViewProps> = ({
-    myUserId, friendIdInput, setFriendIdInput, ws, setSentFriendRequests,
+    myUserId, myObfPos, friendIdInput, setFriendIdInput, ws, setSentFriendRequests,
     socialSection, setSocialSection, friends, nearbyUsers,
-    setSelectedUser, setActiveTab, onOpenChat, requireAuth, handleAddFriendById
+    setSelectedUser, setActiveTab, onOpenChat, requireAuth, handleAddFriendById, radius, handleUpdateRadius
 }) => {
+    const nearbyUsersInRange = nearbyUsers.filter((u) => {
+        if (!myObfPos || typeof u?.lat !== 'number' || typeof u?.lng !== 'number') return true;
+        const dLat = u.lat - myObfPos.lat;
+        const dLng = u.lng - myObfPos.lng;
+        const distKm = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
+        return distKm <= radius;
+    });
+
     return (
         <div className="space-y-5">
             <h3 className="text-lg font-black text-gray-900 px-1">Social</h3>
@@ -32,7 +43,7 @@ const SocialView: React.FC<SocialViewProps> = ({
             <div className="bg-gray-50 rounded-2xl p-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Your User ID</p>
-                    <p className="text-[13px] font-mono font-bold text-gray-900 truncate">{myUserId || '...'}</p>
+                    <p className="text-[13px] font-mono font-bold text-gray-900 break-all">{myUserId || '...'}</p>
                 </div>
                 <button 
                     onClick={() => {
@@ -76,7 +87,7 @@ const SocialView: React.FC<SocialViewProps> = ({
             {/* Section Tabs */}
             <div className="flex bg-gray-100 p-1 rounded-xl">
                 <button onClick={() => setSocialSection('friends')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Friends ({friends.length})</button>
-                <button onClick={() => setSocialSection('nearby')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'nearby' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Nearby ({nearbyUsers.length})</button>
+                <button onClick={() => setSocialSection('nearby')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'nearby' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Nearby ({nearbyUsersInRange.length})</button>
                 <button onClick={() => setSocialSection('blocked')} className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${socialSection === 'blocked' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>Blocked</button>
             </div>
 
@@ -138,9 +149,25 @@ const SocialView: React.FC<SocialViewProps> = ({
 
             {/* Nearby People Section */}
             {socialSection === 'nearby' && (
-                nearbyUsers.length > 0 ? (
+                nearbyUsersInRange.length > 0 ? (
+                    <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4">
+                            <div className="mb-2 flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Nearby range</span>
+                                <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="10"
+                                max="10000"
+                                step="10"
+                                value={Math.min(10000, Math.max(10, radius))}
+                                onChange={(e) => handleUpdateRadius(parseInt(e.target.value, 10))}
+                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
+                        </div>
                     <div className="divide-y divide-gray-50">
-                        {nearbyUsers.map(u => (
+                        {nearbyUsersInRange.map(u => (
                             <div
                                 key={u.id}
                                 onClick={() => setSelectedUser(u)}
@@ -161,12 +188,30 @@ const SocialView: React.FC<SocialViewProps> = ({
                             </div>
                         ))}
                     </div>
+                    </div>
                 ) : (
-                    <div className="py-12 text-center bg-gray-50 rounded-[32px]">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
-                            <Navigation className="w-6 h-6 text-gray-200" />
+                    <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4">
+                            <div className="mb-2 flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Nearby range</span>
+                                <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="10"
+                                max="10000"
+                                step="10"
+                                value={Math.min(10000, Math.max(10, radius))}
+                                onChange={(e) => handleUpdateRadius(parseInt(e.target.value, 10))}
+                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
                         </div>
-                        <p className="text-gray-400 text-xs font-medium">No active users found nearby</p>
+                        <div className="py-12 text-center bg-gray-50 rounded-[32px]">
+                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                <Navigation className="w-6 h-6 text-gray-200" />
+                            </div>
+                            <p className="text-gray-400 text-xs font-medium">No active users found nearby</p>
+                        </div>
                     </div>
                 )
             )}

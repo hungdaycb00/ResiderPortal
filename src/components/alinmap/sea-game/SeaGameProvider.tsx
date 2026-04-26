@@ -147,6 +147,8 @@ interface SeaGameContextType {
   openFortressStorage: (mode?: StorageAccessMode) => void;
   stagingItem: SeaItem | null;
   setStagingItem: (item: SeaItem | null) => void;
+  pickupRewardItem: SeaItem | null;
+  setPickupRewardItem: (item: SeaItem | null) => void;
   encounter: Encounter | null;
   setEncounter: (e: Encounter | null) => void;
   combatResult: CombatResult | null;
@@ -164,7 +166,7 @@ interface SeaGameContextType {
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
-  pickupItem: (spawnId: string) => Promise<void>;
+  pickupItem: (spawnId: string) => Promise<boolean>;
   saveInventory: (inventory: SeaItem[]) => Promise<void>;
   saveStorage: (storage: SeaItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
@@ -336,6 +338,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [isBackpackOpen, setIsBackpackOpen] = useState(false);
   const [stagingItem, setStagingItem] = useState<SeaItem | null>(null);
+  const [pickupRewardItem, setPickupRewardItem] = useState<SeaItem | null>(null);
   const [pendingBagSwap, setPendingBagSwap] = useState<BagItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
@@ -452,7 +455,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   }, [deviceId, API]);
 
   const pickupItem = useCallback(async (spawnId: string) => {
-    if (!deviceId) return;
+    if (!deviceId) return false;
     try {
       const res = await fetch(`${API}/api/sea/pickup`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -460,25 +463,36 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       const data = await res.json();
       if (data.success) {
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
         if (data.type === 'grid_expander') {
-          setState(prev => ({ ...prev, inventoryWidth: data.newWidth, inventoryHeight: data.newHeight }));
+          setState(prev => ({
+            ...prev,
+            cursePercent: data.cursePercent,
+            inventoryWidth: data.newWidth,
+            inventoryHeight: data.newHeight,
+          }));
         } else if (data.type === 'bag') {
+          setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
           setPendingBagSwap(data.bag);
         } else if (data.type === 'item') {
           const floatingItem = { ...data.item, gridX: -1, gridY: -1 };
           const newInventory = [...state.inventory, floatingItem];
-          setState(prev => ({ ...prev, inventory: newInventory }));
-          setStagingItem(null);
           await fetch(`${API}/api/sea/inventory`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ deviceId, inventory: newInventory }),
           });
+          setState(prev => ({ ...prev, cursePercent: data.cursePercent, inventory: newInventory }));
+          setStagingItem(null);
+          setPickupRewardItem(floatingItem);
         }
         setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+        return true;
       }
-    } catch (err) { console.error('[SeaGame] pickupItem error:', err); }
+      return false;
+    } catch (err) {
+      console.error('[SeaGame] pickupItem error:', err);
+      return false;
+    }
   }, [deviceId, API, state.inventory]);
 
   const saveInventory = useCallback(async (inventory: SeaItem[]) => {
@@ -650,7 +664,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const value: SeaGameContextType = {
     state, worldItems, isBackpackOpen, setIsBackpackOpen,
     isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode,
-    stagingItem, setStagingItem, pendingBagSwap, setPendingBagSwap, acceptBagSwap,
+    stagingItem, setStagingItem, pickupRewardItem, setPickupRewardItem,
+    pendingBagSwap, setPendingBagSwap, acceptBagSwap,
     encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
     showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,
