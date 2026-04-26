@@ -206,6 +206,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSheetExpanded={nav.isSheetExpanded}
                 setIsSheetExpanded={nav.setIsSheetExpanded}
                 isSeaGameMode={isSeaGameMode}
+                mainTab={nav.mainTab}
                 myAvatarUrl={wsCtx.myAvatarUrl}
                 myDisplayName={wsCtx.myDisplayName}
                 handleTabClick={nav.handleTabClick}

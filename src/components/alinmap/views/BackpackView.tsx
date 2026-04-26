@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck, Sparkles } from 'lucide-react';
-import { useSeaGame } from '../sea-game/SeaGameProvider';
+import { getBagBonuses, useSeaGame } from '../sea-game/SeaGameProvider';
 import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
 import InventoryGridV2 from '../sea-game/InventoryGridV2';
 
@@ -15,10 +15,19 @@ const TIER_LABELS = [
 
 const TIER_MULTIPLIERS = [0.5, 1, 3, 8, 20, 50];
 
+const BAG_SLOT_RARITY: Record<string, string> = {
+  common: 'border-sky-500/40 bg-sky-950/30 text-sky-200',
+  uncommon: 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200',
+  rare: 'border-amber-500/40 bg-amber-950/30 text-amber-200',
+  legendary: 'border-fuchsia-500/40 bg-fuchsia-950/30 text-fuchsia-200',
+};
+
 const BackpackView: React.FC = () => {
-  const { state, saveInventory, setWorldTier, upgradeBag, openFortressStorage } = useSeaGame();
+  const { state, saveInventory, setWorldTier, openFortressStorage } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
+  const activeBag = state.bags[0];
+  const bagStats = getBagBonuses(activeBag);
 
   useEffect(() => {
     setSelectedTier(state.worldTier);
@@ -31,7 +40,7 @@ const BackpackView: React.FC = () => {
       energyMax: acc.energyMax + (item.energyMax || 0),
       regen: acc.regen + (item.energyRegen || 0),
     }),
-    { hp: 0, weight: 0, energyMax: 0, regen: 0 }
+    { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
   );
 
   const isAtFortress = state.fortressLat != null && state.currentLat != null &&
@@ -80,23 +89,45 @@ const BackpackView: React.FC = () => {
         {tab === 'inventory' && (
           <div className="flex flex-col items-center gap-6">
             <div className="flex w-full items-center justify-between rounded-xl border border-cyan-900/30 bg-cyan-950/30 px-4 py-2">
-              <span className="flex items-center text-xs font-bold uppercase tracking-widest text-cyan-500">
-                {(() => {
-                  const bag = state.bags[0];
-                  const bagCells = bag?.cells || 9;
-                  const upgradeCost = bag ? 50 + Math.max(0, bagCells - 9) * 50 : 0;
-                  return (
-                    <button
-                      onClick={() => upgradeBag()}
-                      disabled={!bag || bagCells >= 42 || state.seaGold < upgradeCost}
-                      className="flex items-center gap-1 rounded-md bg-amber-600 px-3 py-1.5 text-white transition-colors hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Nang cap ({upgradeCost} <Coins className="inline h-3 w-3" />)
-                    </button>
-                  );
-                })()}
+              <span className="text-xs font-bold uppercase tracking-widest text-cyan-500">
+                Balo dang lap
               </span>
               <span className="rounded-md bg-cyan-900/50 px-2 py-0.5 text-xs font-bold text-cyan-300">{state.inventory.filter((item) => item.gridX >= 0).length} items</span>
+            </div>
+
+            <div className="grid w-full gap-3 md:grid-cols-[132px_1fr]">
+              <div className={`rounded-2xl border p-3 shadow-inner ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Slot balo</p>
+                <div className="flex min-h-[96px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-black/20 px-3 py-4 text-center">
+                  <div className="mb-2 text-4xl leading-none">{activeBag?.icon || '🎒'}</div>
+                  <p className="text-sm font-black">{activeBag?.name || 'Balo Co Ban'}</p>
+                  <p className="mt-1 text-[11px] opacity-80">{activeBag?.width || 3}x{activeBag?.height || 3} • {Math.max(9, activeBag?.cells || 9)} o grid</p>
+                  {activeBag?.dropProtected && (
+                    <p className="mt-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-1 text-[10px] font-bold text-cyan-200">
+                      Mac dinh khong roi khi thua
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-2 rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 text-xs text-cyan-100/80 sm:grid-cols-2">
+                <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Chi so</p>
+                  <p className="mt-1 font-bold">+{activeBag?.hpBonus || 0} HP • +{activeBag?.energyMax || 0} EN</p>
+                </div>
+                <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Ho tro chien dau</p>
+                  <p className="mt-1 font-bold">+{activeBag?.weight || 0} DMG • +{activeBag?.energyRegen || 0}% regen</p>
+                </div>
+                <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Gia tri</p>
+                  <p className="mt-1 font-bold">{activeBag?.price || 0} vang</p>
+                </div>
+                <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Tinh trang</p>
+                  <p className="mt-1 font-bold">{activeBag?.isStarter ? 'Balo mac dinh 3x3' : 'Balo nhat duoc / thay the'}</p>
+                </div>
+              </div>
             </div>
 
             <div className="grid w-full gap-3">

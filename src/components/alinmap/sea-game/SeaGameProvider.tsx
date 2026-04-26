@@ -40,6 +40,11 @@ export interface BagItem {
   name: string;
   icon: string;
   rarity: string;
+  price?: number;
+  weight?: number;
+  hpBonus?: number;
+  energyMax?: number;
+  energyRegen?: number;
   gridX: number;
   gridY: number;
   rotated: boolean;
@@ -48,10 +53,28 @@ export interface BagItem {
   height: number;
   cells?: number;
   type?: 'bag';
+  isStarter?: boolean;
+  dropProtected?: boolean;
 }
 
 export const MAX_GRID_W = 7;
 export const MAX_GRID_H = 6;
+
+const BAG_DEFAULTS: Record<string, Partial<BagItem>> = {
+  basic_bag: { name: 'Balo Co Ban', icon: '🎒', rarity: 'common', width: 3, height: 3, cells: 9, price: 0, weight: 0, hpBonus: 10, energyMax: 5, energyRegen: 1, isStarter: true, dropProtected: true },
+  leather_bag: { name: 'Balo Da', icon: '👜', rarity: 'common', width: 4, height: 4, cells: 16, price: 80, weight: 3, hpBonus: 18, energyMax: 8, energyRegen: 1 },
+  duffel_bag: { name: 'Tui Trong', icon: '🧳', rarity: 'uncommon', width: 5, height: 4, cells: 20, price: 180, weight: 5, hpBonus: 26, energyMax: 12, energyRegen: 2 },
+  cross_bag: { name: 'Balo Chu Thap', icon: '✚', rarity: 'uncommon', width: 5, height: 5, cells: 13, price: 240, weight: 7, hpBonus: 34, energyMax: 18, energyRegen: 3 },
+  war_bag: { name: 'Balo Chien Binh', icon: '⚔️', rarity: 'rare', width: 5, height: 5, cells: 21, price: 420, weight: 10, hpBonus: 48, energyMax: 24, energyRegen: 4 },
+  voyager_pack: { name: 'Balo Tham Hiem', icon: '💎', rarity: 'legendary', width: 7, height: 6, cells: 42, price: 900, weight: 14, hpBonus: 72, energyMax: 40, energyRegen: 6 },
+};
+
+export const getBagBonuses = (bag?: Partial<BagItem> | null) => ({
+  hp: Number(bag?.hpBonus) || 0,
+  weight: Number(bag?.weight) || 0,
+  energyMax: Number(bag?.energyMax) || 0,
+  regen: Number(bag?.energyRegen) || 0,
+});
 
 export interface WorldItem {
   spawnId: string;
@@ -151,7 +174,6 @@ interface SeaGameContextType {
   showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => void;
-  upgradeBag: () => Promise<void>;
 }
 
 const defaultState: SeaGameState = {
@@ -175,6 +197,11 @@ const createStarterBag = (existing?: Partial<BagItem>): BagItem => ({
   name: existing?.name || 'Balo Cơ Bản',
   icon: existing?.icon || '🎒',
   rarity: existing?.rarity || 'common',
+  price: existing?.price ?? BAG_DEFAULTS.basic_bag.price ?? 0,
+  weight: existing?.weight ?? BAG_DEFAULTS.basic_bag.weight ?? 0,
+  hpBonus: existing?.hpBonus ?? BAG_DEFAULTS.basic_bag.hpBonus ?? 10,
+  energyMax: existing?.energyMax ?? BAG_DEFAULTS.basic_bag.energyMax ?? 5,
+  energyRegen: existing?.energyRegen ?? BAG_DEFAULTS.basic_bag.energyRegen ?? 1,
   gridX: Math.floor((MAX_GRID_W - 3) / 2),
   gridY: Math.floor((MAX_GRID_H - 3) / 2),
   rotated: existing?.rotated ?? false,
@@ -183,6 +210,8 @@ const createStarterBag = (existing?: Partial<BagItem>): BagItem => ({
   height: 3,
   cells: 9,
   type: 'bag',
+  isStarter: existing?.isStarter ?? true,
+  dropProtected: existing?.dropProtected ?? true,
 });
 
 const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boolean } => {
@@ -190,8 +219,9 @@ const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boolean } =>
 
   const bag: BagItem = { ...rawBag };
   let repaired = false;
-  const width = Number(bag.width) || 3;
-  const height = Number(bag.height) || 3;
+  const bagDefaults = BAG_DEFAULTS[bag.id || 'basic_bag'] || BAG_DEFAULTS.basic_bag;
+  const width = Number(bag.width) || Number(bagDefaults.width) || 3;
+  const height = Number(bag.height) || Number(bagDefaults.height) || 3;
 
   if (!Array.isArray(bag.shape) || bag.shape.length === 0) {
     bag.shape = Array.from({ length: height }, () => Array(width).fill(true));
@@ -219,9 +249,20 @@ const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boolean } =>
   }
   if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
   if (!bag.id) { bag.id = 'basic_bag'; repaired = true; }
+  if (!bag.name) { bag.name = bagDefaults.name || 'Balo Co Ban'; repaired = true; }
+  if (!bag.icon) { bag.icon = bagDefaults.icon || '🎒'; repaired = true; }
   if (!bag.name) { bag.name = 'Balo Cơ Bản'; repaired = true; }
   if (!bag.icon) { bag.icon = '🎒'; repaired = true; }
-  if (!bag.rarity) { bag.rarity = 'common'; repaired = true; }
+  if (!bag.rarity) { bag.rarity = bagDefaults.rarity || 'common'; repaired = true; }
+  if (bag.price == null) { bag.price = Number(bagDefaults.price) || 0; repaired = true; }
+  if (bag.weight == null) { bag.weight = Number(bagDefaults.weight) || 0; repaired = true; }
+  if (bag.hpBonus == null) { bag.hpBonus = Number(bagDefaults.hpBonus) || 0; repaired = true; }
+  if (bag.energyMax == null) { bag.energyMax = Number(bagDefaults.energyMax) || 0; repaired = true; }
+  if (bag.energyRegen == null) { bag.energyRegen = Number(bagDefaults.energyRegen) || 0; repaired = true; }
+  if (bag.isStarter == null) { bag.isStarter = !!bagDefaults.isStarter; repaired = true; }
+  if (bag.dropProtected == null) { bag.dropProtected = bagDefaults.dropProtected !== false; repaired = true; }
+  if (bag.cells != null && bag.cells < 9) { bag.cells = 9; repaired = true; }
+  if (bag.type !== 'bag') { bag.type = 'bag'; repaired = true; }
 
   return { bag, repaired };
 };
@@ -544,27 +585,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadWorldItems(true);
   }, [deviceId, API, loadState, loadWorldItems]);
 
-  const upgradeBag = useCallback(async () => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/sea/upgrade-bag`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setState(prev => {
-          const newBags = [...prev.bags];
-          newBags[0] = data.bag;
-          return { ...prev, bags: newBags, seaGold: prev.seaGold - data.goldSpent };
-        });
-      } else {
-        alert(data.error);
-      }
-    } catch (err) { console.error('[SeaGame] upgradeBag error:', err); }
-  }, [deviceId, API]);
-
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
 
@@ -579,7 +599,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
-    upgradeBag,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       setFortressStorageMode(mode);
       setIsFortressStorageOpen(true);

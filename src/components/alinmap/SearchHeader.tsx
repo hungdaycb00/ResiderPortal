@@ -9,6 +9,7 @@ interface SearchHeaderProps {
   isSheetExpanded: boolean;
   setIsSheetExpanded: (v: boolean) => void;
   isSeaGameMode: boolean;
+  mainTab: string;
   myAvatarUrl: string;
   myDisplayName: string;
   handleTabClick: (tabId: string) => void;
@@ -25,12 +26,14 @@ interface SearchHeaderProps {
 
 const SearchHeader: React.FC<SearchHeaderProps> = ({
   searchTag, setSearchTag, isDesktop, isSheetExpanded, setIsSheetExpanded,
-  isSeaGameMode, myAvatarUrl, myDisplayName, handleTabClick,
+  isSeaGameMode, mainTab, myAvatarUrl, myDisplayName, handleTabClick,
   showDesktopResults, setShowDesktopResults, isSearchingDesktop, desktopSearchResults,
   setSelectedUser, setActiveTab, weatherData,
 }) => {
+  const shouldHideSearch = isSeaGameMode || ['profile', 'creator', 'backpack'].includes(mainTab);
+
   return (
-    <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${isSeaGameMode ? 'hidden' : ''}`}>
+    <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${shouldHideSearch ? 'hidden' : ''}`}>
       <div className={`flex-1 backdrop-blur-xl rounded-full flex items-center px-3 md:px-4 py-2 md:py-3 overflow-hidden transition-all duration-300 ${isDesktop && isSheetExpanded ? 'bg-white border border-gray-200 shadow-none' : 'bg-white/70 md:bg-white/90 shadow-md md:shadow-[0_4px_20px_rgba(0,0,0,0.15)]'}`}>
         <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-500 mr-2 shrink-0" />
         <input

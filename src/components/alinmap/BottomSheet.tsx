@@ -115,6 +115,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
     const [panelWidth, setPanelWidth] = React.useState(400);
+    const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
 
     return (
         <>
@@ -192,7 +193,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         </div>
 
                         {/* MOBILE Search Bar inside Sheet */}
-                        {!isDesktop && isSheetExpanded && (
+                        {!isDesktop && isSheetExpanded && !shouldHideSearch && (
                             <div className="px-4 pb-3 -mt-1 block md:hidden animate-in fade-in duration-300">
                                 <div className="flex bg-gray-100 rounded-full items-center px-4 py-2 border border-gray-200 shadow-inner">
                                     <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
@@ -221,7 +222,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     >
                       <div style={{ direction: 'ltr' }}>
                         {/* Instant Search Results */}
-                        {!selectedUser && (
+                        {!selectedUser && !shouldHideSearch && (
                             <SheetSearchResults
                                 searchTag={searchTag}
                                 nearbyUsers={nearbyUsers}
