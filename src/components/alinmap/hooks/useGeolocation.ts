@@ -10,9 +10,25 @@ export interface WeatherData {
 }
 
 export function useGeolocation() {
-  const [position, setPosition] = useState<[number, number] | null>(null);
-  const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(null);
-  const [isConsentOpen, setIsConsentOpen] = useState(() => !localStorage.getItem('alin_location_consent_handled'));
+  const defaultPosition: [number, number] = [10.762622, 106.660172];
+  const [position, setPosition] = useState<[number, number] | null>(() => {
+    const lastPos = localStorage.getItem('alin_last_position');
+    if (lastPos) {
+      try { return JSON.parse(lastPos); } catch (e) {}
+    }
+    return defaultPosition;
+  });
+  const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(() => {
+    const lastPos = localStorage.getItem('alin_last_position');
+    if (lastPos) {
+      try {
+        const parsed = JSON.parse(lastPos);
+        return { lat: parsed[0], lng: parsed[1] };
+      } catch (e) {}
+    }
+    return { lat: defaultPosition[0], lng: defaultPosition[1] };
+  });
+  const [isConsentOpen, setIsConsentOpen] = useState(false);
   const [currentProvince, setCurrentProvince] = useState<string | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
@@ -68,15 +84,6 @@ export function useGeolocation() {
       setIsConsentOpen(false);
     }
   };
-
-  // Auto-init
-  useEffect(() => {
-    if (!position) {
-      const hasConsented = localStorage.getItem('alin_location_consent_handled');
-      if (hasConsented === 'true') { requestLocation(); }
-      else if (!isConsentOpen) { setIsConsentOpen(true); }
-    }
-  }, [position]);
 
   // Fetch Weather Data (temp, humidity, feels-like)
   useEffect(() => {

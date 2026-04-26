@@ -104,6 +104,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         onTabChange,
         handleRefresh: wsCtx.handleRefresh,
         requireAuth,
+        user,
     });
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
@@ -242,7 +243,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSeaGameMode={isSeaGameMode}
             />
 
-            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} unreadCount={unreadCount} handleTabClick={nav.handleTabClick} />
+            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} unreadCount={unreadCount} handleTabClick={nav.handleTabClick} user={user} />
 
             <BottomSheet
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}

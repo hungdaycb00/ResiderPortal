@@ -10,12 +10,13 @@ interface UseMapNavigationParams {
   onTabChange?: (tab: string) => void;
   handleRefresh: () => void;
   requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+  user?: any;
 }
 
 export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'creator' | 'backpack';
 
 export function useMapNavigation({
-  initialMainTab, myObfPos, ws, seaState, seaGame, onTabChange, handleRefresh, requireAuth,
+  initialMainTab, myObfPos, ws, seaState, seaGame, onTabChange, handleRefresh, requireAuth, user,
 }: UseMapNavigationParams) {
   const { setIsSeaGameMode, isSeaGameMode, initGame, loadWorldItems } = seaGame;
 
@@ -42,6 +43,11 @@ export function useMapNavigation({
 
   useEffect(() => {
     if (initialMainTab) {
+      if (initialMainTab === 'creator' && !user) {
+        setMainTab('discover');
+        setIsSheetExpanded(true);
+        return;
+      }
       if (initialMainTab === 'backpack' && requireAuth && !requireAuth('su dung Balo va Sea Game')) {
         setMainTab('discover');
         setIsSheetExpanded(false);
@@ -50,7 +56,7 @@ export function useMapNavigation({
       setMainTab(initialMainTab as MainTab);
       setIsSheetExpanded(true);
     }
-  }, [initialMainTab, requireAuth]);
+  }, [initialMainTab, requireAuth, user]);
 
   useEffect(() => {
     if (mainTab === 'backpack' && seaState.initialized && !isSeaGameMode) {
@@ -87,6 +93,12 @@ export function useMapNavigation({
   const handleTabClick = useCallback((tabId: string) => {
     setSelectedUser(null);
     if (tabId === 'profile') { setActiveTab('info'); }
+    if (tabId === 'creator' && !user) {
+      setMainTab('discover');
+      setIsSheetExpanded(true);
+      if (onTabChange) onTabChange('discover');
+      return;
+    }
 
     if (tabId === 'backpack') {
       if (requireAuth && !requireAuth('su dung Balo va Sea Game')) return;
@@ -124,7 +136,7 @@ export function useMapNavigation({
     }
 
     if (onTabChange) onTabChange(tabId);
-  }, [mainTab, seaState, myObfPos, isSeaGameMode, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo, onTabChange, requireAuth]);
+  }, [mainTab, seaState, myObfPos, isSeaGameMode, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo, onTabChange, requireAuth, user]);
 
   return {
     panX, panY, scale, selfDragX, selfDragY,

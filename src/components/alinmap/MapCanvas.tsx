@@ -152,18 +152,20 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 )}
 
                                 {/* Self Node */}
-                                <SelfNode
-                                    isSeaGameMode={!!isSeaGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
-                                    myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
-                                    user={user} myUserId={myUserId} galleryActive={galleryActive}
-                                    galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                    scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
-                                    panX={panX} panY={panY}
-                                    boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
-                                    ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
-                                    setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                    setMainTab={setMainTab} addLog={addLog}
-                                />
+                                {user && (
+                                    <SelfNode
+                                        isSeaGameMode={!!isSeaGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
+                                        myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
+                                        user={user} myUserId={myUserId} galleryActive={galleryActive}
+                                        galleryTitle={galleryTitle} galleryImages={galleryImages}
+                                        scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
+                                        panX={panX} panY={panY}
+                                        boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
+                                        ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
+                                        setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
+                                        setMainTab={setMainTab} addLog={addLog}
+                                    />
+                                )}
 
                                 {/* Search Marker Pin */}
                                 {searchMarkerPos && (

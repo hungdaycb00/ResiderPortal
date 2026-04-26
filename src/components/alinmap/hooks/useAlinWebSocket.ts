@@ -55,7 +55,7 @@ export function useAlinWebSocket({
   }, []);
 
   const connectWS = useCallback(() => {
-    if (!user || !position || isConnecting) return;
+    if (!position || isConnecting) return;
     reconnectEnabled.current = true;
     setIsConnecting(true);
 
@@ -81,18 +81,20 @@ export function useAlinWebSocket({
     socket.onopen = () => {
       if (!isMounted.current) { socket.close(); return; }
       addLog(`✅ Connected! Sending USER_JOIN...`);
+      const joinType = user ? 'USER_JOIN' : 'OBSERVER_JOIN';
+      addLog(`Connected! Sending ${joinType}...`);
       setIsConnecting(false);
       setWsStatus('OPEN');
       const deviceId = externalApi.getDeviceId();
       socket.send(JSON.stringify({
-        type: 'USER_JOIN',
+        type: joinType,
         payload: {
           deviceId,
           lat: position[0],
           lng: position[1],
           radiusKm: radius,
           status: myStatus,
-          visible: isVisibleOnMap,
+          visible: user ? isVisibleOnMap : false,
           avatar_url: user?.photoURL || '',
           province: currentProvince || ''
         }
@@ -155,7 +157,7 @@ export function useAlinWebSocket({
       setIsConnecting(false);
       setWsStatus('ERROR');
     };
-  }, [position, radius, searchTag, isConnecting, user]);
+  }, [position, radius, searchTag, isConnecting, user, isVisibleOnMap, myStatus, currentProvince, externalApi]);
 
   useEffect(() => {
     connectWS();
