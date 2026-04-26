@@ -41,12 +41,12 @@ const BackpackView: React.FC = () => {
           <Package className="w-5 h-5 text-cyan-400" />
           <h2 className="text-lg font-black tracking-tight">Hòm Đồ Biển Cả</h2>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-amber-900/40 px-3 py-1 rounded-full border border-amber-500/20 relative">
-            <span className="absolute -top-2 -right-2 bg-amber-500 text-[9px] text-black font-black px-1.5 py-0.5 rounded-full z-10 shadow-sm shadow-amber-900/50">{goldCountdown}s</span>
+        <div className="flex flex-col items-end gap-0.5">
+          <div className="flex items-center gap-1.5 bg-amber-900/40 px-3 py-1 rounded-full border border-amber-500/20">
             <Coins className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
           </div>
+          <span className="text-[10px] text-white/70 font-medium pr-2">+{goldCountdown}s</span>
         </div>
       </div>
 
