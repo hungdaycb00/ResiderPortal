@@ -54,7 +54,7 @@ export function useAlinWebSocket({
   }, []);
 
   const connectWS = useCallback(() => {
-    if (!position || isConnecting) return;
+    if (!user || !position || isConnecting) return;
     setIsConnecting(true);
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -153,7 +153,7 @@ export function useAlinWebSocket({
       setIsConnecting(false);
       setWsStatus('ERROR');
     };
-  }, [position, radius, searchTag, isConnecting]);
+  }, [position, radius, searchTag, isConnecting, user]);
 
   useEffect(() => {
     connectWS();
@@ -161,7 +161,7 @@ export function useAlinWebSocket({
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       if (ws.current) ws.current.close();
     };
-  }, [position]);
+  }, [position, user]);
 
   // Sync avatar/displayName/province
   useEffect(() => {

@@ -13,7 +13,7 @@ const TIER_LABELS = [
 ];
 
 const BackpackView: React.FC = () => {
-  const { state, pendingBagSwap, setPendingBagSwap, acceptBagSwap, saveInventory, saveBags, setWorldTier, sellItems } = useSeaGame();
+  const { state, saveInventory, saveBags, setWorldTier, sellItems, upgradeBag, goldCountdown } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [sellMode, setSellMode] = useState(false);
@@ -42,7 +42,8 @@ const BackpackView: React.FC = () => {
           <h2 className="text-lg font-black tracking-tight">Hòm Đồ Biển Cả</h2>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-amber-900/40 px-3 py-1 rounded-full border border-amber-500/20">
+          <div className="flex items-center gap-1.5 bg-amber-900/40 px-3 py-1 rounded-full border border-amber-500/20 relative">
+            <span className="absolute -top-2 -right-2 bg-amber-500 text-[9px] text-black font-black px-1.5 py-0.5 rounded-full z-10 shadow-sm shadow-amber-900/50">{goldCountdown}s</span>
             <Coins className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
           </div>
@@ -74,7 +75,21 @@ const BackpackView: React.FC = () => {
         {tab === 'inventory' && (
           <div className="flex flex-col items-center gap-6">
             <div className="w-full flex justify-between items-center bg-cyan-950/30 px-4 py-2 rounded-xl border border-cyan-900/30">
-              <span className="text-xs text-cyan-500 font-bold uppercase tracking-widest">Grid 7×8 • {state.bags.length} túi</span>
+              <span className="text-xs text-cyan-500 font-bold uppercase tracking-widest flex items-center">
+                {(() => {
+                  const bag = state.bags[0];
+                  const upgradeCost = bag ? 50 + (bag.cells - 9) * 50 : 0;
+                  return (
+                    <button 
+                      onClick={() => upgradeBag()} 
+                      disabled={!bag || bag.cells >= 42 || state.seaGold < upgradeCost}
+                      className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      Nâng cấp ({upgradeCost} <Coins className="w-3 h-3 inline"/>)
+                    </button>
+                  );
+                })()}
+              </span>
               <span className="text-xs text-cyan-300 font-bold bg-cyan-900/50 px-2 py-0.5 rounded-md">{state.inventory.filter(i => i.gridX >= 0).length} items</span>
             </div>
 
@@ -199,35 +214,6 @@ const BackpackView: React.FC = () => {
           </div>
         )}
       </div>
-      {/* Pending Bag Swap Modal */}
-      {pendingBagSwap && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="bg-[#0a1929] border border-cyan-500/50 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
-            <div className="w-16 h-16 rounded-full bg-cyan-900/40 border border-cyan-400/50 flex items-center justify-center text-4xl mb-4 shadow-inner">
-              {pendingBagSwap.icon}
-            </div>
-            <h3 className="text-xl font-black text-cyan-400 tracking-tight mb-2">Đổi Balo Mới?</h3>
-            <p className="text-sm text-cyan-100/80 mb-6 font-medium">
-              Bạn nhặt được <span className="text-white font-bold">{pendingBagSwap.name}</span> ({pendingBagSwap.width}x{pendingBagSwap.height} ô).<br/>
-              <span className="text-[11px] text-amber-400/80 mt-2 block">Các item nằm ngoài balo mới sẽ rơi vào Khu Vực Chờ.</span>
-            </p>
-            <div className="flex gap-3 w-full">
-              <button
-                onClick={() => setPendingBagSwap(null)}
-                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded-xl transition-colors border border-gray-600/50"
-              >
-                Bỏ qua
-              </button>
-              <button
-                onClick={() => acceptBagSwap(pendingBagSwap)}
-                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl transition-all shadow-lg shadow-cyan-900/50"
-              >
-                Đồng ý
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

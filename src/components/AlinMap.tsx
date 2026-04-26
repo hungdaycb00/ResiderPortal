@@ -62,12 +62,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Notifications ---
     const fetchNotifications = useCallback(async () => {
+        if (!user) return;
         try {
             const resp = await fetch(`${API_BASE}/api/notifications`, { headers: { 'X-Device-Id': externalApi.getDeviceId() }});
             const data = await resp.json();
             if (data.success) setNotifications(data.notifications);
         } catch (err) { console.error('Fetch notifications error:', err); }
-    }, [API_BASE, externalApi]);
+    }, [API_BASE, externalApi, user]);
 
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
@@ -272,8 +273,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 };
 
 const AlinMap: React.FC<AlinMapProps> = (props) => {
+    const activeDeviceId = props.user ? props.externalApi.getDeviceId() : null;
     return (
-        <SeaGameProvider deviceId={props.externalApi.getDeviceId()}>
+        <SeaGameProvider deviceId={activeDeviceId}>
             <SeaGameUI />
             <AlinMapInner {...props} />
         </SeaGameProvider>

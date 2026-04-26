@@ -89,22 +89,18 @@ export function useMapNavigation({
         setMainTab('backpack');
         setIsSeaGameMode(true);
         setIsSheetExpanded(true);
-        setIsSeaLoading(true);
 
         const doLoad = async () => {
-          try {
-            if (!seaState.initialized && myObfPos) {
-              await initGame(myObfPos.lat, myObfPos.lng);
-            }
-            await loadWorldItems();
-          } finally {
-            setIsSeaLoading(false);
+          if (!seaState.initialized && myObfPos) {
+            await initGame(myObfPos.lat, myObfPos.lng);
           }
+          await loadWorldItems();
         };
         doLoad();
 
-        const targetLat = seaState.currentLat || myObfPos?.lat;
-        const targetLng = seaState.currentLng || myObfPos?.lng;
+        // Trỏ camera về thuyền
+        const targetLat = myObfPos?.lat || seaState.currentLat;
+        const targetLng = myObfPos?.lng || seaState.currentLng;
         if (targetLat && targetLng) {
           handleCenterTo(targetLat, targetLng);
         }

@@ -144,6 +144,8 @@ interface SeaGameContextType {
   showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => void;
+  upgradeBag: () => Promise<void>;
+  goldCountdown: number;
 }
 
 const defaultState: SeaGameState = {
@@ -184,16 +186,27 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [goldCountdown, setGoldCountdown] = useState(60);
   const goldTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const API = getBaseUrl();
 
-  // Gold regen: +1 gold per minute
+  // Gold regen: +1 gold per minute with UI countdown
   useEffect(() => {
+    const startTick = Date.now();
+    const countdownInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTick) / 1000);
+        const remaining = 60 - (elapsed % 60);
+        setGoldCountdown(remaining);
+    }, 1000);
+
     goldTimerRef.current = setInterval(() => {
       setState(prev => ({ ...prev, seaGold: prev.seaGold + 1 }));
     }, 60000);
-    return () => { if (goldTimerRef.current) clearInterval(goldTimerRef.current); };
+    return () => { 
+        if (goldTimerRef.current) clearInterval(goldTimerRef.current); 
+        clearInterval(countdownInterval);
+    };
   }, []);
 
   const loadState = useCallback(async () => {
@@ -436,6 +449,27 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadWorldItems(true);
   }, [deviceId, API, loadState, loadWorldItems]);
 
+  const upgradeBag = useCallback(async () => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/sea/upgrade-bag`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setState(prev => {
+          const newBags = [...prev.bags];
+          newBags[0] = data.bag;
+          return { ...prev, bags: newBags, seaGold: prev.seaGold - data.goldSpent };
+        });
+      } else {
+        alert(data.error);
+      }
+    } catch (err) { console.error('[SeaGame] upgradeBag error:', err); }
+  }, [deviceId, API]);
+
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
 
@@ -449,6 +483,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, saveInventory, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
+    upgradeBag, goldCountdown,
   };
 
   return <SeaGameContext.Provider value={value}>{children}</SeaGameContext.Provider>;

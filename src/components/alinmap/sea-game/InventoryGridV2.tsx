@@ -162,6 +162,13 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
         i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
       );
       onItemLayoutChange?.(newItems);
+    } else if (isHoveringStorage && dragMode === 'storage-item') {
+      // Reorder storage: move to front
+      const filtered = items.filter(i => i.uid !== dragItem.uid);
+      const movingItem = items.find(i => i.uid === dragItem.uid);
+      if (movingItem) {
+        onItemLayoutChange?.([movingItem, ...filtered]);
+      }
     }
 
     setDragMode(null);
