@@ -3,6 +3,7 @@
  */
 
 const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL;
+const SERVER_VPS_API_URL = import.meta.env.VITE_EXPRESSTURN_API_URL || EXTERNAL_API_URL || 'https://api.alin.city';
 
 export const getBaseUrl = (urlOverride?: string): string => {
   let url = urlOverride || localStorage.getItem('cloudflareUrl') || EXTERNAL_API_URL || 'http://localhost:3001';
@@ -16,6 +17,17 @@ export const getBaseUrl = (urlOverride?: string): string => {
     }
   }
 
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  return url;
+};
+
+export const getServerVpsBaseUrl = (): string => {
+  let url = SERVER_VPS_API_URL;
+  if (url.includes('alin-api.alin.city')) {
+    url = url.replace('alin-api.alin.city', 'api.alin.city');
+  }
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }

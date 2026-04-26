@@ -1,5 +1,5 @@
 import React from 'react';
-import { externalApi } from '../../../services/externalApi';
+import { externalApi, getServerVpsBaseUrl } from '../../../services/externalApi';
 import { NAME_REGEX } from '../constants';
 
 interface UseGameManagerParams {
@@ -293,13 +293,16 @@ export function useGameManager(params: UseGameManagerParams) {
     setIsDownloadingDoc(true);
     try {
       const deviceId = externalApi.getDeviceId();
-      const baseUrl = localStorage.getItem('cloudflareUrl') || import.meta.env.VITE_EXTERNAL_API_URL || 'http://localhost:3000';
+      const baseUrl = getServerVpsBaseUrl();
       const safeBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
       // Chỉ check TURN config cho multiplayer
       if (docMode === 'multiplayer') {
         try {
-          const configCheck = await externalApi.request<any>('/api/creator/turn-config', { method: 'GET' });
+          const configRes = await fetch(`${safeBaseUrl}/api/creator/turn-config?deviceId=${encodeURIComponent(deviceId)}`, {
+            headers: { 'X-Device-Id': deviceId },
+          });
+          const configCheck = await configRes.json().catch(() => null);
           if (configCheck && !configCheck.hasConfig) {
             if (configCheck.hasCredentials) {
               showNotification('⏳ Đang khởi tạo cấu hình P2P, vui lòng đợi...', 'info');

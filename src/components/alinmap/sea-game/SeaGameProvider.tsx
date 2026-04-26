@@ -145,7 +145,6 @@ interface SeaGameContextType {
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => void;
   upgradeBag: () => Promise<void>;
-  goldCountdown: number;
 }
 
 const defaultState: SeaGameState = {
@@ -186,40 +185,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [goldCountdown, setGoldCountdown] = useState(60);
-  const goldTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const API = getBaseUrl();
-
-  // Gold regen: +1 gold per minute, persisted to server so Admin sees the same value.
-  useEffect(() => {
-    const startTick = Date.now();
-    const countdownInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTick) / 1000);
-        const remaining = 60 - (elapsed % 60);
-        setGoldCountdown(remaining);
-    }, 1000);
-
-    goldTimerRef.current = setInterval(() => {
-      if (!deviceId) return;
-      fetch(`${API}/api/sea/gold-tick`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, amount: 1 }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && typeof data.seaGold === 'number') {
-            setState(prev => ({ ...prev, seaGold: data.seaGold }));
-          }
-        })
-        .catch(err => console.error('[SeaGame] gold tick error:', err));
-    }, 60000);
-    return () => { 
-        if (goldTimerRef.current) clearInterval(goldTimerRef.current); 
-        clearInterval(countdownInterval);
-    };
-  }, [API, deviceId]);
 
   const loadState = useCallback(async () => {
     if (!deviceId) return;
@@ -503,7 +469,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, saveInventory, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
-    upgradeBag, goldCountdown,
+    upgradeBag,
   };
 
   return <SeaGameContext.Provider value={value}>{children}</SeaGameContext.Provider>;

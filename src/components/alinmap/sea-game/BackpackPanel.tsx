@@ -5,6 +5,7 @@ import { useSeaGame, MAX_GRID_W } from './SeaGameProvider';
 import InventoryGridV2 from './InventoryGridV2';
 
 const TIER_LABELS = [
+  { tier: 0, cost: 0, label: '0' },
   { tier: 1, cost: 10, label: '10' },
   { tier: 2, cost: 100, label: '100' },
   { tier: 3, cost: 1000, label: '1K' },
@@ -168,7 +169,7 @@ const BackpackPanel: React.FC = () => {
                 {/* Tier Slider */}
                 <div className="relative">
                   <input
-                    type="range" min={1} max={5} step={1} value={selectedTier}
+                    type="range" min={state.seaGold > 0 ? 1 : 0} max={5} step={1} value={selectedTier}
                     onChange={(e) => setSelectedTier(Number(e.target.value))}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
                   />
@@ -183,25 +184,25 @@ const BackpackPanel: React.FC = () => {
                 </div>
 
                 <div className="mt-6 bg-amber-900/20 border border-amber-700/30 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-black text-amber-300">{TIER_LABELS[selectedTier - 1].label} <span className="text-lg">Vàng</span></p>
+                  <p className="text-2xl font-black text-amber-300">{TIER_LABELS.find(t => t.tier === selectedTier)?.label || '0'} <span className="text-lg">Vàng</span></p>
                   <p className="text-xs text-gray-400 mt-1">Chi phí vào thế giới Tier {selectedTier}</p>
-                  <p className="text-xs text-amber-400/70 mt-1">Multiplier: ×{[1, 3, 8, 20, 50][selectedTier - 1]}</p>
+                  <p className="text-xs text-amber-400/70 mt-1">Multiplier: ×{[0.5, 1, 3, 8, 20, 50][selectedTier]}</p>
                 </div>
 
                 <button
                   onClick={() => setWorldTier(selectedTier)}
-                  disabled={state.seaGold < TIER_LABELS[selectedTier - 1].cost}
+                  disabled={state.seaGold < (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0)}
                   className={`w-full mt-4 py-3 rounded-xl font-black text-lg transition-all ${
-                    state.seaGold >= TIER_LABELS[selectedTier - 1].cost
+                    state.seaGold >= (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0)
                       ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-600/30 active:scale-95'
                       : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   ⚔️ Thử Thách
                 </button>
-                {state.seaGold < TIER_LABELS[selectedTier - 1].cost && (
+                {state.seaGold < (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0) && (
                   <p className="text-[10px] text-red-400 text-center mt-2">
-                    Cần thêm {TIER_LABELS[selectedTier - 1].cost - state.seaGold} vàng
+                    Cần thêm {(TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0) - state.seaGold} vàng
                   </p>
                 )}
               </div>

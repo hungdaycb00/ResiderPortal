@@ -5,6 +5,7 @@ import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
 import InventoryGridV2 from '../sea-game/InventoryGridV2';
 
 const TIER_LABELS = [
+  { tier: 0, cost: 0, label: '0' },
   { tier: 1, cost: 10, label: '10' },
   { tier: 2, cost: 100, label: '100' },
   { tier: 3, cost: 1000, label: '1K' },
@@ -13,7 +14,7 @@ const TIER_LABELS = [
 ];
 
 const BackpackView: React.FC = () => {
-  const { state, saveInventory, saveBags, setWorldTier, sellItems, upgradeBag, goldCountdown } = useSeaGame();
+  const { state, saveInventory, saveBags, setWorldTier, sellItems, upgradeBag } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [sellMode, setSellMode] = useState(false);
@@ -46,7 +47,6 @@ const BackpackView: React.FC = () => {
             <Coins className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
           </div>
-          <span className="text-[10px] text-white/70 font-medium pr-2">{goldCountdown}s</span>
         </div>
       </div>
 
@@ -166,7 +166,7 @@ const BackpackView: React.FC = () => {
               {/* Tier Slider */}
               <div className="relative px-2">
                 <input
-                  type="range" min={1} max={5} step={1} value={selectedTier}
+                  type="range" min={state.seaGold > 0 ? 1 : 0} max={5} step={1} value={selectedTier}
                   onChange={(e) => setSelectedTier(Number(e.target.value))}
                   className="w-full h-3 bg-[#0d2137] rounded-full appearance-none cursor-pointer outline-none border border-cyan-800/50
                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(251,191,36,0.6)] [&::-webkit-slider-thumb]:transition-transform hover:[&::-webkit-slider-thumb]:scale-110"
@@ -184,30 +184,30 @@ const BackpackView: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
                 <p className="text-[10px] uppercase font-black text-amber-500/60 tracking-[0.2em] mb-1">Tier {selectedTier}</p>
                 <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 mb-2 drop-shadow-sm">
-                  {TIER_LABELS[selectedTier - 1].label} <span className="text-lg">Vàng</span>
+                  {TIER_LABELS.find(t => t.tier === selectedTier)?.label || '0'} <span className="text-lg">Vàng</span>
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-950/50 rounded-full border border-amber-700/30">
                   <span className="text-[10px] text-gray-400 uppercase font-bold">Multiplier</span>
-                  <span className="text-sm font-black text-amber-400">×{[1, 3, 8, 20, 50][selectedTier - 1]}</span>
+                  <span className="text-sm font-black text-amber-400">×{[0.5, 1, 3, 8, 20, 50][selectedTier]}</span>
                 </div>
               </div>
 
               <button
                 onClick={() => setWorldTier(selectedTier)}
-                disabled={state.seaGold < TIER_LABELS[selectedTier - 1].cost}
+                disabled={state.seaGold < (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0)}
                 className={`w-full mt-6 py-4 rounded-2xl font-black text-lg transition-all flex items-center justify-center gap-2 ${
-                  state.seaGold >= TIER_LABELS[selectedTier - 1].cost
+                  state.seaGold >= (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0)
                     ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 hover:from-amber-500 hover:via-orange-400 hover:to-amber-500 text-white shadow-[0_0_20px_rgba(217,119,6,0.4)] active:scale-[0.98]'
                     : 'bg-[#1a2332] text-gray-600 cursor-not-allowed border border-gray-800'
                 }`}
-                style={state.seaGold >= TIER_LABELS[selectedTier - 1].cost ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
+                style={state.seaGold >= (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0) ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
               >
                 <Swords className="w-5 h-5" />
                 VÀO THẾ GIỚI
               </button>
-              {state.seaGold < TIER_LABELS[selectedTier - 1].cost && (
+              {state.seaGold < (TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0) && (
                 <p className="text-xs text-red-400/80 text-center mt-3 font-medium flex items-center justify-center gap-1">
-                  <span className="text-base">⚠️</span> Bạn cần thêm {TIER_LABELS[selectedTier - 1].cost - state.seaGold} vàng
+                  <span className="text-base">⚠️</span> Bạn cần thêm {(TIER_LABELS.find(t => t.tier === selectedTier)?.cost || 0) - state.seaGold} vàng
                 </p>
               )}
             </div>
