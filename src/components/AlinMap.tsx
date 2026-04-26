@@ -50,10 +50,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     });
 
     useEffect(() => {
-        if (user !== null && user !== undefined) {
-            localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
-        }
-    }, [isVisibleOnMap, user]);
+        localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
+    }, [isVisibleOnMap]);
 
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
@@ -103,10 +101,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         triggerAuth?.(afterLogin || (() => {}));
         return false;
     }, [user, showNotification, triggerAuth]);
-
-    useEffect(() => {
-        if (!user) setIsVisibleOnMap(false);
-    }, [user]);
 
     // --- Map Navigation ---
     const nav = useMapNavigation({

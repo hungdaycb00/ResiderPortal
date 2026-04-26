@@ -104,6 +104,8 @@ export interface SeaGameState {
   energyCurrent: number;
 }
 
+type StorageAccessMode = 'fortress' | 'portal';
+
 interface SeaGameContextType {
   state: SeaGameState;
   worldItems: WorldItem[];
@@ -111,7 +113,8 @@ interface SeaGameContextType {
   setIsBackpackOpen: (v: boolean) => void;
   isFortressStorageOpen: boolean;
   setIsFortressStorageOpen: (v: boolean) => void;
-  openFortressStorage: () => void;
+  fortressStorageMode: StorageAccessMode;
+  openFortressStorage: (mode?: StorageAccessMode) => void;
   stagingItem: SeaItem | null;
   setStagingItem: (item: SeaItem | null) => void;
   encounter: Encounter | null;
@@ -141,7 +144,7 @@ interface SeaGameContextType {
   executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
-  storeItems: (itemUids: string[], action: 'store' | 'retrieve') => Promise<void>;
+  storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode) => Promise<void>;
   setWorldTier: (tier: number) => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   isMoving: boolean;
@@ -252,6 +255,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [isSeaGameMode, setIsSeaGameMode] = useState(false);
   const [isChallengeActive, setIsChallengeActive] = useState(false);
   const [isFortressStorageOpen, setIsFortressStorageOpen] = useState(false);
+  const [fortressStorageMode, setFortressStorageMode] = useState<StorageAccessMode>('fortress');
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -498,11 +502,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadState();
   }, [deviceId, API, loadState]);
 
-  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve') => {
+  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress') => {
     if (!deviceId) return;
     await fetch(`${API}/api/sea/store`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids, action }),
+      body: JSON.stringify({ deviceId, itemUids, action, mode }),
     });
     await loadState();
   }, [deviceId, API, loadState]);
@@ -566,6 +570,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const value: SeaGameContextType = {
     state, worldItems, isBackpackOpen, setIsBackpackOpen,
+    isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode,
     stagingItem, setStagingItem, pendingBagSwap, setPendingBagSwap, acceptBagSwap,
     encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
@@ -574,8 +579,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
-    upgradeBag, isFortressStorageOpen, setIsFortressStorageOpen,
-    openFortressStorage: () => setIsFortressStorageOpen(true),
+    upgradeBag,
+    openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
+      setFortressStorageMode(mode);
+      setIsFortressStorageOpen(true);
+    },
   };
 
   return <SeaGameContext.Provider value={value}>{children}</SeaGameContext.Provider>;

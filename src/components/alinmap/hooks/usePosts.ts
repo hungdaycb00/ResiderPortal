@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getBaseUrl } from '../../../services/externalApi';
 
 interface UsePostsParams {
@@ -49,8 +49,9 @@ export function usePosts({
   const [isSavingPost, setIsSavingPost] = useState(false);
   const [userGames, setUserGames] = useState<any[]>([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
+  const activeProfileRequestRef = useRef(0);
 
-  const fetchUserPosts = async (userId: string | null | undefined) => {
+  const fetchUserPosts = async (userId: string | null | undefined, requestId?: number) => {
     if (!userId || (userId === 'saved' && !user)) return;
     try {
       const endpoint = userId === 'saved'
@@ -58,6 +59,7 @@ export function usePosts({
         : `${API_BASE}/api/user/${userId}/posts`;
       const resp = await fetch(endpoint, { headers: { 'X-Device-Id': externalApi.getDeviceId() } });
       const data = await resp.json();
+      if (requestId != null && activeProfileRequestRef.current !== requestId) return;
       if (data.success) {
         setUserPosts(data.posts);
         const starred = data.posts.find((p: any) => p.isStarred);
@@ -126,16 +128,32 @@ export function usePosts({
   // Fetch user posts/games khi selectedUser thay đổi
   useEffect(() => {
     if (selectedUser) {
+      const requestId = Date.now();
+      activeProfileRequestRef.current = requestId;
       setIsLoadingGames(true);
       setUserPosts([]);
+      setUserGames([]);
       externalApi.getUserGames(selectedUser.id)
-        .then((res: any) => { if (res.success) setUserGames(res.games); })
+        .then((res: any) => {
+          if (activeProfileRequestRef.current !== requestId) return;
+          if (res.success) setUserGames(res.games || []);
+        })
         .catch(console.error)
-        .finally(() => setIsLoadingGames(false));
+        .finally(() => {
+          if (activeProfileRequestRef.current === requestId) setIsLoadingGames(false);
+        });
       const targetId = selectedUser.isSelf ? (myUserId || user?.uid) : selectedUser.id;
-      fetchUserPosts(targetId);
-    } else { setUserGames([]); }
-  }, [selectedUser, externalApi]);
+      fetchUserPosts(targetId, requestId);
+    } else {
+      activeProfileRequestRef.current = Date.now();
+      setIsLoadingGames(false);
+      setUserGames([]);
+      setUserPosts([]);
+      setGalleryActive(false);
+      setGalleryTitle('');
+      setGalleryImages([]);
+    }
+  }, [selectedUser, externalApi, myUserId, user, setGalleryActive, setGalleryTitle, setGalleryImages]);
 
   return {
     userPosts, postTitle, setPostTitle,

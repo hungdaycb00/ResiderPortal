@@ -1,106 +1,136 @@
 import React, { useMemo } from 'react';
-import { X, ArrowDown, Database, Package } from 'lucide-react';
-import { useSeaGame, MAX_GRID_W, MAX_GRID_H, SeaItem, BagItem } from './SeaGameProvider';
+import { X, ArrowDown, Database, Package, Sparkles } from 'lucide-react';
+import { useSeaGame, SeaItem, BagItem } from './SeaGameProvider';
 import InventoryGridV2 from './InventoryGridV2';
 
+const PORTAL_FEE_RATE = 0.05;
+
 export default function FortressStorageModal() {
-  const { 
-    state, isFortressStorageOpen, setIsFortressStorageOpen, 
-    storeItems, saveStorage 
+  const {
+    state,
+    isFortressStorageOpen,
+    setIsFortressStorageOpen,
+    fortressStorageMode,
+    storeItems,
+    saveStorage,
   } = useSeaGame();
 
-  const storageBag: BagItem = useMemo(() => {
-    return {
-      uid: 'storage_fortress',
-      id: 'storage_fortress',
-      name: 'Kho Thành Trì',
-      icon: '🏰',
-      rarity: 'legendary',
-      gridX: 0,
-      gridY: 0,
-      rotated: false,
-      shape: Array.from({ length: MAX_GRID_H * 4 }, () => Array(MAX_GRID_W).fill(true)),
-      width: MAX_GRID_W,
-      height: MAX_GRID_H * 4,
-      cells: MAX_GRID_W * MAX_GRID_H * 4,
-    };
-  }, []);
+  const isPortalMode = fortressStorageMode === 'portal';
+  const activeBag = state.bags[0];
+  const storageWidth = Math.max(3, activeBag?.width || 3);
+  const storageCells = Math.max(storageWidth, (activeBag?.cells || 9) * 4);
+  const storageHeight = Math.max(activeBag?.height || 3, Math.ceil(storageCells / storageWidth));
+
+  const storageBag: BagItem = useMemo(() => ({
+    uid: 'storage_fortress',
+    id: 'storage_fortress',
+    name: isPortalMode ? 'Portal Kho Do' : 'Kho Thanh Tri',
+    icon: isPortalMode ? '🌀' : '🏰',
+    rarity: 'legendary',
+    gridX: 0,
+    gridY: 0,
+    rotated: false,
+    shape: Array.from({ length: storageHeight }, () => Array(storageWidth).fill(true)),
+    width: storageWidth,
+    height: storageHeight,
+    cells: storageCells,
+  }), [isPortalMode, storageCells, storageHeight, storageWidth]);
 
   if (!isFortressStorageOpen) return null;
 
-  const backpackItems = state.inventory.filter(i => i.gridX >= 0);
+  const backpackItems = state.inventory.filter((item) => item.gridX >= 0);
+  const portalFeeForItem = (item: SeaItem) => Math.max(1, Math.ceil((item.price || 0) * PORTAL_FEE_RATE));
 
   const handleSendToStorage = async (item: SeaItem) => {
-    await storeItems([item.uid], 'store');
+    await storeItems([item.uid], 'store', fortressStorageMode);
   };
 
   const handleRetrieveToBackpack = async (item: SeaItem) => {
-    await storeItems([item.uid], 'retrieve');
+    if (isPortalMode) return;
+    await storeItems([item.uid], 'retrieve', 'fortress');
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#040b12] text-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-[#0a1929] border-b border-cyan-800/30">
-        <h2 className="text-lg font-black text-cyan-400 flex items-center gap-2 tracking-wide uppercase">
-          <Database className="w-5 h-5" /> Kho Đồ Thành Trì
+      <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
+        <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
+          {isPortalMode ? <Sparkles className="h-5 w-5" /> : <Database className="h-5 w-5" />}
+          {isPortalMode ? 'Portal Kho Do' : 'Kho Do Thanh Tri'}
         </h2>
-        <button 
+        <button
           onClick={() => setIsFortressStorageOpen(false)}
-          className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          className="rounded-full p-2 transition-colors hover:bg-white/10"
         >
-          <X className="w-6 h-6 text-gray-400" />
+          <X className="h-6 w-6 text-gray-400" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col p-4 gap-6">
-        {/* Backpack Strip */}
-        <div className="bg-[#0a1929] border border-cyan-800/30 rounded-xl p-3 shadow-lg shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold text-cyan-300 flex items-center gap-1.5 uppercase tracking-wider">
-              <Package className="w-4 h-4" /> Balo của bạn ({backpackItems.length})
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-4">
+        <div className={`rounded-xl border p-3 shadow-lg ${isPortalMode ? 'border-violet-700/40 bg-violet-950/30' : 'border-cyan-800/30 bg-[#0a1929]'}`}>
+          <p className={`text-xs font-bold uppercase tracking-[0.2em] ${isPortalMode ? 'text-violet-300' : 'text-cyan-300'}`}>
+            {isPortalMode ? 'Ket Noi Portal' : 'Kho Trung Tam'}
+          </p>
+          <p className="mt-1 text-xs text-gray-300">
+            {isPortalMode
+              ? 'Thuyen co the gui do ve kho tu xa. Phi moi mon = 5% gia, lam tron len.'
+              : 'Dang o thanh tri nen ban co the cat va lay do mien phi.'}
+          </p>
+        </div>
+
+        <div className="shrink-0 rounded-xl border border-cyan-800/30 bg-[#0a1929] p-3 shadow-lg">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-cyan-300">
+              <Package className="h-4 w-4" /> Balo cua ban ({backpackItems.length})
             </h3>
-            <span className="text-[10px] text-gray-400">Nhấn đúp (hoặc bấm) để cất vào kho <ArrowDown className="w-3 h-3 inline text-emerald-400"/></span>
+            <span className="text-[10px] text-gray-400">
+              {isPortalMode ? 'Bam de gui qua portal' : 'Bam de cat vao kho'}
+              <ArrowDown className="ml-1 inline h-3 w-3 text-emerald-400" />
+            </span>
           </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 subtle-scrollbar">
-            {backpackItems.map(item => (
+
+          <div className="subtle-scrollbar flex gap-2 overflow-x-auto pb-2">
+            {backpackItems.map((item) => (
               <button
                 key={item.uid}
                 onClick={() => handleSendToStorage(item)}
-                className="w-12 h-12 shrink-0 bg-[#0d2137] hover:bg-[#122b46] border border-cyan-900/50 rounded-lg flex items-center justify-center text-2xl transition-all active:scale-95"
-                title={`${item.name}\nNhấn để cất vào kho`}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-cyan-900/50 bg-[#0d2137] text-2xl transition-all hover:bg-[#122b46] active:scale-95"
+                title={isPortalMode ? `${item.name} - Phi portal: ${portalFeeForItem(item)} vang` : `${item.name} - Cat vao kho`}
               >
-                {item.icon}
+                <span className="leading-none">{item.icon}</span>
               </button>
             ))}
             {backpackItems.length === 0 && (
-              <div className="w-full text-center text-xs text-gray-500 py-3 italic">
-                Balo đang trống
+              <div className="w-full py-3 text-center text-xs italic text-gray-500">
+                Balo dang trong
               </div>
             )}
           </div>
         </div>
 
-        {/* Storage Grid */}
-        <div className="flex-1 bg-[#06111a] rounded-xl border border-cyan-900/30 p-2 shadow-inner overflow-hidden flex flex-col">
-          <div className="text-center mb-2 mt-1">
-            <span className="text-xs font-bold text-amber-500/80 uppercase tracking-widest bg-amber-900/20 px-3 py-1 rounded-full">
-              Sức chứa tối đa: {storageBag.cells} ô
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-cyan-900/30 bg-[#06111a] p-2 shadow-inner">
+          <div className="mb-2 mt-1 text-center">
+            <span className="rounded-full bg-amber-900/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-amber-500/80">
+              Suc chua toi da: {storageBag.cells} o • ngang {storageWidth} • doc {storageHeight}
             </span>
           </div>
-          
-          <div className="flex-1 overflow-y-auto subtle-scrollbar flex flex-col items-center pb-8">
+
+          <div className="subtle-scrollbar flex flex-1 flex-col items-center overflow-y-auto pb-8">
             <InventoryGridV2
               items={state.storage}
               bags={[storageBag]}
-              gridW={MAX_GRID_W}
-              gridH={MAX_GRID_H * 4}
-              cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
+              gridW={storageWidth}
+              gridH={storageHeight}
+              cellSize={Math.min(44, (window.innerWidth - 64) / storageWidth)}
               onItemLayoutChange={(newStorage) => saveStorage(newStorage)}
-              onItemDoubleClick={handleRetrieveToBackpack}
+              onItemDoubleClick={isPortalMode ? undefined : handleRetrieveToBackpack}
             />
           </div>
+
+          {isPortalMode && (
+            <div className="border-t border-violet-900/30 px-3 py-2 text-center text-[11px] text-violet-200/80">
+              Che do portal chi cho phep gui do ve kho. Muon lay do ra balo, hay quay ve thanh tri.
+            </div>
+          )}
         </div>
       </div>
     </div>
