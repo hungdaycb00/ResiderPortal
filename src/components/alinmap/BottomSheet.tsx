@@ -113,6 +113,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
     const [panelWidth, setPanelWidth] = React.useState(400);
+    const [mobileExpandLevel, setMobileExpandLevel] = React.useState<'half' | 'full'>('half');
 
     return (
         <>
@@ -123,23 +124,37 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
-                        expanded: { y: isDesktop ? 0 : '18vh', x: 0 },
+                        full: { y: isDesktop ? 0 : '0vh', x: 0 },
+                        half: { y: isDesktop ? 0 : '25vh', x: 0 },
                         collapsed: {
                             y: isDesktop ? 0 : 'calc(100% - 60px)',
                             x: isDesktop ? '-100%' : 0
                         }
                     }}
                     initial="collapsed"
-                    animate={isSheetExpanded || selectedUser ? "expanded" : "collapsed"}
+                    animate={isSheetExpanded || selectedUser ? (isDesktop ? 'full' : mobileExpandLevel) : "collapsed"}
                     transition={{ type: "spring", stiffness: 350, damping: 35 }}
                     drag={isDesktop ? false : "y"}
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={0.05}
                     onDragEnd={(e, info) => {
                         if (isDesktop) return;
-                        const threshold = 100;
-                        if (info.offset.y < -threshold) setIsSheetExpanded(true);
-                        else if (info.offset.y > threshold) { setIsSheetExpanded(false); setSelectedUser(null); }
+                        const threshold = 60;
+                        if (!isSheetExpanded) {
+                            if (info.offset.y < -threshold) {
+                                setIsSheetExpanded(true);
+                                setMobileExpandLevel('half');
+                            }
+                        } else if (mobileExpandLevel === 'full') {
+                            if (info.offset.y > threshold) setMobileExpandLevel('half');
+                        } else {
+                            // half
+                            if (info.offset.y < -threshold) setMobileExpandLevel('full');
+                            else if (info.offset.y > threshold) {
+                                setIsSheetExpanded(false);
+                                setSelectedUser(null);
+                            }
+                        }
                     }}
                 >
                     {/* PC Hinge Toggle Button */}
@@ -168,10 +183,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     {/* Header Part (Search & Handle) */}
                     <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
                         {/* Hover Area / Handle (Mobile Only) */}
-                        <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" onClick={() => setIsSheetExpanded(!isSheetExpanded)}>
+                        <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" 
+                            onClick={() => {
+                                if (!isSheetExpanded) {
+                                    setIsSheetExpanded(true);
+                                    setMobileExpandLevel('half');
+                                } else if (mobileExpandLevel === 'half') {
+                                    setMobileExpandLevel('full');
+                                } else {
+                                    setMobileExpandLevel('half');
+                                }
+                            }}>
                             <div className="w-10 h-1 bg-gray-300 rounded-full mb-1" />
                             <div className="text-gray-400">
-                                {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                                {isSheetExpanded && mobileExpandLevel === 'full' ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                             </div>
                         </div>
 
@@ -198,7 +223,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar" style={{ direction: 'rtl' }}>
+                    <div 
+                      className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar" 
+                      style={{ direction: 'rtl' }}
+                      onPointerDownCapture={(e) => e.stopPropagation()}
+                    >
                       <div style={{ direction: 'ltr' }}>
                         {/* Instant Search Results */}
                         {!selectedUser && (
