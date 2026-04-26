@@ -130,6 +130,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         if (wsCtx.wsStatus === 'OPEN') fetchNotifications();
     }, [wsCtx.wsStatus, fetchNotifications]);
 
+    // --- Fallback myObfPos for unauthenticated users ---
+    useEffect(() => {
+        if (!user && geo.position && !geo.myObfPos) {
+            geo.setMyObfPos({ lat: geo.position[0], lng: geo.position[1] });
+        }
+    }, [user, geo.position, geo.myObfPos]);
+
     // --- Social actions ---
     const handleAddFriend = async (targetUser?: any) => {
         const userToAdd = targetUser || nav.selectedUser;

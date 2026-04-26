@@ -51,7 +51,7 @@ export function usePosts({
   const [isLoadingGames, setIsLoadingGames] = useState(false);
 
   const fetchUserPosts = async (userId: string | null | undefined) => {
-    if (!userId) return;
+    if (!userId || (userId === 'saved' && !user)) return;
     try {
       const endpoint = userId === 'saved'
         ? `${API_BASE}/api/user/archived-posts`
