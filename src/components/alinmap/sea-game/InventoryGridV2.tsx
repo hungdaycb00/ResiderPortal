@@ -55,6 +55,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
   const pointerStartRef = useRef<{ itemUid: string; clientX: number; clientY: number } | null>(null);
+  const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
   const activeBag = bags[0]; // Single bag system
 
@@ -125,12 +126,23 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     
     setDragMode(mode);
     setDragItem(item);
-    setDragOffset({ x: (item.gridW * cellSize) / 2, y: (item.gridH * cellSize) / 2 });
+    const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    setDragOffset({
+      x: Math.max(0, e.clientX - itemRect.left),
+      y: Math.max(0, e.clientY - itemRect.top),
+    });
     pointerStartRef.current = {
       itemUid: item.uid,
       clientX: e.clientX,
       clientY: e.clientY,
     };
+    pointerCurrentRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
+    try {
+      (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
+    } catch {}
     
     // Track global position if needed, but we'll stick to relative to grid for rendering
     setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top });
@@ -144,12 +156,18 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     if (gridRect) {
       const relX = clientX - gridRect.left;
       const relY = clientY - gridRect.top;
+      pointerCurrentRef.current = { clientX, clientY };
       setDragPos({ x: relX, y: relY });
       
       // Check if hovering grid
       if (clientX >= gridRect.left && clientX <= gridRect.right &&
           clientY >= gridRect.top && clientY <= gridRect.bottom) {
-        setHoverCell({ x: Math.floor(relX / cellSize), y: Math.floor(relY / cellSize) });
+        const topLeftX = relX - dragOffset.x;
+        const topLeftY = relY - dragOffset.y;
+        setHoverCell({
+          x: Math.round(topLeftX / cellSize),
+          y: Math.round(topLeftY / cellSize),
+        });
         setIsHoveringStorage(false);
       } 
       // Check if hovering storage
@@ -164,7 +182,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
         setIsHoveringStorage(false);
       }
     }
-  }, [dragMode, dragItem, cellSize]);
+  }, [dragMode, dragItem, cellSize, dragOffset.x, dragOffset.y]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     updateDragPosition(e.clientX, e.clientY);
@@ -174,9 +192,11 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     if (!dragMode || !dragItem) return;
 
     const pointerStart = pointerStartRef.current;
+    const pointerCurrent = pointerCurrentRef.current;
     const wasClick = !!pointerStart && pointerStart.itemUid === dragItem.uid &&
-      Math.abs(dragPos.x + (gridRef.current?.getBoundingClientRect().left || 0) - pointerStart.clientX) <= CLICK_MOVE_TOLERANCE &&
-      Math.abs(dragPos.y + (gridRef.current?.getBoundingClientRect().top || 0) - pointerStart.clientY) <= CLICK_MOVE_TOLERANCE;
+      !!pointerCurrent &&
+      Math.abs(pointerCurrent.clientX - pointerStart.clientX) <= CLICK_MOVE_TOLERANCE &&
+      Math.abs(pointerCurrent.clientY - pointerStart.clientY) <= CLICK_MOVE_TOLERANCE;
 
     if (wasClick) {
       onItemClick?.(dragItem);
@@ -185,6 +205,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
       setHoverCell(null);
       setIsHoveringStorage(false);
       pointerStartRef.current = null;
+      pointerCurrentRef.current = null;
       return;
     }
 
@@ -214,7 +235,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     setHoverCell(null);
     setIsHoveringStorage(false);
     pointerStartRef.current = null;
-  }, [dragMode, dragItem, dragPos.x, dragPos.y, hoverCell, isHoveringStorage, items, canPlaceItem, onItemClick, onItemLayoutChange]);
+    pointerCurrentRef.current = null;
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, items, canPlaceItem, onItemClick, onItemLayoutChange]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
@@ -266,6 +288,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
           height: gridH * cellSize,
           background: '#060d17',
           border: '2px solid rgba(30, 60, 90, 0.4)',
+          touchAction: 'none',
         }}
         onContextMenu={(e) => e.preventDefault()}
       >
@@ -348,6 +371,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 top: item.gridY * cellSize + 1,
                 width: w * cellSize - 2,
                 height: h * cellSize - 2,
+                touchAction: 'none',
               }}
               whileTap={{ scale: 1.05 }}
               onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
@@ -401,6 +425,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 className={`w-10 h-10 rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
                   isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
                 }`}
+                style={{ touchAction: 'none' }}
                 onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
                 onDoubleClick={() => onItemDoubleClick?.(item)}
                 title={formatItemTooltip(item)}

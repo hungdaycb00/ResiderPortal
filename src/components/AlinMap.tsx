@@ -327,6 +327,14 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                             {pickupRewardItem.icon}
                         </div>
                         <p className="mt-4 text-lg font-black text-cyan-100">{pickupRewardItem.name}</p>
+                        <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-cyan-100/85">
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">DMG: {pickupRewardItem.weight || 0}</div>
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">HP: {pickupRewardItem.hpBonus || 0}</div>
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">EN: {pickupRewardItem.energyMax || 0}</div>
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Regen: {pickupRewardItem.energyRegen || 0}</div>
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Vang: {pickupRewardItem.price || 0}</div>
+                            <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Kich thuoc: {pickupRewardItem.gridW}x{pickupRewardItem.gridH}</div>
+                        </div>
 
                         <div className="mt-5 flex gap-3">
                             <button
