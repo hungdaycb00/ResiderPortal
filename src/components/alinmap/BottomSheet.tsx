@@ -92,6 +92,7 @@ interface BottomSheetProps {
     externalOpenList?: boolean;
     onOpenListChange?: (v: boolean) => void;
     onPublishSuccess?: () => void;
+    requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = (props) => {
@@ -109,7 +110,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
         handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
-        cloudflareUrl, triggerAuth, requireAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess
+        cloudflareUrl, triggerAuth, requireAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess, requestLocation
     } = props;
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
@@ -286,6 +287,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
                                         avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
                                         triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
+                                        requestLocation={requestLocation}
                                     />
                                 )}
                                 {mainTab === 'creator' && (

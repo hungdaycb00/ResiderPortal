@@ -49,11 +49,15 @@ export function useGeolocation() {
 
   const requestLocation = (forceInvisible: boolean = false, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => {
     localStorage.setItem('alin_location_consent_handled', 'true');
-    if (forceInvisible && setIsVisibleOnMap) {
-      setIsVisibleOnMap(false);
+    const updateVisibility = (visible: boolean) => {
+      setIsVisibleOnMap?.(visible);
       if (wsRef?.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: false } }));
+        wsRef.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible } }));
       }
+    };
+
+    if (forceInvisible) {
+      updateVisibility(false);
     }
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -61,10 +65,12 @@ export function useGeolocation() {
           const { latitude, longitude } = pos.coords;
           setPosition([latitude, longitude]);
           localStorage.setItem('alin_last_position', JSON.stringify([latitude, longitude]));
+          if (!forceInvisible) updateVisibility(true);
           setIsConsentOpen(false);
         },
         (err) => {
           console.error("Geolocation error:", err);
+          if (!forceInvisible) updateVisibility(false);
           const lastPos = localStorage.getItem('alin_last_position');
           if (lastPos) {
             try { setPosition(JSON.parse(lastPos)); } catch (e) { setPosition([10.762622, 106.660172]); }
@@ -81,6 +87,7 @@ export function useGeolocation() {
       } else {
         setPosition([10.762622, 106.660172]);
       }
+      if (!forceInvisible) updateVisibility(false);
       setIsConsentOpen(false);
     }
   };

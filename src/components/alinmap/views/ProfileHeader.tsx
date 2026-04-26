@@ -4,6 +4,7 @@ import { normalizeImageUrl } from '../../../services/externalApi';
 
 interface ProfileHeaderProps {
     myUserId: string | null;
+    userEmail?: string | null;
     myDisplayName: string;
     myAvatarUrl: string;
     currentProvince: string | null;
@@ -23,7 +24,7 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
-    myUserId, myDisplayName, myAvatarUrl, currentProvince,
+    myUserId, userEmail, myDisplayName, myAvatarUrl, currentProvince,
     isEditingName, setIsEditingName, nameInput, setNameInput, setMyDisplayName,
     ws, showNotification, showAvatarMenu, setShowAvatarMenu,
     avatarInputRef, handleAvatarUpload, handleDefaultAvatar, requireAuth,
@@ -107,6 +108,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 truncate max-w-[120px]">ID: {myUserId}</span>
                     <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500" />
                 </div>
+                {userEmail && (
+                    <p className="text-[10px] font-semibold text-gray-400 mt-1 truncate max-w-[220px]">
+                        Gmail: {userEmail}
+                    </p>
+                )}
             </div>
         </div>
     );

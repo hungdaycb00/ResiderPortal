@@ -22,13 +22,14 @@ interface ProfileInfoTabProps {
     logout?: () => void;
     user: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     myUserId, myStatus, setMyStatus, isEditingStatus, setIsEditingStatus,
     statusInput, setStatusInput, radius, handleUpdateRadius,
     isVisibleOnMap, setIsVisibleOnMap, games, ws, myObfPos,
-    setIsSheetExpanded, setMainTab, logout, user, requireAuth,
+    setIsSheetExpanded, setMainTab, logout, user, requireAuth, requestLocation,
 }) => {
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
@@ -156,8 +157,14 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                         <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
                             if (requireAuth && !requireAuth('cap nhat hien thi tren map')) return;
                             const newVal = !isVisibleOnMap;
+                            if (newVal && requestLocation) {
+                                requestLocation(false, ws, setIsVisibleOnMap);
+                                return;
+                            }
                             setIsVisibleOnMap(newVal);
-                            if (ws.current?.readyState === WebSocket.OPEN) ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                            if (ws.current?.readyState === WebSocket.OPEN) {
+                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                            }
                         }}>
                             <div className={`w-9 h-5 rounded-full transition-colors ${isVisibleOnMap ? 'bg-blue-600' : 'bg-gray-300'}`}>
                                 <div className={`w-4 h-4 bg-white rounded-full mt-0.5 ml-0.5 transition-transform shadow-sm flex items-center justify-center ${isVisibleOnMap ? 'translate-x-4' : 'translate-x-0'}`}>

@@ -117,26 +117,26 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top });
   };
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+  const updateDragPosition = useCallback((clientX: number, clientY: number) => {
     if (!dragMode || !dragItem) return;
     const gridRect = gridRef.current?.getBoundingClientRect();
     const storageRect = storageRef.current?.getBoundingClientRect();
     
     if (gridRect) {
-      const relX = e.clientX - gridRect.left;
-      const relY = e.clientY - gridRect.top;
+      const relX = clientX - gridRect.left;
+      const relY = clientY - gridRect.top;
       setDragPos({ x: relX, y: relY });
       
       // Check if hovering grid
-      if (e.clientX >= gridRect.left && e.clientX <= gridRect.right &&
-          e.clientY >= gridRect.top && e.clientY <= gridRect.bottom) {
+      if (clientX >= gridRect.left && clientX <= gridRect.right &&
+          clientY >= gridRect.top && clientY <= gridRect.bottom) {
         setHoverCell({ x: Math.floor(relX / cellSize), y: Math.floor(relY / cellSize) });
         setIsHoveringStorage(false);
       } 
       // Check if hovering storage
       else if (storageRect && 
-               e.clientX >= storageRect.left && e.clientX <= storageRect.right &&
-               e.clientY >= storageRect.top && e.clientY <= storageRect.bottom) {
+               clientX >= storageRect.left && clientX <= storageRect.right &&
+               clientY >= storageRect.top && clientY <= storageRect.bottom) {
         setHoverCell(null);
         setIsHoveringStorage(true);
       } 
@@ -146,6 +146,10 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
       }
     }
   }, [dragMode, dragItem, cellSize]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    updateDragPosition(e.clientX, e.clientY);
+  }, [updateDragPosition]);
 
   const handlePointerUp = useCallback(() => {
     if (!dragMode || !dragItem) return;
@@ -179,12 +183,19 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
+    const handleGlobalMove = (e: PointerEvent) => {
+      if (dragMode) updateDragPosition(e.clientX, e.clientY);
+    };
     const handleGlobalUp = () => {
       if (dragMode) handlePointerUp();
     };
+    window.addEventListener('pointermove', handleGlobalMove);
     window.addEventListener('pointerup', handleGlobalUp);
-    return () => window.removeEventListener('pointerup', handleGlobalUp);
-  }, [dragMode, handlePointerUp]);
+    return () => {
+      window.removeEventListener('pointermove', handleGlobalMove);
+      window.removeEventListener('pointerup', handleGlobalUp);
+    };
+  }, [dragMode, handlePointerUp, updateDragPosition]);
 
   // ==========================================
   // Render Helpers

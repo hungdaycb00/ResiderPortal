@@ -46,7 +46,7 @@ const BackpackView: React.FC = () => {
             <Coins className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
           </div>
-          <span className="text-[10px] text-white/70 font-medium pr-2">+{goldCountdown}s</span>
+          <span className="text-[10px] text-white/70 font-medium pr-2">{goldCountdown}s</span>
         </div>
       </div>
 

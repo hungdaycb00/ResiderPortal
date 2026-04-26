@@ -54,6 +54,7 @@ interface MyProfileViewProps {
     triggerAuth?: (callback: () => void) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     logout?: () => void;
+    requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
 }
 
 const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
@@ -67,7 +68,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleCreatePost, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
         showAvatarMenu, setShowAvatarMenu, avatarInputRef, handleAvatarUpload, handleDefaultAvatar,
-        triggerAuth, requireAuth, logout
+        triggerAuth, requireAuth, logout, requestLocation
     } = props;
 
     const openCreatePost = (open: boolean) => {
@@ -96,7 +97,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
             </div>
 
             <ProfileHeader
-                myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl}
+                myUserId={myUserId} userEmail={user?.email || null} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl}
                 currentProvince={currentProvince} isEditingName={isEditingName} setIsEditingName={setIsEditingName}
                 nameInput={nameInput} setNameInput={setNameInput} setMyDisplayName={setMyDisplayName}
                 ws={ws} showNotification={showNotification}
@@ -145,6 +146,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     games={games} ws={ws} myObfPos={myObfPos}
                     setIsSheetExpanded={setIsSheetExpanded} setMainTab={setMainTab}
                     logout={logout} user={user} requireAuth={requireAuth}
+                    requestLocation={requestLocation}
                 />
             ) : activeTab === 'posts' ? (
                 <div className="pb-8">

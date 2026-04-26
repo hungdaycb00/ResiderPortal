@@ -94,6 +94,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         return false;
     }, [user, showNotification, triggerAuth]);
 
+    useEffect(() => {
+        if (!user) setIsVisibleOnMap(false);
+    }, [user]);
+
     // --- Map Navigation ---
     const nav = useMapNavigation({
         initialMainTab,
@@ -279,6 +283,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 externalOpenList={externalOpenList}
                 onOpenListChange={onOpenListChange}
                 onPublishSuccess={handleRefresh}
+                requestLocation={geo.requestLocation}
             />
 
             {/* Context Menu Overlay */}

@@ -191,7 +191,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const API = getBaseUrl();
 
-  // Gold regen: +1 gold per minute with UI countdown
+  // Gold regen: +1 gold per minute, persisted to server so Admin sees the same value.
   useEffect(() => {
     const startTick = Date.now();
     const countdownInterval = setInterval(() => {
@@ -201,13 +201,25 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     }, 1000);
 
     goldTimerRef.current = setInterval(() => {
-      setState(prev => ({ ...prev, seaGold: prev.seaGold + 1 }));
+      if (!deviceId) return;
+      fetch(`${API}/api/sea/gold-tick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, amount: 1 }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && typeof data.seaGold === 'number') {
+            setState(prev => ({ ...prev, seaGold: data.seaGold }));
+          }
+        })
+        .catch(err => console.error('[SeaGame] gold tick error:', err));
     }, 60000);
     return () => { 
         if (goldTimerRef.current) clearInterval(goldTimerRef.current); 
         clearInterval(countdownInterval);
     };
-  }, []);
+  }, [API, deviceId]);
 
   const loadState = useCallback(async () => {
     if (!deviceId) return;
@@ -301,12 +313,20 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         } else if (data.type === 'bag') {
           setPendingBagSwap(data.bag);
         } else if (data.type === 'item') {
-          setStagingItem(data.item);
+          const floatingItem = { ...data.item, gridX: -1, gridY: -1 };
+          const newInventory = [...state.inventory, floatingItem];
+          setState(prev => ({ ...prev, inventory: newInventory }));
+          setStagingItem(null);
+          await fetch(`${API}/api/sea/inventory`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, inventory: newInventory }),
+          });
         }
         setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
       }
     } catch (err) { console.error('[SeaGame] pickupItem error:', err); }
-  }, [deviceId, API]);
+  }, [deviceId, API, state.inventory]);
 
   const saveInventory = useCallback(async (inventory: SeaItem[]) => {
     if (!deviceId) return;
