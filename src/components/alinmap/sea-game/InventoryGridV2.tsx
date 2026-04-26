@@ -8,7 +8,10 @@ interface InventoryGridV2Props {
   bags: BagItem[]; // We only use the first bag now
   readOnly?: boolean;
   onItemLayoutChange?: (items: SeaItem[]) => void;
+  onItemDoubleClick?: (item: SeaItem) => void;
   cellSize?: number;
+  gridW?: number;
+  gridH?: number;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -19,10 +22,10 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const BAG_BG: Record<string, string> = {
-  common: 'rgba(20, 60, 100, 0.35)',
-  uncommon: 'rgba(20, 80, 70, 0.35)',
-  rare: 'rgba(80, 60, 20, 0.35)',
-  legendary: 'rgba(60, 20, 80, 0.35)',
+  common: 'rgba(56, 189, 248, 0.2)', // sky-400
+  uncommon: 'rgba(52, 211, 153, 0.2)', // emerald-400
+  rare: 'rgba(251, 191, 36, 0.2)', // amber-400
+  legendary: 'rgba(192, 132, 252, 0.2)', // purple-400
 };
 
 type DragMode = 'item' | 'storage-item' | null;
@@ -30,7 +33,10 @@ type DragMode = 'item' | 'storage-item' | null;
 const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   items, bags, readOnly = false,
   onItemLayoutChange,
+  onItemDoubleClick,
   cellSize = 40,
+  gridW = MAX_GRID_W,
+  gridH = MAX_GRID_H,
 }) => {
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
@@ -48,14 +54,14 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   // Occupancy Grids
   // ==========================================
   const buildBagOccupancy = useCallback(() => {
-    const grid: boolean[][] = Array.from({ length: MAX_GRID_H }, () => Array(MAX_GRID_W).fill(false));
+    const grid: boolean[][] = Array.from({ length: gridH }, () => Array(gridW).fill(false));
     if (!activeBag || activeBag.gridX < 0) return grid;
     
     const w = activeBag.width;
     const h = activeBag.height;
     const shape = activeBag.shape || [];
-    for (let r = 0; r < h && (activeBag.gridY + r) < MAX_GRID_H; r++) {
-      for (let c = 0; c < w && (activeBag.gridX + c) < MAX_GRID_W; c++) {
+    for (let r = 0; r < h && (activeBag.gridY + r) < gridH; r++) {
+      for (let c = 0; c < w && (activeBag.gridX + c) < gridW; c++) {
         if (shape[r] && shape[r][c]) {
           grid[activeBag.gridY + r][activeBag.gridX + c] = true;
         }
@@ -65,13 +71,13 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
   }, [activeBag]);
 
   const buildItemOccupancy = useCallback((excludeUid?: string) => {
-    const grid: (string | null)[][] = Array.from({ length: MAX_GRID_H }, () => Array(MAX_GRID_W).fill(null));
+    const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
     for (const item of items) {
       if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
       const w = item.gridW;
       const h = item.gridH;
-      for (let r = item.gridY; r < item.gridY + h && r < MAX_GRID_H; r++) {
-        for (let c = item.gridX; c < item.gridX + w && c < MAX_GRID_W; c++) {
+      for (let r = item.gridY; r < item.gridY + h && r < gridH; r++) {
+        for (let c = item.gridX; c < item.gridX + w && c < gridW; c++) {
           grid[r][c] = item.uid;
         }
       }
@@ -85,7 +91,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
     const itemOcc = buildItemOccupancy(excludeUid);
     const w = item.gridW;
     const h = item.gridH;
-    if (x < 0 || y < 0 || x + w > MAX_GRID_W || y + h > MAX_GRID_H) return false;
+    if (x < 0 || y < 0 || x + w > gridW || y + h > gridH) return false;
     for (let r = y; r < y + h; r++) {
       for (let c = x; c < x + w; c++) {
         if (!bagOcc[r][c]) return false; // Not on the bag
@@ -227,16 +233,16 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
         ref={gridRef}
         className="relative rounded-lg overflow-hidden shrink-0 mx-auto"
         style={{
-          width: MAX_GRID_W * cellSize,
-          height: MAX_GRID_H * cellSize,
+          width: gridW * cellSize,
+          height: gridH * cellSize,
           background: '#060d17',
           border: '2px solid rgba(30, 60, 90, 0.4)',
         }}
         onContextMenu={(e) => e.preventDefault()}
       >
         {/* Layer 1: Background grid cells */}
-        {Array.from({ length: MAX_GRID_H }).map((_, r) =>
-          Array.from({ length: MAX_GRID_W }).map((_, c) => (
+        {Array.from({ length: gridH }).map((_, r) =>
+          Array.from({ length: gridW }).map((_, c) => (
             <div
               key={`bg-${r}-${c}`}
               className="absolute"
@@ -266,14 +272,15 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 bagCells.push(
                   <div
                     key={`bag-${r}-${c}`}
-                    className="absolute opacity-100"
+                    className="absolute"
                     style={{
                       left: (activeBag.gridX + c) * cellSize,
                       top: (activeBag.gridY + r) * cellSize,
                       width: cellSize,
                       height: cellSize,
                       background: bgColor,
-                      border: '1px solid rgba(60, 130, 200, 0.4)',
+                      border: '1px solid rgba(56, 189, 248, 0.5)',
+                      boxShadow: 'inset 0 0 8px rgba(56, 189, 248, 0.15)',
                     }}
                   />
                 );
@@ -315,6 +322,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
               }}
               whileTap={{ scale: 1.05 }}
               onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
+              onDoubleClick={() => onItemDoubleClick?.(item)}
               onContextMenu={(e) => e.preventDefault()}
             >
               <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
@@ -364,7 +372,8 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                   isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
                 }`}
                 onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
-                title={`${item.name} (${item.gridW}x${item.gridH})`}
+                onDoubleClick={() => onItemDoubleClick?.(item)}
+                title={`${item.name} (${item.gridW}x${item.gridH}) - Double click to transfer`}
               >
                 <span className="text-xl leading-none">{item.icon}</span>
               </div>

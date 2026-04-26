@@ -44,7 +44,17 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [myStatus, setMyStatus] = useState("🚀 Exploring the digital universe");
     const [friendIdInput, setFriendIdInput] = useState('');
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
-    const [isVisibleOnMap, setIsVisibleOnMap] = useState(!!user);
+    const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(() => {
+        const saved = localStorage.getItem('alinmap_visible');
+        return saved !== null ? saved === 'true' : !!user;
+    });
+
+    useEffect(() => {
+        if (user !== null && user !== undefined) {
+            localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
+        }
+    }, [isVisibleOnMap, user]);
+
     const [isReporting, setIsReporting] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [reportStatus, setReportStatus] = useState("");

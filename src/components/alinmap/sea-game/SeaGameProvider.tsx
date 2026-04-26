@@ -109,6 +109,9 @@ interface SeaGameContextType {
   worldItems: WorldItem[];
   isBackpackOpen: boolean;
   setIsBackpackOpen: (v: boolean) => void;
+  isFortressStorageOpen: boolean;
+  setIsFortressStorageOpen: (v: boolean) => void;
+  openFortressStorage: () => void;
   stagingItem: SeaItem | null;
   setStagingItem: (item: SeaItem | null) => void;
   encounter: Encounter | null;
@@ -130,6 +133,7 @@ interface SeaGameContextType {
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
   pickupItem: (spawnId: string) => Promise<void>;
   saveInventory: (inventory: SeaItem[]) => Promise<void>;
+  saveStorage: (storage: SeaItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
   pendingBagSwap: BagItem | null;
   setPendingBagSwap: (bag: BagItem | null) => void;
@@ -182,6 +186,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
   const [isSeaGameMode, setIsSeaGameMode] = useState(false);
   const [isChallengeActive, setIsChallengeActive] = useState(false);
+  const [isFortressStorageOpen, setIsFortressStorageOpen] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -303,6 +308,17 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       setState(prev => ({ ...prev, inventory }));
     } catch (err) { console.error('[SeaGame] saveInventory error:', err); }
+  }, [deviceId, API]);
+
+  const saveStorage = useCallback(async (storage: SeaItem[]) => {
+    if (!deviceId) return;
+    try {
+      await fetch(`${API}/api/sea/storage_layout`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, storage }),
+      });
+      setState(prev => ({ ...prev, storage }));
+    } catch (err) { console.error('[SeaGame] saveStorage error:', err); }
   }, [deviceId, API]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
@@ -467,9 +483,10 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,
     isChallengeActive, setIsChallengeActive, globalSettings,
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
-    initGame, loadState, moveBoat, pickupItem, saveInventory, saveBags,
+    initGame, loadState, moveBoat, pickupItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
-    upgradeBag,
+    upgradeBag, isFortressStorageOpen, setIsFortressStorageOpen,
+    openFortressStorage: () => setIsFortressStorageOpen(true),
   };
 
   return <SeaGameContext.Provider value={value}>{children}</SeaGameContext.Provider>;

@@ -19,7 +19,13 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
             {/* Fortress Island */}
             {seaState?.fortressLat && (
                 <div
-                    className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-none z-[90]"
+                    onClick={() => {
+                        // Open Fortress Storage
+                        if (seaGameCtx && seaGameCtx.openFortressStorage) {
+                            seaGameCtx.openFortressStorage();
+                        }
+                    }}
+                    className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
                     style={{
                         top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                         left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
