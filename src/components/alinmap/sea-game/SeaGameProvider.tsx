@@ -51,7 +51,7 @@ export interface BagItem {
 }
 
 export const MAX_GRID_W = 7;
-export const MAX_GRID_H = 8;
+export const MAX_GRID_H = 6;
 
 export interface WorldItem {
   spawnId: string;
@@ -131,8 +131,9 @@ interface SeaGameContextType {
   pickupItem: (spawnId: string) => Promise<void>;
   saveInventory: (inventory: SeaItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
-  stagingBag: BagItem | null;
-  setStagingBag: (bag: BagItem | null) => void;
+  pendingBagSwap: BagItem | null;
+  setPendingBagSwap: (bag: BagItem | null) => void;
+  acceptBagSwap: (newBag: BagItem) => void;
   executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
@@ -173,7 +174,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [isBackpackOpen, setIsBackpackOpen] = useState(false);
   const [stagingItem, setStagingItem] = useState<SeaItem | null>(null);
-  const [stagingBag, setStagingBag] = useState<BagItem | null>(null);
+  const [pendingBagSwap, setPendingBagSwap] = useState<BagItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
   const [showCurseModal, setShowCurseModal] = useState(false);
@@ -285,7 +286,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         if (data.type === 'grid_expander') {
           setState(prev => ({ ...prev, inventoryWidth: data.newWidth, inventoryHeight: data.newHeight }));
         } else if (data.type === 'bag') {
-          setStagingBag(data.bag);
+          setPendingBagSwap(data.bag);
         } else if (data.type === 'item') {
           setStagingItem(data.item);
         }
@@ -315,6 +316,34 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       setState(prev => ({ ...prev, bags }));
     } catch (err) { console.error('[SeaGame] saveBags error:', err); }
   }, [deviceId, API]);
+
+  const acceptBagSwap = useCallback(async (newBag: BagItem) => {
+    // Determine which items need to be pushed out
+    const bagShape = newBag.shape || [];
+    const newItems = state.inventory.map(item => {
+      if (item.gridX < 0) return item; // Already staging
+      let inBounds = true;
+      for (let r = 0; r < item.gridH; r++) {
+        for (let c = 0; c < item.gridW; c++) {
+          const br = item.gridY + r - newBag.gridY;
+          const bc = item.gridX + c - newBag.gridX;
+          if (br < 0 || br >= newBag.height || bc < 0 || bc >= newBag.width || !bagShape[br][bc]) {
+            inBounds = false;
+            break;
+          }
+        }
+        if (!inBounds) break;
+      }
+      if (!inBounds) {
+        return { ...item, gridX: -1, gridY: -1 };
+      }
+      return item;
+    });
+
+    await saveBags([newBag]);
+    await saveInventory(newItems);
+    setPendingBagSwap(null);
+  }, [state.inventory, saveBags, saveInventory]);
 
   const confirmDiscard = useCallback(async () => {
     // Delete floating items
@@ -412,7 +441,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const value: SeaGameContextType = {
     state, worldItems, isBackpackOpen, setIsBackpackOpen,
-    stagingItem, setStagingItem, stagingBag, setStagingBag,
+    stagingItem, setStagingItem, pendingBagSwap, setPendingBagSwap, acceptBagSwap,
     encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
     showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,

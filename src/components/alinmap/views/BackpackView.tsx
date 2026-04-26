@@ -13,7 +13,7 @@ const TIER_LABELS = [
 ];
 
 const BackpackView: React.FC = () => {
-  const { state, stagingItem, setStagingItem, stagingBag, setStagingBag, saveInventory, saveBags, setWorldTier, sellItems } = useSeaGame();
+  const { state, pendingBagSwap, setPendingBagSwap, acceptBagSwap, saveInventory, saveBags, setWorldTier, sellItems } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [sellMode, setSellMode] = useState(false);
@@ -82,20 +82,7 @@ const BackpackView: React.FC = () => {
               <InventoryGridV2
                 items={state.inventory}
                 bags={state.bags}
-                stagingItem={stagingItem}
-                stagingBag={stagingBag}
                 onItemLayoutChange={(newItems) => saveInventory(newItems)}
-                onBagLayoutChange={(newBags) => saveBags(newBags)}
-                onStagingItemPlaced={(placed) => {
-                  saveInventory([...state.inventory, placed]);
-                  setStagingItem(null);
-                }}
-                onStagingBagPlaced={(placed) => {
-                  saveBags([...state.bags, placed]);
-                  setStagingBag(null);
-                }}
-                onStagingItemDiscarded={() => setStagingItem(null)}
-                onStagingBagDiscarded={() => setStagingBag(null)}
                 cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>
@@ -212,6 +199,35 @@ const BackpackView: React.FC = () => {
           </div>
         )}
       </div>
+      {/* Pending Bag Swap Modal */}
+      {pendingBagSwap && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          <div className="bg-[#0a1929] border border-cyan-500/50 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center text-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+            <div className="w-16 h-16 rounded-full bg-cyan-900/40 border border-cyan-400/50 flex items-center justify-center text-4xl mb-4 shadow-inner">
+              {pendingBagSwap.icon}
+            </div>
+            <h3 className="text-xl font-black text-cyan-400 tracking-tight mb-2">Đổi Balo Mới?</h3>
+            <p className="text-sm text-cyan-100/80 mb-6 font-medium">
+              Bạn nhặt được <span className="text-white font-bold">{pendingBagSwap.name}</span> ({pendingBagSwap.width}x{pendingBagSwap.height} ô).<br/>
+              <span className="text-[11px] text-amber-400/80 mt-2 block">Các item nằm ngoài balo mới sẽ rơi vào Khu Vực Chờ.</span>
+            </p>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setPendingBagSwap(null)}
+                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded-xl transition-colors border border-gray-600/50"
+              >
+                Bỏ qua
+              </button>
+              <button
+                onClick={() => acceptBagSwap(pendingBagSwap)}
+                className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl transition-all shadow-lg shadow-cyan-900/50"
+              >
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

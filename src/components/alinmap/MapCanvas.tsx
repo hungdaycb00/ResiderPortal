@@ -189,7 +189,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 )}
 
                                 {/* Other User Nodes */}
-                                {!isSeaGameMode && nearbyUsers.filter(u => {
+                                {nearbyUsers.filter(u => {
                                     if (u.id === myUserId || u.id === user?.uid) return false;
                                     if (searchTag) {
                                         const term = searchTag.toLowerCase();
@@ -206,13 +206,15 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     if (age < filterAgeMin || age > filterAgeMax) return false;
                                     return true;
                                 }).map(u => (
-                                    <SpatialNode
-                                        key={u.id} user={u} myPos={myObfPos!} mapScale={scale}
-                                        onClick={() => setSelectedUser(u)}
-                                        onContextMenu={(e, uData) => {
-                                            setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
-                                        }}
-                                    />
+                                    <div key={u.id} className={`transition-opacity duration-500 ${isSeaGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
+                                        <SpatialNode
+                                            user={u} myPos={myObfPos!} mapScale={scale}
+                                            onClick={() => !isSeaGameMode && setSelectedUser(u)}
+                                            onContextMenu={(e, uData) => {
+                                                if (!isSeaGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
+                                            }}
+                                        />
+                                    </div>
                                 ))}
                             </>
                         )}
