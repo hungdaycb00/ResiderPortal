@@ -34,6 +34,13 @@ export interface GridExpander {
   type: 'grid_expander';
 }
 
+export interface PortalItem {
+  id: string;
+  name: string;
+  icon: string;
+  type: 'portal';
+}
+
 export interface BagItem {
   uid: string;
   id: string;
@@ -82,7 +89,7 @@ export interface WorldItem {
   lng: number;
   isExpander: boolean;
   minigameType: 'fishing' | 'diving' | 'chest';
-  item: SeaItem | GridExpander | BagItem;
+  item: SeaItem | GridExpander | BagItem | PortalItem;
 }
 
 export interface Encounter {
@@ -189,6 +196,47 @@ const countBagCells = (shape: unknown): number => {
     if (!Array.isArray(row)) return sum;
     return sum + row.filter(Boolean).length;
   }, 0);
+};
+
+const PORTAL_SPACING_METERS = 5000;
+const PORTAL_SEARCH_RADIUS = 2;
+
+const createPortalWorldItems = (
+  fortressLat: number | null,
+  fortressLng: number | null,
+  currentLat: number | null,
+  currentLng: number | null
+): WorldItem[] => {
+  if (fortressLat == null || fortressLng == null || currentLat == null || currentLng == null) return [];
+  const cosLat = Math.max(0.25, Math.cos((fortressLat * Math.PI) / 180));
+  const xMeters = (currentLng - fortressLng) * 111000 * cosLat;
+  const yMeters = (currentLat - fortressLat) * 111000;
+  const centerGridX = Math.round(xMeters / PORTAL_SPACING_METERS);
+  const centerGridY = Math.round(yMeters / PORTAL_SPACING_METERS);
+  const items: WorldItem[] = [];
+
+  for (let gridY = centerGridY - PORTAL_SEARCH_RADIUS; gridY <= centerGridY + PORTAL_SEARCH_RADIUS; gridY += 1) {
+    for (let gridX = centerGridX - PORTAL_SEARCH_RADIUS; gridX <= centerGridX + PORTAL_SEARCH_RADIUS; gridX += 1) {
+      if (gridX === 0 && gridY === 0) continue;
+      const portalLat = fortressLat + ((gridY * PORTAL_SPACING_METERS) / 111000);
+      const portalLng = fortressLng + ((gridX * PORTAL_SPACING_METERS) / (111000 * cosLat));
+      items.push({
+        spawnId: `portal_${gridX}_${gridY}`,
+        lat: portalLat,
+        lng: portalLng,
+        isExpander: false,
+        minigameType: 'chest',
+        item: {
+          id: 'sea_portal',
+          name: 'Cong Portal',
+          icon: '🌀',
+          type: 'portal',
+        },
+      });
+    }
+  }
+
+  return items;
 };
 
 const createStarterBag = (existing?: Partial<BagItem>): BagItem => ({
@@ -558,14 +606,17 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       const res = await fetch(`${API}/api/sea/world-items?deviceId=${encodeURIComponent(deviceId)}`);
       const data = await res.json();
       if (data.success) {
-          let items = data.items;
+          const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+          const mapItems: WorldItem[] = Array.isArray(data.items) ? data.items : [];
+          const normalItems = mapItems.filter((item) => (item as any)?.item?.type !== 'portal');
+          let items = [...portalItems, ...normalItems];
           if (!forceActive && !isChallengeActive) {
-              items = items.slice(0, 3);
+              items = [...portalItems, ...normalItems.slice(0, 3)];
           }
           setWorldItems(items);
       }
     } catch (err) { console.error('[SeaGame] loadWorldItems error:', err); }
-  }, [deviceId, API, isChallengeActive]);
+  }, [deviceId, API, isChallengeActive, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
 
   const setWorldTier = useCallback(async (tier: number) => {
     if (!deviceId) return;
@@ -584,6 +635,14 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     // Load world items for the new tier (force=true to bypass stale closure)
     await loadWorldItems(true);
   }, [deviceId, API, loadState, loadWorldItems]);
+
+  useEffect(() => {
+    const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+    setWorldItems((prev) => {
+      const normalItems = prev.filter((item) => (item as any)?.item?.type !== 'portal');
+      return [...portalItems, ...normalItems];
+    });
+  }, [state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
 
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);

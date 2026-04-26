@@ -16,11 +16,14 @@ const TIER_LABELS = [
 const TIER_MULTIPLIERS = [0.5, 1, 3, 8, 20, 50];
 
 const BAG_SLOT_RARITY: Record<string, string> = {
-  common: 'border-sky-500/40 bg-sky-950/30 text-sky-200',
-  uncommon: 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200',
-  rare: 'border-amber-500/40 bg-amber-950/30 text-amber-200',
-  legendary: 'border-fuchsia-500/40 bg-fuchsia-950/30 text-fuchsia-200',
+  common: 'border-sky-500/40 bg-sky-950/20 text-sky-200',
+  uncommon: 'border-emerald-500/40 bg-emerald-950/20 text-emerald-200',
+  rare: 'border-amber-500/40 bg-amber-950/20 text-amber-200',
+  legendary: 'border-fuchsia-500/40 bg-fuchsia-950/20 text-fuchsia-200',
 };
+
+const formatBagTooltip = (bag: any) =>
+  `${bag?.name || 'Balo'}\n⚔ ${bag?.weight || 0} DMG | ❤ +${bag?.hpBonus || 0} HP\n⚡ +${bag?.energyMax || 0} EN | ✦ +${bag?.energyRegen || 0} Regen\n💰 ${bag?.price || 0} vang | ${(bag?.width || 3)}x${(bag?.height || 3)} | ${Math.max(9, bag?.cells || 9)} o`;
 
 const BackpackPanel: React.FC = () => {
   const {
@@ -119,39 +122,15 @@ const BackpackPanel: React.FC = () => {
                 Grid 7x6 • {Math.max(9, activeBag?.cells || 9)} o • {state.inventory.filter((i) => i.gridX >= 0).length} items
               </div>
 
-              <div className="grid w-full gap-3 sm:grid-cols-[132px_1fr]">
-                <div className={`rounded-2xl border p-3 shadow-inner ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Slot balo</p>
-                  <div className="flex min-h-[96px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-black/20 px-3 py-4 text-center">
-                    <div className="mb-2 text-4xl leading-none">{activeBag?.icon || '🎒'}</div>
-                    <p className="text-sm font-black">{activeBag?.name || 'Balo Co Ban'}</p>
-                    <p className="mt-1 text-[11px] opacity-80">{activeBag?.width || 3}x{activeBag?.height || 3} • {Math.max(9, activeBag?.cells || 9)} o</p>
-                    {activeBag?.dropProtected && (
-                      <p className="mt-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-1 text-[10px] font-bold text-cyan-200">
-                        Khong roi khi danh nhau
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid gap-2 rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 text-xs text-cyan-100/80 sm:grid-cols-2">
-                  <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Chi so</p>
-                    <p className="mt-1 font-bold">+{activeBag?.hpBonus || 0} HP • +{activeBag?.energyMax || 0} EN</p>
-                  </div>
-                  <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Ho tro</p>
-                    <p className="mt-1 font-bold">+{activeBag?.weight || 0} DMG • +{activeBag?.energyRegen || 0}% regen</p>
-                  </div>
-                  <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Gia tri</p>
-                    <p className="mt-1 font-bold">{activeBag?.price || 0} vang</p>
-                  </div>
-                  <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-400/70">Trang thai</p>
-                    <p className="mt-1 font-bold">{activeBag?.isStarter ? 'Balo mac dinh 3x3' : 'Balo thay the'}</p>
-                  </div>
-                </div>
+              <div className="flex w-full items-center gap-3 rounded-2xl border border-cyan-900/30 bg-[#08131d] px-4 py-3">
+                <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Slot balo</div>
+                <button
+                  type="button"
+                  title={formatBagTooltip(activeBag)}
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl border-2 shadow-inner transition-transform hover:scale-[1.04] ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}
+                >
+                  <span className="text-4xl leading-none">{activeBag?.icon || '🎒'}</span>
+                </button>
               </div>
 
               <InventoryGridV2

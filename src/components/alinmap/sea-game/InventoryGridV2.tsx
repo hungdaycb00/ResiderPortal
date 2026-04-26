@@ -28,6 +28,9 @@ const BAG_BG: Record<string, string> = {
   legendary: 'rgba(192, 132, 252, 0.2)', // purple-400
 };
 
+const formatItemTooltip = (item: SeaItem) =>
+  `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vang | ${item.gridW}x${item.gridH}`;
+
 type DragMode = 'item' | 'storage-item' | null;
 
 const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
@@ -324,6 +327,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
               onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
               onDoubleClick={() => onItemDoubleClick?.(item)}
               onContextMenu={(e) => e.preventDefault()}
+              title={formatItemTooltip(item)}
             >
               <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
             </motion.div>
@@ -373,7 +377,7 @@ const InventoryGridV2: React.FC<InventoryGridV2Props> = ({
                 }`}
                 onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
                 onDoubleClick={() => onItemDoubleClick?.(item)}
-                title={`${item.name} (${item.gridW}x${item.gridH}) - Double click to transfer`}
+                title={formatItemTooltip(item)}
               >
                 <span className="text-xl leading-none">{item.icon}</span>
               </div>

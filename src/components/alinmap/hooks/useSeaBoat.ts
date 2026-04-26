@@ -14,7 +14,8 @@ interface UseSeaBoatParams {
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const PICKUP_RADIUS_DEG = 0.0004; // ~45m pickup radius
+const PICKUP_RADIUS_DEG = 0.0011; // forgiving pickup radius
+const PORTAL_RADIUS_DEG = 0.0015;
 const DOUBLE_TAP_DELAY_MS = 450;
 const TAP_MOVE_TOLERANCE_PX = 16;
 
@@ -26,6 +27,7 @@ export function useSeaBoat({
     const lastTapPosRef = useRef<{ x: number; y: number } | null>(null);
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
     const pickingItemsRef = useRef(new Set<string>());
+    const activePortalRef = useRef<string | null>(null);
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
@@ -43,6 +45,20 @@ export function useSeaBoat({
             const dLat = item.lat - currentLat;
             const dLng = item.lng - currentLng;
             const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+            if (item?.item?.type === 'portal') {
+                if (dist < PORTAL_RADIUS_DEG && activePortalRef.current !== item.spawnId) {
+                    boatOffsetX.stop();
+                    boatOffsetY.stop();
+                    panX.stop();
+                    panY.stop();
+                    setBoatTargetPin(null);
+                    activePortalRef.current = item.spawnId;
+                    seaGameCtx.openFortressStorage?.('portal');
+                } else if (dist >= PORTAL_RADIUS_DEG && activePortalRef.current === item.spawnId) {
+                    activePortalRef.current = null;
+                }
+                return;
+            }
             if (dist < PICKUP_RADIUS_DEG) {
                 // Dừng thuyền khi va chạm
                 boatOffsetX.stop();
