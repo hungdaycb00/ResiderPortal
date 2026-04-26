@@ -212,9 +212,12 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
             bag.height = h;
             repaired = true;
           }
-          if (bag.gridX == null || bag.gridY == null) {
-            bag.gridX = Math.floor((MAX_GRID_W - (bag.width || 3)) / 2);
-            bag.gridY = Math.floor((MAX_GRID_H - (bag.height || 3)) / 2);
+          // Always recalculate center position based on bag dimensions
+          const correctX = Math.floor((MAX_GRID_W - (bag.width || 3)) / 2);
+          const correctY = Math.floor((MAX_GRID_H - (bag.height || 3)) / 2);
+          if (bag.gridX !== correctX || bag.gridY !== correctY) {
+            bag.gridX = correctX;
+            bag.gridY = correctY;
             repaired = true;
           }
           if (bag.cells == null) {
