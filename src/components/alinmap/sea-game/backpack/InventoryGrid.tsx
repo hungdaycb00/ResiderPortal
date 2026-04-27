@@ -14,6 +14,10 @@ interface InventoryGridProps {
   cellSize?: number;
   gridW?: number;
   gridH?: number;
+  hideStorage?: boolean;
+  onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
+  externalDragItem?: SeaItem | null;
+  externalHoverCell?: { x: number; y: number } | null;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -45,6 +49,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   cellSize = 40,
   gridW = MAX_GRID_W,
   gridH = MAX_GRID_H,
+  hideStorage = false,
+  onHoverCellChange,
+  externalDragItem,
+  externalHoverCell,
 }) => {
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
@@ -61,6 +69,15 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
   const activeBag = Array.isArray(bags) ? bags[0] : undefined; // Single bag system
+
+  // Sync internal hoverCell to external if needed
+  const updateHoverCell = useCallback((cell: { x: number; y: number } | null) => {
+    setHoverCell(cell);
+    onHoverCellChange?.(cell);
+  }, [onHoverCellChange]);
+
+  const activeDragItem = externalDragItem || dragItem;
+  const activeHoverCell = externalHoverCell || hoverCell;
 
   // ==========================================
   // Occupancy Grids
@@ -80,7 +97,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       }
     }
     return grid;
-  }, [activeBag]);
+  }, [activeBag, gridW, gridH]);
 
   const buildItemOccupancy = useCallback((excludeUid?: string) => {
     const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
@@ -95,7 +112,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       }
     }
     return grid;
-  }, [items]);
+  }, [items, gridW, gridH]);
 
   // Can place item: all cells must be on the bag AND not occupied by another item
   const canPlaceItem = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
@@ -111,7 +128,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       }
     }
     return true;
-  }, [buildBagOccupancy, buildItemOccupancy]);
+  }, [buildBagOccupancy, buildItemOccupancy, gridW, gridH]);
 
   // ==========================================
   // Drag Handlers
@@ -152,7 +169,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   };
 
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
-    if (!dragMode || !dragItem) return;
+    if ((!dragMode || !dragItem) && !externalDragItem) return;
+    const itemToMeasure = dragItem || externalDragItem;
+    if (!itemToMeasure) return;
+
     const gridRect = gridRef.current?.getBoundingClientRect();
     const storageRect = storageRef.current?.getBoundingClientRect();
     const trashRect = trashRef.current?.getBoundingClientRect();
@@ -166,7 +186,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       if (trashRect &&
           clientX >= trashRect.left && clientX <= trashRect.right &&
           clientY >= trashRect.top && clientY <= trashRect.bottom) {
-        setHoverCell(null);
+        updateHoverCell(null);
         setIsHoveringStorage(false);
         setIsHoveringTrash(true);
       }
@@ -175,7 +195,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           clientY >= gridRect.top && clientY <= gridRect.bottom) {
         const topLeftX = relX - dragOffset.x;
         const topLeftY = relY - dragOffset.y;
-        setHoverCell({
+        updateHoverCell({
           x: Math.round(topLeftX / cellSize),
           y: Math.round(topLeftY / cellSize),
         });
@@ -186,17 +206,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       else if (storageRect && 
                clientX >= storageRect.left && clientX <= storageRect.right &&
                clientY >= storageRect.top && clientY <= storageRect.bottom) {
-        setHoverCell(null);
+        updateHoverCell(null);
         setIsHoveringStorage(true);
         setIsHoveringTrash(false);
       } 
       else {
-        setHoverCell(null);
+        updateHoverCell(null);
         setIsHoveringStorage(false);
         setIsHoveringTrash(false);
       }
     }
-  }, [dragMode, dragItem, cellSize, dragOffset.x, dragOffset.y]);
+  }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, updateHoverCell]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     updateDragPosition(e.clientX, e.clientY);
@@ -229,13 +249,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
         );
         onItemLayoutChange?.(newItems);
-      } else if (isHoveringStorage && dragMode === 'item') {
+      } else if (isHoveringStorage && !hideStorage && dragMode === 'item') {
         // Move from grid to storage
         const newItems = items.map(i =>
           i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
         );
         onItemLayoutChange?.(newItems);
-      } else if (isHoveringStorage && dragMode === 'storage-item') {
+      } else if (isHoveringStorage && !hideStorage && dragMode === 'storage-item') {
         // Reorder storage: move to front
         const filtered = items.filter(i => i.uid !== dragItem.uid);
         const movingItem = items.find(i => i.uid === dragItem.uid);
@@ -247,17 +267,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
     setDragMode(null);
     setDragItem(null);
-    setHoverCell(null);
+    updateHoverCell(null);
     setIsHoveringStorage(false);
     setIsHoveringTrash(false);
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
-  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange]);
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
     const handleGlobalMove = (e: PointerEvent) => {
-      if (dragMode) updateDragPosition(e.clientX, e.clientY);
+      if (dragMode || externalDragItem) updateDragPosition(e.clientX, e.clientY);
     };
     const handleGlobalUp = (e: PointerEvent) => {
       if (dragMode) handlePointerUp(e);
@@ -268,7 +288,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       window.removeEventListener('pointermove', handleGlobalMove);
       window.removeEventListener('pointerup', handleGlobalUp);
     };
-  }, [dragMode, handlePointerUp, updateDragPosition]);
+  }, [dragMode, externalDragItem, handlePointerUp, updateDragPosition]);
 
   // ==========================================
   // Render Helpers
@@ -276,12 +296,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const bagOcc = buildBagOccupancy();
   
   const highlightCells: { x: number; y: number; valid: boolean }[] = [];
-  if (hoverCell && dragMode && dragItem) {
-    const w = dragItem.gridW;
-    const h = dragItem.gridH;
-    const valid = canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid);
-    for (let r = hoverCell.y; r < hoverCell.y + h; r++) {
-      for (let c = hoverCell.x; c < hoverCell.x + w; c++) {
+  if (activeHoverCell && activeDragItem) {
+    const w = activeDragItem.gridW;
+    const h = activeDragItem.gridH;
+    const valid = canPlaceItem(activeDragItem, activeHoverCell.x, activeHoverCell.y, activeDragItem.uid);
+    for (let r = activeHoverCell.y; r < activeHoverCell.y + h; r++) {
+      for (let c = activeHoverCell.x; c < activeHoverCell.x + w; c++) {
         highlightCells.push({ x: c, y: r, valid });
       }
     }
@@ -292,179 +312,186 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   return (
     <div 
-      className="flex flex-col gap-4 select-none touch-none" 
+      className="flex flex-col gap-4 select-none touch-none w-full" 
       onPointerMove={handlePointerMove}
     >
-      {/* Main Grid 7x6 */}
-      <div
-        ref={gridRef}
-        className="relative rounded-lg overflow-hidden shrink-0 mx-auto"
-        style={{
-          width: gridW * cellSize,
-          height: gridH * cellSize,
-          background: '#060d17',
-          border: '2px solid rgba(30, 60, 90, 0.4)',
-          touchAction: 'none',
-        }}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        {/* Layer 1: Background grid cells */}
-        {Array.from({ length: gridH }).map((_, r) =>
-          Array.from({ length: gridW }).map((_, c) => (
-            <div
-              key={`bg-${r}-${c}`}
-              className="absolute"
-              style={{
-                left: c * cellSize,
-                top: r * cellSize,
-                width: cellSize,
-                height: cellSize,
-                border: '1px solid rgba(25, 45, 65, 0.3)',
-                background: bagOcc[r][c] ? undefined : 'rgba(8, 12, 20, 0.6)',
-              }}
-            />
-          ))
-        )}
+      {/* Container for scrollability */}
+      <div className="w-full overflow-x-auto overflow-y-hidden subtle-scrollbar pb-1">
+        <div
+          ref={gridRef}
+          className="relative rounded-lg overflow-hidden shrink-0 mx-auto bg-[#060d17]"
+          style={{
+            width: gridW * cellSize,
+            height: gridH * cellSize,
+            border: '2px solid rgba(30, 60, 90, 0.4)',
+            touchAction: 'none',
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          {/* Layer 1: Background grid cells */}
+          {Array.from({ length: gridH }).map((_, r) =>
+            Array.from({ length: gridW }).map((_, c) => (
+              <div
+                key={`bg-${r}-${c}`}
+                className="absolute"
+                style={{
+                  left: c * cellSize,
+                  top: r * cellSize,
+                  width: cellSize,
+                  height: cellSize,
+                  border: '1px solid rgba(25, 45, 65, 0.2)',
+                  background: bagOcc[r][c] ? undefined : 'rgba(8, 12, 20, 0.6)',
+                }}
+              />
+            ))
+          )}
 
-        {/* Layer 2: Bag active cells */}
-        {activeBag && activeBag.gridX >= 0 && (() => {
-          const w = activeBag.width;
-          const h = activeBag.height;
-          const shape = activeBag.shape || [];
-          const bgColor = BAG_BG[activeBag.rarity] || BAG_BG.common;
+          {/* Layer 2: Bag active cells */}
+          {activeBag && activeBag.gridX >= 0 && (() => {
+            const w = activeBag.width;
+            const h = activeBag.height;
+            const shape = activeBag.shape || [];
+            const bgColor = BAG_BG[activeBag.rarity] || BAG_BG.common;
 
-          const bagCells = [];
-          for (let r = 0; r < h; r++) {
-            for (let c = 0; c < w; c++) {
-              if (shape[r] && shape[r][c]) {
-                bagCells.push(
-                  <div
-                    key={`bag-${r}-${c}`}
-                    className="absolute"
-                    style={{
-                      left: (activeBag.gridX + c) * cellSize,
-                      top: (activeBag.gridY + r) * cellSize,
-                      width: cellSize,
-                      height: cellSize,
-                      background: bgColor,
-                      border: '1px solid rgba(56, 189, 248, 0.5)',
-                      boxShadow: 'inset 0 0 8px rgba(56, 189, 248, 0.15)',
-                    }}
-                  />
-                );
+            const bagCells = [];
+            for (let r = 0; r < h; r++) {
+              for (let c = 0; c < w; c++) {
+                if (shape[r] && shape[r][c]) {
+                  const x = activeBag.gridX + c;
+                  const y = activeBag.gridY + r;
+                  if (x < gridW && y < gridH) {
+                    bagCells.push(
+                      <div
+                        key={`bag-${r}-${c}`}
+                        className="absolute"
+                        style={{
+                          left: x * cellSize,
+                          top: y * cellSize,
+                          width: cellSize,
+                          height: cellSize,
+                          background: bgColor,
+                          border: '1px solid rgba(56, 189, 248, 0.4)',
+                          boxShadow: 'inset 0 0 10px rgba(56, 189, 248, 0.1)',
+                        }}
+                      />
+                    );
+                  }
+                }
               }
             }
-          }
-          return bagCells;
-        })()}
+            return bagCells;
+          })()}
 
-        {/* Highlight cells */}
-        {highlightCells.map(({ x, y, valid }) => (
-          <div
-            key={`hl-${x}-${y}`}
-            className={`absolute z-10 pointer-events-none transition-colors ${
-              valid ? 'bg-emerald-400/30 border border-emerald-400/60' : 'bg-red-400/30 border border-red-400/60'
-            }`}
-            style={{ left: x * cellSize, top: y * cellSize, width: cellSize, height: cellSize }}
-          />
-        ))}
-
-        {/* Grid Items */}
-        {gridItems.map(item => {
-          const w = item.gridW;
-          const h = item.gridH;
-          const isDragging = dragItem?.uid === item.uid && dragMode === 'item';
-          const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
-
-          return (
-            <motion.div
-              key={item.uid}
-              className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing z-20 ${colorClass} ${
-                isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
+          {/* Highlight cells */}
+          {highlightCells.map(({ x, y, valid }) => (
+            <div
+              key={`hl-${x}-${y}`}
+              className={`absolute z-10 pointer-events-none transition-colors ${
+                valid ? 'bg-emerald-400/30 border border-emerald-400/60' : 'bg-red-400/30 border border-red-400/60'
               }`}
-              style={{
-                left: item.gridX * cellSize + 1,
-                top: item.gridY * cellSize + 1,
-                width: w * cellSize - 2,
-                height: h * cellSize - 2,
-                touchAction: 'none',
-              }}
-              whileTap={{ scale: 1.05 }}
-              onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
-              onDoubleClick={() => onItemDoubleClick?.(item)}
-              onContextMenu={(e) => e.preventDefault()}
-              title={formatItemTooltip(item)}
-            >
-              <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
-            </motion.div>
-          );
-        })}
+              style={{ left: x * cellSize, top: y * cellSize, width: cellSize, height: cellSize }}
+            />
+          ))}
 
-        {/* Drag Ghost inside Grid bounds */}
-        {dragMode && dragItem && hoverCell && (
-          <div
-            className={`absolute z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
-            style={{
-              left: hoverCell.x * cellSize + 1,
-              top: hoverCell.y * cellSize + 1,
-              width: dragItem.gridW * cellSize - 2,
-              height: dragItem.gridH * cellSize - 2,
-            }}
-          >
-            <span className="text-xl">{dragItem.icon}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Storage Area (Khoảng trống chứa item) */}
-      <div 
-        ref={storageRef}
-        className={`relative min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
-          isHoveringStorage ? 'border-cyan-400 bg-[#122b46]' : 'border-cyan-800/50'
-        }`}
-      >
-        <div
-          ref={trashRef}
-          className={`absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/50 text-red-200 transition-transform ${
-            isHoveringTrash ? 'scale-150 border-red-300 bg-red-800 text-white shadow-lg shadow-red-900/40' : 'scale-100'
-          }`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </div>
-        <div className="mb-2 flex items-center justify-between pl-10">
-          <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
-            Khu Vực Chờ ({storageItems.length})
-          </p>
-          <span className="text-[9px] text-cyan-600">Kéo item xuống đây để cất</span>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {storageItems.map(item => {
-            const isDragging = dragItem?.uid === item.uid && dragMode === 'storage-item';
+          {/* Grid Items */}
+          {gridItems.map(item => {
+            const w = item.gridW;
+            const h = item.gridH;
+            const isDragging = activeDragItem?.uid === item.uid && (dragMode === 'item' || externalDragItem);
             const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
-            
+
             return (
-              <div
+              <motion.div
                 key={item.uid}
-                className={`w-10 h-10 rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
+                className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing z-20 ${colorClass} ${
                   isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
                 }`}
-                style={{ touchAction: 'none' }}
-                onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
+                style={{
+                  left: item.gridX * cellSize + 1,
+                  top: item.gridY * cellSize + 1,
+                  width: w * cellSize - 2,
+                  height: h * cellSize - 2,
+                  touchAction: 'none',
+                }}
+                whileTap={{ scale: 1.05 }}
+                onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
                 onDoubleClick={() => onItemDoubleClick?.(item)}
+                onContextMenu={(e) => e.preventDefault()}
                 title={formatItemTooltip(item)}
               >
-                <span className="text-xl leading-none">{item.icon}</span>
-              </div>
+                <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
+              </motion.div>
             );
           })}
-          {storageItems.length === 0 && (
-             <div className="text-xs text-slate-500 italic w-full text-center py-2">
-               Kho trống
-             </div>
+
+          {/* Drag Ghost inside Grid bounds */}
+          {dragMode && dragItem && hoverCell && (
+            <div
+              className={`absolute z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+              style={{
+                left: hoverCell.x * cellSize + 1,
+                top: hoverCell.y * cellSize + 1,
+                width: dragItem.gridW * cellSize - 2,
+                height: dragItem.gridH * cellSize - 2,
+              }}
+            >
+              <span className="text-xl">{dragItem.icon}</span>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Storage Area */}
+      {!hideStorage && (
+        <div 
+          ref={storageRef}
+          className={`relative min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
+            isHoveringStorage ? 'border-cyan-400 bg-[#122b46]' : 'border-cyan-800/50'
+          }`}
+        >
+          <div
+            ref={trashRef}
+            className={`absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/50 text-red-200 transition-transform ${
+              isHoveringTrash ? 'scale-150 border-red-300 bg-red-800 text-white shadow-lg shadow-red-900/40' : 'scale-100'
+            }`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </div>
+          <div className="mb-2 flex items-center justify-between pl-10">
+            <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
+              Khu Vực Chờ ({storageItems.length})
+            </p>
+            <span className="text-[9px] text-cyan-600">Kéo item xuống đây để cất</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {storageItems.map(item => {
+              const isDragging = dragItem?.uid === item.uid && dragMode === 'storage-item';
+              const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
+              
+              return (
+                <div
+                  key={item.uid}
+                  className={`w-10 h-10 rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
+                    isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
+                  }`}
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
+                  onDoubleClick={() => onItemDoubleClick?.(item)}
+                  title={formatItemTooltip(item)}
+                >
+                  <span className="text-xl leading-none">{item.icon}</span>
+                </div>
+              );
+            })}
+            {storageItems.length === 0 && (
+               <div className="text-xs text-slate-500 italic w-full text-center py-2">
+                 Kho trống
+               </div>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Free-floating Drag Ghost (follows cursor exactly when not snapped to grid) */}
       {dragMode && dragItem && (!hoverCell || isHoveringStorage) && (

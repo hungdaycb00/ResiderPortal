@@ -1,9 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import { X, Database, Package, Sparkles, ArrowRightLeft, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
-import { MAX_GRID_W } from './constants';
+import { MAX_GRID_W, MAX_GRID_H } from './constants';
 import { useSeaGame } from '../SeaGameProvider';
-import type { SeaItem } from './types';
+import type { SeaItem, BagItem } from './types';
+
+const STORAGE_GRID_W = MAX_GRID_W;
+const STORAGE_GRID_H = 24;
+
+const VIRTUAL_STORAGE_BAG: BagItem = {
+  uid: 'virtual_storage_bag',
+  id: 'virtual_storage_bag',
+  name: 'Kho Portal',
+  icon: '🌀',
+  rarity: 'common',
+  width: STORAGE_GRID_W,
+  height: STORAGE_GRID_H,
+  gridX: 0,
+  gridY: 0,
+  rotated: false,
+  shape: Array(STORAGE_GRID_H).fill(Array(STORAGE_GRID_W).fill(true)),
+  cells: STORAGE_GRID_W * STORAGE_GRID_H,
+};
 
 const PORTAL_FEE_RATE = 0.05;
 
@@ -19,14 +37,75 @@ export default function FortressStorageModal() {
     openFortressStorage,
     returnToFortress,
     saveInventory,
+    saveStorage,
     storeItems,
   } = useSeaGame();
-  const [dragging, setDragging] = useState<{ uid: string; source: 'inventory' | 'storage' } | null>(null);
+  
+  const [dragItem, setDragItem] = useState<SeaItem | null>(null);
+  const [dragSource, setDragSource] = useState<'inventory' | 'storage' | null>(null);
+  const [hoverTarget, setHoverTarget] = useState<'inventory' | 'storage' | null>(null);
+  const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
   const isPortalMode = fortressStorageMode === 'portal';
-  const backpackItems = useMemo(() => state.inventory, [state.inventory]);
-  const storageItems = state.storage;
+  
+  // Ensure all storage items have grid coordinates for the UI
+  const storageItems = useMemo(() => {
+    let current = [...state.storage];
+    let changed = false;
+    
+    // Simple auto-layout for items without coordinates
+    const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
+    
+    // First pass: mark occupied
+    current.forEach(item => {
+      if (item.gridX >= 0) {
+        for (let r = 0; r < item.gridH; r++) {
+          for (let c = 0; c < item.gridW; c++) {
+            if (item.gridY + r < STORAGE_GRID_H && item.gridX + c < STORAGE_GRID_W) {
+              occ[item.gridY + r][item.gridX + c] = true;
+            }
+          }
+        }
+      }
+    });
+
+    // Second pass: assign missing
+    const updated = current.map(item => {
+      if (item.gridX < 0) {
+        // Find first fit
+        for (let r = 0; r <= STORAGE_GRID_H - item.gridH; r++) {
+          for (let c = 0; c <= STORAGE_GRID_W - item.gridW; c++) {
+            let canFit = true;
+            for (let ir = 0; ir < item.gridH; ir++) {
+              for (let ic = 0; ic < item.gridW; ic++) {
+                if (occ[r + ir][c + ic]) { canFit = false; break; }
+              }
+              if (!canFit) break;
+            }
+            if (canFit) {
+              item.gridX = c;
+              item.gridY = r;
+              for (let ir = 0; ir < item.gridH; ir++) {
+                for (let ic = 0; ic < item.gridW; ic++) {
+                  occ[r + ir][c + ic] = true;
+                }
+              }
+              changed = true;
+              return item;
+            }
+          }
+        }
+      }
+      return item;
+    });
+
+    if (changed) {
+      // We don't save back immediately to avoid loops, 
+      // but the UI will use these coords.
+    }
+    return updated;
+  }, [state.storage]);
 
   if (!isFortressStorageOpen) return null;
 
@@ -63,134 +142,119 @@ export default function FortressStorageModal() {
 
   const portalFeeForItem = (item: SeaItem) => Math.max(1, Math.ceil((item.price || 0) * PORTAL_FEE_RATE));
 
-  const Column = ({
-    title,
-    icon,
-    items,
-    source,
-    onDrop,
-    allowDrop,
-    caption,
-  }: {
-    title: string;
-    icon: React.ReactNode;
-    items: SeaItem[];
-    source: 'inventory' | 'storage';
-    onDrop: () => void;
-    allowDrop: boolean;
-    caption: string;
-  }) => (
-    <div
-      onDragOver={(e) => {
-        if (!allowDrop) return;
-        e.preventDefault();
-      }}
-      onDrop={(e) => {
-        if (!allowDrop) return;
-        e.preventDefault();
-        void onDrop();
-      }}
-      className={`flex flex-1 flex-col rounded-2xl border p-3 transition-colors ${allowDrop && dragging ? 'border-cyan-400/60 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'}`}
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
-          {icon}
-          {title}
+  const handleGlobalPointerUp = async () => {
+    if (!dragItem || !dragSource) return;
+    
+    const item = dragItem;
+    const source = dragSource;
+    const target = hoverTarget;
+    const cell = hoverCell;
+
+    setDragItem(null);
+    setDragSource(null);
+    setHoverTarget(null);
+    setHoverCell(null);
+
+    if (!target || !cell) return;
+
+    if (source === 'inventory' && target === 'storage') {
+      // Move to storage at specific cell
+      await storeItems([item.uid], 'store', fortressStorageMode, cell.x, cell.y);
+    } else if (source === 'storage' && target === 'inventory') {
+      if (isPortalMode) return;
+      // Move to inventory at specific cell
+      // Since InventoryGrid handles internal moves, we only care about cross-container
+      const newInventory = [...state.inventory, { ...item, gridX: cell.x, gridY: cell.y }];
+      await saveInventory(newInventory);
+      await storeItems([item.uid], 'retrieve', 'fortress');
+    } else if (source === 'storage' && target === 'storage') {
+      // Reorder storage
+      const newStorage = storageItems.map(i => 
+        i.uid === item.uid ? { ...i, gridX: cell.x, gridY: cell.y } : i
+      );
+      await saveStorage(newStorage);
+    }
+  };
+
+  React.useEffect(() => {
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
+  }, [dragItem, dragSource, hoverTarget, hoverCell]);
+
+  const StoragePanel = () => {
+    return (
+      <div className="flex flex-1 flex-col rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 transition-colors">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
+            {isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
+            {isPortalMode ? 'Kho Portal' : 'Kho Thanh Tri'}
+          </div>
+          <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
         </div>
-        <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{items.length} items</span>
-      </div>
 
-      <p className="mb-3 text-[11px] text-cyan-100/65">{caption}</p>
+        <p className="mb-3 text-[11px] text-cyan-100/65">
+          {isPortalMode ? 'Keo item vao day de gui vao kho.' : 'Keo item qua lai giua 2 ben.'}
+        </p>
 
-      <div 
-        className="subtle-scrollbar grid grid-cols-7 gap-[1px] overflow-y-auto rounded-xl border-2 border-[rgba(30,60,90,0.4)] bg-[#060d17] p-1 mx-auto"
-        style={{ width: "fit-content", maxHeight: "400px" }}
-      >
-        {items.map((item) => (
-          <button
-            key={item.uid}
-            type="button"
-            draggable
-            onDragStart={() => setDragging({ uid: item.uid, source })}
-            onDragEnd={() => setDragging(null)}
-            onDoubleClick={() => handleTransferItem(item, source)}
-            title={formatItemTooltip(item)}
-            className="flex aspect-square w-[40px] h-[40px] items-center justify-center border border-[rgba(25,45,65,0.3)] bg-[rgba(8,12,20,0.6)] text-2xl transition-all hover:scale-[1.04] hover:border-cyan-500/60 z-10"
-          >
-            <span className="leading-none">{item.icon}</span>
-          </button>
-        ))}
-        {Array.from({ length: Math.max(0, 168 - items.length) }).map((_, i) => (
-          <div 
-            key={`empty-${i}`} 
-            className="aspect-square w-[40px] h-[40px] border border-[rgba(25,45,65,0.3)] bg-[rgba(8,12,20,0.6)]" 
-          />
-        ))}
+        <div 
+          className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 h-[400px] overflow-hidden"
+          onPointerEnter={() => setHoverTarget('storage')}
+        >
+          <div className="h-full overflow-y-auto subtle-scrollbar">
+            <InventoryGrid
+              items={storageItems}
+              bags={[VIRTUAL_STORAGE_BAG]}
+              gridH={STORAGE_GRID_H}
+              hideStorage
+              onItemLayoutChange={(newItems) => saveStorage(newItems)}
+              onHoverCellChange={(c) => setHoverCell(c)}
+              externalDragItem={dragSource === 'inventory' ? dragItem : null}
+              externalHoverCell={dragSource === 'inventory' ? hoverCell : null}
+              onItemPointerDown={(item) => {
+                setDragItem(item);
+                setDragSource('storage');
+              }}
+              cellSize={40}
+            />
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const InventoryPanel = () => {
-    const allowRetrieveDrop = dragging?.source === 'storage' && !isPortalMode;
-
     return (
-      <div
-        onDragOver={(e) => {
-          if (!allowRetrieveDrop) return;
-          e.preventDefault();
-        }}
-        onDrop={(e) => {
-          if (!allowRetrieveDrop) return;
-          e.preventDefault();
-          void handleDropToInventory();
-        }}
-        className={`flex flex-1 flex-col rounded-2xl border p-3 transition-colors ${
-          allowRetrieveDrop ? 'border-cyan-400/60 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'
-        }`}
-      >
+      <div className="flex flex-1 flex-col rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 transition-colors">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
             <Package className="h-4 w-4" />
             Hom do tren thuyen
           </div>
-          <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{backpackItems.length} items</span>
+          <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
         </div>
 
         <p className="mb-3 text-[11px] text-cyan-100/65">
-          Sap xep va lap item tren grid. Keo item tu dai ben duoi sang kho de cat.
+          Sap xep va keo item sang kho ben phai de cat.
         </p>
 
-        <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2">
+        <div 
+          className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2"
+          onPointerEnter={() => setHoverTarget('inventory')}
+        >
           <InventoryGrid
             items={state.inventory}
             bags={state.bags}
+            hideStorage
             onItemLayoutChange={(newItems) => saveInventory(newItems)}
-            onItemDoubleClick={(item) => handleTransferItem(item, 'inventory')}
-            cellSize={Math.min(40, (window.innerWidth - 96) / MAX_GRID_W)}
+            onHoverCellChange={(c) => setHoverCell(c)}
+            externalDragItem={dragSource === 'storage' ? dragItem : null}
+            externalHoverCell={dragSource === 'storage' ? hoverCell : null}
+            onItemPointerDown={(item) => {
+              setDragItem(item);
+              setDragSource('inventory');
+            }}
+            cellSize={40}
           />
-        </div>
-
-        <div className="mt-3">
-          <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/80">Cat nhanh vao kho</div>
-          <div className="subtle-scrollbar flex max-h-24 flex-wrap gap-2 overflow-y-auto rounded-xl border border-cyan-950/60 bg-[#050b12] p-2">
-            {backpackItems.map((item) => (
-              <button
-                key={item.uid}
-                type="button"
-                draggable
-                onDragStart={() => setDragging({ uid: item.uid, source: 'inventory' })}
-                onDragEnd={() => setDragging(null)}
-                onDoubleClick={() => handleTransferItem(item, 'inventory')}
-                title={formatItemTooltip(item)}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-900/40 bg-[#0d2137] text-xl transition-all hover:scale-[1.04] hover:border-cyan-500/60"
-              >
-                <span className="leading-none">{item.icon}</span>
-              </button>
-            ))}
-            {backpackItems.length === 0 && (
-              <div className="w-full py-3 text-center text-xs italic text-gray-500">Trong</div>
-            )}
-          </div>
         </div>
       </div>
     );
@@ -244,26 +308,14 @@ export default function FortressStorageModal() {
           </span>
         </div>
 
-        <div className="flex flex-col-reverse lg:grid flex-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col lg:grid flex-1 gap-4 lg:grid-cols-2">
           <InventoryPanel />
-
-          <Column
-            title={isPortalMode ? 'Kho portal' : 'Kho thanh tri'}
-            icon={isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
-            items={storageItems}
-            source="storage"
-            onDrop={handleDropToStorage}
-            allowDrop={dragging?.source === 'inventory'}
-            caption={isPortalMode ? 'Tha vao day de cat tru qua cong portal.' : 'Tha vao day de cat, keo nguoc lai de lay ra.'}
-          />
+          <StoragePanel />
         </div>
 
-        {isPortalMode && dragging?.source === 'inventory' && (
+        {isPortalMode && dragItem && dragSource === 'inventory' && (
           <div className="mt-4 rounded-2xl border border-violet-500/20 bg-violet-950/20 px-4 py-3 text-xs text-violet-100/80">
-            {(() => {
-              const item = backpackItems.find((entry) => entry.uid === dragging.uid);
-              return item ? `Dang keo ${item.name}. Phi gui: ${portalFeeForItem(item)} vang.` : 'Dang keo item.';
-            })()}
+            {`Dang keo ${dragItem.name}. Phi gui: ${portalFeeForItem(dragItem)} vang.`}
           </div>
         )}
       </div>

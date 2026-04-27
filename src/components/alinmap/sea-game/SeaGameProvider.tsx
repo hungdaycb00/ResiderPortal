@@ -116,7 +116,7 @@ interface SeaGameContextType {
   executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
-  storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode) => Promise<void>;
+  storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode, gridX?: number, gridY?: number) => Promise<void>;
   destroyItem: (spawnId: string) => Promise<boolean>;
   setWorldTier: (tier: number) => Promise<void>;
   returnToFortress: () => Promise<void>;
@@ -504,11 +504,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadState();
   }, [deviceId, API, loadState]);
 
-  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress') => {
+  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
     await fetch(`${API}/api/sea/store`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids, action, mode }),
+      body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
     });
     await loadState();
   }, [deviceId, API, loadState]);

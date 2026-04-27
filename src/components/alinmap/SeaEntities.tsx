@@ -15,7 +15,7 @@ interface SeaEntitiesProps {
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
     myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
-    const x1 = useMotionTemplate`calc(50% - ${boatOffsetX}px)`;
+    const x1 = useMotionTemplate`calc(50% + ${boatOffsetX}px)`;
     const y1 = useMotionTemplate`calc(50% + ${boatOffsetY}px)`;
 
     return (
