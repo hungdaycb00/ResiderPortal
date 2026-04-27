@@ -73,7 +73,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         fetchNotifications: async () => {},
         onStatusSync: () => {}, // We will update ProfileContext from children or a separate effect if needed
     });
-    const resolvedMyUserId = wsCtx.myUserId || profileUserId || null;
+    const resolvedMyUserId = wsCtx.myUserId || profileUserId || localStorage.getItem('alin_profile_user_id') || null;
     const resolvedMyStatus = profileStatus || wsCtx.myStatus || '';
 
     const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {

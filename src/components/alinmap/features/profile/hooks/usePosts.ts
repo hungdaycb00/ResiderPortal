@@ -43,8 +43,8 @@ export function usePosts({
   showNotification, setGalleryActive, setGalleryTitle, setGalleryImages,
 }: UsePostsParams) {
   const API_BASE = getBaseUrl();
-  const resolvedMyUserId = myUserId || user?.uid || null;
-  const resolvedSelfUserId = resolvedMyUserId || localStorage.getItem('alin_profile_user_id') || user?.uid || null;
+  const resolvedMyUserId = myUserId || localStorage.getItem('alin_profile_user_id') || null;
+  const resolvedSelfUserId = resolvedMyUserId;
   const selfPostsIdentifier = resolvedSelfUserId || 'me';
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [postTitle, setPostTitle] = useState('');
@@ -154,13 +154,13 @@ export function usePosts({
       }
       const targetId = selectedUser.isSelf ? (resolvedSelfUserId || selectedUser.id || 'me') : selectedUser.id;
       fetchUserPosts(targetId, requestId);
-    } else if (resolvedSelfUserId) {
+    } else if (resolvedSelfUserId || user) {
       const requestId = Date.now();
       activeProfileRequestRef.current = requestId;
       setIsLoadingGames(false);
       setUserGames([]);
       fetchUserPosts(selfPostsIdentifier, requestId);
-    } else if (!user) {
+    } else {
       activeProfileRequestRef.current = Date.now();
       setIsLoadingGames(false);
       setUserGames([]);
