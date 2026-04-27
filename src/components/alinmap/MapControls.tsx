@@ -140,17 +140,17 @@ const MapControls: React.FC<MapControlsProps> = ({
 
             {/* Mobile Location/Coords Widget - Below Search Bar */}
             {!isSeaGameMode && (
-                <div className="md:hidden absolute top-[108px] left-6 right-6 z-[120] pointer-events-none flex flex-col gap-1 items-start">
+                <div className="md:hidden absolute top-[98px] left-8 right-8 z-[120] pointer-events-none flex flex-col gap-1 items-start">
                     <div 
-                        className="pointer-events-auto flex items-center gap-2 bg-white/70 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-white/50 active:scale-95 transition-transform"
+                        className="pointer-events-auto flex items-center gap-2 px-1 active:scale-95 transition-transform"
                         onClick={() => setIsWidgetExpanded(true)}
                     >
-                        <Navigation className="w-3 h-3 text-blue-500 fill-current" />
-                        <span className="text-[11px] font-black text-gray-800 truncate max-w-[150px]">
+                        <Navigation className="w-3 h-3 text-blue-400 fill-current drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+                        <span className="text-[11px] font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate max-w-[150px]">
                             {currentProvince || "Vị trí của tôi"}
                         </span>
-                        <div className="w-[1px] h-3 bg-gray-300 mx-1" />
-                        <span className="text-[10px] font-bold text-gray-500 font-mono">
+                        <div className="w-[1px] h-2.5 bg-white/30 mx-1 shadow-sm" />
+                        <span className="text-[10px] font-bold text-white/80 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                             {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : "Đang lấy..."}
                         </span>
                     </div>
