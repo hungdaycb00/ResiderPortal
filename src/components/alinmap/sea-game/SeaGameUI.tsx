@@ -4,6 +4,7 @@ import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
+import CombatLootModal from './backpack/CombatLootModal';
 import { useSeaGame } from './SeaGameProvider';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -14,16 +15,18 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
+    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
 
     return (
         <>
             <CombatScreen />
             <CurseModal />
             <FortressStorageModal />
+            <CombatLootModal />
             {showMinigame && (
                 <PickupMinigame
                     type={showMinigame.minigameType || 'fishing'}
+                    tier={state.worldTier || 0}
                     difficulty={(() => {
                         if (showMinigame.isExpander) return 3;
                         const r = (showMinigame.item as any).rarity;
@@ -37,7 +40,7 @@ const SeaGameUI: React.FC = () => {
                         setShowMinigame(null);
                     }}
                     onLose={() => {
-                        if (showMinigame?.spawnId) destroyItem(showMinigame.spawnId);
+                        if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
                         setShowMinigame(null);
                     }}
                     onClose={() => {

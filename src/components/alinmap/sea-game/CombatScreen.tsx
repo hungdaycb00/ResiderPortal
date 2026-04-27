@@ -136,8 +136,10 @@ const CombatScreen: React.FC = () => {
   const handleClose = () => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setEncounter(null);
-    setCombatResult(null);
     setPhase('ready');
+    if (!(combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0)) {
+        setCombatResult(null);
+    }
     loadState();
   };
 

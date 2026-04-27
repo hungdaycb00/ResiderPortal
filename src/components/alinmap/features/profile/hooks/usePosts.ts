@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getBaseUrl } from '../../../services/externalApi';
+import { getBaseUrl } from '../../../../../services/externalApi';
 
 interface UsePostsParams {
   ws: React.MutableRefObject<WebSocket | null>;

@@ -1,7 +1,9 @@
 import React from 'react';
 import { X, UserPlus, MessageCircle, MapPin, Flag, ChevronRight, Edit } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
-import PostCard from '../PostCard';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import PostCard from './PostCard';
+import { useProfile } from '../context/ProfileContext';
+import { useSocial } from '../../social/context/SocialContext';
 
 const DEGREES_TO_PX = 11100;
 
@@ -11,20 +13,11 @@ interface SelectedUserViewProps {
     activeTab: 'info' | 'posts' | 'saved';
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     fetchUserPosts: (uid: string) => void;
-    sentFriendRequests: string[];
     friends: any[];
-    handleAddFriend: () => void;
-    handleMessage: () => void;
     myObfPos: any;
     panX: any;
     panY: any;
     scale: any;
-    isReporting: boolean;
-    setIsReporting: (v: boolean) => void;
-    reportStatus: string;
-    setReportStatus: (v: string) => void;
-    reportReason: string;
-    setReportReason: (v: string) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     games: any[];
     userPosts: any[];
@@ -36,11 +29,13 @@ interface SelectedUserViewProps {
 
 const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     selectedUser, setSelectedUser, activeTab, setActiveTab, fetchUserPosts,
-    sentFriendRequests, friends, handleAddFriend, handleMessage,
-    myObfPos, panX, panY, scale, isReporting, setIsReporting,
-    reportStatus, setReportStatus, reportReason, setReportReason, ws,
+    friends,
+    myObfPos, panX, panY, scale, ws,
     games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth
 }) => {
+    const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
+    const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
+
     return (
         <div className="pt-2">
             <div className="flex items-start gap-4 mb-6">

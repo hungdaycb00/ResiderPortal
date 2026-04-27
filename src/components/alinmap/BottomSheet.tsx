@@ -1,16 +1,15 @@
 import React from 'react';
 import { Search, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
-import DiscoverView from './views/DiscoverView';
-import SocialView from './views/SocialView';
-import NotificationsView from './views/NotificationsView';
-import MyProfileView from './views/MyProfileView';
-import SelectedUserView from './views/SelectedUserView';
-import CreatorTabView from './views/CreatorTabView';
-import BackpackView from './views/BackpackView';
+import DiscoverView from './features/explore/components/DiscoverView';
+import SocialView from './features/social/components/SocialView';
+import NotificationsView from './features/social/components/NotificationsView';
+import MyProfileView from './features/profile/components/MyProfileView';
+import SelectedUserView from './features/profile/components/SelectedUserView';
+import CreatorTabView from './features/creator/components/CreatorTabView';
+import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
-import { useAvatarUpload } from './hooks/useAvatarUpload';
-
+import { useSocial } from './features/social/context/SocialContext';
 
 interface BottomSheetProps {
     isDesktop: boolean;
@@ -25,29 +24,15 @@ interface BottomSheetProps {
     userPosts: any[];
     myUserId: string | null;
     myDisplayName: string;
-    myStatus: string;
     myObfPos: { lat: number; lng: number } | null;
     user: any;
     searchTag: string;
-    isReporting: boolean;
-    reportReason: string;
-    reportStatus: string;
-    sentFriendRequests: string[];
-    isEditingStatus: boolean;
-    isEditingName: boolean;
-    statusInput: string;
-    nameInput: string;
-    isVisibleOnMap: boolean;
-    friendIdInput: string;
-    socialSection: 'friends' | 'nearby' | 'recent' | 'blocked';
     isCreatingPost: boolean;
     postTitle: string;
     isSavingPost: boolean;
     galleryActive: boolean;
     currentProvince: string | null;
     radius: number;
-    notifications: any[];
-    fetchNotifications: () => void;
     fetchUserPosts: (uid: string) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     panX: any;
@@ -57,31 +42,18 @@ interface BottomSheetProps {
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
     handlePlayGame?: (game: any) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
-    setSentFriendRequests: (fn: (prev: string[]) => string[]) => void;
     handleUpdateRadius: (v: number) => void;
     setIsSheetExpanded: (v: boolean) => void;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMainTab: (tab: any) => void;
     setSearchTag: (v: string) => void;
-    setIsReporting: (v: boolean) => void;
-    setReportReason: (v: string) => void;
-    setReportStatus: (v: string) => void;
-    setIsEditingStatus: (v: boolean) => void;
-    setIsEditingName: (v: boolean) => void;
     setStatusInput: (v: string) => void;
-    setNameInput: (v: string) => void;
-    setMyStatus: (v: string) => void;
     setMyDisplayName: (v: string) => void;
-    setIsVisibleOnMap: (v: boolean) => void;
     myAvatarUrl: string;
     setMyAvatarUrl: (v: string) => void;
-    setFriendIdInput: (v: string) => void;
-    setSocialSection: (v: 'friends' | 'nearby' | 'recent' | 'blocked') => void;
     setIsCreatingPost: (v: boolean) => void;
     setPostTitle: (v: string) => void;
-    handleAddFriend: (targetUser?: any) => void | Promise<void>;
-    handleMessage: (targetUser?: any) => void;
     handleCreatePost: (files: File[]) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
@@ -98,22 +70,19 @@ interface BottomSheetProps {
 const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const {
         isDesktop, isSheetExpanded, selectedUser, activeTab, mainTab, nearbyUsers, friends, games, userGames, userPosts,
-        myUserId, myDisplayName, myStatus, myObfPos, user, searchTag,
-        isReporting, reportReason, reportStatus, sentFriendRequests,
-        isEditingStatus, isEditingName, statusInput, nameInput, isVisibleOnMap, friendIdInput, socialSection,
+        myUserId, myDisplayName, myObfPos, user, searchTag,
         isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
         ws, panX, panY, scale, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
-        setIsReporting, setReportReason, setReportStatus,
-        setIsEditingStatus, setIsEditingName, setStatusInput, setNameInput, setMyStatus, setMyDisplayName,
-        setIsVisibleOnMap, setFriendIdInput, setSocialSection, setSentFriendRequests,
-        setIsCreatingPost, setPostTitle, notifications, fetchNotifications, fetchUserPosts,
-        handleAddFriend, handleMessage, handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
+        setStatusInput, setMyDisplayName,
+        setIsCreatingPost, setPostTitle, fetchUserPosts,
+        handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
         cloudflareUrl, triggerAuth, requireAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess, requestLocation
     } = props;
 
-    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
+    const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
+
     const [panelWidth, setPanelWidth] = React.useState(400);
     const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
 
@@ -236,11 +205,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         {selectedUser ? (
                             <SelectedUserView
                                 selectedUser={selectedUser} setSelectedUser={setSelectedUser} activeTab={activeTab as any} setActiveTab={setActiveTab as any}
-                                fetchUserPosts={fetchUserPosts} sentFriendRequests={sentFriendRequests} friends={friends}
-                                handleAddFriend={handleAddFriend} handleMessage={handleMessage} myObfPos={myObfPos}
-                                panX={panX} panY={panY} scale={scale} isReporting={isReporting} setIsReporting={setIsReporting}
-                                reportStatus={reportStatus} setReportStatus={setReportStatus} reportReason={reportReason}
-                                setReportReason={setReportReason} ws={ws} games={userGames} userPosts={userPosts}
+                                fetchUserPosts={fetchUserPosts} friends={friends}
+                                myObfPos={myObfPos}
+                                panX={panX} panY={panY} scale={scale}
+                                ws={ws} games={userGames} userPosts={userPosts}
                                 handleStarPost={handleStarPost} handleDeletePost={handleDeletePost} externalApi={externalApi}
                                 requireAuth={requireAuth}
                             />
@@ -251,33 +219,27 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 )}
                                 {mainTab === 'friends' && (
                                     <SocialView
-                                        myUserId={myUserId} myObfPos={myObfPos} friendIdInput={friendIdInput} setFriendIdInput={setFriendIdInput}
-                                        ws={ws} setSentFriendRequests={setSentFriendRequests as any} socialSection={socialSection}
-                                        setSocialSection={setSocialSection} friends={friends} nearbyUsers={nearbyUsers}
-                                        setSelectedUser={setSelectedUser} setActiveTab={setActiveTab as any} onOpenChat={onOpenChat}
-                                        requireAuth={requireAuth}
+                                        myUserId={myUserId} myObfPos={myObfPos}
+                                        friends={friends} nearbyUsers={nearbyUsers}
+                                        setSelectedUser={setSelectedUser} setActiveTab={setActiveTab as any}
                                         radius={radius}
                                         handleUpdateRadius={handleUpdateRadius}
-                                        handleAddFriendById={(targetId) => handleAddFriend({ id: targetId, username: targetId })}
                                     />
                                 )}
                                 {mainTab === 'notifications' && (
-                                    <NotificationsView notifications={notifications} externalApi={externalApi} fetchNotifications={fetchNotifications} />
+                                    <NotificationsView externalApi={externalApi} />
                                 )}
                                 {mainTab === 'profile' && !selectedUser && (
                                     <MyProfileView
-                                        myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl} myStatus={myStatus} currentProvince={currentProvince}
-                                        activeTab={activeTab as any} setActiveTab={setActiveTab as any} galleryActive={galleryActive} isEditingName={isEditingName}
-                                        setIsEditingName={setIsEditingName} nameInput={nameInput} setNameInput={setNameInput} setMyDisplayName={setMyDisplayName}
-                                        isEditingStatus={isEditingStatus} setIsEditingStatus={setIsEditingStatus} statusInput={statusInput} setStatusInput={setStatusInput}
-                                        setMyStatus={setMyStatus} radius={radius} handleUpdateRadius={handleUpdateRadius} isVisibleOnMap={isVisibleOnMap}
-                                        setIsVisibleOnMap={setIsVisibleOnMap} games={games} userPosts={userPosts} isCreatingPost={isCreatingPost}
+                                        myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl} currentProvince={currentProvince}
+                                        activeTab={activeTab as any} setActiveTab={setActiveTab as any} galleryActive={galleryActive}
+                                        setMyDisplayName={setMyDisplayName}
+                                        statusInput={statusInput} setStatusInput={setStatusInput}
+                                        radius={radius} handleUpdateRadius={handleUpdateRadius} games={games} userPosts={userPosts} isCreatingPost={isCreatingPost}
                                         setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle} isSavingPost={isSavingPost}
                                         ws={ws} myObfPos={myObfPos} user={user} showNotification={showNotification} setIsSheetExpanded={setIsSheetExpanded}
                                         setMainTab={setMainTab} handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
-                                        fetchUserPosts={fetchUserPosts} externalApi={externalApi}
-                                        showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
-                                        avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
+                                        fetchUserPosts={fetchUserPosts} externalApi={externalApi} setMyAvatarUrl={setMyAvatarUrl}
                                         triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
                                         requestLocation={requestLocation}
                                     />

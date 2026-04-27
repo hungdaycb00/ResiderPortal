@@ -106,6 +106,7 @@ interface SeaGameContextType {
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
   pickupItem: (spawnId: string) => Promise<boolean>;
+  inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
   saveInventory: (inventory: SeaItem[]) => Promise<void>;
   saveStorage: (storage: SeaItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
@@ -354,6 +355,26 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     }
   }, [deviceId, API, state.inventory]);
 
+  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
+    if (!deviceId) return false;
+    try {
+      const res = await fetch(`${API}/api/sea/minigame-lose`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, spawnId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
+        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[SeaGame] minigamePenalty error:', err);
+      return false;
+    }
+  }, [deviceId, API]);
+
   const destroyItem = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
     try {
@@ -569,7 +590,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,
     isChallengeActive, setIsChallengeActive, globalSettings,
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
-    initGame, loadState, moveBoat, pickupItem, destroyItem, saveInventory, saveStorage, saveBags,
+    initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       setFortressStorageMode(mode);

@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Minimize2, X } from 'lucide-react';
-import { CreatorViewProps, DeviceType, Orientation, DocGraphics, DocMode } from '../../creator/types';
+import { CreatorViewProps, DeviceType, Orientation, DocGraphics, DocMode } from '../../../../creator/types';
 import { Monitor } from 'lucide-react';
-import { usePreviewScale } from '../../creator/hooks/usePreviewScale';
-import { useFileProcessor } from '../../creator/hooks/useFileProcessor';
-import { useGameManager } from '../../creator/hooks/useGameManager';
-import CreatorSidebar from '../../creator/components/CreatorSidebar';
-import PreviewArea from '../../creator/components/PreviewArea';
-import MyGamesModal from '../../creator/modals/MyGamesModal';
-import EditGameModal from '../../creator/modals/EditGameModal';
-import FeedbackModal from '../../creator/modals/FeedbackModal';
-import OutdatedBuildModal from '../../creator/modals/OutdatedBuildModal';
-import PasteCodeModal from '../../creator/modals/PasteCodeModal';
-import DocOptionsModal from '../../creator/modals/DocOptionsModal';
+import { usePreviewScale } from '../../../../creator/hooks/usePreviewScale';
+import { useFileProcessor } from '../../../../creator/hooks/useFileProcessor';
+import { useGameManager } from '../../../../creator/hooks/useGameManager';
+import CreatorSidebar from '../../../../creator/components/CreatorSidebar';
+import PreviewArea from '../../../../creator/components/PreviewArea';
+import MyGamesModal from '../../../../creator/modals/MyGamesModal';
+import EditGameModal from '../../../../creator/modals/EditGameModal';
+import FeedbackModal from '../../../../creator/modals/FeedbackModal';
+import OutdatedBuildModal from '../../../../creator/modals/OutdatedBuildModal';
+import PasteCodeModal from '../../../../creator/modals/PasteCodeModal';
+import DocOptionsModal from '../../../../creator/modals/DocOptionsModal';
 
 export default function CreatorTabView({ 
   user, showNotification, onPublishSuccess, onPlayGame, 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { normalizeImageUrl } from '../../services/externalApi';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Edit } from 'lucide-react';
 
 const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts, requireAuth }: any) => {

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { getBaseUrl } from '../../../services/externalApi';
+import { getBaseUrl } from '../../../../../services/externalApi';
 
 interface UseAvatarUploadParams {
     user: any;

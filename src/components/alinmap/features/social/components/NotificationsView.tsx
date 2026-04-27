@@ -1,14 +1,15 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { useSocial } from '../context/SocialContext';
 
 interface NotificationsViewProps {
-    notifications: any[];
     externalApi: any;
-    fetchNotifications: () => void;
 }
 
-const NotificationsView: React.FC<NotificationsViewProps> = ({ notifications, externalApi, fetchNotifications }) => {
+const NotificationsView: React.FC<NotificationsViewProps> = ({ externalApi }) => {
+    const { notifications, fetchNotifications } = useSocial();
+
     return (
         <div className="space-y-4 pt-16 md:pt-4">
             <div className="flex items-center justify-between px-1 mb-2">

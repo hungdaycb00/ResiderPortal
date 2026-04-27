@@ -1,16 +1,17 @@
 import React from 'react';
 import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package } from 'lucide-react';
+import { useSocial } from './features/social/context/SocialContext';
 
 interface NavigationBarProps {
     mainTab: string;
     selectedUser: any;
     isDesktop: boolean;
-    unreadCount: number;
     handleTabClick: (tabId: string) => void;
     user?: any;
 }
 
-const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, unreadCount, handleTabClick, user }) => {
+const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user }) => {
+    const { unreadCount } = useSocial();
     return (
         <>
             {/* Global Left Navigation (PC Only) */}

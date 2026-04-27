@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit, Copy } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { useProfile } from '../context/ProfileContext';
 
 interface ProfileHeaderProps {
     myUserId: string | null;
@@ -8,10 +9,6 @@ interface ProfileHeaderProps {
     myDisplayName: string;
     myAvatarUrl: string;
     currentProvince: string | null;
-    isEditingName: boolean;
-    setIsEditingName: (v: boolean) => void;
-    nameInput: string;
-    setNameInput: (v: string) => void;
     setMyDisplayName: (v: string) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
@@ -25,10 +22,11 @@ interface ProfileHeaderProps {
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     myUserId, userEmail, myDisplayName, myAvatarUrl, currentProvince,
-    isEditingName, setIsEditingName, nameInput, setNameInput, setMyDisplayName,
+    setMyDisplayName,
     ws, showNotification, showAvatarMenu, setShowAvatarMenu,
     avatarInputRef, handleAvatarUpload, handleDefaultAvatar, requireAuth,
 }) => {
+    const { isEditingName, setIsEditingName, nameInput, setNameInput } = useProfile();
     const saveName = () => {
         if (requireAuth && !requireAuth('doi ten hien thi')) return;
         setMyDisplayName(nameInput);

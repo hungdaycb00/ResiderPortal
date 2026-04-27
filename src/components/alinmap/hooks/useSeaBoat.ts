@@ -61,10 +61,16 @@ export function useSeaBoat({
 
     // Auto-pickup loop
     useAnimationFrame(() => {
+        if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen) {
+            // Stop movement if any event is active
+            if (boatMoveRef.current) {
+                boatMoveRef.current.stop();
+                boatMoveRef.current = null;
+            }
+            return;
+        }
         if (
-            !isSeaGameMode ||
-            !seaGameCtx ||
-            !myObfPos ||
             !seaGameCtx.worldItems?.length ||
             seaGameCtx.pickupRewardItem ||
             seaGameCtx.pendingBagSwap ||

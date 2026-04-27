@@ -9,11 +9,13 @@ import SearchHeader from './alinmap/SearchHeader';
 import ContextMenu from './alinmap/ContextMenu';
 import SeaGameProvider, { useSeaGame } from './alinmap/sea-game/SeaGameProvider';
 import SeaGameUI from './alinmap/sea-game/SeaGameUI';
+import { SocialProvider } from './alinmap/features/social/context/SocialContext';
+import { ProfileProvider } from './alinmap/features/profile/context/ProfileContext';
 
 // Hooks
 import { useGeolocation } from './alinmap/hooks/useGeolocation';
 import { useAlinWebSocket } from './alinmap/hooks/useAlinWebSocket';
-import { usePosts } from './alinmap/hooks/usePosts';
+import { usePosts } from './alinmap/features/profile/hooks/usePosts';
 import { useMapNavigation } from './alinmap/hooks/useMapNavigation';
 import { useDesktopSearch } from './alinmap/hooks/useDesktopSearch';
 
@@ -39,27 +41,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     // --- Geolocation / Weather / Province ---
     const geo = useGeolocation();
 
-    // --- Social state ---
-    const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
-    const [myStatus, setMyStatus] = useState("");
-    const [friendIdInput, setFriendIdInput] = useState('');
-    const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
-    const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(() => {
-        const saved = localStorage.getItem('alinmap_visible');
-        return saved !== null ? saved === 'true' : !!user;
-    });
-
-    useEffect(() => {
-        localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
-    }, [isVisibleOnMap]);
-
-    const [isReporting, setIsReporting] = useState(false);
-    const [reportReason, setReportReason] = useState("");
-    const [reportStatus, setReportStatus] = useState("");
-    const [isEditingStatus, setIsEditingStatus] = useState(false);
-    const [isEditingName, setIsEditingName] = useState(false);
-    const [nameInput, setNameInput] = useState("");
-    const [notifications, setNotifications] = useState<any[]>([]);
     const [searchTag, setSearchTag] = useState('');
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
@@ -68,16 +49,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const seaGame = useSeaGame();
     const { isSeaGameMode, state: seaState, pickupRewardItem, setPickupRewardItem } = seaGame;
 
-    // --- Notifications ---
-    const fetchNotifications = useCallback(async () => {
-        if (!user) return;
-        try {
-            const resp = await fetch(`${API_BASE}/api/notifications`, { headers: { 'X-Device-Id': externalApi.getDeviceId() }});
-            const data = await resp.json();
-            if (data.success) setNotifications(data.notifications);
-        } catch (err) { console.error('Fetch notifications error:', err); }
-    }, [API_BASE, externalApi, user]);
-
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
         position: geo.position,
@@ -85,15 +56,18 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         setMyObfPos: geo.setMyObfPos,
         radius: 5,
         searchTag,
-        myStatus,
-        isVisibleOnMap,
+        myStatus: "",
+        isVisibleOnMap: (() => {
+            const saved = localStorage.getItem('alinmap_visible');
+            return saved !== null ? saved === 'true' : !!user;
+        })(),
         user,
         externalApi,
         currentProvince: geo.currentProvince,
-        panX: undefined as any, // Will be set after nav hook
+        panX: undefined as any,
         panY: undefined as any,
-        fetchNotifications,
-        onStatusSync: (status: string) => setMyStatus(status),
+        fetchNotifications: async () => {},
+        onStatusSync: () => {}, // We will update ProfileContext from children or a separate effect if needed
     });
 
     const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
@@ -143,48 +117,12 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     // --- Desktop Search ---
     const search = useDesktopSearch(searchTag, nav.isDesktop);
 
-    // --- Fetch notifications on WS open ---
-    useEffect(() => {
-        if (wsCtx.wsStatus === 'OPEN') fetchNotifications();
-    }, [wsCtx.wsStatus, fetchNotifications]);
-
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
         if (!user && geo.position && !geo.myObfPos) {
             geo.setMyObfPos({ lat: geo.position[0], lng: geo.position[1] });
         }
     }, [user, geo.position, geo.myObfPos]);
-
-    // --- Social actions ---
-    const handleAddFriend = async (targetUser?: any) => {
-        if (!requireAuth('ket ban')) return;
-        const userToAdd = targetUser || nav.selectedUser;
-        if (!userToAdd) return;
-        try {
-            const resp = await fetch(`${API_BASE}/api/friends/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId: externalApi.getDeviceId(), targetId: userToAdd.id }),
-            });
-            const data = await resp.json().catch(() => ({}));
-            if (!resp.ok || !data.success) throw new Error(data.error || 'Failed to send friend request.');
-            setSentFriendRequests(prev => prev.includes(userToAdd.id) ? prev : [...prev, userToAdd.id]);
-            showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
-        } catch (err: any) {
-            if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
-                showNotification?.("Request already sent or you are already friends!", 'info');
-            } else { showNotification?.(err.message || "Failed to send friend request.", 'error'); }
-        }
-    };
-
-    const handleMessage = (targetUser?: any) => {
-        if (!requireAuth('nhan tin')) return;
-        const userToMsg = targetUser || nav.selectedUser;
-        if (!userToMsg || !onOpenChat) return;
-        onOpenChat(userToMsg.id, userToMsg.username || 'User', userToMsg.avatar_url || userToMsg.photoURL || '');
-    };
-
-    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     // --- Avatar state (from WS context) ---
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -212,6 +150,19 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     };
 
     return (
+        <ProfileProvider initialIsVisible={(() => {
+            const saved = localStorage.getItem('alinmap_visible');
+            return saved !== null ? saved === 'true' : !!user;
+        })()}>
+        <SocialProvider
+            user={user}
+            externalApi={externalApi}
+            apiBase={API_BASE}
+            showNotification={showNotification}
+            requireAuth={requireAuth}
+            onOpenChat={onOpenChat}
+            selectedUser={nav.selectedUser}
+        >
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
             {/* Header / Search Bar */}
             <SearchHeader
@@ -236,8 +187,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
             <MapCanvas
                 position={geo.position} isConsentOpen={geo.isConsentOpen} myObfPos={geo.myObfPos} nearbyUsers={wsCtx.nearbyUsers}
-                myUserId={wsCtx.myUserId} user={user} myDisplayName={wsCtx.myDisplayName} myStatus={myStatus}
-                isVisibleOnMap={isVisibleOnMap} isConnecting={wsCtx.isConnecting} isDesktop={nav.isDesktop}
+                myUserId={wsCtx.myUserId} user={user} myDisplayName={wsCtx.myDisplayName} myStatus={""}
+                isVisibleOnMap={true} isConnecting={wsCtx.isConnecting} isDesktop={nav.isDesktop}
                 currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                 galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
                 filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
@@ -267,33 +218,26 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSeaGameMode={isSeaGameMode}
             />
 
-            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} unreadCount={unreadCount} handleTabClick={nav.handleTabClick} user={user} />
+            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} />
 
             <BottomSheet
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
                 activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
                 games={games} userGames={posts.userGames} userPosts={posts.userPosts} myUserId={wsCtx.myUserId}
                 myDisplayName={wsCtx.myDisplayName} myStatus={myStatus} myObfPos={geo.myObfPos} user={user}
-                searchTag={searchTag} isReporting={isReporting} reportReason={reportReason}
-                reportStatus={reportStatus} sentFriendRequests={sentFriendRequests}
-                isEditingStatus={isEditingStatus} isEditingName={isEditingName} statusInput={wsCtx.statusInput}
-                nameInput={nameInput} isVisibleOnMap={isVisibleOnMap} friendIdInput={friendIdInput}
-                socialSection={socialSection} isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
+                searchTag={searchTag}
+                isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
-                radius={nav.radius} notifications={notifications} fetchNotifications={fetchNotifications} fetchUserPosts={posts.fetchUserPosts}
+                radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
                 showNotification={showNotification}
                 ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} scale={nav.scale} externalApi={externalApi} onOpenChat={onOpenChat}
                 setSentFriendRequests={setSentFriendRequests} handleUpdateRadius={nav.handleUpdateRadius}
                 setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
-                setMainTab={nav.setMainTab} setSearchTag={setSearchTag} setIsReporting={setIsReporting}
-                setReportReason={setReportReason} setReportStatus={setReportStatus}
-                setIsEditingStatus={setIsEditingStatus} setIsEditingName={setIsEditingName}
-                setStatusInput={wsCtx.setStatusInput} setNameInput={setNameInput} setMyStatus={setMyStatus}
-                setMyDisplayName={wsCtx.setMyDisplayName} setIsVisibleOnMap={setIsVisibleOnMap}
+                setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
+                setStatusInput={wsCtx.setStatusInput}
+                setMyDisplayName={wsCtx.setMyDisplayName}
                 myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
-                setFriendIdInput={setFriendIdInput} setSocialSection={setSocialSection}
                 setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
-                handleAddFriend={handleAddFriend} handleMessage={handleMessage}
                 handleCreatePost={posts.handleCreatePost} handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
                 handlePlayGame={handlePlayGame}
                 cloudflareUrl={cloudflareUrl}
@@ -316,8 +260,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                     panY={nav.panY}
                     ws={wsCtx.ws}
                     setSelectedUser={nav.setSelectedUser}
-                    handleAddFriend={handleAddFriend}
-                    handleMessage={handleMessage}
                 />
             )}
 
@@ -357,6 +299,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 </div>
             )}
         </div>
+        </SocialProvider>
+        </ProfileProvider>
     );
 };
 

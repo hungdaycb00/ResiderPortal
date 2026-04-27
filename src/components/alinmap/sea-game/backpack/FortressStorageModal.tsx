@@ -30,6 +30,15 @@ export default function FortressStorageModal() {
 
   if (!isFortressStorageOpen) return null;
 
+  const handleTransferItem = async (item: SeaItem, source: 'inventory' | 'storage') => {
+    if (source === 'inventory') {
+      await storeItems([item.uid], 'store', fortressStorageMode);
+    } else {
+      if (isPortalMode) return;
+      await storeItems([item.uid], 'retrieve', 'fortress');
+    }
+  };
+
   const handleDropToStorage = async () => {
     if (!dragging || dragging.source !== 'inventory') return;
     await storeItems([dragging.uid], 'store', fortressStorageMode);
@@ -94,8 +103,8 @@ export default function FortressStorageModal() {
       <p className="mb-3 text-[11px] text-cyan-100/65">{caption}</p>
 
       <div 
-        className="subtle-scrollbar grid max-h-[45vh] grid-cols-7 gap-[1px] overflow-y-auto rounded-xl border-2 border-[rgba(30,60,90,0.4)] bg-[#060d17] p-1 mx-auto"
-        style={{ width: "fit-content" }}
+        className="subtle-scrollbar grid grid-cols-7 gap-[1px] overflow-y-auto rounded-xl border-2 border-[rgba(30,60,90,0.4)] bg-[#060d17] p-1 mx-auto"
+        style={{ width: "fit-content", maxHeight: "400px" }}
       >
         {items.map((item) => (
           <button
@@ -104,6 +113,7 @@ export default function FortressStorageModal() {
             draggable
             onDragStart={() => setDragging({ uid: item.uid, source })}
             onDragEnd={() => setDragging(null)}
+            onDoubleClick={() => handleTransferItem(item, source)}
             title={formatItemTooltip(item)}
             className="flex aspect-square w-[40px] h-[40px] items-center justify-center border border-[rgba(25,45,65,0.3)] bg-[rgba(8,12,20,0.6)] text-2xl transition-all hover:scale-[1.04] hover:border-cyan-500/60 z-10"
           >
@@ -121,7 +131,7 @@ export default function FortressStorageModal() {
   );
 
   const InventoryPanel = () => {
-    const allowRetrieveDrop = dragging?.source === 'storage';
+    const allowRetrieveDrop = dragging?.source === 'storage' && !isPortalMode;
 
     return (
       <div
@@ -155,6 +165,7 @@ export default function FortressStorageModal() {
             items={state.inventory}
             bags={state.bags}
             onItemLayoutChange={(newItems) => saveInventory(newItems)}
+            onItemDoubleClick={(item) => handleTransferItem(item, 'inventory')}
             cellSize={Math.min(40, (window.innerWidth - 96) / MAX_GRID_W)}
           />
         </div>
@@ -169,6 +180,7 @@ export default function FortressStorageModal() {
                 draggable
                 onDragStart={() => setDragging({ uid: item.uid, source: 'inventory' })}
                 onDragEnd={() => setDragging(null)}
+                onDoubleClick={() => handleTransferItem(item, 'inventory')}
                 title={formatItemTooltip(item)}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-900/40 bg-[#0d2137] text-xl transition-all hover:scale-[1.04] hover:border-cyan-500/60"
               >
@@ -186,7 +198,7 @@ export default function FortressStorageModal() {
 
   return (
     <div className="fixed inset-0 z-[400] flex items-center justify-center lg:p-4 bg-black/60 backdrop-blur-sm">
-      <div className="flex flex-col bg-[#040b12] text-white w-full h-full lg:w-1/3 lg:h-1/2 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl overflow-hidden">
+      <div className="flex flex-col bg-[#040b12] text-white w-full h-full lg:w-1/3 lg:h-3/4 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
@@ -194,7 +206,7 @@ export default function FortressStorageModal() {
             {isPortalMode ? 'Cong Portal' : 'Kho Thanh Tri'}
           </h2>
           <p className="mt-1 text-[11px] text-cyan-100/65">
-            {isPortalMode ? 'Keo item tu hom do tren thuyen sang kho de cat tru.' : 'Keo item qua lai giua thuyen va kho.'}
+            {isPortalMode ? 'Nhanh dup mon do de gui vao kho tu xa.' : 'Nhanh dup mon do de chuyen qua lai giua thuyen va kho.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -228,27 +240,15 @@ export default function FortressStorageModal() {
         <div className="mb-4 flex items-center justify-center gap-2 text-cyan-300/70">
           <ArrowRightLeft className="h-4 w-4" />
           <span className="text-xs font-bold uppercase tracking-[0.24em]">
-            {isPortalMode ? 'Keo tu trai sang phai' : 'Keo qua lai giua hai ben'}
+            {isPortalMode ? 'Nhan nhap dup vao mon do ben trai' : 'Nhap dup vao mon do de chuyen nhanh'}
           </span>
         </div>
 
         <div className="flex flex-col-reverse lg:grid flex-1 gap-4 lg:grid-cols-2">
-          {isPortalMode ? (
-            <Column
-              title="Hom do tren thuyen"
-              icon={<Package className="h-4 w-4" />}
-              items={backpackItems}
-              source="inventory"
-              onDrop={handleDropToInventory}
-              allowDrop={false}
-              caption="Keo item sang kho portal de cat tu xa."
-            />
-          ) : (
-            <InventoryPanel />
-          )}
+          <InventoryPanel />
 
           <Column
-            title={isPortalMode ? 'Kho portal' : 'Kho do'}
+            title={isPortalMode ? 'Kho portal' : 'Kho thanh tri'}
             icon={isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
             items={storageItems}
             source="storage"

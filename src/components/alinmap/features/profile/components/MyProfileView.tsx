@@ -2,32 +2,24 @@ import React from 'react';
 import { Edit, Bookmark, LogIn, LogOut } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
-import CreatePostForm from './CreatePostForm';
-import PostCard from '../PostCard';
+import CreatePostForm from '../../creator/components/CreatePostForm';
+import PostCard from './PostCard';
+import { useProfile } from '../context/ProfileContext';
+import { useAvatarUpload } from '../hooks/useAvatarUpload';
 
 interface MyProfileViewProps {
     myUserId: string | null;
     myDisplayName: string;
     myAvatarUrl: string;
-    myStatus: string;
     currentProvince: string | null;
     activeTab: 'info' | 'posts' | 'saved';
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     galleryActive: boolean;
-    isEditingName: boolean;
-    setIsEditingName: (v: boolean) => void;
-    nameInput: string;
-    setNameInput: (v: string) => void;
     setMyDisplayName: (v: string) => void;
-    isEditingStatus: boolean;
-    setIsEditingStatus: (v: boolean) => void;
     statusInput: string;
     setStatusInput: (v: string) => void;
-    setMyStatus: (v: string) => void;
     radius: number;
     handleUpdateRadius: (v: number) => void;
-    isVisibleOnMap: boolean;
-    setIsVisibleOnMap: (v: boolean) => void;
     games: any[];
     userPosts: any[];
     isCreatingPost: boolean;
@@ -46,11 +38,7 @@ interface MyProfileViewProps {
     handleDeletePost: (postId: string) => void;
     fetchUserPosts: (uid: string) => void;
     externalApi: any;
-    showAvatarMenu: boolean;
-    setShowAvatarMenu: (v: boolean) => void;
-    avatarInputRef: React.RefObject<HTMLInputElement>;
-    handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDefaultAvatar: () => void;
+    setMyAvatarUrl: (v: string) => void;
     triggerAuth?: (callback: () => void) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     logout?: () => void;
@@ -59,17 +47,27 @@ interface MyProfileViewProps {
 
 const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     const {
-        myUserId, myDisplayName, myAvatarUrl, myStatus, currentProvince,
-        activeTab, setActiveTab, galleryActive, isEditingName, setIsEditingName,
-        nameInput, setNameInput, setMyDisplayName, isEditingStatus, setIsEditingStatus,
-        statusInput, setStatusInput, setMyStatus, radius, handleUpdateRadius,
-        isVisibleOnMap, setIsVisibleOnMap, games, userPosts,
+        myUserId, myDisplayName, myAvatarUrl, currentProvince,
+        activeTab, setActiveTab, galleryActive,
+        setMyDisplayName,
+        statusInput, setStatusInput, radius, handleUpdateRadius,
+        games, userPosts,
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, isSavingPost,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleCreatePost, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
-        showAvatarMenu, setShowAvatarMenu, avatarInputRef, handleAvatarUpload, handleDefaultAvatar,
+        setMyAvatarUrl,
         triggerAuth, requireAuth, logout, requestLocation
     } = props;
+
+    const { 
+        myStatus, setMyStatus,
+        isVisibleOnMap, setIsVisibleOnMap,
+        isEditingStatus, setIsEditingStatus,
+        isEditingName, setIsEditingName,
+        nameInput, setNameInput
+    } = useProfile();
+
+    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
 
     const openCreatePost = (open: boolean) => {
         if (open && requireAuth && !requireAuth('dang bai viet')) return;
@@ -106,11 +104,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
 
             <ProfileHeader
                 myUserId={myUserId} userEmail={user?.email || null} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl}
-                currentProvince={currentProvince} isEditingName={isEditingName} setIsEditingName={setIsEditingName}
-                nameInput={nameInput} setNameInput={setNameInput} setMyDisplayName={setMyDisplayName}
+                currentProvince={currentProvince}
+                setMyDisplayName={setMyDisplayName}
                 ws={ws} showNotification={showNotification}
-                showAvatarMenu={showAvatarMenu} setShowAvatarMenu={setShowAvatarMenu}
-                avatarInputRef={avatarInputRef} handleAvatarUpload={handleAvatarUpload} handleDefaultAvatar={handleDefaultAvatar}
+                showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
+                avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
                 requireAuth={requireAuth}
             />
 
@@ -146,11 +144,8 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
 
             {activeTab === 'info' ? (
                 <ProfileInfoTab
-                    myUserId={myUserId} myStatus={myStatus} setMyStatus={setMyStatus}
-                    isEditingStatus={isEditingStatus} setIsEditingStatus={setIsEditingStatus}
-                    statusInput={statusInput} setStatusInput={setStatusInput}
+                    myUserId={myUserId}
                     radius={radius} handleUpdateRadius={handleUpdateRadius}
-                    isVisibleOnMap={isVisibleOnMap} setIsVisibleOnMap={setIsVisibleOnMap}
                     games={games} ws={ws} myObfPos={myObfPos}
                     setIsSheetExpanded={setIsSheetExpanded} setMainTab={setMainTab}
                     logout={logout} user={user} requireAuth={requireAuth}

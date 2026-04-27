@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 import { Edit, X, Compass, ChevronRight, Plus, LogOut } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { useProfile } from '../context/ProfileContext';
 
 interface ProfileInfoTabProps {
     myUserId: string | null;
-    myStatus: string;
-    setMyStatus: (v: string) => void;
-    isEditingStatus: boolean;
-    setIsEditingStatus: (v: boolean) => void;
-    statusInput: string;
-    setStatusInput: (v: string) => void;
     radius: number;
     handleUpdateRadius: (v: number) => void;
-    isVisibleOnMap: boolean;
-    setIsVisibleOnMap: (v: boolean) => void;
     games: any[];
     ws: React.MutableRefObject<WebSocket | null>;
     myObfPos: any;
@@ -26,11 +19,16 @@ interface ProfileInfoTabProps {
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
-    myUserId, myStatus, setMyStatus, isEditingStatus, setIsEditingStatus,
-    statusInput, setStatusInput, radius, handleUpdateRadius,
-    isVisibleOnMap, setIsVisibleOnMap, games, ws, myObfPos,
+    myUserId, radius, handleUpdateRadius,
+    games, ws, myObfPos,
     setIsSheetExpanded, setMainTab, logout, user, requireAuth, requestLocation,
 }) => {
+    const {
+        myStatus, setMyStatus,
+        isEditingStatus, setIsEditingStatus,
+        statusInput, setStatusInput,
+        isVisibleOnMap, setIsVisibleOnMap
+    } = useProfile();
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
 

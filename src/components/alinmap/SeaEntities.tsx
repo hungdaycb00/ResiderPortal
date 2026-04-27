@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, MotionValue } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate } from 'framer-motion';
 import { DEGREES_TO_PX } from './constants';
 
 interface SeaEntitiesProps {
@@ -15,8 +15,28 @@ interface SeaEntitiesProps {
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
     myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
+    const x1 = useMotionTemplate`calc(50% - ${boatOffsetX}px)`;
+    const y1 = useMotionTemplate`calc(50% + ${boatOffsetY}px)`;
+
     return (
         <>
+            {/* SVG Layer for lines */}
+            {boatTargetPin && (
+                <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-[84]" style={{ overflow: 'visible' }}>
+                    <motion.line
+                        x1={x1}
+                        y1={y1}
+                        x2={`calc(50% + ${(boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX}px)`}
+                        y2={`calc(50% + ${-(boatTargetPin.lat - myObfPos.lat) * DEGREES_TO_PX}px)`}
+                        stroke="rgba(34, 211, 238, 0.6)" // cyan-400
+                        strokeWidth="3"
+                        strokeDasharray="8 8"
+                        strokeLinecap="round"
+                        className="animate-[dash_1s_linear_infinite]"
+                    />
+                </svg>
+            )}
+
             {seaState?.fortressLat && (() => {
                 const fLat = seaState.fortressLat - (myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX);
                 const fLng = seaState.fortressLng - (myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX);

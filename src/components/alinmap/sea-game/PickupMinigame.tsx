@@ -65,6 +65,7 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'light') => {
 interface PickupMinigameProps {
   type: 'fishing' | 'diving' | 'chest'; // fishing=Fruit, diving=Memory, chest=Minesweeper
   difficulty: number; // 1=Common, 2=Uncommon, 3=Rare, 4=Legendary
+  tier: number; // 0=0g, 1=10g, etc.
   onWin: () => void;
   onLose: () => void;
   onClose: () => void;
@@ -73,14 +74,11 @@ interface PickupMinigameProps {
 // ==========================================
 // 1. Fruit Game (Fishing Alternative)
 // ==========================================
-const FruitGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void }> = ({ diff, onWin, onLose }) => {
+const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
   const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', '🥝', '🥭'];
-  const config = {
-    1: { rows: 4, cols: 4, time: 60 },
-    2: { rows: 4, cols: 5, time: 50 },
-    3: { rows: 5, cols: 6, time: 40 },
-    4: { rows: 6, cols: 6, time: 30 },
-  }[diff as 1|2|3|4] || { rows: 4, cols: 4, time: 60 };
+  const rows = Math.min(7, 4 + Math.floor(tier / 2));
+  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
+  const config = { rows, cols, time: Math.max(20, 60 - tier * 5) };
 
   const [grid, setGrid] = useState<{f: string | null, id: number}[][]>([]);
   const [selection, setSelection] = useState<{r: number, c: number} | null>(null);
@@ -90,11 +88,14 @@ const FruitGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void 
   useEffect(() => {
     const total = config.rows * config.cols;
     const tiles: string[] = [];
-    for (let i = 0; i < total / 2; i++) {
+    const pairs = Math.floor(total / 2);
+    for (let i = 0; i < pairs; i++) {
       const f = FRUITS[i % FRUITS.length];
       tiles.push(f, f);
     }
+    if (total % 2 !== 0) tiles.push('🌟'); // Add a star for odd grids
     tiles.sort(() => Math.random() - 0.5);
+    
     const newGrid = [];
     let idx = 0;
     for (let r = 0; r < config.rows; r++) {
@@ -120,26 +121,38 @@ const FruitGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void 
     playSound('click');
     triggerHaptic('light');
 
+    if (grid[r][c].f === '🌟') {
+        const newGrid = [...grid.map(row => [...row])];
+        newGrid[r][c].f = null;
+        setGrid(newGrid);
+        playSound('correct');
+        checkWin(newGrid);
+        return;
+    }
+
     if (!selection) {
       setSelection({ r, c });
     } else {
       if (selection.r === r && selection.c === c) { setSelection(null); return; }
       if (grid[r][c].f === grid[selection.r][selection.c].f) {
-        // Simplified connection: any pair matches for Sea Game speed
         const newGrid = [...grid.map(row => [...row])];
         newGrid[r][c].f = null;
         newGrid[selection.r][selection.c].f = null;
         setGrid(newGrid);
         setSelection(null);
         playSound('correct');
-        if (newGrid.every(row => row.every(cell => cell.f === null))) {
-          setGameState('won');
-          playSound('success');
-          setTimeout(onWin, 1500);
-        }
+        checkWin(newGrid);
       } else {
         setSelection({ r, c });
       }
+    }
+  };
+
+  const checkWin = (g: any[][]) => {
+    if (g.every(row => row.every(cell => cell.f === null))) {
+      setGameState('won');
+      playSound('success');
+      setTimeout(onWin, 1500);
     }
   };
 
@@ -149,13 +162,13 @@ const FruitGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void 
         <span>Fruit Harvest</span>
         <span>⏱️ {timeLeft}s</span>
       </div>
-      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
+      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10 overflow-auto max-h-[50vh]" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
         {grid.map((row, r) => row.map((cell, c) => (
           <button
             key={cell.id}
             onClick={() => handleCellClick(r, c)}
-            className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-xl rounded-lg transition-all ${
-              cell.f ? 'bg-white/10 hover:bg-white/20 active:scale-90' : 'opacity-0'
+            className={`w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-lg rounded-lg transition-all ${
+              cell.f ? 'bg-white/10 hover:bg-white/20 active:scale-90' : 'opacity-0 pointer-events-none'
             } ${selection?.r === r && selection?.c === c ? 'ring-2 ring-emerald-400' : ''}`}
           >
             {cell.f}
@@ -170,14 +183,11 @@ const FruitGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void 
 // ==========================================
 // 2. Memory Game (Diving Alternative)
 // ==========================================
-const MemoryGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void }> = ({ diff, onWin, onLose }) => {
-  const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱'];
-  const config = {
-    1: { rows: 4, cols: 4, time: 45 },
-    2: { rows: 4, cols: 4, time: 35 },
-    3: { rows: 4, cols: 6, time: 45 },
-    4: { rows: 6, cols: 6, time: 60 },
-  }[diff as 1|2|3|4] || { rows: 4, cols: 4, time: 45 };
+const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
+  const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱', '⚓', '🌊'];
+  const rows = Math.min(7, 4 + Math.floor(tier / 2));
+  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
+  const config = { rows, cols, time: Math.max(30, 60 - tier * 5) };
 
   const [cards, setCards] = useState<{v: string, f: boolean, m: boolean}[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
@@ -187,10 +197,12 @@ const MemoryGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void
   useEffect(() => {
     const total = config.rows * config.cols;
     const icons = [];
-    for (let i = 0; i < total / 2; i++) {
+    const pairs = Math.floor(total / 2);
+    for (let i = 0; i < pairs; i++) {
       const icon = ICONS[i % ICONS.length];
       icons.push(icon, icon);
     }
+    if (total % 2 !== 0) icons.push('🐚'); // Filler for odd grids
     icons.sort(() => Math.random() - 0.5);
     setCards(icons.map(v => ({ v, f: false, m: false })));
 
@@ -252,15 +264,14 @@ const MemoryGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void
         <span>Memory Dive</span>
         <span>⏱️ {timeLeft}s</span>
       </div>
-      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
+      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10 overflow-auto max-h-[50vh]" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
         {cards.map((card, i) => (
           <button
             key={i}
             onClick={() => handleClick(i)}
-            className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-xl rounded-lg transition-all ${
+            className={`w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-lg rounded-lg transition-all ${
               card.f || card.m ? 'bg-white rotate-0' : 'bg-blue-600/40 rotate-180'
             }`}
-            style={{ transformStyle: 'preserve-3d' }}
           >
             {(card.f || card.m) ? card.v : '❓'}
           </button>
@@ -274,34 +285,31 @@ const MemoryGame: React.FC<{ diff: number; onWin: () => void; onLose: () => void
 // ==========================================
 // 3. Minesweeper (Chest Alternative)
 // ==========================================
-const Minesweeper: React.FC<{ diff: number; onWin: () => void; onLose: () => void }> = ({ diff, onWin, onLose }) => {
-  const config = {
-    1: { size: 5, mines: 3, time: 60 },
-    2: { size: 6, mines: 6, time: 50 },
-    3: { size: 7, mines: 10, time: 45 },
-    4: { size: 8, mines: 15, time: 40 },
-  }[diff as 1|2|3|4] || { size: 5, mines: 3, time: 60 };
+const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
+  const rows = Math.min(7, 4 + Math.floor(tier / 2));
+  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
+  const config = { size: rows, cols, mines: Math.floor(rows * cols * 0.15), time: Math.max(30, 60 - tier * 5) };
 
   const [grid, setGrid] = useState<{m: boolean, o: boolean, n: number}[][]>([]);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
   const [timeLeft, setTimeLeft] = useState(config.time);
 
   useEffect(() => {
-    const newGrid = Array(config.size).fill(0).map(() => Array(config.size).fill(0).map(() => ({ m: false, o: false, n: 0 })));
+    const newGrid = Array(config.rows).fill(0).map(() => Array(config.cols).fill(0).map(() => ({ m: false, o: false, n: 0 })));
     let m = 0;
     while (m < config.mines) {
-      const r = Math.floor(Math.random() * config.size);
-      const c = Math.floor(Math.random() * config.size);
+      const r = Math.floor(Math.random() * config.rows);
+      const c = Math.floor(Math.random() * config.cols);
       if (!newGrid[r][c].m) { newGrid[r][c].m = true; m++; }
     }
-    for (let r = 0; r < config.size; r++) {
-      for (let c = 0; c < config.size; c++) {
+    for (let r = 0; r < config.rows; r++) {
+      for (let c = 0; c < config.cols; c++) {
         if (newGrid[r][c].m) continue;
         let count = 0;
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
             const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < config.size && nc >= 0 && nc < config.size && newGrid[nr][nc].m) count++;
+            if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols && newGrid[nr][nc].m) count++;
           }
         }
         newGrid[r][c].n = count;
@@ -329,7 +337,7 @@ const Minesweeper: React.FC<{ diff: number; onWin: () => void; onLose: () => voi
       setTimeout(onLose, 1500);
     } else {
       const reveal = (row: number, col: number) => {
-        if (row < 0 || row >= config.size || col < 0 || col >= config.size || newGrid[row][col].o) return;
+        if (row < 0 || row >= config.rows || col < 0 || col >= config.cols || newGrid[row][col].o) return;
         newGrid[row][col].o = true;
         if (newGrid[row][col].n === 0) {
           for (let dr = -1; dr <= 1; dr++)
@@ -354,7 +362,7 @@ const Minesweeper: React.FC<{ diff: number; onWin: () => void; onLose: () => voi
         <span>Safe Chest</span>
         <span>⏱️ {timeLeft}s</span>
       </div>
-      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10" style={{ gridTemplateColumns: `repeat(${config.size}, 1fr)` }}>
+      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10 overflow-auto max-h-[50vh]" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
         {grid.map((row, r) => row.map((cell, c) => (
           <button
             key={`${r}-${c}`}
@@ -375,7 +383,7 @@ const Minesweeper: React.FC<{ diff: number; onWin: () => void; onLose: () => voi
 // ==========================================
 // Main Wrapper
 // ==========================================
-const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, onWin, onLose, onClose }) => {
+const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, tier, onWin, onLose, onClose }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -397,11 +405,12 @@ const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, onWin
               <div key={i} className={`w-3 h-1.5 rounded-full ${i < difficulty ? 'bg-cyan-400' : 'bg-white/10'}`} />
             ))}
           </div>
+          <p className="text-[10px] font-bold text-cyan-500 mt-1 uppercase tracking-widest">Cấp độ thế giới: {tier}</p>
         </div>
 
-        {type === 'fishing' && <FruitGame diff={difficulty} onWin={onWin} onLose={onLose} />}
-        {type === 'diving' && <MemoryGame diff={difficulty} onWin={onWin} onLose={onLose} />}
-        {type === 'chest' && <Minesweeper diff={difficulty} onWin={onWin} onLose={onLose} />}
+        {type === 'fishing' && <FruitGame tier={tier} onWin={onWin} onLose={onLose} />}
+        {type === 'diving' && <MemoryGame tier={tier} onWin={onWin} onLose={onLose} />}
+        {type === 'chest' && <Minesweeper tier={tier} onWin={onWin} onLose={onLose} />}
       </motion.div>
     </motion.div>
   );

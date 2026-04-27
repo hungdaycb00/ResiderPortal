@@ -1,8 +1,8 @@
 import React from 'react';
 import { Diamond, MapPin, Trophy, Plus, Brain, Zap, Sword } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
-import GameCard from '../../GameCard';
-import GameSlider from '../../GameSlider';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import GameCard from '../../../../GameCard';
+import GameSlider from '../../../../GameSlider';
 
 interface DiscoverViewProps {
     games: any[];

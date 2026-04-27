@@ -1,5 +1,6 @@
 import React from 'react';
 import { MotionValue } from 'framer-motion';
+import { useSocial } from './features/social/context/SocialContext';
 
 interface ContextMenuData {
   x: number;
@@ -16,14 +17,13 @@ interface ContextMenuProps {
   panY: MotionValue<number>;
   ws: React.MutableRefObject<WebSocket | null>;
   setSelectedUser: (u: any) => void;
-  handleAddFriend: (u?: any) => void;
-  handleMessage: (u?: any) => void;
 }
 
 const ContextMenu: React.FC<ContextMenuProps> = ({
   contextMenu, setContextMenu, setMyObfPos, panX, panY, ws,
-  setSelectedUser, handleAddFriend, handleMessage,
+  setSelectedUser,
 }) => {
+  const { handleAddFriend, handleMessage } = useSocial();
   return (
     <>
       <div

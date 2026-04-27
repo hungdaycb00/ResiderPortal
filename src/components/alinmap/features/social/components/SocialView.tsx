@@ -1,32 +1,29 @@
 import React from 'react';
 import { Copy, Plus, UserPlus, MessageCircle, Navigation, RefreshCw, AlertTriangle } from 'lucide-react';
-import { normalizeImageUrl } from '../../../services/externalApi';
+import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { useSocial } from '../context/SocialContext';
 
 interface SocialViewProps {
     myUserId: string | null;
     myObfPos: { lat: number; lng: number } | null;
-    friendIdInput: string;
-    setFriendIdInput: (val: string) => void;
-    ws: React.MutableRefObject<WebSocket | null>;
-    setSentFriendRequests: React.Dispatch<React.SetStateAction<string[]>>;
-    socialSection: 'friends' | 'nearby' | 'recent' | 'blocked';
-    setSocialSection: (val: 'friends' | 'nearby' | 'recent' | 'blocked') => void;
     friends: any[];
     nearbyUsers: any[];
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
-    onOpenChat?: (id: string, name: string, avatar?: string) => void;
-    requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
-    handleAddFriendById?: (targetId: string) => Promise<void> | void;
     radius: number;
     handleUpdateRadius: (radius: number) => void;
 }
 
 const SocialView: React.FC<SocialViewProps> = ({
-    myUserId, myObfPos, friendIdInput, setFriendIdInput, ws, setSentFriendRequests,
-    socialSection, setSocialSection, friends, nearbyUsers,
-    setSelectedUser, setActiveTab, onOpenChat, requireAuth, handleAddFriendById, radius, handleUpdateRadius
+    myUserId, myObfPos, friends, nearbyUsers,
+    setSelectedUser, setActiveTab, radius, handleUpdateRadius
 }) => {
+    const { 
+        friendIdInput, setFriendIdInput, 
+        socialSection, setSocialSection, 
+        handleAddFriend, handleMessage 
+    } = useSocial();
+
     const nearbyUsersInRange = nearbyUsers.filter((u) => {
         if (!myObfPos || typeof u?.lat !== 'number' || typeof u?.lng !== 'number') return true;
         const dLat = u.lat - myObfPos.lat;
@@ -48,7 +45,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                 <button 
                     onClick={() => {
                         if (!myUserId) {
-                            requireAuth?.('lay User ID');
+                            // If needed we can trigger an auth request, but myUserId usually exists if they are logged in
                             return;
                         }
                         navigator.clipboard.writeText(myUserId);
@@ -73,9 +70,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                     onClick={async () => {
                         const targetId = friendIdInput.trim();
                         if (!targetId) return;
-                        if (requireAuth && !requireAuth('ket ban')) return;
-                        await handleAddFriendById?.(targetId);
-                        setSentFriendRequests(prev => prev.includes(targetId) ? prev : [...prev, targetId]);
+                        await handleAddFriend({ id: targetId, username: targetId });
                         setFriendIdInput('');
                     }}
                     className="px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs transition-colors active:scale-95 shrink-0"
@@ -124,8 +119,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (requireAuth && !requireAuth('nhan tin')) return;
-                                                onOpenChat?.(f.id, f.displayName || f.username || f.id, f.avatarUrl || f.avatar_url || f.photoURL || '');
+                                                handleMessage(f);
                                             }}
                                             className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
                                         >
