@@ -120,7 +120,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
-        if (!user && geo.position && !geo.myObfPos) {
+        if (!user && Array.isArray(geo.position) && geo.position.length >= 2 && !geo.myObfPos) {
             geo.setMyObfPos({ lat: geo.position[0], lng: geo.position[1] });
         }
     }, [user, geo.position, geo.myObfPos]);

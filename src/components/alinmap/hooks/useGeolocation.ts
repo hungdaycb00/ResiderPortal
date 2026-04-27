@@ -14,7 +14,10 @@ export function useGeolocation() {
   const [position, setPosition] = useState<[number, number] | null>(() => {
     const lastPos = localStorage.getItem('alin_last_position');
     if (lastPos) {
-      try { return JSON.parse(lastPos); } catch (e) {}
+      try {
+        const parsed = JSON.parse(lastPos);
+        if (Array.isArray(parsed) && parsed.length >= 2) return parsed;
+      } catch (e) {}
     }
     return defaultPosition;
   });
@@ -23,7 +26,9 @@ export function useGeolocation() {
     if (lastPos) {
       try {
         const parsed = JSON.parse(lastPos);
-        return { lat: parsed[0], lng: parsed[1] };
+        if (Array.isArray(parsed) && parsed.length >= 2) {
+          return { lat: parsed[0], lng: parsed[1] };
+        }
       } catch (e) {}
     }
     return { lat: defaultPosition[0], lng: defaultPosition[1] };

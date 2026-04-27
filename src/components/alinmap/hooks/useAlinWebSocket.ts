@@ -63,7 +63,7 @@ export function useAlinWebSocket({
   }, []);
 
   const connectWS = useCallback(() => {
-    if (!position || isConnecting) return;
+    if (!Array.isArray(position) || position.length < 2 || isConnecting) return;
     reconnectEnabled.current = true;
     setIsConnecting(true);
 

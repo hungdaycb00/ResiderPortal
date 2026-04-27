@@ -249,7 +249,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           baseMaxHp: s.base_max_hp || 100, currentHp: s.current_hp || 100,
           moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
           cursePercent: s.curse_percent || 0, seaGold: s.sea_gold || 0, worldTier: s.world_tier || 1,
-          inventory: JSON.parse(s.inventory_json || '[]'), storage: JSON.parse(s.storage_json || '[]'),
+          inventory: (() => { try { return JSON.parse(s.inventory_json || '[]'); } catch(e) { return []; } })(),
+          storage: (() => { try { return JSON.parse(s.storage_json || '[]'); } catch(e) { return []; } })(),
           bags,
           distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
         });
