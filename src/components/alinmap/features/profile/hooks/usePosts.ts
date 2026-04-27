@@ -54,6 +54,17 @@ export function usePosts({
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const activeProfileRequestRef = useRef(0);
 
+  const sendGallerySync = () => {
+    const socket = ws.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket not ready to send: UPDATE_GALLERY');
+      return false;
+    }
+
+    socket.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
+    return true;
+  };
+
   const fetchUserPosts = async (userId: string | null | undefined, requestId?: number) => {
     if (!userId || (userId === 'saved' && !user)) return;
     try {
@@ -96,7 +107,7 @@ export function usePosts({
         setPostTitle('');
         setIsCreatingPost(false);
         fetchUserPosts(selfPostsIdentifier);
-        ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
+        sendGallerySync();
         showNotification?.('Post created successfully!', 'success');
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
     } catch (err) { console.error('Create post error:', err); }
@@ -112,7 +123,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, { method: 'PUT', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(selfPostsIdentifier); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(selfPostsIdentifier); sendGallerySync(); }
     } catch (err) { console.error('Star post error:', err); }
   };
 
@@ -126,7 +137,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}`, { method: 'DELETE', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(selfPostsIdentifier); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(selfPostsIdentifier); sendGallerySync(); }
     } catch (err) { console.error('Delete post error:', err); }
   };
 

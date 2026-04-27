@@ -161,12 +161,13 @@ export function useAlinWebSocket({
 
     const currentUser = userRef.current;
     const joinType = currentUser ? 'USER_JOIN' : 'OBSERVER_JOIN';
-    const deviceId = currentUser?.uid || externalApiRef.current.getDeviceId();
+    const deviceId = externalApiRef.current.getDeviceId();
 
     socket.send(JSON.stringify({
       type: joinType,
       payload: {
         deviceId,
+        userId: currentUser?.uid || undefined,
         lat: currentPosition[0],
         lng: currentPosition[1],
         radiusKm: radiusRef.current,

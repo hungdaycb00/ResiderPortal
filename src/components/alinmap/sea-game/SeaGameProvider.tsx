@@ -277,7 +277,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       await res.json();
       await loadState();
     } catch (err) { console.error('[SeaGame] initGame error:', err); }
-  }, [deviceId, API, loadState]);
+  }, [deviceId, API, loadState, state.inventory, state.worldTier]);
 
   const moveBoat = useCallback(async (toLat: number, toLng: number) => {
     if (!deviceId) return { curseTrigger: false, encounter: null };
@@ -467,9 +467,25 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
     if (!deviceId) throw new Error('No device');
+    const normalizedOpponentId = opponentId || '';
+    const isBotOpponent = normalizedOpponentId.startsWith('bot_');
     const res = await fetch(`${API}/api/sea/combat`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, targetUserId: opponentId, botItems: opponentInventory, botHp: opponentHp, botBags: opponentBags }),
+      body: JSON.stringify({
+        deviceId,
+        opponentId: normalizedOpponentId,
+        targetUserId: normalizedOpponentId,
+        targetId: normalizedOpponentId,
+        opponentInventory,
+        opponentHp,
+        opponentBags,
+        botItems: opponentInventory,
+        botHp: opponentHp,
+        botBags: opponentBags,
+        isBot: isBotOpponent,
+        playerItemCount: state.inventory.filter((item) => item.gridX >= 0).length,
+        opponentTier: state.worldTier,
+      }),
     });
     const data = await res.json();
     if (data.success) {
