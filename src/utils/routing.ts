@@ -3,7 +3,7 @@
  * Maps between internal tab IDs and URL paths
  */
 
-export type AppTab = 'home' | 'categories' | 'community' | 'support' | 'chat' | 'friends' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile' | 'backpack';
+export type AppTab = 'home' | 'categories' | 'support' | 'chat' | 'friends' | 'creator' | 'alin' | 'discover' | 'social' | 'notifications' | 'profile' | 'backpack';
 
 // Tabs that trigger AlinMap overlay
 export const ALIN_MAP_TABS: string[] = ['alin', 'discover', 'friends', 'social', 'notifications', 'profile', 'creator', 'backpack'];
@@ -16,7 +16,6 @@ const PATH_TO_TAB: Record<string, AppTab> = {
     'notifications': 'notifications',
     'creator': 'creator',
     'games': 'home',
-    'community': 'community',
     'support': 'support',
     'backpack': 'backpack',
 };
@@ -31,7 +30,6 @@ const TAB_TO_PATH: Record<string, string> = {
     'creator': '/creator',
     'home': '/games',
     'categories': '/games/categories',
-    'community': '/community',
     'support': '/support',
     'chat': '/social',
     'backpack': '/backpack',

@@ -21,7 +21,6 @@ import AlinMap from './components/AlinMap';
 import AppHeader from './components/AppHeader';
 import HomeTab from './components/tabs/HomeTab';
 import CategoriesTab from './components/tabs/CategoriesTab';
-import CommunityTab from './components/tabs/CommunityTab';
 import SupportTab from './components/tabs/SupportTab';
 import { AppModals } from './components/AppModals';
 
@@ -187,7 +186,6 @@ export default function App() {
           />
         )}
         {activeTab === 'categories' && <CategoriesTab fetchedGames={fetchedGames} setActiveTab={setActiveTab} />}
-        {activeTab === 'community' && <CommunityTab fetchedFriends={fetchedFriends} fetchExternalData={fetchExternalData} />}
         {activeTab === 'support' && <SupportTab />}
       </main>
 
