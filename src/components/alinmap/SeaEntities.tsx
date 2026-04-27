@@ -18,6 +18,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
         <>
             {seaState?.fortressLat && (
                 <div
+                    data-sea-entity="true"
                     onClick={(e) => {
                         e.stopPropagation();
                         seaGameCtx?.openFortressStorage?.('fortress');
@@ -60,6 +61,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
 
                 return (
                     <motion.div
+                        data-sea-entity="true"
                         key={item.spawnId}
                         className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
                         style={{

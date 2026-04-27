@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 import { User } from '../types';
 
 interface UseAuthReturn {
     user: User | null;
-    setUser: (u: User | null) => void;
+    setUser: Dispatch<SetStateAction<User | null>>;
     isAuthOpen: boolean;
     setIsAuthOpen: (v: boolean) => void;
     isAuthCallbackQueue: (() => void) | null;

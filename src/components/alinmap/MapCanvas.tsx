@@ -101,12 +101,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 <motion.div style={{ scale }} className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div
                         drag={!(isSeaGameMode && seaGameCtx && !seaGameCtx.isChallengeActive)}
-                        style={{ x: panX, y: panY }}
+                        style={{ x: panX, y: panY, touchAction: isSeaGameMode ? 'manipulation' : undefined }}
                         dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
                         dragElastic={0.1}
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
                         onPointerDown={seaBoat.handlePointerDown}
                         onPointerUp={seaBoat.handlePointerUp}
+                        onPointerCancel={seaBoat.handlePointerCancel}
                         onContextMenu={(e) => {
                             e.preventDefault();
                             if (isSeaGameMode || !myObfPos) return;

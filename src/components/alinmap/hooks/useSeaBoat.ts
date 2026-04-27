@@ -15,9 +15,9 @@ interface UseSeaBoatParams {
 }
 
 const PICKUP_RADIUS_DEG = 0.0011; // forgiving pickup radius
-const PORTAL_RADIUS_DEG = 0.0015;
+const PORTAL_RADIUS_DEG = 0.0024;
 const DOUBLE_TAP_DELAY_MS = 450;
-const TAP_MOVE_TOLERANCE_PX = 16;
+const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useSeaBoat({
     isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY,
@@ -56,6 +56,12 @@ export function useSeaBoat({
         panX,
         panY,
     ]);
+
+    useEffect(() => {
+        if (!seaGameCtx?.isFortressStorageOpen) {
+            activePortalRef.current = null;
+        }
+    }, [seaGameCtx?.isFortressStorageOpen]);
 
     // Auto-pickup loop
     useAnimationFrame(() => {
@@ -190,11 +196,20 @@ export function useSeaBoat({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
+        if ((e.target as HTMLElement)?.closest?.('[data-sea-entity="true"]')) {
+            pointerDownRef.current = null;
+            return;
+        }
         pointerDownRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
+        if ((e.target as HTMLElement)?.closest?.('[data-sea-entity="true"]')) {
+            lastTapRef.current = 0;
+            lastTapPosRef.current = null;
+            return;
+        }
 
         const currentPoint = { x: e.clientX, y: e.clientY };
         if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
@@ -217,10 +232,16 @@ export function useSeaBoat({
         }
     };
 
+    const handlePointerCancel = () => {
+        pointerDownRef.current = null;
+        lastTapRef.current = 0;
+        lastTapPosRef.current = null;
+    };
+
     return {
         boatOffsetX, boatOffsetY,
         boatTargetPin,
-        handlePointerDown, handlePointerUp,
+        handlePointerDown, handlePointerUp, handlePointerCancel,
         handleMapDoubleClick,
     };
 }

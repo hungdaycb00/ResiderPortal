@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { Trash2 } from 'lucide-react';
 import type { SeaItem, BagItem } from './SeaGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './SeaGameProvider';
 
@@ -51,9 +52,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
+  const [isHoveringTrash, setIsHoveringTrash] = useState(false);
   
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
+  const trashRef = useRef<HTMLDivElement>(null);
   const pointerStartRef = useRef<{ itemUid: string; clientX: number; clientY: number } | null>(null);
   const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
@@ -152,6 +155,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     if (!dragMode || !dragItem) return;
     const gridRect = gridRef.current?.getBoundingClientRect();
     const storageRect = storageRef.current?.getBoundingClientRect();
+    const trashRect = trashRef.current?.getBoundingClientRect();
     
     if (gridRect) {
       const relX = clientX - gridRect.left;
@@ -159,8 +163,15 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       pointerCurrentRef.current = { clientX, clientY };
       setDragPos({ x: relX, y: relY });
       
+      if (trashRect &&
+          clientX >= trashRect.left && clientX <= trashRect.right &&
+          clientY >= trashRect.top && clientY <= trashRect.bottom) {
+        setHoverCell(null);
+        setIsHoveringStorage(false);
+        setIsHoveringTrash(true);
+      }
       // Check if hovering grid
-      if (clientX >= gridRect.left && clientX <= gridRect.right &&
+      else if (clientX >= gridRect.left && clientX <= gridRect.right &&
           clientY >= gridRect.top && clientY <= gridRect.bottom) {
         const topLeftX = relX - dragOffset.x;
         const topLeftY = relY - dragOffset.y;
@@ -169,6 +180,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           y: Math.round(topLeftY / cellSize),
         });
         setIsHoveringStorage(false);
+        setIsHoveringTrash(false);
       } 
       // Check if hovering storage
       else if (storageRect && 
@@ -176,10 +188,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
                clientY >= storageRect.top && clientY <= storageRect.bottom) {
         setHoverCell(null);
         setIsHoveringStorage(true);
+        setIsHoveringTrash(false);
       } 
       else {
         setHoverCell(null);
         setIsHoveringStorage(false);
+        setIsHoveringTrash(false);
       }
     }
   }, [dragMode, dragItem, cellSize, dragOffset.x, dragOffset.y]);
@@ -207,7 +221,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     if (wasClick) {
       onItemClick?.(dragItem);
     } else {
-      if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
+      if (isHoveringTrash) {
+        onItemLayoutChange?.(items.filter(i => i.uid !== dragItem.uid));
+      } else if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         // Place on grid
         const newItems = items.map(i =>
           i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
@@ -233,9 +249,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setDragItem(null);
     setHoverCell(null);
     setIsHoveringStorage(false);
+    setIsHoveringTrash(false);
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
-  }, [dragMode, dragItem, hoverCell, isHoveringStorage, items, canPlaceItem, onItemClick, onItemLayoutChange]);
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
@@ -402,11 +419,19 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       {/* Storage Area (Khoảng trống chứa item) */}
       <div 
         ref={storageRef}
-        className={`min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
+        className={`relative min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
           isHoveringStorage ? 'border-cyan-400 bg-[#122b46]' : 'border-cyan-800/50'
         }`}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div
+          ref={trashRef}
+          className={`absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/50 text-red-200 transition-transform ${
+            isHoveringTrash ? 'scale-150 border-red-300 bg-red-800 text-white shadow-lg shadow-red-900/40' : 'scale-100'
+          }`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </div>
+        <div className="mb-2 flex items-center justify-between pl-10">
           <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
             Khu Vực Chờ ({storageItems.length})
           </p>

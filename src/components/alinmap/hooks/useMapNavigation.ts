@@ -100,7 +100,6 @@ export function useMapNavigation({
 
     if (mainTab === tabId) {
       setIsSheetExpanded((prev) => !prev);
-      onTabChange?.(tabId);
       return;
     }
 
@@ -122,7 +121,7 @@ export function useMapNavigation({
         if (!seaState.initialized && myObfPos) {
           await initGame(myObfPos.lat, myObfPos.lng);
         }
-        await loadWorldItems();
+        await loadWorldItems(true);
       };
       void doLoad();
 
