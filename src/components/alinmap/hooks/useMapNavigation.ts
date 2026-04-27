@@ -45,14 +45,14 @@ export function useMapNavigation({
     if (initialMainTab) {
       if (initialMainTab === 'creator' && !user) {
         setMainTab('discover');
-        setIsSheetExpanded(true);
+        setIsSheetExpanded(isDesktop);
         return;
       }
 
       setMainTab(initialMainTab as MainTab);
-      setIsSheetExpanded(true);
+      setIsSheetExpanded(isDesktop || initialMainTab !== 'discover');
     }
-  }, [initialMainTab, requireAuth, user]);
+  }, [initialMainTab, isDesktop, user]);
 
   useEffect(() => {
     if (mainTab === 'backpack' && seaState.initialized && !isSeaGameMode) {
@@ -107,7 +107,9 @@ export function useMapNavigation({
     }
 
     if (tabId === 'backpack') {
-
+      if (!user || (requireAuth && !requireAuth('su dung Balo va Sea Game'))) {
+        return;
+      }
 
       setMainTab('backpack');
       setIsSeaGameMode(true);

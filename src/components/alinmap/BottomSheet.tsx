@@ -48,7 +48,6 @@ interface BottomSheetProps {
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMainTab: (tab: any) => void;
     setSearchTag: (v: string) => void;
-    setSearchTag: (v: string) => void;
     setMyDisplayName: (v: string) => void;
     myAvatarUrl: string;
     setMyAvatarUrl: (v: string) => void;

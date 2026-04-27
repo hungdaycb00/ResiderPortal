@@ -118,18 +118,19 @@ export const externalApi = {
         message: data.details || data.error || `HTTP ${response.status}: ${data.message || 'Endpoint not found'}` 
       };
     } catch (error: any) {
-      console.error('External API check failed:', error);
-      
       let message = 'Connection failed';
       if (error.name === 'AbortError') {
         message = 'Connection timeout';
       } else if (error.message === 'Failed to fetch' || error.message.includes('fetch')) {
+        console.error('External API check failed:', error);
         message = 'Proxy unreachable';
         // Auto-clear broken tunnel URL to allow fallback to local port
         if (!urlOverride && localStorage.getItem('cloudflareUrl')) {
           console.warn('Auto-clearing broken cloudflareUrl to allow local fallback');
           localStorage.removeItem('cloudflareUrl');
         }
+      } else {
+        console.error('External API check failed:', error);
       }
 
       return { status: 'offline', message };
@@ -565,7 +566,7 @@ export const externalApi = {
    * P2P ROOMS API
    */
   async getP2PRooms(gameId: string): Promise<any[]> {
-    return this.request<any[]>(`/api/rooms/p2p?gameId=${encodeURIComponent(gameId)}`);
+    return this.request(`/api/rooms/p2p?gameId=${encodeURIComponent(gameId)}`) as Promise<any[]>;
   },
 
   async createP2PRoom(data: { name: string, hostId: string, hostName: string, password?: string, gameId: string, region: string }): Promise<{ success: boolean, roomId: string }> {

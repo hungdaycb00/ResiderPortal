@@ -12,6 +12,10 @@ interface DiscoverViewProps {
 }
 
 const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame }) => {
+    const gameList = Array.isArray(games) ? games.filter(Boolean) : [];
+    const getGameTitle = (game: any) => game.title || game.name || 'Untitled Game';
+    const getGameImage = (game: any) => game.image || game.thumbnail || game.cover || '';
+
     const AVAILABLE_CATEGORIES = [
         { id: 'puzzle', name: 'Puzzle & Logic', icon: <Brain className="w-5 h-5 text-pink-400" /> },
         { id: 'action', name: 'Action & Arcade', icon: <Zap className="w-5 h-5 text-yellow-400" /> },
@@ -24,7 +28,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
         strategy: ['strategy', 'build', 'defense']
     };
 
-    const uniqueHighRated = Array.from(new Map(games.filter(g => (g.score || 0) >= 8 || g.id === 'quiz-game-root').map(g => [g.id || g.title, g])).values())
+    const uniqueHighRated = Array.from(new Map(gameList.filter(g => (g.score || 0) >= 8 || g.id === 'quiz-game-root').map(g => [g.id || g.slug || getGameTitle(g), g])).values())
         .sort((a, b) => (b.score || 0) - (a.score || 0));
 
     return (
@@ -45,8 +49,8 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                                 onClick={() => handlePlayGame && handlePlayGame(game)}
                                 className="snap-start shrink-0 w-[280px] h-[160px] rounded-3xl overflow-hidden relative transition-transform active:scale-[0.98] bg-gray-50 border border-gray-100 shadow-sm cursor-pointer"
                             >
-                                {game.image ? (
-                                    <img src={normalizeImageUrl(game.image)} className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none" alt="" />
+                                {getGameImage(game) ? (
+                                    <img src={normalizeImageUrl(getGameImage(game))} className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none" alt="" />
                                 ) : (
                                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10" />
                                 )}
@@ -56,7 +60,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                                         <Trophy className="w-2.5 h-2.5" /> Featured {game.score ? `• ${game.score}/10` : '🔥'}
                                     </div>
                                     <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none truncate">
-                                        {game.title}
+                                        {getGameTitle(game)}
                                     </h1>
                                 </div>
                             </div>
@@ -71,11 +75,11 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 icon={<Plus className="w-5 h-5 text-purple-400" />}
                 lightMode
             >
-                {games.map((game, i) => (
+                {gameList.map((game, i) => (
                     <div key={i} className="w-[180px] sm:w-[220px]">
                         <GameCard
-                            title={game.title}
-                            image={normalizeImageUrl(game.image || '')}
+                            title={getGameTitle(game)}
+                            image={normalizeImageUrl(getGameImage(game))}
                             logoStyle={game.logoStyle || "text-white"}
                             onClick={() => handlePlayGame && handlePlayGame(game)}
                             lightMode
@@ -86,9 +90,9 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
 
             {/* Categories */}
             {AVAILABLE_CATEGORIES.map((cat) => {
-                const catGames = games.filter(g =>
+                const catGames = gameList.filter(g =>
                     ((g.category || '').toLowerCase().includes(cat.id)) ||
-                    (keywordsMap[cat.id] && keywordsMap[cat.id].some((k: string) => (g.title || '').toLowerCase().includes(k)))
+                    (keywordsMap[cat.id] && keywordsMap[cat.id].some((k: string) => getGameTitle(g).toLowerCase().includes(k)))
                 );
 
                 if (catGames.length === 0) return null;
@@ -103,8 +107,8 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                             {catGames.map((game, i) => (
                                 <div key={i} className="w-[180px] sm:w-[220px]">
                                     <GameCard
-                                        title={game.title}
-                                        image={normalizeImageUrl(game.image || '')}
+                                        title={getGameTitle(game)}
+                                        image={normalizeImageUrl(getGameImage(game))}
                                         logoStyle={game.logoStyle || "text-white"}
                                         onClick={() => handlePlayGame && handlePlayGame(game)}
                                         lightMode

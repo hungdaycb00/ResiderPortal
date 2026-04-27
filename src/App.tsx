@@ -125,7 +125,15 @@ export default function App() {
     { id: 'adventure', name: 'Adventure', icon: <Sword className="w-3 h-3" /> },
   ];
 
-  const filteredGames = (fetchedGames || []).concat(games).filter(game => {
+  const allGames = useMemo(() => {
+    const mergedGames = [...(fetchedGames || []), ...games].filter(Boolean);
+    return Array.from(new Map(mergedGames.map((game: any) => [
+      game.id || game.slug || game.title || game.name,
+      game,
+    ])).values());
+  }, [fetchedGames]);
+
+  const filteredGames = allGames.filter((game: any) => {
     const title = (game.title || game.name || '').toLowerCase();
     const query = searchQuery.toLowerCase();
     const matchesQuery = title.includes(query);
@@ -189,7 +197,7 @@ export default function App() {
             user={user} 
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
-            games={fetchedGames}
+            games={allGames}
             handlePlayGame={handlePlayGame}
             showNotification={showNotification}
             friends={fetchedFriends}

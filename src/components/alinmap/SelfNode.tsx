@@ -46,7 +46,12 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             <motion.div
                 className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
                 style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY }}
-                onClick={(e) => { e.stopPropagation(); setMainTab?.('backpack'); setIsSheetExpanded(true); }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (!user) return;
+                    setMainTab?.('backpack');
+                    setIsSheetExpanded(true);
+                }}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
             >

@@ -15,8 +15,8 @@ interface SeaEntitiesProps {
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
     myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
-    const lineX1 = useTransform(boatOffsetX, v => Math.round(5000 + v));
-    const lineY1 = useTransform(boatOffsetY, v => Math.round(5000 + v));
+    const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
+    const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));
 
     const lineX2 = boatTargetPin ? Math.round(5000 + (boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX) : 0;
     const lineY2 = boatTargetPin ? Math.round(5000 + -(boatTargetPin.lat - myObfPos.lat) * DEGREES_TO_PX) : 0;
