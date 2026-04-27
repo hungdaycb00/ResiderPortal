@@ -258,6 +258,8 @@ export default function CreatorTabView({
       ) : (
         <div className="flex-1 flex flex-col">
           <MyGamesModal
+            isOpen={isMyGamesListOpen}
+            onClose={() => setIsMyGamesListOpen(false)}
             serverGames={serverGames}
             onPlayGame={onPlayGame!}
             onUpdateGame={gameManager.handleUpdateMyGame}

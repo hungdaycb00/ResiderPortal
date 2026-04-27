@@ -78,7 +78,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             onDoubleClick={(e) => e.stopPropagation()}
             onDragEnd={(e, info) => {
                 if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
-                    const currentScale = scale.get() || 1;
+                    const currentScale = scale?.get?.() || 1;
                     const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
                     const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
                     const newLat = myObfPos.lat + deltaLat;
@@ -88,8 +88,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         payload: { lat: newLat, lng: newLng, zoom: 13 }
                     }));
                     setMyObfPos({ lat: newLat, lng: newLng });
-                    panX.set(panX.get() + info.offset.x / currentScale);
-                    panY.set(panY.get() + info.offset.y / currentScale);
+                    panX.set((panX?.get?.() ?? 0) + info.offset.x / currentScale);
+                    panY.set((panY?.get?.() ?? 0) + info.offset.y / currentScale);
                     selfDragX.set(0);
                     selfDragY.set(0);
                     addLog(`🚀 Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
@@ -114,7 +114,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             onPointerEnter={() => {
-                const s = scale.get();
+                const s = scale?.get?.() ?? 1;
                 document.documentElement.style.setProperty('--self-hover-scale', String(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
             }}
             whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}

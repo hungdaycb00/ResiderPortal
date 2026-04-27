@@ -83,8 +83,8 @@ export function useSeaBoat({
             seaGameCtx.showMinigame
         ) return;
 
-        const currentLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
-        const currentLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
+        const currentLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
+        const currentLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
 
         seaGameCtx.worldItems.forEach((item: any) => {
             if (pickingItemsRef.current.has(item.spawnId)) return;
@@ -152,8 +152,8 @@ export function useSeaBoat({
 
         console.log('[MapMove] Target Coordinates:', { lat, lng });
 
-        const boatLng = myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX;
-        const boatLat = myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX;
+        const boatLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
+        const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
         const distLng = lng - boatLng;
         const distLat = lat - boatLat;
         const distDeg = Math.sqrt(distLng * distLng + distLat * distLat);
@@ -198,11 +198,11 @@ export function useSeaBoat({
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
         if (!isSeaGameMode || !myObfPos) return;
 
-        const currentScale = scale.get() || 1;
+        const currentScale = scale?.get?.() || 1;
         const offsetX = clientX - window.innerWidth / 2;
         const offsetY = clientY - window.innerHeight / 2;
-        const mapX = offsetX / currentScale - panX.get();
-        const mapY = offsetY / currentScale - panY.get();
+        const mapX = offsetX / currentScale - (panX?.get?.() ?? 0);
+        const mapY = offsetY / currentScale - (panY?.get?.() ?? 0);
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
         

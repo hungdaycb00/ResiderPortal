@@ -41,8 +41,8 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
             )}
 
             {seaState?.fortressLat && (() => {
-                const fLat = seaState.fortressLat - (myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX);
-                const fLng = seaState.fortressLng - (myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX);
+                const fLat = seaState.fortressLat - (myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX);
+                const fLng = seaState.fortressLng - (myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX);
                 const fDist = Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
                 
                 return (
@@ -87,8 +87,8 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
             )}
 
             {seaGameCtx?.worldItems?.map((item: any) => {
-                const dLat = item.lat - (myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX);
-                const dLng = item.lng - (myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX);
+                const dLat = item.lat - (myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX);
+                const dLng = item.lng - (myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX);
                 const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
                 const distMeters = Math.round(distDeg * 111000);
                 const isPortal = item?.item?.type === 'portal';

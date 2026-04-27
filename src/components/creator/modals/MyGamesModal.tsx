@@ -15,9 +15,13 @@ interface MyGamesModalProps {
 }
 
 export default function MyGamesModal({
+  isOpen,
+  onClose,
   serverGames,
   onPlayGame, onUpdateGame, onEditInfo, onViewFeedback, onDeleteGame,
-}: Omit<MyGamesModalProps, 'isOpen' | 'onClose'>) {
+}: MyGamesModalProps) {
+  if (!isOpen) return null;
+
   return (
         <div className="w-full h-full flex flex-col bg-[#1a1d24]">
             <div className="p-6 flex items-center justify-between bg-[#1a1d24] border-b border-white/5">

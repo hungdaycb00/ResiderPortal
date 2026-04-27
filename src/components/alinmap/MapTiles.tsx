@@ -26,15 +26,15 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
 
   useEffect(() => {
     const checkViewport = () => {
-      const currentScale = scale.get();
+      const currentScale = scale?.get?.() ?? 1;
       const calculatedZ = Math.min(21, Math.max(2, 14 + Math.floor(Math.log2(currentScale))));
       setZLevel(calculatedZ);
 
       const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, calculatedZ)) / 360);
       const tileWidthPx = TILE_SIZE * ratio;
       
-      const currentPanX = panX.get();
-      const currentPanY = panY.get();
+      const currentPanX = panX?.get?.() ?? 0;
+      const currentPanY = panY?.get?.() ?? 0;
       
       setTileOffset({
         x: -Math.floor(currentPanX / tileWidthPx),

@@ -35,6 +35,7 @@ interface CreatorSidebarProps {
   onPublish: () => void;
   onManageGamesClick: () => void;
   onDownloadDoc: () => void;
+  onClose?: () => void;
   showNotification: (msg: string, type: 'success' | 'error' | 'info') => void;
   // Refs
   fileInputRef: React.RefObject<HTMLInputElement>;

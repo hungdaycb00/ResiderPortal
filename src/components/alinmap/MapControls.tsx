@@ -88,14 +88,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                         <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                     <button
-                        onClick={() => scale.set(Math.min(scale.get() + 0.3, 3))}
+                        onClick={() => scale.set(Math.min((scale?.get?.() ?? 1) + 0.3, 3))}
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                         title="Zoom In"
                     >
                         <Plus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
                     </button>
                     <button
-                        onClick={() => scale.set(Math.max(scale.get() - 0.3, 0.4))}
+                        onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
                         title="Zoom Out"
                     >

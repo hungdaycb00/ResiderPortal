@@ -69,7 +69,7 @@ export function useMapNavigation({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const currentScale = scale.get();
+    const currentScale = scale?.get?.() ?? 1;
     const newScale = Math.min(Math.max(0.02, currentScale + delta * currentScale), 5);
     animate(scale, newScale, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [scale]);

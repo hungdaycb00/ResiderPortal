@@ -37,7 +37,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       }
       setIsLoading(true);
       try {
-        const data = await externalApi.request('/api/auth/forgot-password', {
+        const data = await externalApi.request<{ success: boolean; error?: string; message?: string }>('/api/auth/forgot-password', {
           method: 'POST',
           body: JSON.stringify({ email })
         });
@@ -95,7 +95,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     setIsLoading(true);
 
     try {
-      const data = await externalApi.request('/api/auth/login', {
+      const data = await externalApi.request<{ success: boolean; error?: string; message?: string; user?: any }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password, isRegistering })
       });
