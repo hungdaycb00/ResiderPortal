@@ -48,6 +48,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
     const [centerBoatHandler, setCenterBoatHandler] = useState<(() => void) | null>(null);
+    const [isWeatherWidgetExpanded, setIsWeatherWidgetExpanded] = useState(false);
 
     // --- Sea Game ---
     const seaGame = useSeaGame();
@@ -183,6 +184,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setSelectedUser={nav.setSelectedUser}
                 setActiveTab={nav.setActiveTab}
                 weatherData={geo.weatherData}
+                onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
             />
 
             <MapCanvas
@@ -219,6 +221,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setMapMode={nav.setMapMode}
                 isSeaGameMode={isSeaGameMode}
                 seaState={seaState}
+                isWidgetExpanded={isWeatherWidgetExpanded}
+                setIsWidgetExpanded={setIsWeatherWidgetExpanded}
             />
 
             <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} />
@@ -309,7 +313,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 const AlinMap: React.FC<AlinMapProps> = (props) => {
     const activeDeviceId = props.externalApi.getDeviceId();
     return (
-        <SeaGameProvider deviceId={activeDeviceId}>
+        <SeaGameProvider deviceId={activeDeviceId} showNotification={props.showNotification || (() => {})}>
             <SeaGameUI />
             <AlinMapInner {...props} />
         </SeaGameProvider>

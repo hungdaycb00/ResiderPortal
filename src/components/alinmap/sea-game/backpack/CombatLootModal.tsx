@@ -12,10 +12,17 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 export default function CombatLootModal() {
-  const { state, combatResult, setCombatResult, saveInventory } = useSeaGame();
+  const { state, combatResult, setCombatResult, saveInventory, showNotification } = useSeaGame();
   
   // Local state for loot left on the ground
-  const [lootLeft, setLootLeft] = useState<SeaItem[]>(combatResult?.loot || []);
+  const [lootLeft, setLootLeft] = useState<SeaItem[]>([]);
+
+  // Sync lootLeft when combatResult changes
+  React.useEffect(() => {
+    if (combatResult?.loot) {
+      setLootLeft(combatResult.loot);
+    }
+  }, [combatResult]);
   const [draggingLoot, setDraggingLoot] = useState<SeaItem | null>(null);
 
   if (!combatResult || combatResult.result !== 'win' || !combatResult.loot || combatResult.loot.length === 0) return null;
@@ -86,7 +93,7 @@ export default function CombatLootModal() {
     }
 
     if (!foundSpot) {
-      alert("Balo đã đầy, không thể nhặt thêm!");
+      showNotification("Balo đã đầy, không thể nhặt thêm!", "error");
       return;
     }
 

@@ -22,6 +22,7 @@ interface SearchHeaderProps {
   setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
   // Mobile weather
   weatherData: { temp: number; icon: string } | null;
+  onWeatherClick?: () => void;
 }
 
 const SearchHeader: React.FC<SearchHeaderProps> = ({
@@ -50,7 +51,13 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
 
         {/* Mobile Weather Widget */}
         {!isDesktop && weatherData && (
-          <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-gray-200 shrink-0">
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              onWeatherClick?.();
+            }}
+            className="flex items-center gap-1.5 ml-2 pl-2 border-l border-gray-200 shrink-0 cursor-pointer active:scale-95 transition-transform"
+          >
             <span className="text-sm">{weatherData.icon}</span>
             <span className="text-xs font-bold text-gray-700">{weatherData.temp}°C</span>
           </div>

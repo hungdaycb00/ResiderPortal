@@ -21,8 +21,10 @@ const SeaGameUI: React.FC = () => {
         <>
             <CombatScreen />
             <CurseModal />
-            <FortressStorageModal />
-            <CombatLootModal />
+            {state.initialized && <FortressStorageModal />}
+            {combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0 && (
+                <CombatLootModal />
+            )}
             {showMinigame && (
                 <PickupMinigame
                     type={showMinigame.minigameType || 'fishing'}

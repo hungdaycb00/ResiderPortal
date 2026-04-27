@@ -33,6 +33,8 @@ interface MapControlsProps {
     setMapMode: (v: 'grid' | 'satellite') => void;
     isSeaGameMode?: boolean;
     seaState?: any;
+    isWidgetExpanded: boolean;
+    setIsWidgetExpanded: (v: boolean) => void;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -40,10 +42,10 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isSeaGameMode, seaState
+    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isSeaGameMode, seaState,
+    isWidgetExpanded, setIsWidgetExpanded
 }) => {
     const [copyToast, setCopyToast] = useState(false);
-    const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
 
     const handleCopyLocation = () => {
         if (!myObfPos) return;
@@ -135,6 +137,25 @@ const MapControls: React.FC<MapControlsProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Mobile Location/Coords Widget - Below Search Bar */}
+            {!isSeaGameMode && (
+                <div className="md:hidden absolute top-[108px] left-6 right-6 z-[120] pointer-events-none flex flex-col gap-1 items-start">
+                    <div 
+                        className="pointer-events-auto flex items-center gap-2 bg-white/70 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm border border-white/50 active:scale-95 transition-transform"
+                        onClick={() => setIsWidgetExpanded(true)}
+                    >
+                        <Navigation className="w-3 h-3 text-blue-500 fill-current" />
+                        <span className="text-[11px] font-black text-gray-800 truncate max-w-[150px]">
+                            {currentProvince || "Vị trí của tôi"}
+                        </span>
+                        <div className="w-[1px] h-3 bg-gray-300 mx-1" />
+                        <span className="text-[10px] font-bold text-gray-500 font-mono">
+                            {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : "Đang lấy..."}
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Weather & Coordinates Widget - Top Right */}
             {!isSeaGameMode && (

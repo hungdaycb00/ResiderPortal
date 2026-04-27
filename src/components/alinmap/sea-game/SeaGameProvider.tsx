@@ -126,6 +126,7 @@ interface SeaGameContextType {
   showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => void;
+  showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 const defaultState: SeaGameState = {
@@ -192,9 +193,10 @@ export function useSeaGame() {
 interface SeaGameProviderProps {
   children: React.ReactNode;
   deviceId: string | null;
+  showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, deviceId }) => {
+export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, deviceId, showNotification }) => {
   const [state, setState] = useState<SeaGameState>(defaultState);
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [pickupRewardItem, setPickupRewardItem] = useState<SeaItem | null>(null);
@@ -524,12 +526,22 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
-    await fetch(`${API}/api/sea/store`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
-    });
-    await loadState();
-  }, [deviceId, API, loadState]);
+    try {
+      const res = await fetch(`${API}/api/sea/store`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showNotification(data.error || 'Thao tác kho đồ thất bại', 'error');
+        return;
+      }
+      await loadState();
+    } catch (err) { 
+      console.error('[Sea Store]', err);
+      showNotification('Lỗi kết nối máy chủ', 'error');
+    }
+  }, [deviceId, API, loadState, showNotification]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;
@@ -611,6 +623,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
+    showNotification,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       setFortressStorageMode(mode);
       setIsFortressStorageOpen(true);

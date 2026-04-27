@@ -148,8 +148,17 @@ export default function FortressStorageModal() {
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
       </div>
 
-      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden" onPointerEnter={() => setHoverTarget('storage')}>
-        <div className="h-full overflow-y-auto subtle-scrollbar" style={{ maxHeight: '400px' }}>
+      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group" onPointerEnter={() => setHoverTarget('storage')}>
+        <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
+          {/* Scroll Indicator for Mobile */}
+          <div className="absolute right-1.5 top-4 bottom-4 w-1 bg-cyan-900/20 rounded-full pointer-events-none">
+            <motion.div 
+              className="w-full bg-cyan-500/40 rounded-full"
+              style={{ height: '20%' }}
+              animate={{ y: [0, 20, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
           <InventoryGrid
             items={storageItems}
             bags={[VIRTUAL_STORAGE_BAG]}
@@ -237,8 +246,8 @@ export default function FortressStorageModal() {
 
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
           {isPortalMode && (
-            <div className="mb-4 rounded-2xl border border-violet-500/30 bg-violet-950/20 px-4 py-3 text-[11px] text-violet-100/80">
-              Phi portal: 5% gia tri mon do, lam tron len tung mon. Che do portal chi gui vao kho, khong lay ra tu xa.
+            <div className="mb-4">
+              {/* Text description removed by user request */}
             </div>
           )}
 
