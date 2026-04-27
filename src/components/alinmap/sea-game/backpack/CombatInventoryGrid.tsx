@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import type { SeaItem } from './SeaGameProvider';
+import type { SeaItem } from './types';
 
 interface CombatInventoryGridProps {
   items: SeaItem[];

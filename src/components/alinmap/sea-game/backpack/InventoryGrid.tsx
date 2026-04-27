@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
-import type { SeaItem, BagItem } from './SeaGameProvider';
-import { MAX_GRID_W, MAX_GRID_H } from './SeaGameProvider';
+import type { SeaItem, BagItem } from './types';
+import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 interface InventoryGridProps {
   items: SeaItem[];

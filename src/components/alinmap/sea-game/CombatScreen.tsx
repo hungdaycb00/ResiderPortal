@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Heart, Zap, Swords, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSeaGame, SeaItem } from './SeaGameProvider';
-import CombatInventoryGrid from './CombatInventoryGrid';
+import { useSeaGame } from './SeaGameProvider';
+import type { SeaItem } from './backpack';
+import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
   const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState } = useSeaGame();

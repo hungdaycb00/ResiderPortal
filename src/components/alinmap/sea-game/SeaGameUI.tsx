@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
-import FortressStorageModal from './FortressStorageModal';
+import { FortressStorageModal } from './backpack';
 import { useSeaGame } from './SeaGameProvider';
 
 const RARITY_COLORS: Record<string, string> = {

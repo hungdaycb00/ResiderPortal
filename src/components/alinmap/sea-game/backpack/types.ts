@@ -1,0 +1,63 @@
+// ==========================================
+// Backpack / Inventory Types
+// ==========================================
+
+export interface SeaItem {
+  uid: string;
+  id: string;
+  name: string;
+  icon: string;
+  rarity: string;
+  tier: number;
+  price: number;
+  weight: number;
+  hpBonus: number;
+  energyMax: number;
+  energyRegen: number;
+  gridW: number;
+  gridH: number;
+  rotated: boolean;
+  gridX: number;
+  gridY: number;
+  floatX?: number;
+  floatY?: number;
+}
+
+export interface GridExpander {
+  id: string;
+  name: string;
+  icon: string;
+  expandW: number;
+  expandH: number;
+  type: 'grid_expander';
+}
+
+export interface PortalItem {
+  id: string;
+  name: string;
+  icon: string;
+  type: 'portal';
+}
+
+export interface BagItem {
+  uid: string;
+  id: string;
+  name: string;
+  icon: string;
+  rarity: string;
+  price?: number;
+  weight?: number;
+  hpBonus?: number;
+  energyMax?: number;
+  energyRegen?: number;
+  gridX: number;
+  gridY: number;
+  rotated: boolean;
+  shape: boolean[][];
+  width: number;
+  height: number;
+  cells?: number;
+  type?: 'bag';
+  isStarter?: boolean;
+  dropProtected?: boolean;
+}

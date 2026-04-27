@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { X, Database, Package, Sparkles, ArrowRightLeft, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
-import { MAX_GRID_W, useSeaGame } from './SeaGameProvider';
-import type { SeaItem } from './SeaGameProvider';
+import { MAX_GRID_W } from './constants';
+import { useSeaGame } from '../SeaGameProvider';
+import type { SeaItem } from './types';
 
 const PORTAL_FEE_RATE = 0.05;
 

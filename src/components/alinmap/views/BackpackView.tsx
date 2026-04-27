@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
-import { getBagBonuses, isSeaAtFortress, useSeaGame } from '../sea-game/SeaGameProvider';
-import type { SeaItem } from '../sea-game/SeaGameProvider';
-import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
-import InventoryGrid from '../sea-game/InventoryGrid';
+import { isSeaAtFortress, useSeaGame } from '../sea-game/SeaGameProvider';
+import { getBagBonuses, MAX_GRID_W, InventoryGrid } from '../sea-game/backpack';
+import type { SeaItem } from '../sea-game/backpack';
 
 const TIER_LABELS = [
   { tier: 0, cost: 0, label: '0' },
