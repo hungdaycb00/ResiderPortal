@@ -65,7 +65,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         nameInput, setNameInput
     } = useProfile();
 
-    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification });
+    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi });
 
     const openCreatePost = (open: boolean) => {
         if (open && requireAuth && !requireAuth('dang bai viet')) return;
@@ -107,6 +107,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 ws={ws} showNotification={showNotification}
                 showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
                 avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
+                externalApi={externalApi}
                 requireAuth={requireAuth}
             />
 
@@ -144,9 +145,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 <ProfileInfoTab
                     myUserId={myUserId}
                     radius={radius} handleUpdateRadius={handleUpdateRadius}
-                    games={games} ws={ws} myObfPos={myObfPos}
+                games={games} ws={ws} myObfPos={myObfPos}
                     setIsSheetExpanded={setIsSheetExpanded} setMainTab={setMainTab}
                     logout={logout} user={user} requireAuth={requireAuth}
+                    externalApi={externalApi}
+                    showNotification={showNotification}
                     requestLocation={requestLocation}
                 />
             ) : activeTab === 'posts' ? (

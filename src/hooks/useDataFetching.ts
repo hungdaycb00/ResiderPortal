@@ -10,6 +10,8 @@ export function useDataFetching(
     const [fetchedFriends, setFetchedFriends] = useState<any[]>([]);
     const [friendRequests, setFriendRequests] = useState<any[]>([]);
     const [userStats, setUserStats] = useState<{ gold: number, level: number, xp: number, rankScore: number } | null>(null);
+    const [profileUserId, setProfileUserId] = useState<string | null>(null);
+    const [profileStatus, setProfileStatus] = useState('');
     const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>(() => {
         const saved = localStorage.getItem('recentlyPlayed');
         return saved ? JSON.parse(saved) : [];
@@ -61,6 +63,8 @@ export function useDataFetching(
         try {
             const profile = await externalApi.request<{ success: boolean, user: any }>('/api/profile');
             if (profile.success && profile.user) {
+                setProfileUserId(profile.user.id || null);
+                setProfileStatus(profile.user.status || '');
                 setUserStats({
                     gold: profile.user.gold || 0,
                     level: profile.user.level || 1,
@@ -136,6 +140,7 @@ export function useDataFetching(
 
     return {
         fetchedGames, fetchedFriends, friendRequests, userStats, setUserStats,
+        profileUserId, profileStatus,
         recentlyPlayed, setRecentlyPlayed,
         fetchExternalData,
     };

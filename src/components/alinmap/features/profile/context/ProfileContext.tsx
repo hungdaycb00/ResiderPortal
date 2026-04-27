@@ -28,6 +28,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: 
     const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(initialIsVisible);
 
     useEffect(() => {
+        setMyStatus(initialStatus);
+    }, [initialStatus]);
+
+    useEffect(() => {
         localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
     }, [isVisibleOnMap]);
 

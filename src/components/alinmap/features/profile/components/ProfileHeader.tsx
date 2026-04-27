@@ -17,6 +17,7 @@ interface ProfileHeaderProps {
     avatarInputRef: React.RefObject<HTMLInputElement>;
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDefaultAvatar: () => void;
+    externalApi: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
 
@@ -24,15 +25,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     myUserId, userEmail, myDisplayName, myAvatarUrl, currentProvince,
     setMyDisplayName,
     ws, showNotification, showAvatarMenu, setShowAvatarMenu,
-    avatarInputRef, handleAvatarUpload, handleDefaultAvatar, requireAuth,
+    avatarInputRef, handleAvatarUpload, handleDefaultAvatar, externalApi, requireAuth,
 }) => {
     const { isEditingName, setIsEditingName, nameInput, setNameInput } = useProfile();
-    const saveName = () => {
+    const saveName = async () => {
         if (requireAuth && !requireAuth('doi ten hien thi')) return;
-        setMyDisplayName(nameInput);
-        setIsEditingName(false);
-        if (ws.current?.readyState === WebSocket.OPEN) {
-            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nameInput } }));
+        const nextName = nameInput.trim();
+        if (!nextName) return;
+        try {
+            await externalApi.request('/api/update-profile', {
+                method: 'POST',
+                body: JSON.stringify({ displayName: nextName }),
+            });
+            setMyDisplayName(nextName);
+            setIsEditingName(false);
+            if (ws.current?.readyState === WebSocket.OPEN) {
+                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { displayName: nextName } }));
+            }
+            showNotification?.('Da luu ten hien thi', 'success');
+        } catch (err) {
+            console.error(err);
+            showNotification?.('Khong the luu ten len server', 'error');
         }
     };
 
@@ -70,10 +83,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     <div className="flex gap-2 mb-2">
                         <input
                             autoFocus type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') saveName(); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') void saveName(); }}
                             className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 w-full outline-none focus:border-blue-500 transition-colors"
                         />
-                        <button onClick={saveName} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
+                        <button onClick={() => { void saveName(); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
                     </div>
                 ) : (
                     <div className="mb-1">

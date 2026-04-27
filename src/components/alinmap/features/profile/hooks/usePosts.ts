@@ -43,6 +43,7 @@ export function usePosts({
   showNotification, setGalleryActive, setGalleryTitle, setGalleryImages,
 }: UsePostsParams) {
   const API_BASE = getBaseUrl();
+  const resolvedMyUserId = myUserId || user?.uid || null;
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [postTitle, setPostTitle] = useState('');
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -90,7 +91,7 @@ export function usePosts({
       if (data.success) {
         setPostTitle('');
         setIsCreatingPost(false);
-        fetchUserPosts(myUserId || user?.uid);
+        fetchUserPosts(resolvedMyUserId);
         ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
         showNotification?.('Post created successfully!', 'success');
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
@@ -107,7 +108,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, { method: 'PUT', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(myUserId || user?.uid); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(resolvedMyUserId); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
     } catch (err) { console.error('Star post error:', err); }
   };
 
@@ -121,7 +122,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}`, { method: 'DELETE', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(myUserId || user?.uid); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(resolvedMyUserId); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
     } catch (err) { console.error('Delete post error:', err); }
   };
 
@@ -142,8 +143,15 @@ export function usePosts({
         .finally(() => {
           if (activeProfileRequestRef.current === requestId) setIsLoadingGames(false);
         });
-      const targetId = selectedUser.isSelf ? (myUserId || user?.uid) : selectedUser.id;
+      const targetId = selectedUser.isSelf ? resolvedMyUserId : selectedUser.id;
       fetchUserPosts(targetId, requestId);
+    } else if (resolvedMyUserId) {
+      const requestId = Date.now();
+      activeProfileRequestRef.current = requestId;
+      setIsLoadingGames(false);
+      setUserGames([]);
+      setUserPosts([]);
+      fetchUserPosts(resolvedMyUserId, requestId);
     } else {
       activeProfileRequestRef.current = Date.now();
       setIsLoadingGames(false);
@@ -153,7 +161,7 @@ export function usePosts({
       setGalleryTitle('');
       setGalleryImages([]);
     }
-  }, [selectedUser, externalApi, myUserId, user, setGalleryActive, setGalleryTitle, setGalleryImages]);
+  }, [selectedUser, externalApi, resolvedMyUserId, user, setGalleryActive, setGalleryTitle, setGalleryImages]);
 
   return {
     userPosts, postTitle, setPostTitle,

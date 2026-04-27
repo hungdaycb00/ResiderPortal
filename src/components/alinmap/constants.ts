@@ -9,6 +9,8 @@ export interface AlinMapProps {
     user: any;
     onClose: () => void;
     externalApi: any;
+    profileUserId?: string | null;
+    profileStatus?: string;
     games: any[];
     friends?: any[];
     onOpenChat?: (id: string, name: string, avatar?: string) => void;

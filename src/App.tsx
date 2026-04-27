@@ -69,6 +69,7 @@ export default function App() {
 
   const {
     fetchedGames, fetchedFriends, friendRequests, userStats, setUserStats,
+    profileUserId, profileStatus,
     recentlyPlayed, setRecentlyPlayed, fetchExternalData,
   } = useDataFetching(serverStatus, cloudflareUrl, setUser);
 
@@ -197,6 +198,8 @@ export default function App() {
             user={user} 
             onClose={() => setActiveTab('home')} 
             externalApi={externalApi}
+            profileUserId={profileUserId}
+            profileStatus={profileStatus}
             games={allGames}
             handlePlayGame={handlePlayGame}
             showNotification={showNotification}

@@ -104,7 +104,11 @@ const MapControls: React.FC<MapControlsProps> = ({
                 {isSeaGameMode && (
                     <div className="flex flex-col gap-2 mt-2">
                         <button
-                            onClick={handleCenter}
+                            onClick={() => {
+                                if (seaState?.currentLat != null && seaState?.currentLng != null) {
+                                    handleCenterTo(seaState.currentLat, seaState.currentLng);
+                                }
+                            }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"
                             title="Định vị Thuyền"
                         >
@@ -112,8 +116,10 @@ const MapControls: React.FC<MapControlsProps> = ({
                         </button>
                         <button
                             onClick={() => {
-                                if (seaState?.currentLat != null && seaState?.currentLng != null) {
-                                    handleCenterTo(seaState.currentLat, seaState.currentLng);
+                                if (seaState?.fortressLat != null && seaState?.fortressLng != null) {
+                                    handleCenterTo(seaState.fortressLat, seaState.fortressLng);
+                                } else {
+                                    handleCenter();
                                 }
                             }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"

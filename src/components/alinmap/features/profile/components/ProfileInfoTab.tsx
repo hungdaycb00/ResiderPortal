@@ -14,14 +14,16 @@ interface ProfileInfoTabProps {
     setMainTab: (tab: any) => void;
     logout?: () => void;
     user: any;
+    externalApi: any;
+    showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
 }
 
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     myUserId, radius, handleUpdateRadius,
-    games, ws, myObfPos,
-    setIsSheetExpanded, setMainTab, logout, user, requireAuth, requestLocation,
+    games, ws,
+    setIsSheetExpanded, setMainTab, logout, user, externalApi, showNotification, requireAuth, requestLocation,
 }) => {
     const {
         myStatus, setMyStatus,
@@ -32,33 +34,53 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     const [isAddingTag, setIsAddingTag] = useState(false);
     const [tagInput, setTagInput] = useState('');
 
-    const saveStatus = () => {
-        if (requireAuth && !requireAuth('cap nhat trang thai')) return;
-        setMyStatus(statusInput);
-        setIsEditingStatus(false);
-        if (ws.current?.readyState === WebSocket.OPEN && myObfPos) {
-            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: statusInput } }));
+    const persistStatus = async (nextStatus: string) => {
+        await externalApi.request('/api/update-profile', {
+            method: 'POST',
+            body: JSON.stringify({ status: nextStatus }),
+        });
+        if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: nextStatus } }));
         }
     };
 
-    const removeTag = (tag: string) => {
+    const saveStatus = async () => {
+        if (requireAuth && !requireAuth('cap nhat trang thai')) return;
+        const nextStatus = statusInput.trim();
+        try {
+            await persistStatus(nextStatus);
+            setMyStatus(nextStatus);
+            setIsEditingStatus(false);
+        } catch (err) {
+            console.error(err);
+            showNotification?.('Khong the luu trang thai len server', 'error');
+        }
+    };
+
+    const removeTag = async (tag: string) => {
         if (requireAuth && !requireAuth('cap nhat tag')) return;
         const cleanTag = '#' + tag.toLowerCase();
         const newStatus = myStatus.replace(new RegExp(cleanTag + '\\b', 'g'), '').replace(/\s+/g, ' ').trim();
-        setMyStatus(newStatus);
-        if (ws.current?.readyState === WebSocket.OPEN && myObfPos) {
-            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: newStatus } }));
+        try {
+            await persistStatus(newStatus);
+            setMyStatus(newStatus);
+        } catch (err) {
+            console.error(err);
+            showNotification?.('Khong the luu tag len server', 'error');
         }
     };
 
-    const addTag = (rawTag: string) => {
+    const addTag = async (rawTag: string) => {
         if (requireAuth && !requireAuth('cap nhat tag')) return;
         const newTag = '#' + rawTag.trim();
         if (!myStatus.includes(newTag)) {
             const newStatus = (myStatus.trim() + ' ' + newTag).trim();
-            setMyStatus(newStatus);
-            if (ws.current?.readyState === WebSocket.OPEN && myObfPos) {
-                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: newStatus } }));
+            try {
+                await persistStatus(newStatus);
+                setMyStatus(newStatus);
+            } catch (err) {
+                console.error(err);
+                showNotification?.('Khong the luu tag len server', 'error');
             }
         }
         setTagInput('');
@@ -78,11 +100,11 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                         <input
                             autoFocus type="text" value={statusInput}
                             onChange={(e) => setStatusInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') saveStatus(); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') void saveStatus(); }}
                             placeholder="Update your status..."
                             className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 w-full outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         />
-                        <button onClick={saveStatus} className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
+                        <button onClick={() => { void saveStatus(); }} className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
                             Save
                         </button>
                     </div>
@@ -101,9 +123,9 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             {/* Tags */}
             <div className="flex flex-wrap gap-1.5 mt-3 mb-4 items-center px-1">
                 {parsedTags.map((tag) => (
-                    <span key={tag} className="group/tag relative text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100 flex items-center gap-1 transition-all hover:bg-blue-100">
-                        {tag.toUpperCase()}
-                        <button onClick={() => removeTag(tag.replace('#', ''))} className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-red-500">
+                        <span key={tag} className="group/tag relative text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100 flex items-center gap-1 transition-all hover:bg-blue-100">
+                            {tag.toUpperCase()}
+                        <button onClick={() => { void removeTag(tag.replace('#', '')); }} className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-red-500">
                             <X className="w-2.5 h-2.5" />
                         </button>
                     </span>
@@ -116,7 +138,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                             autoFocus type="text" value={tagInput}
                             onChange={(e) => setTagInput(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter' && tagInput.trim()) addTag(tagInput);
+                                if (e.key === 'Enter' && tagInput.trim()) void addTag(tagInput);
                                 else if (e.key === 'Escape') setIsAddingTag(false);
                             }}
                             onBlur={() => { if (!tagInput.trim()) setIsAddingTag(false); }}

@@ -23,6 +23,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     user,
     onClose,
     externalApi,
+    profileUserId,
+    profileStatus,
     games,
     friends = [],
     onOpenChat,
@@ -57,7 +59,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         setMyObfPos: geo.setMyObfPos,
         radius: 5,
         searchTag,
-        myStatus: "",
+        myStatus: profileStatus || '',
         isVisibleOnMap: (() => {
             const saved = localStorage.getItem('alinmap_visible');
             return saved !== null ? saved === 'true' : !!user;
@@ -70,6 +72,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         fetchNotifications: async () => {},
         onStatusSync: () => {}, // We will update ProfileContext from children or a separate effect if needed
     });
+    const resolvedMyUserId = wsCtx.myUserId || profileUserId || null;
+    const resolvedMyStatus = profileStatus || wsCtx.myStatus || '';
 
     const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
         if (user) return true;
@@ -106,7 +110,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const posts = usePosts({
         ws: wsCtx.ws,
         externalApi,
-        myUserId: wsCtx.myUserId,
+        myUserId: resolvedMyUserId,
         user,
         selectedUser: nav.selectedUser,
         showNotification,
@@ -147,7 +151,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 const saved = localStorage.getItem('alinmap_visible');
                 return saved !== null ? saved === 'true' : !!user;
             })()}
-            initialStatus={wsCtx.myStatus}
+            initialStatus={resolvedMyStatus}
         >
         <SocialProvider
             user={user}
@@ -182,7 +186,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
             <MapCanvas
                 position={geo.position} isConsentOpen={geo.isConsentOpen} myObfPos={geo.myObfPos} nearbyUsers={wsCtx.nearbyUsers}
-                myUserId={wsCtx.myUserId} user={user} myDisplayName={wsCtx.myDisplayName} myStatus={""}
+                myUserId={resolvedMyUserId} user={user} myDisplayName={wsCtx.myDisplayName} myStatus={resolvedMyStatus}
                 isVisibleOnMap={true} isConnecting={wsCtx.isConnecting} isDesktop={nav.isDesktop}
                 currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                 galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
@@ -219,7 +223,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             <BottomSheet
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
                 activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                games={games} userGames={posts.userGames} userPosts={posts.userPosts} myUserId={wsCtx.myUserId}
+                games={games} userGames={posts.userGames} userPosts={posts.userPosts} myUserId={resolvedMyUserId}
                 myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
                 searchTag={searchTag}
                 isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
