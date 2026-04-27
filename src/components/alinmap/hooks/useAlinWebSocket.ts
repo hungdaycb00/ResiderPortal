@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from '../constants';
 
