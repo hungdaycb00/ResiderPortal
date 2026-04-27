@@ -37,7 +37,7 @@ export function useGeolocation() {
   const [currentProvince, setCurrentProvince] = useState<string | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
-  const fetchProvinceName = async (lat: number, lng: number) => {
+  const fetchProvinceName = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
       const data = await res.json();
@@ -46,13 +46,13 @@ export function useGeolocation() {
     } catch (e) {
       console.error('Geocoding error:', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (myObfPos) fetchProvinceName(myObfPos.lat, myObfPos.lng);
-  }, [myObfPos?.lat, myObfPos?.lng]);
+  }, [myObfPos?.lat, myObfPos?.lng, fetchProvinceName]);
 
-  const requestLocation = (forceInvisible: boolean = false, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => {
+  const requestLocation = useCallback((forceInvisible: boolean = false, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => {
     localStorage.setItem('alin_location_consent_handled', 'true');
     const updateVisibility = (visible: boolean) => {
       setIsVisibleOnMap?.(visible);
@@ -95,7 +95,7 @@ export function useGeolocation() {
       if (!forceInvisible) updateVisibility(false);
       setIsConsentOpen(false);
     }
-  };
+  }, []);
 
   // Fetch Weather Data (temp, humidity, feels-like)
   useEffect(() => {
@@ -115,14 +115,14 @@ export function useGeolocation() {
           }
         }).catch(err => console.error('Weather fetch error:', err));
     }
-  }, [myObfPos]);
+  }, [myObfPos?.lat, myObfPos?.lng]);
 
-  return {
+  return React.useMemo(() => ({
     position, setPosition,
     myObfPos, setMyObfPos,
     isConsentOpen, setIsConsentOpen,
     currentProvince,
     weatherData,
     requestLocation,
-  };
+  }), [position, myObfPos, isConsentOpen, currentProvince, weatherData, requestLocation]);
 }

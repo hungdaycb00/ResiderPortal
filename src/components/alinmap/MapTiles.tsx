@@ -134,4 +134,4 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
   );
 };
 
-export default MapTiles;
+export default React.memo(MapTiles);

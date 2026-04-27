@@ -138,24 +138,6 @@ const MapControls: React.FC<MapControlsProps> = ({
                 )}
             </div>
 
-            {/* Mobile Location/Coords Widget - Below Search Bar */}
-            {!isSeaGameMode && (
-                <div className="md:hidden absolute top-[98px] left-8 right-8 z-[120] pointer-events-none flex flex-col gap-1 items-start">
-                    <div 
-                        className="pointer-events-auto flex items-center gap-2 px-1 active:scale-95 transition-transform"
-                        onClick={() => setIsWidgetExpanded(true)}
-                    >
-                        <Navigation className="w-3 h-3 text-blue-400 fill-current drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
-                        <span className="text-[11px] font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate max-w-[150px]">
-                            {currentProvince || "Vị trí của tôi"}
-                        </span>
-                        <div className="w-[1px] h-2.5 bg-white/30 mx-1 shadow-sm" />
-                        <span className="text-[10px] font-bold text-white/80 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                            {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : "Đang lấy..."}
-                        </span>
-                    </div>
-                </div>
-            )}
 
             {/* Weather & Coordinates Widget - Top Right */}
             {!isSeaGameMode && (

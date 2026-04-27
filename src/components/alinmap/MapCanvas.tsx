@@ -443,4 +443,4 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     );
 };
 
-export default MapCanvas;
+export default React.memo(MapCanvas);

@@ -184,6 +184,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setSelectedUser={nav.setSelectedUser}
                 setActiveTab={nav.setActiveTab}
                 weatherData={geo.weatherData}
+                currentProvince={geo.currentProvince}
+                myObfPos={geo.myObfPos}
                 onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
             />
 

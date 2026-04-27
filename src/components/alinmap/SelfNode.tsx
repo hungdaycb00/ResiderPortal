@@ -206,4 +206,4 @@ const SelfNode: React.FC<SelfNodeProps> = ({
     );
 };
 
-export default SelfNode;
+export default React.memo(SelfNode);

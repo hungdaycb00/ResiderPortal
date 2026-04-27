@@ -99,4 +99,4 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
     );
 };
 
-export default SpatialNode;
+export default React.memo(SpatialNode);

@@ -428,7 +428,7 @@ export function useAlinWebSocket({
     }
   }, [myObfPos, panX, panY]);
 
-  return {
+  return React.useMemo(() => ({
     ws,
     isConnecting,
     wsStatus,
@@ -453,5 +453,8 @@ export function useAlinWebSocket({
     galleryImages,
     setGalleryImages,
     handleRefresh,
-  };
+  }), [
+    isConnecting, wsStatus, myUserId, addLog, nearbyUsers, selectedUser, myDisplayName, 
+    myAvatarUrl, localMyStatus, statusInput, galleryActive, galleryTitle, galleryImages, handleRefresh
+  ]);
 }

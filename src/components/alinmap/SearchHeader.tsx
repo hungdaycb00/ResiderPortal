@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronRight, Navigation } from 'lucide-react';
 import { normalizeImageUrl } from '../../services/externalApi';
 
 interface SearchHeaderProps {
@@ -20,8 +20,10 @@ interface SearchHeaderProps {
   desktopSearchResults: { posts: any[], users: any[] };
   setSelectedUser: (u: any) => void;
   setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
-  // Mobile weather
+  // Mobile weather & location
   weatherData: { temp: number; icon: string } | null;
+  currentProvince?: string | null;
+  myObfPos?: { lat: number; lng: number } | null;
   onWeatherClick?: () => void;
 }
 
@@ -29,7 +31,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   searchTag, setSearchTag, isDesktop, isSheetExpanded, setIsSheetExpanded,
   isSeaGameMode, mainTab, myAvatarUrl, myDisplayName, handleTabClick,
   showDesktopResults, setShowDesktopResults, isSearchingDesktop, desktopSearchResults,
-  setSelectedUser, setActiveTab, weatherData,
+  setSelectedUser, setActiveTab, weatherData, currentProvince, myObfPos, onWeatherClick
 }) => {
   const shouldHideSearch = isSeaGameMode || ['profile', 'creator', 'backpack'].includes(mainTab);
 
@@ -72,6 +74,25 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
           onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`; }}
         />
       </button>
+
+      {/* Mobile Location/Coords Widget - Bound to SearchHeader visibility */}
+      {!isDesktop && !isSeaGameMode && (
+          <div className="md:hidden absolute top-[105%] left-4 pointer-events-none flex flex-col gap-1 items-start mt-1">
+              <div 
+                  className="pointer-events-auto flex items-center gap-2 px-1 active:scale-95 transition-transform cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onWeatherClick?.(); }}
+              >
+                  <Navigation className="w-3 h-3 text-blue-400 fill-current drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+                  <span className="text-[11px] font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate max-w-[150px]">
+                      {currentProvince || "Vị trí của tôi"}
+                  </span>
+                  <div className="w-[1px] h-2.5 bg-white/30 mx-1 shadow-sm" />
+                  <span className="text-[10px] font-bold text-white/80 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                      {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : "Đang lấy..."}
+                  </span>
+              </div>
+          </div>
+      )}
 
       {/* Desktop Search Results Dropdown */}
       {showDesktopResults && isDesktop && (
