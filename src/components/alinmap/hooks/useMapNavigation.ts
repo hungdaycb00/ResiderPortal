@@ -50,11 +50,11 @@ export function useMapNavigation({
       }
 
       setMainTab(prev => {
-        // Nếu đang ở mobile và chuyển từ tab khác sang discover, ta nên giữ nguyên trạng thái expand hiện tại thay vì ép đóng
-        if (prev !== initialMainTab && initialMainTab === 'discover' && !isDesktop) {
-            // Không set lại isSheetExpanded=false ở đây nữa
-        } else {
-            setIsSheetExpanded(isDesktop || initialMainTab !== 'discover');
+        // Không tự động co lại khi chuyển sang discover để tránh hiệu ứng giật
+        if (prev !== initialMainTab && initialMainTab !== 'discover') {
+            setIsSheetExpanded(true);
+        } else if (isDesktop) {
+            setIsSheetExpanded(true);
         }
         return initialMainTab as MainTab;
       });

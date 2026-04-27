@@ -15,7 +15,7 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
+    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult } = useSeaGame();
 
     return (
         <>
