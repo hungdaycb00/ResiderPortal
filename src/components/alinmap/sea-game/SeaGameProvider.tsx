@@ -114,7 +114,7 @@ interface SeaGameContextType {
   pendingBagSwap: BagItem | null;
   setPendingBagSwap: (bag: BagItem | null) => void;
   acceptBagSwap: (newBag: BagItem) => void;
-  executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => Promise<CombatResult>;
+  executeCombat: (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number, opponentBags?: BagItem[]) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
   storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode, gridX?: number, gridY?: number) => Promise<void>;
@@ -465,11 +465,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     setShowDiscardModal(false);
   }, [state.inventory, saveInventory]);
 
-  const executeCombat = useCallback(async (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number) => {
+  const executeCombat = useCallback(async (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
     if (!deviceId) throw new Error('No device');
     const res = await fetch(`${API}/api/sea/combat`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, opponentId, opponentInventory, opponentHp }),
+      body: JSON.stringify({ deviceId, targetUserId: opponentId, botItems: opponentInventory, botHp: opponentHp, botBags: opponentBags }),
     });
     const data = await res.json();
     if (data.success) {

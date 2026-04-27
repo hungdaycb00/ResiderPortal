@@ -211,6 +211,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handleRefresh={handleRefresh} handleCenter={nav.handleCenter} handleCenterTo={nav.handleCenterTo} handleUpdateRadius={nav.handleUpdateRadius}
                 setMapMode={nav.setMapMode}
                 isSeaGameMode={isSeaGameMode}
+                seaState={seaState}
             />
 
             <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} />

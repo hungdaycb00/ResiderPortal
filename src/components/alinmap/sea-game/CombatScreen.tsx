@@ -38,7 +38,11 @@ const CombatScreen: React.FC = () => {
   const maxHpA = state.baseMaxHp + myStats.hp;
   const maxManaA = 100 + myStats.eMax;
   const maxHpB = encounter.totalHp;
-  const maxManaB = 100;
+  const botStats = encounter.isBot ? (encounter.inventory || []).reduce(
+    (a: any, i: any) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight, eMax: a.eMax + i.energyMax, eRegen: a.eRegen + i.energyRegen }),
+    { hp: 0, weight: 0, eMax: 0, eRegen: 0 }
+  ) : { hp: 0, weight: 0, eMax: 0, eRegen: 0 };
+  const maxManaB = 100 + botStats.eMax;
 
   const handleStart = async () => {
     setPhase('fighting');
@@ -56,7 +60,8 @@ const CombatScreen: React.FC = () => {
       const result = await executeCombat(
         encounter.id,
         encounter.isBot ? encounter.inventory : undefined,
-        encounter.isBot ? encounter.baseMaxHp : undefined
+        encounter.isBot ? encounter.baseMaxHp : undefined,
+        encounter.isBot ? (encounter as any).bags : undefined
       );
 
       if (result.combatLog?.length) {
@@ -91,10 +96,16 @@ const CombatScreen: React.FC = () => {
       const entry = combatLogRef.current[currentIdxRef.current];
       const side = entry.attacker;
 
+      // Both sides gain mana
+      const gainA = (15 + myStats.eRegen) * (dt / 1000) * 10;
+      const gainB = (15 + botStats.eRegen) * (dt / 1000) * 10;
+      
+      manaARef.current = Math.min(manaARef.current + gainA, maxManaA);
+      manaBRef.current = Math.min(manaBRef.current + gainB, maxManaB);
+      setManaA(manaARef.current);
+      setManaB(manaBRef.current);
+
       if (side === 'A') {
-        const manaGain = (15 + myStats.eRegen) * (dt / 1000) * 10;
-        manaARef.current = Math.min(manaARef.current + manaGain, maxManaA);
-        
         if (manaARef.current >= maxManaA) {
           isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
@@ -107,11 +118,7 @@ const CombatScreen: React.FC = () => {
           }, 800);
           manaARef.current = 0;
         }
-        setManaA(manaARef.current);
       } else {
-        const manaGain = 20 * (dt / 1000) * 10;
-        manaBRef.current = Math.min(manaBRef.current + manaGain, maxManaB);
-        
         if (manaBRef.current >= maxManaB) {
           isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
@@ -124,7 +131,6 @@ const CombatScreen: React.FC = () => {
           }, 800);
           manaBRef.current = 0;
         }
-        setManaB(manaBRef.current);
       }
 
       frameRef.current = requestAnimationFrame(loop);
@@ -164,7 +170,7 @@ const CombatScreen: React.FC = () => {
             </div>
         </div>
         <div className="flex-1 flex justify-center items-center overflow-auto subtle-scrollbar">
-           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
+           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
         </div>
       </div>
 
@@ -271,7 +277,7 @@ const CombatScreen: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
-            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={cellSize} />
+            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={cellSize} />
           </div>
         </div>
       </div>

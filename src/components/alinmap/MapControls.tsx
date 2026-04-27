@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Waves } from 'lucide-react';
+import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -31,6 +31,7 @@ interface MapControlsProps {
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
     isSeaGameMode?: boolean;
+    seaState?: any;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -38,7 +39,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode, isSeaGameMode
+    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode, isSeaGameMode, seaState
 }) => {
     const [copyToast, setCopyToast] = useState(false);
     const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
@@ -55,8 +56,9 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            {!isSeaGameMode && (
-                <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
+            <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
+                {!isSeaGameMode && (
+                    <>
                     <button
                         onClick={handleRefresh}
                     disabled={isConnecting}
@@ -72,13 +74,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                 >
                     <Waves className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="w-8 h-8 md:w-10 md:h-10 bg-white/60 md:bg-white backdrop-blur-md text-gray-700 rounded-[10px] md:rounded-xl shadow-md flex items-center justify-center active:scale-95 transition-all"
-                    title="Settings / Filters"
-                >
-                    <Filter className="w-4 h-4 md:w-5 md:h-5" />
-                </button>
+                    </>
+                )}
                 <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
                     <button
                         onClick={handleCenter}
@@ -102,8 +99,29 @@ const MapControls: React.FC<MapControlsProps> = ({
                         <Minus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
                     </button>
                 </div>
+                {isSeaGameMode && (
+                    <div className="flex flex-col gap-2 mt-2">
+                        <button
+                            onClick={handleCenter}
+                            className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"
+                            title="Định vị Thuyền"
+                        >
+                            <Navigation className="w-5 h-5 md:w-6 md:h-6 fill-current rotate-45" />
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (seaState?.fortressLat && seaState?.fortressLng) {
+                                    handleCenterTo(seaState.fortressLat, seaState.fortressLng);
+                                }
+                            }}
+                            className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"
+                            title="Về Thành trì"
+                        >
+                            <Home className="w-5 h-5 md:w-6 md:h-6" />
+                        </button>
+                    </div>
+                )}
             </div>
-            )}
 
             {/* Weather & Coordinates Widget - Top Right */}
             {!isSeaGameMode && (

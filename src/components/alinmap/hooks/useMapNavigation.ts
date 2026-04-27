@@ -75,9 +75,9 @@ export function useMapNavigation({
   }, [scale]);
 
   const handleCenter = useCallback(() => {
-    panX.set(0);
-    panY.set(0);
-    scale.set(1);
+    animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
+    animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
+    animate(scale, 1, { duration: 0.8, ease: "easeInOut" });
   }, [panX, panY, scale]);
 
   const handleCenterTo = useCallback((lat: number, lng: number) => {
@@ -85,8 +85,8 @@ export function useMapNavigation({
     const DEGREES_TO_PX = 11100;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
-    panX.set(-pxX);
-    panY.set(-pxY);
+    animate(panX, -pxX, { duration: 1.5, ease: "easeInOut" });
+    animate(panY, -pxY, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {

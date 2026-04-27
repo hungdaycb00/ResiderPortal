@@ -9,6 +9,7 @@ interface CombatInventoryGridProps {
   readOnly?: boolean;
   onLayoutChange?: (items: SeaItem[]) => void;
   cellSize?: number;
+  bag?: any;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -32,6 +33,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
   readOnly = false,
   onLayoutChange,
   cellSize = 48,
+  bag,
 }) => {
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -205,13 +207,16 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
         }}
       >
         {Array.from({ length: gridHeight }).map((_, r) =>
-          Array.from({ length: gridWidth }).map((_, c) => (
-            <div
-              key={`cell-${r}-${c}`}
-              className="absolute border border-cyan-800/30"
-              style={{ left: c * cellSize, top: r * cellSize, width: cellSize, height: cellSize }}
-            />
-          ))
+          Array.from({ length: gridWidth }).map((_, c) => {
+            const isBag = bag && bag.shape?.[r - (bag.gridY || 0)]?.[c - (bag.gridX || 0)];
+            return (
+              <div
+                key={`cell-${r}-${c}`}
+                className={`absolute border ${isBag ? 'bg-cyan-900/20 border-cyan-800/30' : 'bg-gray-900/40 border-white/5'}`}
+                style={{ left: c * cellSize, top: r * cellSize, width: cellSize, height: cellSize }}
+              />
+            );
+          })
         )}
 
         {highlightCells.map(({ x, y, valid }) => (

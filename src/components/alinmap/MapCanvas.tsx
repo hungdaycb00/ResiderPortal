@@ -246,8 +246,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Sea Game Curse Bar */}
             {isSeaGameMode && (
-                <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
-                    <div className="flex items-center gap-2 bg-[#0d0f13]/95 backdrop-blur-xl rounded-full px-4 py-2.5 border border-red-900/40 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+                <div className="absolute top-[12px] left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
+                    <div className="bg-black/60 backdrop-blur-xl border border-red-500/30 rounded-full p-1.5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
                         <span className="text-red-400 text-xs font-black uppercase tracking-wider shrink-0">☠️ Curse</span>
                         <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden relative">
                             <motion.div
@@ -273,7 +273,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Active Curses List - Top Right Corner */}
             {isSeaGameMode && seaState?.activeCurses && Object.values(seaState.activeCurses).some(v => (v as number) > 0) && (
-                <div className="absolute top-[130px] right-4 z-[115] flex flex-col items-end gap-2 pointer-events-none">
+                <div className="absolute top-[60px] right-4 z-[115] flex flex-col items-end gap-2 pointer-events-none">
                     {Object.entries(seaState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
                         const CURSE_META: any = {
                             dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
