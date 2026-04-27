@@ -188,8 +188,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     updateDragPosition(e.clientX, e.clientY);
   }, [updateDragPosition]);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e?: React.PointerEvent | PointerEvent) => {
     if (!dragMode || !dragItem) return;
+
+    if (e && 'currentTarget' in e && e.currentTarget) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture?.((e as any).pointerId);
+      } catch {}
+    }
 
     const pointerStart = pointerStartRef.current;
     const pointerCurrent = pointerCurrentRef.current;
@@ -200,33 +206,26 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
     if (wasClick) {
       onItemClick?.(dragItem);
-      setDragMode(null);
-      setDragItem(null);
-      setHoverCell(null);
-      setIsHoveringStorage(false);
-      pointerStartRef.current = null;
-      pointerCurrentRef.current = null;
-      return;
-    }
-
-    if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
-      // Place on grid
-      const newItems = items.map(i =>
-        i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
-      );
-      onItemLayoutChange?.(newItems);
-    } else if (isHoveringStorage && dragMode === 'item') {
-      // Move from grid to storage
-      const newItems = items.map(i =>
-        i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
-      );
-      onItemLayoutChange?.(newItems);
-    } else if (isHoveringStorage && dragMode === 'storage-item') {
-      // Reorder storage: move to front
-      const filtered = items.filter(i => i.uid !== dragItem.uid);
-      const movingItem = items.find(i => i.uid === dragItem.uid);
-      if (movingItem) {
-        onItemLayoutChange?.([movingItem, ...filtered]);
+    } else {
+      if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
+        // Place on grid
+        const newItems = items.map(i =>
+          i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
+        );
+        onItemLayoutChange?.(newItems);
+      } else if (isHoveringStorage && dragMode === 'item') {
+        // Move from grid to storage
+        const newItems = items.map(i =>
+          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
+        );
+        onItemLayoutChange?.(newItems);
+      } else if (isHoveringStorage && dragMode === 'storage-item') {
+        // Reorder storage: move to front
+        const filtered = items.filter(i => i.uid !== dragItem.uid);
+        const movingItem = items.find(i => i.uid === dragItem.uid);
+        if (movingItem) {
+          onItemLayoutChange?.([movingItem, ...filtered]);
+        }
       }
     }
 
@@ -243,8 +242,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const handleGlobalMove = (e: PointerEvent) => {
       if (dragMode) updateDragPosition(e.clientX, e.clientY);
     };
-    const handleGlobalUp = () => {
-      if (dragMode) handlePointerUp();
+    const handleGlobalUp = (e: PointerEvent) => {
+      if (dragMode) handlePointerUp(e);
     };
     window.addEventListener('pointermove', handleGlobalMove);
     window.addEventListener('pointerup', handleGlobalUp);
