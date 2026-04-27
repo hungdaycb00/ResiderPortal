@@ -70,6 +70,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         setMainTab, setIsSheetExpanded, showNotification
     });
 
+    const curseBarBg = useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${seaBoat.curseVisual}%, #ef4444)`;
+    const curseBarWidth = useMotionTemplate`${seaBoat.curseVisual}%`;
+    const curseText = useTransform(seaBoat.curseVisual, (v) => `${Math.round(v)}%`);
+
     useEffect(() => {
         setBoatCenterHandler?.(seaBoat.centerOnBoat);
         return () => {
@@ -366,8 +370,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             <motion.div
                                 className="h-full rounded-full relative"
                                 style={{
-                                    background: useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${seaBoat.curseVisual}%, #ef4444)`,
-                                    width: useMotionTemplate`${seaBoat.curseVisual}%`,
+                                    background: curseBarBg,
+                                    width: curseBarWidth,
                                     boxShadow: (seaState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
                                 }}
                             />
@@ -377,7 +381,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             initial={false}
                             animate={{ opacity: [0.5, 1] }}
                         >
-                            <motion.span>{useTransform(seaBoat.curseVisual, (v) => `${Math.round(v)}%`)}</motion.span>
+                            <motion.span>{curseText}</motion.span>
                         </motion.span>
                     </div>
                 </div>
