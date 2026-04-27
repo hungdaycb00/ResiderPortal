@@ -16,6 +16,8 @@ interface InventoryGridProps {
   gridH?: number;
   hideStorage?: boolean;
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
+  onDragStart?: (item: SeaItem, source: 'inventory' | 'storage') => void;
+  onDragEnd?: () => void;
   externalDragItem?: SeaItem | null;
   externalHoverCell?: { x: number; y: number } | null;
 }
@@ -28,10 +30,10 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const BAG_BG: Record<string, string> = {
-  common: 'rgba(56, 189, 248, 0.2)', // sky-400
-  uncommon: 'rgba(52, 211, 153, 0.2)', // emerald-400
-  rare: 'rgba(251, 191, 36, 0.2)', // amber-400
-  legendary: 'rgba(192, 132, 252, 0.2)', // purple-400
+  common: 'rgba(56, 189, 248, 0.15)', // sky-400
+  uncommon: 'rgba(52, 211, 153, 0.15)', // emerald-400
+  rare: 'rgba(251, 191, 36, 0.15)', // amber-400
+  legendary: 'rgba(192, 132, 252, 0.15)', // purple-400
 };
 
 const CLICK_MOVE_TOLERANCE = 8;
@@ -51,6 +53,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   gridH = MAX_GRID_H,
   hideStorage = false,
   onHoverCellChange,
+  onDragStart,
+  onDragEnd,
   externalDragItem,
   externalHoverCell,
 }) => {
@@ -69,12 +73,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
   const activeBag = Array.isArray(bags) ? bags[0] : undefined; // Single bag system
-
-  // Sync internal hoverCell to external if needed
-  const updateHoverCell = useCallback((cell: { x: number; y: number } | null) => {
-    setHoverCell(cell);
-    onHoverCellChange?.(cell);
-  }, [onHoverCellChange]);
 
   const activeDragItem = externalDragItem || dragItem;
   const activeHoverCell = externalHoverCell || hoverCell;
@@ -98,6 +96,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     }
     return grid;
   }, [activeBag, gridW, gridH]);
+
+  // Sync internal hoverCell to external if needed
+  const updateHoverCell = useCallback((cell: { x: number; y: number } | null) => {
+    setHoverCell(cell);
+    onHoverCellChange?.(cell);
+  }, [onHoverCellChange]);
 
   const buildItemOccupancy = useCallback((excludeUid?: string) => {
     const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
@@ -146,6 +150,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     
     setDragMode(mode);
     setDragItem(item);
+    onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage');
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     setDragOffset({
       x: Math.max(0, e.clientX - itemRect.left),
@@ -272,7 +277,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setIsHoveringTrash(false);
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
-  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell]);
+    onDragEnd?.();
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell, onDragEnd]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
@@ -353,6 +359,32 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             const shape = activeBag.shape || [];
             const bgColor = BAG_BG[activeBag.rarity] || BAG_BG.common;
 
+            // Check if it's a solid rectangle to simplify rendering and avoid grid lines
+            let isRect = true;
+            for (let r = 0; r < h; r++) {
+              for (let c = 0; c < w; c++) {
+                if (!shape[r] || !shape[r][c]) { isRect = false; break; }
+              }
+              if (!isRect) break;
+            }
+
+            if (isRect) {
+              return (
+                <div
+                  className="absolute rounded-lg"
+                  style={{
+                    left: activeBag.gridX * cellSize,
+                    top: activeBag.gridY * cellSize,
+                    width: w * cellSize,
+                    height: h * cellSize,
+                    background: bgColor,
+                    border: '2px solid rgba(56, 189, 248, 0.3)',
+                    boxShadow: 'inset 0 0 20px rgba(56, 189, 248, 0.1)',
+                  }}
+                />
+              );
+            }
+
             const bagCells = [];
             for (let r = 0; r < h; r++) {
               for (let c = 0; c < w; c++) {
@@ -370,8 +402,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
                           width: cellSize,
                           height: cellSize,
                           background: bgColor,
-                          border: '1px solid rgba(56, 189, 248, 0.4)',
-                          boxShadow: 'inset 0 0 10px rgba(56, 189, 248, 0.1)',
+                          // Only show borders between non-adjacent cells or at edges
+                          borderTop: (r === 0 || !shape[r - 1][c]) ? '1px solid rgba(56, 189, 248, 0.4)' : 'none',
+                          borderLeft: (c === 0 || !shape[r][c - 1]) ? '1px solid rgba(56, 189, 248, 0.4)' : 'none',
+                          borderBottom: (r === h - 1 || !shape[r + 1][c]) ? '1px solid rgba(56, 189, 248, 0.4)' : 'none',
+                          borderRight: (c === w - 1 || !shape[r][c + 1]) ? '1px solid rgba(56, 189, 248, 0.4)' : 'none',
                         }}
                       />
                     );

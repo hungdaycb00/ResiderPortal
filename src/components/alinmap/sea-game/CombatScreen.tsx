@@ -194,10 +194,10 @@ const CombatScreen: React.FC = () => {
         </motion.div>
 
         {/* Flying item animation */}
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {flyingItem && (
             <motion.div
-              key={Math.random()}
+              key={flyingItem.item.uid + flyingItem.from}
               initial={{ x: flyingItem.from === 'A' ? '20vw' : '80vw', y: '-5vh', opacity: 1, scale: 1.5 }}
               animate={{ x: flyingItem.from === 'A' ? '75vw' : '20vw', y: '10vh', opacity: 0.3, scale: 0.8 }}
               exit={{ opacity: 0 }}

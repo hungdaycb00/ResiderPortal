@@ -47,88 +47,9 @@ export default function FortressStorageModal() {
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
-  const isPortalMode = fortressStorageMode === 'portal';
-  
-  // Ensure all storage items have grid coordinates for the UI
-  const storageItems = useMemo(() => {
-    let current = [...state.storage];
-    let changed = false;
-    
-    // Simple auto-layout for items without coordinates
-    const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
-    
-    // First pass: mark occupied
-    current.forEach(item => {
-      if (item.gridX >= 0) {
-        for (let r = 0; r < item.gridH; r++) {
-          for (let c = 0; c < item.gridW; c++) {
-            if (item.gridY + r < STORAGE_GRID_H && item.gridX + c < STORAGE_GRID_W) {
-              occ[item.gridY + r][item.gridX + c] = true;
-            }
-          }
-        }
-      }
-    });
-
-    // Second pass: assign missing
-    const updated = current.map(item => {
-      if (item.gridX < 0) {
-        // Find first fit
-        for (let r = 0; r <= STORAGE_GRID_H - item.gridH; r++) {
-          for (let c = 0; c <= STORAGE_GRID_W - item.gridW; c++) {
-            let canFit = true;
-            for (let ir = 0; ir < item.gridH; ir++) {
-              for (let ic = 0; ic < item.gridW; ic++) {
-                if (occ[r + ir][c + ic]) { canFit = false; break; }
-              }
-              if (!canFit) break;
-            }
-            if (canFit) {
-              item.gridX = c;
-              item.gridY = r;
-              for (let ir = 0; ir < item.gridH; ir++) {
-                for (let ic = 0; ic < item.gridW; ic++) {
-                  occ[r + ir][c + ic] = true;
-                }
-              }
-              changed = true;
-              return item;
-            }
-          }
-        }
-      }
-      return item;
-    });
-
-    if (changed) {
-      // We don't save back immediately to avoid loops, 
-      // but the UI will use these coords.
-    }
-    return updated;
-  }, [state.storage]);
-
   if (!isFortressStorageOpen) return null;
 
-  const handleTransferItem = async (item: SeaItem, source: 'inventory' | 'storage') => {
-    if (source === 'inventory') {
-      await storeItems([item.uid], 'store', fortressStorageMode);
-    } else {
-      if (isPortalMode) return;
-      await storeItems([item.uid], 'retrieve', 'fortress');
-    }
-  };
-
-  const handleDropToStorage = async () => {
-    if (!dragging || dragging.source !== 'inventory') return;
-    await storeItems([dragging.uid], 'store', fortressStorageMode);
-    setDragging(null);
-  };
-
-  const handleDropToInventory = async () => {
-    if (!dragging || dragging.source !== 'storage' || isPortalMode) return;
-    await storeItems([dragging.uid], 'retrieve', 'fortress');
-    setDragging(null);
-  };
+  const isPortalMode = fortressStorageMode === 'portal';
 
   const handleReturnToFortress = async () => {
     setIsReturning(true);
@@ -140,11 +61,50 @@ export default function FortressStorageModal() {
     }
   };
 
+  // Ensure all storage items have grid coordinates for the UI
+  const storageItems = useMemo(() => {
+    let current = [...state.storage];
+    const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
+    current.forEach(item => {
+      if (item.gridX >= 0) {
+        for (let r = 0; r < item.gridH; r++) {
+          for (let c = 0; c < item.gridW; c++) {
+            if (item.gridY + r < STORAGE_GRID_H && item.gridX + c < STORAGE_GRID_W) {
+              occ[item.gridY + r][item.gridX + c] = true;
+            }
+          }
+        }
+      }
+    });
+    return current.map(item => {
+      if (item.gridX < 0) {
+        for (let r = 0; r <= STORAGE_GRID_H - item.gridH; r++) {
+          for (let c = 0; c <= STORAGE_GRID_W - item.gridW; c++) {
+            let canFit = true;
+            for (let ir = 0; ir < item.gridH; ir++) {
+              for (let ic = 0; ic < item.gridW; ic++) {
+                if (occ[r + ir][c + ic]) { canFit = false; break; }
+              }
+              if (!canFit) break;
+            }
+            if (canFit) {
+              item.gridX = c; item.gridY = r;
+              for (let ir = 0; ir < item.gridH; ir++) {
+                for (let ic = 0; ic < item.gridW; ic++) { occ[r + ir][c + ic] = true; }
+              }
+              return { ...item };
+            }
+          }
+        }
+      }
+      return item;
+    });
+  }, [state.storage]);
+
   const portalFeeForItem = (item: SeaItem) => Math.max(1, Math.ceil((item.price || 0) * PORTAL_FEE_RATE));
 
   const handleGlobalPointerUp = async () => {
     if (!dragItem || !dragSource) return;
-    
     const item = dragItem;
     const source = dragSource;
     const target = hoverTarget;
@@ -158,20 +118,12 @@ export default function FortressStorageModal() {
     if (!target || !cell) return;
 
     if (source === 'inventory' && target === 'storage') {
-      // Move to storage at specific cell
       await storeItems([item.uid], 'store', fortressStorageMode, cell.x, cell.y);
     } else if (source === 'storage' && target === 'inventory') {
       if (isPortalMode) return;
-      // Move to inventory at specific cell
-      // Since InventoryGrid handles internal moves, we only care about cross-container
-      const newInventory = [...state.inventory, { ...item, gridX: cell.x, gridY: cell.y }];
-      await saveInventory(newInventory);
-      await storeItems([item.uid], 'retrieve', 'fortress');
+      await storeItems([item.uid], 'retrieve', 'fortress', cell.x, cell.y);
     } else if (source === 'storage' && target === 'storage') {
-      // Reorder storage
-      const newStorage = storageItems.map(i => 
-        i.uid === item.uid ? { ...i, gridX: cell.x, gridY: cell.y } : i
-      );
+      const newStorage = storageItems.map(i => i.uid === item.uid ? { ...i, gridX: cell.x, gridY: cell.y } : i);
       await saveStorage(newStorage);
     }
   };
@@ -192,15 +144,8 @@ export default function FortressStorageModal() {
           <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
         </div>
 
-        <p className="mb-3 text-[11px] text-cyan-100/65">
-          {isPortalMode ? 'Keo item vao day de gui vao kho.' : 'Keo item qua lai giua 2 ben.'}
-        </p>
-
-        <div 
-          className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 h-[400px] overflow-hidden"
-          onPointerEnter={() => setHoverTarget('storage')}
-        >
-          <div className="h-full overflow-y-auto subtle-scrollbar">
+        <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden" onPointerEnter={() => setHoverTarget('storage')}>
+          <div className="h-full overflow-y-auto subtle-scrollbar" style={{ maxHeight: '400px' }}>
             <InventoryGrid
               items={storageItems}
               bags={[VIRTUAL_STORAGE_BAG]}
@@ -208,13 +153,10 @@ export default function FortressStorageModal() {
               hideStorage
               onItemLayoutChange={(newItems) => saveStorage(newItems)}
               onHoverCellChange={(c) => setHoverCell(c)}
+              onDragStart={(item, src) => { setDragItem(item); setDragSource(src); }}
               externalDragItem={dragSource === 'inventory' ? dragItem : null}
               externalHoverCell={dragSource === 'inventory' ? hoverCell : null}
-              onItemPointerDown={(item) => {
-                setDragItem(item);
-                setDragSource('storage');
-              }}
-              cellSize={40}
+              cellSize={38}
             />
           </div>
         </div>
@@ -228,32 +170,22 @@ export default function FortressStorageModal() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
             <Package className="h-4 w-4" />
-            Hom do tren thuyen
+            Hom do thuyen
           </div>
           <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
         </div>
 
-        <p className="mb-3 text-[11px] text-cyan-100/65">
-          Sap xep va keo item sang kho ben phai de cat.
-        </p>
-
-        <div 
-          className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2"
-          onPointerEnter={() => setHoverTarget('inventory')}
-        >
+        <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2" onPointerEnter={() => setHoverTarget('inventory')}>
           <InventoryGrid
             items={state.inventory}
             bags={state.bags}
             hideStorage
             onItemLayoutChange={(newItems) => saveInventory(newItems)}
             onHoverCellChange={(c) => setHoverCell(c)}
+            onDragStart={(item, src) => { setDragItem(item); setDragSource(src); }}
             externalDragItem={dragSource === 'storage' ? dragItem : null}
             externalHoverCell={dragSource === 'storage' ? hoverCell : null}
-            onItemPointerDown={(item) => {
-              setDragItem(item);
-              setDragSource('inventory');
-            }}
-            cellSize={40}
+            cellSize={38}
           />
         </div>
       </div>
