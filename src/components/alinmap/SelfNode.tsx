@@ -30,13 +30,14 @@ interface SelfNodeProps {
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     setMainTab?: (tab: string) => void;
     addLog: (msg: string) => void;
+    seaState?: any;
 }
 
 const SelfNode: React.FC<SelfNodeProps> = ({
     isSeaGameMode, myObfPos, myDisplayName, myStatus, isVisibleOnMap, isDesktop,
     user, myUserId, galleryActive, galleryTitle, galleryImages,
     scale, selfDragX, selfDragY, panX, panY, boatOffsetX, boatOffsetY,
-    ws, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, setMainTab, addLog,
+    ws, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, setMainTab, addLog, seaState,
 }) => {
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;

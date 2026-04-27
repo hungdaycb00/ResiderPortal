@@ -164,7 +164,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
                                         ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                                         setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                        setMainTab={setMainTab} addLog={addLog}
+                                        setMainTab={setMainTab} addLog={addLog} seaState={seaState}
                                     />
                                 ) : (
                                     <div
