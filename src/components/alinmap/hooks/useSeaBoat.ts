@@ -126,7 +126,7 @@ export function useSeaBoat({
         });
     });
 
-    const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
+    const executeMoveToExact = useCallback((lat: number, lng: number) => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) {
             console.log('[MapMove] Pre-conditions failed:', { isSeaGameMode, hasCtx: !!seaGameCtx, hasPos: !!myObfPos });
             return;
@@ -136,14 +136,6 @@ export function useSeaBoat({
             showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
             return;
         }
-
-        const currentScale = scale.get() || 1;
-        const offsetX = clientX - window.innerWidth / 2;
-        const offsetY = clientY - window.innerHeight / 2;
-        const mapX = offsetX / currentScale - panX.get();
-        const mapY = offsetY / currentScale - panY.get();
-        const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
-        const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
 
         console.log('[MapMove] Target Coordinates:', { lat, lng });
 
@@ -186,7 +178,21 @@ export function useSeaBoat({
                 setBoatTargetPin(null);
             }
         });
-    }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY]);
+    }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+
+    const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
+        if (!isSeaGameMode || !myObfPos) return;
+
+        const currentScale = scale.get() || 1;
+        const offsetX = clientX - window.innerWidth / 2;
+        const offsetY = clientY - window.innerHeight / 2;
+        const mapX = offsetX / currentScale - panX.get();
+        const mapY = offsetY / currentScale - panY.get();
+        const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+        const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+        
+        executeMoveToExact(lat, lng);
+    }, [isSeaGameMode, myObfPos, scale, panX, panY, executeMoveToExact]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;
@@ -242,6 +248,6 @@ export function useSeaBoat({
         boatOffsetX, boatOffsetY,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick,
+        handleMapDoubleClick, executeMoveToExact
     };
 }

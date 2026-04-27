@@ -9,10 +9,11 @@ interface SeaEntitiesProps {
     boatTargetPin: { lat: number; lng: number } | null;
     boatOffsetX: MotionValue<number>;
     boatOffsetY: MotionValue<number>;
+    executeMoveToExact?: (lat: number, lng: number) => void;
 }
 
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
-    myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY,
+    myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
     return (
         <>
@@ -73,6 +74,10 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                         onClick={(e) => {
                             e.stopPropagation();
                             if (isPortal) seaGameCtx?.openFortressStorage?.('portal');
+                        }}
+                        onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            executeMoveToExact?.(item.lat, item.lng);
                         }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onPointerUp={(e) => {}}

@@ -205,6 +205,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         myObfPos={myObfPos} seaState={seaState} seaGameCtx={seaGameCtx}
                                         boatTargetPin={seaBoat.boatTargetPin}
                                         boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
+                                        executeMoveToExact={seaBoat.executeMoveToExact}
                                     />
                                 )}
 

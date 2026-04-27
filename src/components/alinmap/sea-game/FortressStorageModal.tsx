@@ -180,7 +180,7 @@ export default function FortressStorageModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#040b12] text-white">
+    <div className="fixed inset-0 z-[400] flex flex-col bg-[#040b12] text-white">
       <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
