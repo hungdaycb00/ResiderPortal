@@ -109,7 +109,12 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); setGameState('lost'); setTimeout(onLose, 1500); return 0; }
+        if (prev <= 1) { 
+          clearInterval(timer); 
+          setGameState('lost'); 
+          setTimeout(() => { onLose(); }, 1500); 
+          return 0; 
+        }
         return prev - 1;
       });
     }, 1000);
@@ -208,7 +213,12 @@ const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); setGameState('lost'); setTimeout(onLose, 1500); return 0; }
+        if (prev <= 1) { 
+          clearInterval(timer); 
+          setGameState('lost'); 
+          setTimeout(() => { if (gameState === 'lost') onLose(); }, 1500); 
+          return 0; 
+        }
         return prev - 1;
       });
     }, 1000);
@@ -319,7 +329,12 @@ const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => voi
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); setGameState('lost'); setTimeout(onLose, 1500); return 0; }
+        if (prev <= 1) { 
+          clearInterval(timer); 
+          setGameState('lost'); 
+          setTimeout(() => { if (gameState === 'lost') onLose(); }, 1500); 
+          return 0; 
+        }
         return prev - 1;
       });
     }, 1000);

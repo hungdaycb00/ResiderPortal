@@ -29,6 +29,8 @@ export function useSeaBoat({
     const pickingItemsRef = useRef(new Set<string>());
     const activePortalRef = useRef<string | null>(null);
     const isAnimatingRef = useRef(false);
+    const boatMoveXRef = useRef<any>(null);
+    const boatMoveYRef = useRef<any>(null);
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
@@ -62,11 +64,15 @@ export function useSeaBoat({
     // Auto-pickup loop
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen) {
+        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen || seaGameCtx.encounter || seaGameCtx.showCurseModal) {
             // Stop movement if any event is active
-            if (boatMoveRef.current) {
-                boatMoveRef.current.stop();
-                boatMoveRef.current = null;
+            if (boatMoveXRef.current) {
+                boatMoveXRef.current.stop();
+                boatMoveXRef.current = null;
+            }
+            if (boatMoveYRef.current) {
+                boatMoveYRef.current.stop();
+                boatMoveYRef.current = null;
             }
             return;
         }
@@ -134,6 +140,11 @@ export function useSeaBoat({
             return;
         }
 
+        if (seaGameCtx.showMinigame || seaGameCtx.encounter || seaGameCtx.showCurseModal) {
+            console.log('[MapMove] Blocked by active event');
+            return;
+        }
+
         if (!seaGameCtx.isChallengeActive) {
             showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
             return;
@@ -166,8 +177,8 @@ export function useSeaBoat({
         const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
         const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
 
-        animate(boatOffsetX, newBoatPxX, { duration, ease: "easeInOut" });
-        animate(boatOffsetY, newBoatPxY, { duration, ease: "easeInOut" });
+        boatMoveXRef.current = animate(boatOffsetX, newBoatPxX, { duration, ease: "easeInOut" });
+        boatMoveYRef.current = animate(boatOffsetY, newBoatPxY, { duration, ease: "easeInOut" });
 
         const newPanX = -newBoatPxX;
         const newPanY = -newBoatPxY;
@@ -178,6 +189,8 @@ export function useSeaBoat({
             onComplete: () => {
                 isAnimatingRef.current = false;
                 setBoatTargetPin(null);
+                boatMoveXRef.current = null;
+                boatMoveYRef.current = null;
             }
         });
     }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
