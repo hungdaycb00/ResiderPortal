@@ -18,6 +18,7 @@ export function useDataFetching(
     const fetchExternalData = useCallback(async (retry = true) => {
         if (serverStatus !== 'online') return;
 
+        // 1. Fetch Profile (May fail for guests)
         try {
             const profile = await externalApi.request<{ success: boolean, user: any }>('/api/profile');
             if (profile.success && profile.user) {
@@ -33,6 +34,13 @@ export function useDataFetching(
                     setUser(prev => prev ? { ...prev, photoURL: normalizedAvatar, displayName: profile.user.display_name || prev.displayName } : null);
                 }
             }
+        } catch (err) {
+            // Guests will hit 404 here, which is expected
+            console.log("[DataFetching] Profile fetch skipped or failed (Guest user)");
+        }
+
+        // 2. Fetch Games (Public data, should always try)
+        try {
             const gamesData = await externalApi.listServer();
             if (gamesData && Array.isArray(gamesData.games)) {
                 const normalized = gamesData.games.map(g => ({
@@ -42,9 +50,10 @@ export function useDataFetching(
                 setFetchedGames(normalized);
             }
         } catch (err) {
-            console.warn("Failed to fetch games/profile:", err);
+            console.warn("[DataFetching] Failed to fetch server games:", err);
         }
 
+        // 3. Fetch Friends (Requires auth, usually fails for guests)
         try {
             const friendsData = await externalApi.getFriends();
             if (friendsData && friendsData.success) {
@@ -61,11 +70,13 @@ export function useDataFetching(
             }
         } catch (err: any) {
             if (retry && err.message.toLowerCase().includes('user not found')) {
+                // Potential stale deviceId
                 externalApi.clearDeviceId();
                 fetchExternalData(false);
                 return;
             }
-            console.warn("Failed to fetch friends:", err);
+            // Expected failure for guest users
+            console.log("[DataFetching] Friends fetch skipped or failed (Auth required)");
         }
     }, [serverStatus, setUser]);
 
