@@ -94,6 +94,12 @@ export function useAlinWebSocket({
       setIsConnecting(false);
       setWsStatus('OPEN');
       const deviceId = user?.uid || externalApi.getDeviceId();
+      
+      if (!Array.isArray(position) || position.length < 2) {
+          addLog("⚠️ WebSocket open but no GPS, waiting...");
+          return;
+      }
+
       socket.send(JSON.stringify({
         type: joinType,
         payload: {

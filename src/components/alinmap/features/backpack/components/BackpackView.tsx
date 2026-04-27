@@ -30,7 +30,7 @@ const BackpackView: React.FC = () => {
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [selectedItem, setSelectedItem] = useState<SeaItem | null>(null);
-  const activeBag = state.bags[0];
+  const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
   useEffect(() => {

@@ -27,7 +27,7 @@ export default function CombatLootModal() {
 
   const handleLootItem = async (item: SeaItem) => {
     // Auto place logic
-    const activeBag = state.bags[0];
+    const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
     if (!activeBag || activeBag.gridX < 0) return;
 
     // 1. Build occupancy grid

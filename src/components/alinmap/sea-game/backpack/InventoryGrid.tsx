@@ -60,7 +60,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const pointerStartRef = useRef<{ itemUid: string; clientX: number; clientY: number } | null>(null);
   const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
-  const activeBag = bags[0]; // Single bag system
+  const activeBag = Array.isArray(bags) ? bags[0] : undefined; // Single bag system
 
   // ==========================================
   // Occupancy Grids
