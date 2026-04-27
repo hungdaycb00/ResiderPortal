@@ -42,6 +42,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const geo = useGeolocation();
 
     const [searchTag, setSearchTag] = useState('');
+    const [friendIdInput, setFriendIdInput] = useState('');
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
 
@@ -124,16 +125,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         }
     }, [user, geo.position, geo.myObfPos]);
 
-    // --- Avatar state (from WS context) ---
-    const [showAvatarMenu, setShowAvatarMenu] = useState(false);
-    const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Placeholder — actual upload handled elsewhere
-    };
-    const handleDefaultAvatar = () => {
-        // Placeholder
-    };
 
     const handleOpenBackpackFromPickup = () => {
         seaGame.setIsSeaGameMode(true);
@@ -224,14 +216,14 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
                 activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
                 games={games} userGames={posts.userGames} userPosts={posts.userPosts} myUserId={wsCtx.myUserId}
-                myDisplayName={wsCtx.myDisplayName} myStatus={myStatus} myObfPos={geo.myObfPos} user={user}
+                myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
                 searchTag={searchTag}
                 isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
                 radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
                 showNotification={showNotification}
                 ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} scale={nav.scale} externalApi={externalApi} onOpenChat={onOpenChat}
-                setSentFriendRequests={setSentFriendRequests} handleUpdateRadius={nav.handleUpdateRadius}
+                handleUpdateRadius={nav.handleUpdateRadius}
                 setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
                 setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
                 setStatusInput={wsCtx.setStatusInput}
