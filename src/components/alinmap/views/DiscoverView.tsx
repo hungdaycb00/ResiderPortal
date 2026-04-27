@@ -65,13 +65,13 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 </section>
             )}
 
-            {/* New Games */}
+            {/* All Games */}
             <GameSlider
-                title="New Games"
+                title="All Games"
                 icon={<Plus className="w-5 h-5 text-purple-400" />}
                 lightMode
             >
-                {[...games].reverse().slice(0, 10).map((game, i) => (
+                {games.map((game, i) => (
                     <div key={i} className="w-[180px] sm:w-[220px]">
                         <GameCard
                             title={game.title}

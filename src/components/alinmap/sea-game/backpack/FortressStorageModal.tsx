@@ -93,7 +93,10 @@ export default function FortressStorageModal() {
 
       <p className="mb-3 text-[11px] text-cyan-100/65">{caption}</p>
 
-      <div className="subtle-scrollbar grid max-h-[55vh] grid-cols-4 gap-2 overflow-y-auto rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 sm:grid-cols-5">
+      <div 
+        className="subtle-scrollbar grid max-h-[45vh] grid-cols-7 gap-[1px] overflow-y-auto rounded-xl border-2 border-[rgba(30,60,90,0.4)] bg-[#060d17] p-1 mx-auto"
+        style={{ width: "fit-content" }}
+      >
         {items.map((item) => (
           <button
             key={item.uid}
@@ -102,16 +105,17 @@ export default function FortressStorageModal() {
             onDragStart={() => setDragging({ uid: item.uid, source })}
             onDragEnd={() => setDragging(null)}
             title={formatItemTooltip(item)}
-            className="flex aspect-square items-center justify-center rounded-xl border border-cyan-900/40 bg-[#0d2137] text-2xl transition-all hover:scale-[1.04] hover:border-cyan-500/60"
+            className="flex aspect-square w-[40px] h-[40px] items-center justify-center border border-[rgba(25,45,65,0.3)] bg-[rgba(8,12,20,0.6)] text-2xl transition-all hover:scale-[1.04] hover:border-cyan-500/60 z-10"
           >
             <span className="leading-none">{item.icon}</span>
           </button>
         ))}
-        {items.length === 0 && (
-          <div className="col-span-full py-8 text-center text-xs italic text-gray-500">
-            Trong
-          </div>
-        )}
+        {Array.from({ length: Math.max(0, 168 - items.length) }).map((_, i) => (
+          <div 
+            key={`empty-${i}`} 
+            className="aspect-square w-[40px] h-[40px] border border-[rgba(25,45,65,0.3)] bg-[rgba(8,12,20,0.6)]" 
+          />
+        ))}
       </div>
     </div>
   );
@@ -181,7 +185,8 @@ export default function FortressStorageModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[400] flex flex-col bg-[#040b12] text-white">
+    <div className="fixed inset-0 z-[400] flex items-center justify-center lg:p-4 bg-black/60 backdrop-blur-sm">
+      <div className="flex flex-col bg-[#040b12] text-white w-full h-full lg:w-1/3 lg:h-1/2 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
@@ -261,6 +266,7 @@ export default function FortressStorageModal() {
             })()}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

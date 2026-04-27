@@ -33,7 +33,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                                 executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
                             }
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => {}}
                         onPointerUp={(e) => {}}
                         className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
                         style={{
@@ -93,7 +93,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                                 executeMoveToExact?.(item.lat, item.lng);
                             }
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => {}}
                         onPointerUp={(e) => {}}
                     >
                         <div className="relative group flex flex-col items-center">

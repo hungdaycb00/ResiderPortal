@@ -361,7 +361,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 };
 
 const AlinMap: React.FC<AlinMapProps> = (props) => {
-    const activeDeviceId = props.user ? props.externalApi.getDeviceId() : null;
+    const activeDeviceId = props.externalApi.getDeviceId();
     return (
         <SeaGameProvider deviceId={activeDeviceId}>
             <SeaGameUI />

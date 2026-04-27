@@ -48,11 +48,7 @@ export function useMapNavigation({
         setIsSheetExpanded(true);
         return;
       }
-      if (initialMainTab === 'backpack' && requireAuth && !requireAuth('su dung Balo va Sea Game')) {
-        setMainTab('discover');
-        setIsSheetExpanded(false);
-        return;
-      }
+
       setMainTab(initialMainTab as MainTab);
       setIsSheetExpanded(true);
     }
@@ -111,7 +107,7 @@ export function useMapNavigation({
     }
 
     if (tabId === 'backpack') {
-      if (requireAuth && !requireAuth('su dung Balo va Sea Game')) return;
+
 
       setMainTab('backpack');
       setIsSeaGameMode(true);

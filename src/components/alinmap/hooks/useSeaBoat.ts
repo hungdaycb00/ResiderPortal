@@ -57,11 +57,7 @@ export function useSeaBoat({
         panY,
     ]);
 
-    useEffect(() => {
-        if (!seaGameCtx?.isFortressStorageOpen) {
-            activePortalRef.current = null;
-        }
-    }, [seaGameCtx?.isFortressStorageOpen]);
+
 
     // Auto-pickup loop
     useAnimationFrame(() => {
@@ -202,20 +198,11 @@ export function useSeaBoat({
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if ((e.target as HTMLElement)?.closest?.('[data-sea-entity="true"]')) {
-            pointerDownRef.current = null;
-            return;
-        }
         pointerDownRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-        if ((e.target as HTMLElement)?.closest?.('[data-sea-entity="true"]')) {
-            lastTapRef.current = 0;
-            lastTapPosRef.current = null;
-            return;
-        }
 
         const currentPoint = { x: e.clientX, y: e.clientY };
         if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {

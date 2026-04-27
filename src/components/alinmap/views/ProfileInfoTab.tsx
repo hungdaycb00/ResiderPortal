@@ -204,14 +204,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                 </div>
             )}
 
-            {/* Logout Button */}
-            {user && (
-                <div className="pt-4 pb-4">
-                    <button onClick={() => logout?.()} className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-4 rounded-[20px] font-bold transition-all active:scale-95 shadow-sm border border-red-100">
-                        <LogOut className="w-5 h-5" /> Đăng xuất
-                    </button>
-                </div>
-            )}
+
         </>
     );
 };

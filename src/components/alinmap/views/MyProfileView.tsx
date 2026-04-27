@@ -85,7 +85,15 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         <div className="space-y-4 pt-16 md:pt-4">
             <div className="flex items-center justify-between px-1 mb-2">
                 <h3 className="text-lg font-black text-gray-900">My Profile</h3>
-                {!user && (
+                {user ? (
+                    <button
+                        onClick={() => logout?.()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Đăng xuất
+                    </button>
+                ) : (
                     <button
                         onClick={() => triggerAuth?.(() => {})}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"

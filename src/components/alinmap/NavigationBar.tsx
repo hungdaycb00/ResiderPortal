@@ -39,10 +39,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         </button>
                     )}
                     
-                    {/* Balo Button */}
+                    {/* Looter Button */}
                     <button onClick={() => handleTabClick('backpack')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
                         <Package className={`w-6 h-6 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`} />
-                        <span className={`text-[9px] font-bold ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`}>Balo</span>
+                        <span className={`text-[9px] font-bold ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400 group-hover:text-amber-400'}`}>Looter</span>
                     </button>
                 </div>
             </div>
@@ -68,10 +68,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     </button>
                 )}
                 
-                {/* Balo Button */}
+                {/* Looter Button */}
                 <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
                     <Package className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Balo</span>
+                    <span className="text-[9px] font-black uppercase">Looter</span>
                 </button>
             </div>
         </>
