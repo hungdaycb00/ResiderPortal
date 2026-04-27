@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Heart, Zap, Swords, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSeaGame, SeaItem } from './SeaGameProvider';
-import InventoryGrid from './InventoryGrid';
+import CombatInventoryGrid from './CombatInventoryGrid';
 
 const CombatScreen: React.FC = () => {
   const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState } = useSeaGame();
@@ -230,7 +230,7 @@ const CombatScreen: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
-            <InventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={cellSize} />
+            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={cellSize} />
           </div>
         </div>
 
@@ -251,7 +251,7 @@ const CombatScreen: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
-            <InventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={cellSize} />
+            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={cellSize} />
           </div>
         </div>
       </div>

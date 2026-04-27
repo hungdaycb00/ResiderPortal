@@ -1,175 +1,269 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCw } from 'lucide-react';
-import type { SeaItem } from './SeaGameProvider';
+import type { SeaItem, BagItem } from './SeaGameProvider';
+import { MAX_GRID_W, MAX_GRID_H } from './SeaGameProvider';
 
 interface InventoryGridProps {
   items: SeaItem[];
-  gridWidth: number;
-  gridHeight: number;
+  bags: BagItem[]; // We only use the first bag now
   readOnly?: boolean;
-  stagingItem?: SeaItem | null;
-  onLayoutChange?: (items: SeaItem[]) => void;
-  onStagingPlaced?: (item: SeaItem) => void;
-  onStagingDiscarded?: () => void;
+  onItemLayoutChange?: (items: SeaItem[]) => void;
+  onItemDoubleClick?: (item: SeaItem) => void;
+  onItemClick?: (item: SeaItem) => void;
   cellSize?: number;
+  gridW?: number;
+  gridH?: number;
 }
 
 const RARITY_COLORS: Record<string, string> = {
-  common: 'bg-sky-100 border-sky-300',
-  uncommon: 'bg-emerald-100 border-emerald-300',
-  rare: 'bg-amber-100 border-amber-400',
-  legendary: 'bg-purple-100 border-purple-400',
+  common: 'bg-sky-100 border-sky-300 text-sky-900',
+  uncommon: 'bg-emerald-100 border-emerald-300 text-emerald-900',
+  rare: 'bg-amber-100 border-amber-400 text-amber-900',
+  legendary: 'bg-purple-100 border-purple-400 text-purple-900',
 };
 
-const RARITY_GLOW: Record<string, string> = {
-  common: '',
-  uncommon: 'shadow-emerald-200/50',
-  rare: 'shadow-amber-300/60',
-  legendary: 'shadow-purple-400/60 animate-pulse',
+const BAG_BG: Record<string, string> = {
+  common: 'rgba(56, 189, 248, 0.2)', // sky-400
+  uncommon: 'rgba(52, 211, 153, 0.2)', // emerald-400
+  rare: 'rgba(251, 191, 36, 0.2)', // amber-400
+  legendary: 'rgba(192, 132, 252, 0.2)', // purple-400
 };
+
+const CLICK_MOVE_TOLERANCE = 8;
+
+const formatItemTooltip = (item: SeaItem) =>
+  `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vang | ${item.gridW}x${item.gridH}`;
+
+type DragMode = 'item' | 'storage-item' | null;
 
 const InventoryGrid: React.FC<InventoryGridProps> = ({
-  items, gridWidth, gridHeight, readOnly = false,
-  stagingItem, onLayoutChange, onStagingPlaced, onStagingDiscarded,
-  cellSize = 48,
+  items, bags, readOnly = false,
+  onItemLayoutChange,
+  onItemDoubleClick,
+  onItemClick,
+  cellSize = 40,
+  gridW = MAX_GRID_W,
+  gridH = MAX_GRID_H,
 }) => {
+  const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
-  const [isDraggingStaging, setIsDraggingStaging] = useState(false);
+  const [isHoveringStorage, setIsHoveringStorage] = useState(false);
+  
   const gridRef = useRef<HTMLDivElement>(null);
+  const storageRef = useRef<HTMLDivElement>(null);
+  const pointerStartRef = useRef<{ itemUid: string; clientX: number; clientY: number } | null>(null);
+  const pointerCurrentRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
-  // Build occupancy grid
-  const buildOccupancy = useCallback((excludeUid?: string) => {
-    const grid: (string | null)[][] = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
+  const activeBag = bags[0]; // Single bag system
+
+  // ==========================================
+  // Occupancy Grids
+  // ==========================================
+  const buildBagOccupancy = useCallback(() => {
+    const grid: boolean[][] = Array.from({ length: gridH }, () => Array(gridW).fill(false));
+    if (!activeBag || activeBag.gridX < 0) return grid;
+    
+    const w = activeBag.width;
+    const h = activeBag.height;
+    const shape = activeBag.shape || [];
+    for (let r = 0; r < h && (activeBag.gridY + r) < gridH; r++) {
+      for (let c = 0; c < w && (activeBag.gridX + c) < gridW; c++) {
+        if (shape[r] && shape[r][c]) {
+          grid[activeBag.gridY + r][activeBag.gridX + c] = true;
+        }
+      }
+    }
+    return grid;
+  }, [activeBag]);
+
+  const buildItemOccupancy = useCallback((excludeUid?: string) => {
+    const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
     for (const item of items) {
-      if (item.gridX < 0 || item.gridY < 0) continue;
-      if (excludeUid && item.uid === excludeUid) continue;
-      const w = item.rotated ? item.gridH : item.gridW;
-      const h = item.rotated ? item.gridW : item.gridH;
-      for (let r = item.gridY; r < item.gridY + h && r < gridHeight; r++) {
-        for (let c = item.gridX; c < item.gridX + w && c < gridWidth; c++) {
+      if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
+      const w = item.gridW;
+      const h = item.gridH;
+      for (let r = item.gridY; r < item.gridY + h && r < gridH; r++) {
+        for (let c = item.gridX; c < item.gridX + w && c < gridW; c++) {
           grid[r][c] = item.uid;
         }
       }
     }
     return grid;
-  }, [items, gridWidth, gridHeight]);
+  }, [items]);
 
-  const canPlace = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
-    const occ = buildOccupancy(excludeUid);
-    const w = item.rotated ? item.gridH : item.gridW;
-    const h = item.rotated ? item.gridW : item.gridH;
-    if (x < 0 || y < 0 || x + w > gridWidth || y + h > gridHeight) return false;
+  // Can place item: all cells must be on the bag AND not occupied by another item
+  const canPlaceItem = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
+    const bagOcc = buildBagOccupancy();
+    const itemOcc = buildItemOccupancy(excludeUid);
+    const w = item.gridW;
+    const h = item.gridH;
+    if (x < 0 || y < 0 || x + w > gridW || y + h > gridH) return false;
     for (let r = y; r < y + h; r++) {
       for (let c = x; c < x + w; c++) {
-        if (occ[r][c] !== null) return false;
+        if (!bagOcc[r][c]) return false; // Not on the bag
+        if (itemOcc[r][c] !== null) return false; // Overlap
       }
     }
     return true;
-  }, [buildOccupancy, gridWidth, gridHeight]);
+  }, [buildBagOccupancy, buildItemOccupancy]);
 
-  // --- Drag handlers (inventory items) ---
-  const handleItemPointerDown = (e: React.PointerEvent, item: SeaItem) => {
+  // ==========================================
+  // Drag Handlers
+  // ==========================================
+  const handleItemPointerDown = (e: React.PointerEvent, item: SeaItem, mode: DragMode) => {
     if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
-    const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    
+    // We base the coordinates relative to the screen to allow cross-container dragging,
+    // but for simplicity we keep it relative to a wrapper or document.
+    // Actually, bounding rects are easiest.
+    const gridRect = gridRef.current?.getBoundingClientRect();
+    if (!gridRect) return;
+    
+    setDragMode(mode);
     setDragItem(item);
-    // Đặt offset vào chính giữa item
-    const w = item.rotated ? item.gridH : item.gridW;
-    const h = item.rotated ? item.gridW : item.gridH;
-    setDragOffset({ x: (w * cellSize) / 2, y: (h * cellSize) / 2 });
-    setDragPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    setDragOffset({
+      x: Math.max(0, e.clientX - itemRect.left),
+      y: Math.max(0, e.clientY - itemRect.top),
+    });
+    pointerStartRef.current = {
+      itemUid: item.uid,
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
+    pointerCurrentRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
+    try {
+      (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
+    } catch {}
+    
+    // Track global position if needed, but we'll stick to relative to grid for rendering
+    setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top });
   };
+
+  const updateDragPosition = useCallback((clientX: number, clientY: number) => {
+    if (!dragMode || !dragItem) return;
+    const gridRect = gridRef.current?.getBoundingClientRect();
+    const storageRect = storageRef.current?.getBoundingClientRect();
+    
+    if (gridRect) {
+      const relX = clientX - gridRect.left;
+      const relY = clientY - gridRect.top;
+      pointerCurrentRef.current = { clientX, clientY };
+      setDragPos({ x: relX, y: relY });
+      
+      // Check if hovering grid
+      if (clientX >= gridRect.left && clientX <= gridRect.right &&
+          clientY >= gridRect.top && clientY <= gridRect.bottom) {
+        const topLeftX = relX - dragOffset.x;
+        const topLeftY = relY - dragOffset.y;
+        setHoverCell({
+          x: Math.round(topLeftX / cellSize),
+          y: Math.round(topLeftY / cellSize),
+        });
+        setIsHoveringStorage(false);
+      } 
+      // Check if hovering storage
+      else if (storageRect && 
+               clientX >= storageRect.left && clientX <= storageRect.right &&
+               clientY >= storageRect.top && clientY <= storageRect.bottom) {
+        setHoverCell(null);
+        setIsHoveringStorage(true);
+      } 
+      else {
+        setHoverCell(null);
+        setIsHoveringStorage(false);
+      }
+    }
+  }, [dragMode, dragItem, cellSize, dragOffset.x, dragOffset.y]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragItem && !isDraggingStaging) return;
-    const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    // Calculate position relative to grid
-    const relX = e.clientX - rect.left;
-    const relY = e.clientY - rect.top;
-    
-    setDragPos({ x: relX, y: relY });
-    const cellX = Math.floor(relX / cellSize);
-    const cellY = Math.floor(relY / cellSize);
-    setHoverCell({ x: cellX, y: cellY });
-  }, [dragItem, isDraggingStaging, cellSize]);
+    updateDragPosition(e.clientX, e.clientY);
+  }, [updateDragPosition]);
 
   const handlePointerUp = useCallback(() => {
-    if (dragItem) {
-      if (hoverCell && canPlace(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
-        const newItems = items.map(i =>
-          i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
-        );
-        onLayoutChange?.(newItems);
-      } else {
-        // Nếu thả ra ngoài hoặc không hợp lệ, chuyển thành floating
-        const newItems = items.map(i =>
-          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1, floatX: dragPos.x - dragOffset.x, floatY: dragPos.y - dragOffset.y } : i
-        );
-        onLayoutChange?.(newItems);
+    if (!dragMode || !dragItem) return;
+
+    const pointerStart = pointerStartRef.current;
+    const pointerCurrent = pointerCurrentRef.current;
+    const wasClick = !!pointerStart && pointerStart.itemUid === dragItem.uid &&
+      !!pointerCurrent &&
+      Math.abs(pointerCurrent.clientX - pointerStart.clientX) <= CLICK_MOVE_TOLERANCE &&
+      Math.abs(pointerCurrent.clientY - pointerStart.clientY) <= CLICK_MOVE_TOLERANCE;
+
+    if (wasClick) {
+      onItemClick?.(dragItem);
+      setDragMode(null);
+      setDragItem(null);
+      setHoverCell(null);
+      setIsHoveringStorage(false);
+      pointerStartRef.current = null;
+      pointerCurrentRef.current = null;
+      return;
+    }
+
+    if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
+      // Place on grid
+      const newItems = items.map(i =>
+        i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
+      );
+      onItemLayoutChange?.(newItems);
+    } else if (isHoveringStorage && dragMode === 'item') {
+      // Move from grid to storage
+      const newItems = items.map(i =>
+        i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
+      );
+      onItemLayoutChange?.(newItems);
+    } else if (isHoveringStorage && dragMode === 'storage-item') {
+      // Reorder storage: move to front
+      const filtered = items.filter(i => i.uid !== dragItem.uid);
+      const movingItem = items.find(i => i.uid === dragItem.uid);
+      if (movingItem) {
+        onItemLayoutChange?.([movingItem, ...filtered]);
       }
     }
-    if (isDraggingStaging && stagingItem && hoverCell) {
-      if (canPlace(stagingItem, hoverCell.x, hoverCell.y)) {
-        const placed = { ...stagingItem, gridX: hoverCell.x, gridY: hoverCell.y };
-        onStagingPlaced?.(placed);
-      }
-      setIsDraggingStaging(false);
-    }
+
+    setDragMode(null);
     setDragItem(null);
     setHoverCell(null);
-  }, [dragItem, hoverCell, items, canPlace, onLayoutChange, isDraggingStaging, stagingItem, onStagingPlaced]);
+    setIsHoveringStorage(false);
+    pointerStartRef.current = null;
+    pointerCurrentRef.current = null;
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, items, canPlaceItem, onItemClick, onItemLayoutChange]);
 
-  // --- Rotate ---
-  const handleRotate = (item: SeaItem) => {
-    if (readOnly) return;
-    const rotated = !item.rotated;
-    
-    // Luôn cho phép xoay (yêu cầu mới: không cần biết có đủ ô hay không)
-    if (dragItem?.uid === item.uid) {
-      setDragItem({ ...dragItem, rotated });
-    }
-    
-    // Cập nhật trạng thái trong danh sách items
-    const newItems = items.map(i => i.uid === item.uid ? { ...i, rotated } : i);
-    onLayoutChange?.(newItems);
+  // Global mouse up to catch drops outside
+  React.useEffect(() => {
+    const handleGlobalMove = (e: PointerEvent) => {
+      if (dragMode) updateDragPosition(e.clientX, e.clientY);
+    };
+    const handleGlobalUp = () => {
+      if (dragMode) handlePointerUp();
+    };
+    window.addEventListener('pointermove', handleGlobalMove);
+    window.addEventListener('pointerup', handleGlobalUp);
+    return () => {
+      window.removeEventListener('pointermove', handleGlobalMove);
+      window.removeEventListener('pointerup', handleGlobalUp);
+    };
+  }, [dragMode, handlePointerUp, updateDragPosition]);
 
-    // Nếu là staging item
-    if (stagingItem && item.uid === stagingItem.uid) {
-      onStagingPlaced?.({ ...item, rotated });
-    }
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, item: SeaItem) => {
-    e.preventDefault();
-    handleRotate(item);
-  };
-
-  // --- Staging item drag ---
-  const handleStagingPointerDown = (e: React.PointerEvent) => {
-    if (!stagingItem) return;
-    e.preventDefault();
-    setIsDraggingStaging(true);
-    setDragPos({ x: e.clientX, y: e.clientY });
-  };
-
-  // Render placed items
-  const occupancy = buildOccupancy();
-
-  // Highlight cells for current drag
+  // ==========================================
+  // Render Helpers
+  // ==========================================
+  const bagOcc = buildBagOccupancy();
+  
   const highlightCells: { x: number; y: number; valid: boolean }[] = [];
-  if (hoverCell && (dragItem || (isDraggingStaging && stagingItem))) {
-    const item = dragItem || stagingItem!;
-    const w = item.rotated ? item.gridH : item.gridW;
-    const h = item.rotated ? item.gridW : item.gridH;
-    const valid = canPlace(item, hoverCell.x, hoverCell.y, dragItem?.uid);
+  if (hoverCell && dragMode && dragItem) {
+    const w = dragItem.gridW;
+    const h = dragItem.gridH;
+    const valid = canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid);
     for (let r = hoverCell.y; r < hoverCell.y + h; r++) {
       for (let c = hoverCell.x; c < hoverCell.x + w; c++) {
         highlightCells.push({ x: c, y: r, valid });
@@ -177,152 +271,190 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     }
   }
 
+  const gridItems = items.filter(i => i.gridX >= 0);
+  const storageItems = items.filter(i => i.gridX < 0);
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Grid */}
+    <div 
+      className="flex flex-col gap-4 select-none touch-none" 
+      onPointerMove={handlePointerMove}
+    >
+      {/* Main Grid 7x6 */}
       <div
         ref={gridRef}
-        className="relative border-2 border-cyan-600/40 rounded-lg bg-[#0a1929]/80 select-none"
-        style={{ width: gridWidth * cellSize, height: gridHeight * cellSize }}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onMouseDown={(e) => {
-          // Button 2 is Right Click
-          if (e.button === 2 && dragItem) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleRotate(dragItem);
-          }
+        className="relative rounded-lg overflow-hidden shrink-0 mx-auto"
+        style={{
+          width: gridW * cellSize,
+          height: gridH * cellSize,
+          background: '#060d17',
+          border: '2px solid rgba(30, 60, 90, 0.4)',
+          touchAction: 'none',
         }}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (dragItem) handleRotate(dragItem);
-        }}
-        onAuxClick={(e) => {
-          if (e.button === 2 && dragItem) {
-            e.preventDefault();
-            handleRotate(dragItem);
-          }
-        }}
+        onContextMenu={(e) => e.preventDefault()}
       >
-        {/* Grid lines */}
-        {Array.from({ length: gridHeight }).map((_, r) =>
-          Array.from({ length: gridWidth }).map((_, c) => (
+        {/* Layer 1: Background grid cells */}
+        {Array.from({ length: gridH }).map((_, r) =>
+          Array.from({ length: gridW }).map((_, c) => (
             <div
-              key={`cell-${r}-${c}`}
-              className="absolute border border-cyan-800/30"
-              style={{ left: c * cellSize, top: r * cellSize, width: cellSize, height: cellSize }}
+              key={`bg-${r}-${c}`}
+              className="absolute"
+              style={{
+                left: c * cellSize,
+                top: r * cellSize,
+                width: cellSize,
+                height: cellSize,
+                border: '1px solid rgba(25, 45, 65, 0.3)',
+                background: bagOcc[r][c] ? undefined : 'rgba(8, 12, 20, 0.6)',
+              }}
             />
           ))
         )}
 
-        {/* Highlight on drag */}
+        {/* Layer 2: Bag active cells */}
+        {activeBag && activeBag.gridX >= 0 && (() => {
+          const w = activeBag.width;
+          const h = activeBag.height;
+          const shape = activeBag.shape || [];
+          const bgColor = BAG_BG[activeBag.rarity] || BAG_BG.common;
+
+          const bagCells = [];
+          for (let r = 0; r < h; r++) {
+            for (let c = 0; c < w; c++) {
+              if (shape[r] && shape[r][c]) {
+                bagCells.push(
+                  <div
+                    key={`bag-${r}-${c}`}
+                    className="absolute"
+                    style={{
+                      left: (activeBag.gridX + c) * cellSize,
+                      top: (activeBag.gridY + r) * cellSize,
+                      width: cellSize,
+                      height: cellSize,
+                      background: bgColor,
+                      border: '1px solid rgba(56, 189, 248, 0.5)',
+                      boxShadow: 'inset 0 0 8px rgba(56, 189, 248, 0.15)',
+                    }}
+                  />
+                );
+              }
+            }
+          }
+          return bagCells;
+        })()}
+
+        {/* Highlight cells */}
         {highlightCells.map(({ x, y, valid }) => (
           <div
             key={`hl-${x}-${y}`}
-            className={`absolute z-10 transition-colors pointer-events-none ${
+            className={`absolute z-10 pointer-events-none transition-colors ${
               valid ? 'bg-emerald-400/30 border border-emerald-400/60' : 'bg-red-400/30 border border-red-400/60'
             }`}
             style={{ left: x * cellSize, top: y * cellSize, width: cellSize, height: cellSize }}
           />
         ))}
 
-        {/* Render Items */}
-        {items.map(item => {
-          if (item.gridX < 0 && item.floatX == null) return null; // Old items that were floating before this feature
-          const isFloating = item.gridX < 0;
-
-          const w = item.rotated ? item.gridH : item.gridW;
-          const h = item.rotated ? item.gridW : item.gridH;
-          const isDragging = dragItem?.uid === item.uid;
+        {/* Grid Items */}
+        {gridItems.map(item => {
+          const w = item.gridW;
+          const h = item.gridH;
+          const isDragging = dragItem?.uid === item.uid && dragMode === 'item';
           const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
-          const glowClass = RARITY_GLOW[item.rarity] || '';
-          
-          const left = isFloating ? (item.floatX || 0) : item.gridX * cellSize;
-          const top = isFloating ? (item.floatY || 0) : item.gridY * cellSize;
 
           return (
             <motion.div
               key={item.uid}
-              className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-shadow origin-center ${colorClass} ${glowClass} ${
-                isDragging ? 'opacity-0' : 'opacity-100 hover:brightness-110'
-              } ${isFloating ? 'z-[100] ring-4 ring-red-500/80 shadow-2xl animate-pulse' : 'z-20'}`}
+              className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing z-20 ${colorClass} ${
+                isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
+              }`}
               style={{
-                left: left + 1,
-                top: top + 1,
+                left: item.gridX * cellSize + 1,
+                top: item.gridY * cellSize + 1,
                 width: w * cellSize - 2,
                 height: h * cellSize - 2,
+                touchAction: 'none',
               }}
-              whileTap={{ scale: 1.1 }}
-              onPointerDown={(e) => {
-                if (e.button === 2) {
-                  e.preventDefault();
-                  handleRotate(item);
-                  return;
-                }
-                handleItemPointerDown(e, item);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                if (!dragItem) handleRotate(item);
-              }}
-              title={`${item.name}\n⚔️ ${item.weight} DMG | ❤️ +${item.hpBonus} HP\n💰 ${item.price}g | ${item.gridW}×${item.gridH}`}
+              whileTap={{ scale: 1.05 }}
+              onPointerDown={(e) => handleItemPointerDown(e, item, 'item')}
+              onDoubleClick={() => onItemDoubleClick?.(item)}
+              onContextMenu={(e) => e.preventDefault()}
+              title={formatItemTooltip(item)}
             >
-              <span className="text-lg leading-none drop-shadow-md">{item.icon}</span>
-              {(w * cellSize > 50 || h * cellSize > 50) && (
-                <span className="text-[8px] font-bold text-gray-700 leading-tight truncate max-w-full px-0.5">{item.name}</span>
-              )}
+              <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
             </motion.div>
           );
         })}
 
-        {/* Dragging ghost - now using absolute to avoid BottomSheet transform issues */}
-        {(dragItem || (isDraggingStaging && stagingItem)) && (
+        {/* Drag Ghost inside Grid bounds */}
+        {dragMode && dragItem && hoverCell && (
           <div
-            className="absolute z-[9999] pointer-events-none opacity-90 scale-110 origin-center"
+            className={`absolute z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
             style={{
-              left: dragPos.x - (dragItem ? dragOffset.x : ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridH : (dragItem || stagingItem)!.gridW) * cellSize / 2),
-              top: dragPos.y - (dragItem ? dragOffset.y : ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize / 2),
-              width: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridH : (dragItem || stagingItem)!.gridW) * cellSize,
-              height: ((dragItem || stagingItem)!.rotated ? (dragItem || stagingItem)!.gridW : (dragItem || stagingItem)!.gridH) * cellSize,
+              left: hoverCell.x * cellSize + 1,
+              top: hoverCell.y * cellSize + 1,
+              width: dragItem.gridW * cellSize - 2,
+              height: dragItem.gridH * cellSize - 2,
             }}
           >
-            <div className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-2xl ${RARITY_COLORS[(dragItem || stagingItem)!.rarity] || ''}`}>
-              <span className="text-2xl">{(dragItem || stagingItem)!.icon}</span>
-            </div>
+            <span className="text-xl">{dragItem.icon}</span>
           </div>
         )}
       </div>
 
-      {/* Staging Area */}
-      {stagingItem && !readOnly && (
-        <div className="flex items-center gap-2 bg-amber-900/40 border border-amber-400/50 rounded-lg p-2">
-          <div
-            className={`shrink-0 rounded-md border-2 flex items-center justify-center cursor-grab ${RARITY_COLORS[stagingItem.rarity] || ''}`}
-            style={{ width: stagingItem.gridW * cellSize * 0.7, height: stagingItem.gridH * cellSize * 0.7 }}
-            onPointerDown={handleStagingPointerDown}
-          >
-            <span className="text-lg">{stagingItem.icon}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-amber-200 truncate">{stagingItem.name}</p>
-            <p className="text-[10px] text-amber-300/70">⚔️{stagingItem.weight} ❤️+{stagingItem.hpBonus} 💰{stagingItem.price}</p>
-            <p className="text-[9px] text-amber-400/50">Kéo vào grid để nhặt</p>
-          </div>
-          <button
-            onClick={() => handleRotate({ ...stagingItem, gridX: -1, gridY: -1 })}
-            className="p-1.5 bg-amber-700/50 rounded hover:bg-amber-600/50 transition-colors"
-            title="Xoay item"
-          >
-            <RotateCw className="w-4 h-4 text-amber-200" />
-          </button>
-          <button
-            onClick={onStagingDiscarded}
-            className="text-[10px] text-red-400 font-bold px-2 py-1 bg-red-900/30 rounded hover:bg-red-800/40 transition-colors"
-          >
-            Bỏ
-          </button>
+      {/* Storage Area (Khoảng trống chứa item) */}
+      <div 
+        ref={storageRef}
+        className={`min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
+          isHoveringStorage ? 'border-cyan-400 bg-[#122b46]' : 'border-cyan-800/50'
+        }`}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
+            Khu Vực Chờ ({storageItems.length})
+          </p>
+          <span className="text-[9px] text-cyan-600">Kéo item xuống đây để cất</span>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {storageItems.map(item => {
+            const isDragging = dragItem?.uid === item.uid && dragMode === 'storage-item';
+            const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
+            
+            return (
+              <div
+                key={item.uid}
+                className={`w-10 h-10 rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
+                  isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
+                }`}
+                style={{ touchAction: 'none' }}
+                onPointerDown={(e) => handleItemPointerDown(e, item, 'storage-item')}
+                onDoubleClick={() => onItemDoubleClick?.(item)}
+                title={formatItemTooltip(item)}
+              >
+                <span className="text-xl leading-none">{item.icon}</span>
+              </div>
+            );
+          })}
+          {storageItems.length === 0 && (
+             <div className="text-xs text-slate-500 italic w-full text-center py-2">
+               Kho trống
+             </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Free-floating Drag Ghost (follows cursor exactly when not snapped to grid) */}
+      {dragMode && dragItem && (!hoverCell || isHoveringStorage) && (
+        <div
+          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+          style={{
+            // Convert relative to viewport coords since it's fixed
+            left: (gridRef.current?.getBoundingClientRect().left || 0) + dragPos.x - dragOffset.x,
+            top: (gridRef.current?.getBoundingClientRect().top || 0) + dragPos.y - dragOffset.y,
+            width: dragItem.gridW * cellSize - 2,
+            height: dragItem.gridH * cellSize - 2,
+          }}
+        >
+          <span className="text-xl">{dragItem.icon}</span>
         </div>
       )}
     </div>

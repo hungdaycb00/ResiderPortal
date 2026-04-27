@@ -3,7 +3,7 @@ import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } 
 import { getBagBonuses, useSeaGame } from '../sea-game/SeaGameProvider';
 import type { SeaItem } from '../sea-game/SeaGameProvider';
 import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
-import InventoryGridV2 from '../sea-game/InventoryGridV2';
+import InventoryGrid from '../sea-game/InventoryGrid';
 
 const TIER_LABELS = [
   { tier: 0, cost: 0, label: '0' },
@@ -135,7 +135,7 @@ const BackpackView: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-cyan-900/20 bg-[#06111a] p-2 shadow-inner">
-              <InventoryGridV2
+              <InventoryGrid
                 items={state.inventory}
                 bags={state.bags}
                 onItemLayoutChange={(newItems) => saveInventory(newItems)}

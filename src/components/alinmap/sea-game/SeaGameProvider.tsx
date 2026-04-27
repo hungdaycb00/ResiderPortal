@@ -139,14 +139,10 @@ type StorageAccessMode = 'fortress' | 'portal';
 interface SeaGameContextType {
   state: SeaGameState;
   worldItems: WorldItem[];
-  isBackpackOpen: boolean;
-  setIsBackpackOpen: (v: boolean) => void;
   isFortressStorageOpen: boolean;
   setIsFortressStorageOpen: (v: boolean) => void;
   fortressStorageMode: StorageAccessMode;
   openFortressStorage: (mode?: StorageAccessMode) => void;
-  stagingItem: SeaItem | null;
-  setStagingItem: (item: SeaItem | null) => void;
   pickupRewardItem: SeaItem | null;
   setPickupRewardItem: (item: SeaItem | null) => void;
   encounter: Encounter | null;
@@ -336,8 +332,6 @@ interface SeaGameProviderProps {
 export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, deviceId }) => {
   const [state, setState] = useState<SeaGameState>(defaultState);
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
-  const [isBackpackOpen, setIsBackpackOpen] = useState(false);
-  const [stagingItem, setStagingItem] = useState<SeaItem | null>(null);
   const [pickupRewardItem, setPickupRewardItem] = useState<SeaItem | null>(null);
   const [pendingBagSwap, setPendingBagSwap] = useState<BagItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
@@ -482,7 +476,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
             body: JSON.stringify({ deviceId, inventory: newInventory }),
           });
           setState(prev => ({ ...prev, cursePercent: data.cursePercent, inventory: newInventory }));
-          setStagingItem(null);
           setPickupRewardItem(floatingItem);
         }
         setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
@@ -560,7 +553,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     // Delete floating items
     const validItems = state.inventory.filter(i => i.gridX >= 0);
     await saveInventory(validItems);
-    setStagingItem(null);
     setShowDiscardModal(false);
   }, [state.inventory, saveInventory]);
 
@@ -662,9 +654,9 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
 
   const value: SeaGameContextType = {
-    state, worldItems, isBackpackOpen, setIsBackpackOpen,
+    state, worldItems,
     isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode,
-    stagingItem, setStagingItem, pickupRewardItem, setPickupRewardItem,
+    pickupRewardItem, setPickupRewardItem,
     pendingBagSwap, setPendingBagSwap, acceptBagSwap,
     encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,

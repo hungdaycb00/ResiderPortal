@@ -14,7 +14,7 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, stagingItem } = useSeaGame();
+    const { showMinigame, setShowMinigame, pickupItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
 
     return (
         <>
@@ -78,14 +78,6 @@ const SeaGameUI: React.FC = () => {
                                             <span className="text-2xl drop-shadow-md">{item.icon}</span>
                                         </div>
                                     ))}
-                                    {stagingItem && (
-                                        <div
-                                            className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 bg-gray-900/40 ${RARITY_COLORS[stagingItem.rarity] || ''}`}
-                                            title={stagingItem.name}
-                                        >
-                                            <span className="text-2xl drop-shadow-md">{stagingItem.icon}</span>
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="w-full flex flex-col gap-3 mt-2">

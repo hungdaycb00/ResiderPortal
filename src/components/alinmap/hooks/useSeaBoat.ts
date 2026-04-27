@@ -125,7 +125,7 @@ export function useSeaBoat({
         const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
         const duration = baseDuration / multiplier;
 
-        const hasFloatingItems = (seaGameCtx.state.inventory.some((i: any) => i.gridX < 0) || !!seaGameCtx.stagingItem);
+        const hasFloatingItems = seaGameCtx.state.inventory.some((i: any) => i.gridX < 0);
         if (hasFloatingItems) {
             console.log('[MapMove] Blocked by floating items');
             seaGameCtx.setShowDiscardModal(true);
