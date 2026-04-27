@@ -130,9 +130,9 @@ export function useMapNavigation({
       };
       void doLoad();
 
-      const targetLat = myObfPos?.lat || seaState.currentLat;
-      const targetLng = myObfPos?.lng || seaState.currentLng;
-      if (targetLat && targetLng) handleCenterTo(targetLat, targetLng);
+      const targetLat = seaState.currentLat ?? myObfPos?.lat;
+      const targetLng = seaState.currentLng ?? myObfPos?.lng;
+      if (targetLat != null && targetLng != null) handleCenterTo(targetLat, targetLng);
     } else {
       setIsSeaGameMode(false);
       setMainTab(tabId as MainTab);

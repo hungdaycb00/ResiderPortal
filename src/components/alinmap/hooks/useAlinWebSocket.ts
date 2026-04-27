@@ -56,6 +56,19 @@ export function useAlinWebSocket({
   // Keep refs in sync with state
   useEffect(() => { searchTagRef.current = searchTag; }, [searchTag]);
   useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
+  useEffect(() => {
+    if (user?.displayName) setMyDisplayName(user.displayName);
+  }, [user?.displayName]);
+  useEffect(() => {
+    if (user?.photoURL !== undefined) setMyAvatarUrl(user.photoURL || '');
+  }, [user?.photoURL]);
+  useEffect(() => {
+    setLocalMyStatus(myStatus);
+    setStatusInput(myStatus);
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && user && myStatus?.trim()) {
+      ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: myStatus } }));
+    }
+  }, [myStatus, user]);
 
   const addLog = useCallback((msg: string) => {
     console.log('[Alin]', msg);
@@ -123,10 +136,13 @@ export function useAlinWebSocket({
       if (data.type === 'JOIN_SUCCESS') {
         const p = data.payload;
         addLog(`🎯 My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
-        setMyObfPos({ lat: p.lat, lng: p.lng });
+        if (!myObfPos && p.lat != null && p.lng != null) {
+          setMyObfPos({ lat: p.lat, lng: p.lng });
+        }
         setMyUserId(p.userId);
         myUserIdRef.current = p.userId;
-        if (p.username) setMyDisplayName(p.username);
+        const nextDisplayName = user?.displayName || p.displayName || p.username;
+        if (nextDisplayName) setMyDisplayName(nextDisplayName);
         if (p.status) {
           setLocalMyStatus(p.status);
           setStatusInput(p.status);

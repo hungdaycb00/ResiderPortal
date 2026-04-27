@@ -47,6 +47,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [friendIdInput, setFriendIdInput] = useState('');
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
+    const [centerBoatHandler, setCenterBoatHandler] = useState<(() => void) | null>(null);
 
     // --- Sea Game ---
     const seaGame = useSeaGame();
@@ -202,6 +203,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSeaLoading={nav.isSeaLoading}
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
+                setBoatCenterHandler={setCenterBoatHandler}
             />
 
             <MapControls
@@ -213,6 +215,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setSearchMarkerPos={setSearchMarkerPos} setFilterDistance={() => {}}
                 setFilterAgeMin={() => {}} setFilterAgeMax={() => {}} setSearchTag={setSearchTag}
                 handleRefresh={handleRefresh} handleCenter={nav.handleCenter} handleCenterTo={nav.handleCenterTo} handleUpdateRadius={nav.handleUpdateRadius}
+                handleCenterBoat={centerBoatHandler}
                 setMapMode={nav.setMapMode}
                 isSeaGameMode={isSeaGameMode}
                 seaState={seaState}

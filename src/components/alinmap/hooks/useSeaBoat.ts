@@ -16,15 +16,12 @@ interface UseSeaBoatParams {
 
 const PICKUP_RADIUS_DEG = 0.0011; // forgiving pickup radius
 const PORTAL_RADIUS_DEG = 0.0024;
-const DOUBLE_TAP_DELAY_MS = 450;
 const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useSeaBoat({
     isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY,
     setMainTab, setIsSheetExpanded, showNotification
 }: UseSeaBoatParams) {
-    const lastTapRef = useRef<number>(0);
-    const lastTapPosRef = useRef<{ x: number; y: number } | null>(null);
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
     const pickingItemsRef = useRef(new Set<string>());
     const activePortalRef = useRef<string | null>(null);
@@ -193,7 +190,14 @@ export function useSeaBoat({
                 boatMoveYRef.current = null;
             }
         });
-    }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+        }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+
+    const centerOnBoat = useCallback(() => {
+        const nextPanX = -(boatOffsetX?.get?.() ?? 0);
+        const nextPanY = -(boatOffsetY?.get?.() ?? 0);
+        animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
+        animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
+    }, [boatOffsetX, boatOffsetY, panX, panY]);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
         if (!isSeaGameMode || !myObfPos) return;
@@ -221,39 +225,30 @@ export function useSeaBoat({
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-
-        const currentPoint = { x: e.clientX, y: e.clientY };
-        if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
-            lastTapRef.current = 0;
-            lastTapPosRef.current = null;
+        if (!isSeaGameMode || !seaGameCtx || !myObfPos) {
+            pointerDownRef.current = null;
             return;
         }
 
-        const now = Date.now();
-        const isCloseToLastTap = isTapWithinTolerance(lastTapPosRef.current, currentPoint);
-        if (now - lastTapRef.current < DOUBLE_TAP_DELAY_MS && isCloseToLastTap) {
-            console.log('[MapClick] Double Click/Tap detected');
-            handleMapDoubleClick(e.clientX, e.clientY);
-            lastTapRef.current = 0;
-            lastTapPosRef.current = null;
-        } else {
-            console.log('[MapClick] Single Click/Tap at', now);
-            lastTapRef.current = now;
-            lastTapPosRef.current = currentPoint;
+        const currentPoint = { x: e.clientX, y: e.clientY };
+        if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
+            pointerDownRef.current = null;
+            return;
         }
+
+        console.log('[MapClick] Tap detected');
+        handleMapDoubleClick(e.clientX, e.clientY);
+        pointerDownRef.current = null;
     };
 
     const handlePointerCancel = () => {
         pointerDownRef.current = null;
-        lastTapRef.current = 0;
-        lastTapPosRef.current = null;
     };
 
     return {
         boatOffsetX, boatOffsetY,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact
+        handleMapDoubleClick, executeMoveToExact, centerOnBoat
     };
 }

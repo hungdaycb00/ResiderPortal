@@ -39,6 +39,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             method: 'POST',
             body: JSON.stringify({ status: nextStatus }),
         });
+        localStorage.setItem('alin_profile_status', nextStatus);
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: nextStatus } }));
         }

@@ -3,6 +3,8 @@ import { Edit, Copy } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { useProfile } from '../context/ProfileContext';
 
+const PROFILE_DISPLAY_NAME_KEY = 'alin_profile_display_name';
+
 interface ProfileHeaderProps {
     myUserId: string | null;
     userEmail?: string | null;
@@ -37,6 +39,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 method: 'POST',
                 body: JSON.stringify({ displayName: nextName }),
             });
+            try {
+                const savedUserRaw = localStorage.getItem('user');
+                if (savedUserRaw) {
+                    const savedUser = JSON.parse(savedUserRaw);
+                    const nextUser = { ...savedUser, displayName: nextName };
+                    localStorage.setItem('user', JSON.stringify(nextUser));
+                }
+            } catch {}
+            localStorage.setItem(PROFILE_DISPLAY_NAME_KEY, nextName);
             setMyDisplayName(nextName);
             setIsEditingName(false);
             if (ws.current?.readyState === WebSocket.OPEN) {

@@ -44,6 +44,8 @@ export function usePosts({
 }: UsePostsParams) {
   const API_BASE = getBaseUrl();
   const resolvedMyUserId = myUserId || user?.uid || null;
+  const resolvedSelfUserId = resolvedMyUserId || localStorage.getItem('alin_profile_user_id') || user?.uid || null;
+  const selfPostsIdentifier = resolvedSelfUserId || 'me';
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [postTitle, setPostTitle] = useState('');
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -57,6 +59,8 @@ export function usePosts({
     try {
       const endpoint = userId === 'saved'
         ? `${API_BASE}/api/user/archived-posts`
+        : userId === 'me'
+          ? `${API_BASE}/api/user/me/posts`
         : `${API_BASE}/api/user/${userId}/posts`;
       const resp = await fetch(endpoint, { headers: { 'X-Device-Id': externalApi.getDeviceId() } });
       const data = await resp.json();
@@ -91,7 +95,7 @@ export function usePosts({
       if (data.success) {
         setPostTitle('');
         setIsCreatingPost(false);
-        fetchUserPosts(resolvedMyUserId);
+        fetchUserPosts(selfPostsIdentifier);
         ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' }));
         showNotification?.('Post created successfully!', 'success');
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
@@ -108,7 +112,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, { method: 'PUT', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(resolvedMyUserId); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(selfPostsIdentifier); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
     } catch (err) { console.error('Star post error:', err); }
   };
 
@@ -122,7 +126,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}`, { method: 'DELETE', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(resolvedMyUserId); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
+      if (data.success) { fetchUserPosts(selfPostsIdentifier); ws.current?.send(JSON.stringify({ type: 'UPDATE_GALLERY' })); }
     } catch (err) { console.error('Delete post error:', err); }
   };
 
@@ -134,25 +138,29 @@ export function usePosts({
       setIsLoadingGames(true);
       setUserPosts([]);
       setUserGames([]);
-      externalApi.getUserGames(selectedUser.id)
-        .then((res: any) => {
-          if (activeProfileRequestRef.current !== requestId) return;
-          if (res.success) setUserGames(res.games || []);
-        })
-        .catch(console.error)
-        .finally(() => {
-          if (activeProfileRequestRef.current === requestId) setIsLoadingGames(false);
-        });
-      const targetId = selectedUser.isSelf ? resolvedMyUserId : selectedUser.id;
+      const selectedUserGamesId = selectedUser.isSelf ? (resolvedSelfUserId || selectedUser.id || null) : selectedUser.id;
+      if (selectedUserGamesId) {
+        externalApi.getUserGames(selectedUserGamesId)
+          .then((res: any) => {
+            if (activeProfileRequestRef.current !== requestId) return;
+            if (res.success) setUserGames(res.games || []);
+          })
+          .catch(console.error)
+          .finally(() => {
+            if (activeProfileRequestRef.current === requestId) setIsLoadingGames(false);
+          });
+      } else {
+        setIsLoadingGames(false);
+      }
+      const targetId = selectedUser.isSelf ? (resolvedSelfUserId || selectedUser.id || 'me') : selectedUser.id;
       fetchUserPosts(targetId, requestId);
-    } else if (resolvedMyUserId) {
+    } else if (resolvedSelfUserId) {
       const requestId = Date.now();
       activeProfileRequestRef.current = requestId;
       setIsLoadingGames(false);
       setUserGames([]);
-      setUserPosts([]);
-      fetchUserPosts(resolvedMyUserId, requestId);
-    } else {
+      fetchUserPosts(selfPostsIdentifier, requestId);
+    } else if (!user) {
       activeProfileRequestRef.current = Date.now();
       setIsLoadingGames(false);
       setUserGames([]);
@@ -161,7 +169,7 @@ export function usePosts({
       setGalleryTitle('');
       setGalleryImages([]);
     }
-  }, [selectedUser, externalApi, resolvedMyUserId, user, setGalleryActive, setGalleryTitle, setGalleryImages]);
+  }, [selectedUser, externalApi, resolvedMyUserId, resolvedSelfUserId, selfPostsIdentifier, user, setGalleryActive, setGalleryTitle, setGalleryImages]);
 
   return {
     userPosts, postTitle, setPostTitle,

@@ -3,6 +3,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 import { User } from '../types';
 
+const PROFILE_DISPLAY_NAME_KEY = 'alin_profile_display_name';
+
 interface UseAuthReturn {
     user: User | null;
     setUser: Dispatch<SetStateAction<User | null>>;
@@ -26,7 +28,12 @@ export function useAuth(
         const savedUser = localStorage.getItem('user');
         if (!savedUser) return null;
         try {
-            return JSON.parse(savedUser);
+            const parsed = JSON.parse(savedUser);
+            const cachedDisplayName = localStorage.getItem(PROFILE_DISPLAY_NAME_KEY);
+            if (cachedDisplayName && cachedDisplayName.trim() && parsed.displayName !== cachedDisplayName) {
+                return { ...parsed, displayName: cachedDisplayName };
+            }
+            return parsed;
         } catch (e) {
             console.error("Failed to parse saved user", e);
             localStorage.removeItem('user');
@@ -58,6 +65,9 @@ export function useAuth(
                 };
                 setUser(loggedInUser);
                 localStorage.setItem('user', JSON.stringify(loggedInUser));
+                if (!localStorage.getItem(PROFILE_DISPLAY_NAME_KEY) && loggedInUser.displayName) {
+                    localStorage.setItem(PROFILE_DISPLAY_NAME_KEY, loggedInUser.displayName);
+                }
                 showNotification('Login successful!', 'success');
             }
         } catch (error: any) {
@@ -103,6 +113,9 @@ export function useAuth(
     const logout = () => {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem(PROFILE_DISPLAY_NAME_KEY);
+        localStorage.removeItem('alin_profile_user_id');
+        localStorage.removeItem('alin_profile_status');
         externalApi.clearDeviceId();
         showNotification('Logged out successfully', 'info');
         window.location.reload();

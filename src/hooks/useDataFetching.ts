@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 
+const PROFILE_DISPLAY_NAME_KEY = 'alin_profile_display_name';
+
 export function useDataFetching(
     serverStatus: 'online' | 'offline' | 'checking',
     cloudflareUrl: string,
@@ -10,8 +12,8 @@ export function useDataFetching(
     const [fetchedFriends, setFetchedFriends] = useState<any[]>([]);
     const [friendRequests, setFriendRequests] = useState<any[]>([]);
     const [userStats, setUserStats] = useState<{ gold: number, level: number, xp: number, rankScore: number } | null>(null);
-    const [profileUserId, setProfileUserId] = useState<string | null>(null);
-    const [profileStatus, setProfileStatus] = useState('');
+    const [profileUserId, setProfileUserId] = useState<string | null>(() => localStorage.getItem('alin_profile_user_id') || null);
+    const [profileStatus, setProfileStatus] = useState(() => localStorage.getItem('alin_profile_status') || '');
     const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>(() => {
         const saved = localStorage.getItem('recentlyPlayed');
         return saved ? JSON.parse(saved) : [];
@@ -57,14 +59,29 @@ export function useDataFetching(
     const fetchExternalData = useCallback(async (retry = true) => {
         await fetchServerGames();
 
-        if (serverStatus !== 'online') return;
-
         // 1. Fetch Profile (May fail for guests)
         try {
             const profile = await externalApi.request<{ success: boolean, user: any }>('/api/profile');
             if (profile.success && profile.user) {
-                setProfileUserId(profile.user.id || null);
-                setProfileStatus(profile.user.status || '');
+                const serverDisplayName = profile.user.displayName || profile.user.display_name || '';
+                const serverAvatarUrl = profile.user.avatarUrl || profile.user.avatar_url || '';
+                const nextProfileUserId = profile.user.id || null;
+                const nextProfileStatus = profile.user.status || '';
+                const cachedDisplayName = localStorage.getItem(PROFILE_DISPLAY_NAME_KEY) || '';
+                const nextDisplayName = serverDisplayName || cachedDisplayName;
+
+                setProfileUserId(nextProfileUserId);
+                if (nextProfileUserId) {
+                    localStorage.setItem('alin_profile_user_id', nextProfileUserId);
+                } else {
+                    localStorage.removeItem('alin_profile_user_id');
+                }
+
+                setProfileStatus(nextProfileStatus);
+                localStorage.setItem('alin_profile_status', nextProfileStatus);
+                if (nextDisplayName) {
+                    localStorage.setItem(PROFILE_DISPLAY_NAME_KEY, nextDisplayName);
+                }
                 setUserStats({
                     gold: profile.user.gold || 0,
                     level: profile.user.level || 1,
@@ -72,15 +89,23 @@ export function useDataFetching(
                     rankScore: profile.user.balance || 0
                 });
 
-                if (profile.user.avatar_url) {
-                    const normalizedAvatar = normalizeImageUrl(profile.user.avatar_url);
-                    setUser(prev => prev ? { ...prev, photoURL: normalizedAvatar, displayName: profile.user.display_name || prev.displayName } : null);
-                }
+                setUser(prev => {
+                    if (!prev) return prev;
+                    const nextUser = {
+                        ...prev,
+                        displayName: nextDisplayName || prev.displayName,
+                        photoURL: serverAvatarUrl ? normalizeImageUrl(serverAvatarUrl) : (prev.photoURL || ''),
+                    };
+                    localStorage.setItem('user', JSON.stringify(nextUser));
+                    return nextUser;
+                });
             }
         } catch (err) {
             // Guests will hit 404 here, which is expected
             console.log("[DataFetching] Profile fetch skipped or failed (Guest user)");
         }
+
+        if (serverStatus !== 'online') return;
 
         // 3. Fetch Friends (Requires auth, usually fails for guests)
         try {
@@ -99,9 +124,7 @@ export function useDataFetching(
             }
         } catch (err: any) {
             if (retry && err.message.toLowerCase().includes('user not found')) {
-                // Potential stale deviceId
-                externalApi.clearDeviceId();
-                fetchExternalData(false);
+                console.warn('[DataFetching] Friends fetch reported user not found; keeping cached deviceId and profile state.');
                 return;
             }
             // Expected failure for guest users

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Eye, MapPin, RefreshCw, UserRound } from 'lucide-react';
 import { motion, MotionValue } from 'framer-motion';
 import SpatialNode from './SpatialNode';
@@ -50,6 +50,7 @@ interface MapCanvasProps {
     isSeaLoading?: boolean;
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
+    setBoatCenterHandler?: (fn: (() => void) | null) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -58,7 +59,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab, showNotification
+    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab, showNotification,
+    setBoatCenterHandler
 }) => {
     const seaBoat = useSeaBoat({
         isSeaGameMode: !!isSeaGameMode,
@@ -67,6 +69,118 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         scale, panX, panY,
         setMainTab, setIsSheetExpanded, showNotification
     });
+
+    useEffect(() => {
+        setBoatCenterHandler?.(seaBoat.centerOnBoat);
+        return () => {
+            setBoatCenterHandler?.(null);
+        };
+    }, [seaBoat.centerOnBoat, setBoatCenterHandler]);
+
+    const mapDragRef = useRef<{
+        active: boolean;
+        pointerId: number | null;
+        startX: number;
+        startY: number;
+        startPanX: number;
+        startPanY: number;
+        moved: boolean;
+        suppressClick: boolean;
+    }>({
+        active: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        startPanX: 0,
+        startPanY: 0,
+        moved: false,
+        suppressClick: false,
+    });
+
+    const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
+        if (interactiveTarget && !isSeaGameMode) {
+            seaBoat.handlePointerDown(e);
+            return;
+        }
+        seaBoat.handlePointerDown(e);
+        mapDragRef.current = {
+            active: true,
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            startY: e.clientY,
+            startPanX: panX.get(),
+            startPanY: panY.get(),
+            moved: false,
+            suppressClick: false,
+        };
+
+        try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {}
+        e.preventDefault();
+    }, [isSeaGameMode, panX, panY, seaBoat]);
+
+    const handleMapPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        const dragState = mapDragRef.current;
+        if (!dragState.active || dragState.pointerId !== e.pointerId) return;
+
+        const currentScale = scale?.get?.() ?? 1;
+        const deltaX = (e.clientX - dragState.startX) / currentScale;
+        const deltaY = (e.clientY - dragState.startY) / currentScale;
+        if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
+            dragState.moved = true;
+        }
+
+        panX.set(dragState.startPanX + deltaX);
+        panY.set(dragState.startPanY + deltaY);
+        e.preventDefault();
+    }, [panX, panY, scale]);
+
+    const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        const dragState = mapDragRef.current;
+        const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
+
+        if (dragState.active && dragState.pointerId === e.pointerId) {
+            dragState.active = false;
+            try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+            } catch {}
+
+            if (dragState.moved) {
+                dragState.suppressClick = true;
+                seaBoat.handlePointerCancel();
+                return;
+            }
+        }
+
+        if (interactiveTarget) {
+            seaBoat.handlePointerCancel();
+            return;
+        }
+
+        seaBoat.handlePointerUp(e);
+    }, [seaBoat]);
+
+    const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        const dragState = mapDragRef.current;
+        if (dragState.active && dragState.pointerId === e.pointerId) {
+            dragState.active = false;
+            try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+            } catch {}
+        }
+        seaBoat.handlePointerCancel();
+    }, [seaBoat]);
+
+    const handleMapClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        const dragState = mapDragRef.current;
+        if (!dragState.suppressClick) return;
+        dragState.suppressClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
 
     return (
         <div className="flex-1 relative overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
@@ -100,14 +214,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             {position && (
                 <motion.div style={{ scale }} className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div
-                        drag={!(isSeaGameMode && seaGameCtx && !seaGameCtx.isChallengeActive)}
-                        style={{ x: panX, y: panY, touchAction: isSeaGameMode ? 'manipulation' : undefined }}
-                        dragConstraints={{ left: -10000, right: 10000, top: -10000, bottom: 10000 }}
-                        dragElastic={0.1}
+                        style={{ x: panX, y: panY, touchAction: 'none' }}
                         className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
-                        onPointerDown={seaBoat.handlePointerDown}
-                        onPointerUp={seaBoat.handlePointerUp}
-                        onPointerCancel={seaBoat.handlePointerCancel}
+                        onPointerDown={handleMapPointerDown}
+                        onPointerMove={handleMapPointerMove}
+                        onPointerUp={handleMapPointerUp}
+                        onPointerCancel={handleMapPointerCancel}
+                        onClickCapture={handleMapClickCapture}
                         onContextMenu={(e) => {
                             e.preventDefault();
                             if (isSeaGameMode || !myObfPos) return;

@@ -48,6 +48,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 return (
                     <div
                         data-sea-entity="true"
+                        data-map-interactive="true"
                         onClick={(e) => {
                             e.stopPropagation();
                             const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
@@ -100,6 +101,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 return (
                     <motion.div
                         data-sea-entity="true"
+                        data-map-interactive="true"
                         key={item.spawnId}
                         className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
                         style={{

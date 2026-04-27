@@ -47,18 +47,18 @@ const SelfNode: React.FC<SelfNodeProps> = ({
         const finalBoatScale = 1 + boatScaleStack * 0.05;
 
         return (
-            <motion.div
-                className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
-                style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale }}
+                <motion.div
+                    data-map-interactive="true"
+                    className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
+                    style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale }}
                 onClick={(e) => {
                     e.stopPropagation();
                     if (!user) return;
                     setMainTab?.('backpack');
                     setIsSheetExpanded(true);
-                }}
-                onDoubleClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-            >
+                    }}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                >
                 <motion.div
                     className="w-full h-full"
                     animate={{ y: [-2, 2, -2], rotateZ: [-2, 2, -2] }}
@@ -74,6 +74,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
 
     return (
         <motion.div
+            data-map-interactive="true"
             drag
             dragMomentum={false}
             dragConstraints={{ left: -3000, right: 3000, top: -3000, bottom: 3000 }}

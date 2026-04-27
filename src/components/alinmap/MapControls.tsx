@@ -28,6 +28,7 @@ interface MapControlsProps {
     handleRefresh: () => void;
     handleCenter: () => void;
     handleCenterTo: (lat: number, lng: number) => void;
+    handleCenterBoat?: () => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
     isSeaGameMode?: boolean;
@@ -39,7 +40,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode, isSeaGameMode, seaState
+    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isSeaGameMode, seaState
 }) => {
     const [copyToast, setCopyToast] = useState(false);
     const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
@@ -105,6 +106,10 @@ const MapControls: React.FC<MapControlsProps> = ({
                     <div className="flex flex-col gap-2 mt-2">
                         <button
                             onClick={() => {
+                                if (handleCenterBoat) {
+                                    handleCenterBoat();
+                                    return;
+                                }
                                 if (seaState?.currentLat != null && seaState?.currentLng != null) {
                                     handleCenterTo(seaState.currentLat, seaState.currentLng);
                                 }
