@@ -246,7 +246,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Sea Game Curse Bar */}
             {isSeaGameMode && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
+                <div className="absolute top-[72px] md:top-auto md:bottom-2 left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
                     <div className="flex items-center gap-2 bg-[#0d0f13]/90 backdrop-blur-md rounded-full px-4 py-2 border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.15)]">
                         <span className="text-red-400 text-xs font-bold shrink-0">☠️ Nguyền rủa</span>
                         <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden relative">

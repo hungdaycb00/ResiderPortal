@@ -49,8 +49,15 @@ export function useMapNavigation({
         return;
       }
 
-      setMainTab(initialMainTab as MainTab);
-      setIsSheetExpanded(isDesktop || initialMainTab !== 'discover');
+      setMainTab(prev => {
+        // Nếu đang ở mobile và chuyển từ tab khác sang discover, ta nên giữ nguyên trạng thái expand hiện tại thay vì ép đóng
+        if (prev !== initialMainTab && initialMainTab === 'discover' && !isDesktop) {
+            // Không set lại isSheetExpanded=false ở đây nữa
+        } else {
+            setIsSheetExpanded(isDesktop || initialMainTab !== 'discover');
+        }
+        return initialMainTab as MainTab;
+      });
     }
   }, [initialMainTab, isDesktop, user]);
 

@@ -255,7 +255,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                     />
                                 )}
                                 {mainTab === 'backpack' && (
-                                    <BackpackView />
+                                    <BackpackView onEnterWorld={() => setIsSheetExpanded(false)} />
                                 )}
                             </div>
                         )}

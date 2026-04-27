@@ -37,7 +37,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
 
     return (
-        <div className="pt-2">
+        <div className="pt-20 md:pt-6 pb-24 md:pb-6 px-2">
             <div className="flex items-start gap-4 mb-6">
                 <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar">
                     <img

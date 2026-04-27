@@ -25,7 +25,11 @@ const BAG_SLOT_RARITY: Record<string, string> = {
 const formatBagTooltip = (bag: any) =>
   `${bag?.name || 'Balo'}\n⚔ ${bag?.weight || 0} DMG | ❤ +${bag?.hpBonus || 0} HP\n⚡ +${bag?.energyMax || 0} EN | ✦ +${bag?.energyRegen || 0} Regen\n💰 ${bag?.price || 0} vang | ${(bag?.width || 3)}x${(bag?.height || 3)} | ${Math.max(9, bag?.cells || 9)} o`;
 
-const BackpackView: React.FC = () => {
+interface BackpackViewProps {
+  onEnterWorld?: () => void;
+}
+
+const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
@@ -226,6 +230,7 @@ const BackpackView: React.FC = () => {
                 onClick={() => {
                   if (!canEnterWorld) return;
                   setWorldTier(selectedTier);
+                  onEnterWorld?.();
                 }}
                 disabled={!canEnterWorld}
                 className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-lg font-black transition-all ${

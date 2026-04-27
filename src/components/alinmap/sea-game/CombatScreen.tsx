@@ -153,21 +153,23 @@ const CombatScreen: React.FC = () => {
       className="fixed inset-0 z-[400] bg-[#040e1a] flex flex-col overflow-hidden"
     >
       {/* 1. Enemy Inventory (Top on Mobile, Right on Desktop) */}
-      <div className="md:hidden flex flex-col bg-[#370d0d]/20 p-2 border-b border-red-900/20 shrink-0">
-        <div className="flex justify-between items-end mb-1 px-1">
-           <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
-           <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
+      <div className="md:hidden flex-1 flex flex-col bg-[#370d0d]/20 p-2 border-b border-red-900/20 overflow-hidden">
+        <div className="mb-2">
+            <div className="flex justify-between items-end mb-1 px-1">
+               <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
+               <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
+            </div>
+            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5">
+              <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
+            </div>
         </div>
-        <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-2 border border-white/5">
-          <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
-        </div>
-        <div className="flex justify-center">
+        <div className="flex-1 flex justify-center items-center overflow-auto subtle-scrollbar">
            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
         </div>
       </div>
 
       {/* 2. Ocean scene with boats (Middle) */}
-      <div className="relative h-[22vh] md:h-[28vh] min-h-[140px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0">
+      <div className="relative h-[22vh] md:h-[28vh] min-h-[160px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0 border-y border-[#0a1929]/50 shadow-[0_0_20px_rgba(0,0,0,0.5)_inset]">
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a1929] to-transparent" />
         <svg className="absolute bottom-0 w-full h-8 text-[#0a1929]" viewBox="0 0 1200 40" preserveAspectRatio="none">
           <path d="M0,20 Q150,0 300,20 Q450,40 600,20 Q750,0 900,20 Q1050,40 1200,20 L1200,40 L0,40 Z" fill="currentColor" />
@@ -175,7 +177,7 @@ const CombatScreen: React.FC = () => {
 
         {/* Player A (left) */}
         <motion.div
-          className="absolute left-[15%] bottom-[25%] flex flex-col items-center"
+          className="absolute left-[20%] bottom-[40%] flex flex-col items-center"
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         >
@@ -185,12 +187,12 @@ const CombatScreen: React.FC = () => {
 
         {/* Player B (right) */}
         <motion.div
-          className="absolute right-[15%] bottom-[25%] flex flex-col items-center"
+          className="absolute right-[20%] bottom-[40%] flex flex-col items-center"
           animate={{ y: [0, -6, 0] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         >
           <span className="text-4xl md:text-5xl" style={{ transform: 'scaleX(-1)' }}>🚢</span>
-          <span className="text-[10px] font-black text-red-200 bg-black/40 px-2 py-0.5 rounded-full mt-1">{encounter.name}</span>
+          <span className="text-[10px] font-black text-red-200 bg-black/40 px-2 py-0.5 rounded-full mt-1 max-w-[80px] truncate">{encounter.name}</span>
         </motion.div>
 
         {/* Flying item animation */}
@@ -217,37 +219,38 @@ const CombatScreen: React.FC = () => {
         </div>
         
         {phase === 'ready' && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
             <button
               onClick={handleStart}
-              className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-lg rounded-2xl shadow-lg shadow-amber-600/40 hover:scale-105 active:scale-95 transition-transform"
+              className="px-8 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-lg rounded-full shadow-lg shadow-amber-600/40 hover:scale-105 active:scale-95 transition-transform border-2 border-amber-300/30 flex items-center gap-2"
             >
-              ⚔️ Bắt Đầu
+              <Swords className="w-5 h-5" />
+              Bắt Đầu
             </button>
           </div>
         )}
       </div>
 
       {/* 3. Stats + Inventories (Desktop Layout / Player Inventory Bottom on Mobile) */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-2 gap-2">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-0 md:p-2 gap-0 md:gap-2 bg-[#040e1a]">
         {/* Player A side (Bottom on Mobile) */}
-        <div className="flex-1 flex flex-col bg-[#0d2137]/30 rounded-2xl p-3 border border-cyan-800/20">
-          <div className="mb-3">
+        <div className="flex-1 flex flex-col bg-[#0d2137]/30 md:rounded-2xl p-2 border-t md:border border-cyan-800/20 overflow-hidden">
+          <div className="mb-2 shrink-0 px-1">
             <div className="flex justify-between items-end mb-1">
                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">⚔️ DMG: {myStats.weight}</span>
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpA))}/{maxHpA}</span>
             </div>
             {/* HP Bar */}
-            <div className="h-4 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
+            <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-1 border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
+            <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(manaA / maxManaA) * 100}%` }} transition={{ duration: 0.1 }} />
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
-            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={cellSize} />
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0">
+            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
           </div>
         </div>
 
