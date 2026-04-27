@@ -18,7 +18,12 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
         <>
             {seaState?.fortressLat && (
                 <div
-                    onClick={() => seaGameCtx?.openFortressStorage?.('fortress')}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        seaGameCtx?.openFortressStorage?.('fortress');
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
                     className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
                     style={{
                         top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
@@ -63,9 +68,12 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                         }}
                         animate={{ y: [-2, 2, -2] }}
                         transition={{ duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             if (isPortal) seaGameCtx?.openFortressStorage?.('portal');
                         }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => e.stopPropagation()}
                     >
                         <div className="relative group flex flex-col items-center">
                             <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
-import { getBagBonuses, useSeaGame } from '../sea-game/SeaGameProvider';
+import { getBagBonuses, isSeaAtFortress, useSeaGame } from '../sea-game/SeaGameProvider';
 import type { SeaItem } from '../sea-game/SeaGameProvider';
 import { MAX_GRID_W } from '../sea-game/SeaGameProvider';
 import InventoryGrid from '../sea-game/InventoryGrid';
@@ -27,7 +27,7 @@ const formatBagTooltip = (bag: any) =>
   `${bag?.name || 'Balo'}\n⚔ ${bag?.weight || 0} DMG | ❤ +${bag?.hpBonus || 0} HP\n⚡ +${bag?.energyMax || 0} EN | ✦ +${bag?.energyRegen || 0} Regen\n💰 ${bag?.price || 0} vang | ${(bag?.width || 3)}x${(bag?.height || 3)} | ${Math.max(9, bag?.cells || 9)} o`;
 
 const BackpackView: React.FC = () => {
-  const { state, saveInventory, setWorldTier, openFortressStorage } = useSeaGame();
+  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [selectedItem, setSelectedItem] = useState<SeaItem | null>(null);
@@ -60,9 +60,11 @@ const BackpackView: React.FC = () => {
     { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
   );
 
-  const isAtFortress = state.fortressLat != null && state.currentLat != null &&
-    Math.abs(state.currentLat - state.fortressLat) * 111000 < 200 &&
-    Math.abs((state.currentLng || 0) - (state.fortressLng || 0)) * 111000 < 200;
+  const isAtFortress = isSeaAtFortress(state);
+  const selectedTierCost = TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0;
+  const hasEnoughGold = state.seaGold >= selectedTierCost;
+  const isWorldEntryLocked = isChallengeActive || !isAtFortress;
+  const canEnterWorld = !isWorldEntryLocked && hasEnoughGold;
 
   return (
     <div className="flex min-h-[600px] flex-col overflow-hidden rounded-3xl border border-cyan-900/50 bg-[#0a1929] text-white shadow-2xl">
@@ -222,21 +224,29 @@ const BackpackView: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setWorldTier(selectedTier)}
-                disabled={state.seaGold < (TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0)}
+                onClick={() => {
+                  if (!canEnterWorld) return;
+                  setWorldTier(selectedTier);
+                }}
+                disabled={!canEnterWorld}
                 className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-lg font-black transition-all ${
-                  state.seaGold >= (TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0)
+                  canEnterWorld
                     ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.4)] hover:from-amber-500 hover:via-orange-400 hover:to-amber-500 active:scale-[0.98]'
                     : 'cursor-not-allowed border border-gray-800 bg-[#1a2332] text-gray-600'
                 }`}
-                style={state.seaGold >= (TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0) ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
+                style={canEnterWorld ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
               >
                 <Swords className="h-5 w-5" />
-                VAO THE GIOI
+                {isWorldEntryLocked ? 'DANG TRONG THE GIOI' : 'VAO THE GIOI'}
               </button>
-              {state.seaGold < (TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0) && (
+              {isWorldEntryLocked && (
+                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-amber-300/80">
+                  <Anchor className="h-4 w-4" /> Ve Thanh Tri de mo lai nut vao the gioi.
+                </p>
+              )}
+              {!isWorldEntryLocked && !hasEnoughGold && (
                 <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-red-400/80">
-                  <span className="text-base">!</span> Ban can them {(TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0) - state.seaGold} vang
+                  <span className="text-base">!</span> Ban can them {selectedTierCost - state.seaGold} vang
                 </p>
               )}
             </div>

@@ -83,6 +83,24 @@ export const getBagBonuses = (bag?: Partial<BagItem> | null) => ({
   regen: Number(bag?.energyRegen) || 0,
 });
 
+export const FORTRESS_INTERACTION_METERS = 200;
+
+export const getDistanceMeters = (
+  fromLat?: number | null,
+  fromLng?: number | null,
+  toLat?: number | null,
+  toLng?: number | null
+) => {
+  if (fromLat == null || fromLng == null || toLat == null || toLng == null) return Number.POSITIVE_INFINITY;
+  const cosLat = Math.max(0.25, Math.cos((fromLat * Math.PI) / 180));
+  const dLat = (toLat - fromLat) * 111000;
+  const dLng = (toLng - fromLng) * 111000 * cosLat;
+  return Math.sqrt(dLat * dLat + dLng * dLng);
+};
+
+export const isSeaAtFortress = (state: Pick<SeaGameState, 'currentLat' | 'currentLng' | 'fortressLat' | 'fortressLng'>) =>
+  getDistanceMeters(state.currentLat, state.currentLng, state.fortressLat, state.fortressLng) <= FORTRESS_INTERACTION_METERS;
+
 export interface WorldItem {
   spawnId: string;
   lat: number;
@@ -174,6 +192,7 @@ interface SeaGameContextType {
   sellItems: (itemUids: string[]) => Promise<void>;
   storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode) => Promise<void>;
   setWorldTier: (tier: number) => Promise<void>;
+  returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   isMoving: boolean;
   showDiscardModal: boolean;
@@ -393,12 +412,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           setGlobalSettings(data.settings);
         }
         
-        const isAtFortress = s.current_lat === s.fortress_lat && s.current_lng === s.fortress_lng;
-        if (!isAtFortress) {
-            setIsChallengeActive(true);
-        } else {
-            setIsChallengeActive(false);
-        }
+        const isAtFortress = getDistanceMeters(s.current_lat, s.current_lng, s.fortress_lat, s.fortress_lng) <= FORTRESS_INTERACTION_METERS;
+        setIsChallengeActive(!isAtFortress);
       }
     } catch (err) { console.error('[SeaGame] loadState error:', err); }
   }, [deviceId, API]);
@@ -427,13 +442,20 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       const data = await res.json();
       if (data.success) {
+        const nextLat = data.currentLat ?? toLat;
+        const nextLng = data.currentLng ?? toLng;
         setState(prev => ({
           ...prev,
-          currentLat: toLat,
-          currentLng: toLng,
+          currentLat: nextLat,
+          currentLng: nextLng,
           cursePercent: data.cursePercent,
           distance: prev.distance + (data.distMeters || 0),
         }));
+        if (data.returnedToFortress || getDistanceMeters(nextLat, nextLng, state.fortressLat, state.fortressLng) <= FORTRESS_INTERACTION_METERS) {
+          setIsChallengeActive(false);
+        } else {
+          setIsChallengeActive(true);
+        }
 
         if (data.curseTrigger && data.encounter) {
           setEncounter(data.encounter);
@@ -446,7 +468,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       console.error('[SeaGame] moveBoat error:', err);
       return { curseTrigger: false, encounter: null };
     } finally { setIsMoving(false); }
-  }, [deviceId, API]);
+  }, [deviceId, API, state.fortressLat, state.fortressLng]);
 
   const pickupItem = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
@@ -606,6 +628,22 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     await loadState();
   }, [deviceId, API, loadState]);
 
+  const returnToFortress = useCallback(async () => {
+    if (!deviceId) return;
+    const res = await fetch(`${API}/api/sea/return-fortress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      console.error('[SeaGame] returnToFortress failed:', data.error);
+      return;
+    }
+    await loadState();
+    setIsChallengeActive(false);
+  }, [deviceId, API, loadState]);
+
   const loadWorldItems = useCallback(async (forceActive?: boolean) => {
     if (!deviceId) return;
     try {
@@ -664,7 +702,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isChallengeActive, setIsChallengeActive, globalSettings,
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, saveInventory, saveStorage, saveBags,
-    executeCombat, curseChoice, sellItems, storeItems, setWorldTier, loadWorldItems,
+    executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       setFortressStorageMode(mode);
       setIsFortressStorageOpen(true);

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useMotionValue, animate, useAnimationFrame, MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from '../constants';
 
@@ -28,10 +28,34 @@ export function useSeaBoat({
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
     const pickingItemsRef = useRef(new Set<string>());
     const activePortalRef = useRef<string | null>(null);
+    const isAnimatingRef = useRef(false);
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
+
+    useEffect(() => {
+        if (!isSeaGameMode || !seaGameCtx?.state || !myObfPos || isAnimatingRef.current) return;
+        const { currentLat, currentLng } = seaGameCtx.state;
+        if (currentLat == null || currentLng == null) return;
+
+        const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
+        const nextBoatY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
+        boatOffsetX.set(nextBoatX);
+        boatOffsetY.set(nextBoatY);
+        panX.set(-nextBoatX);
+        panY.set(-nextBoatY);
+    }, [
+        isSeaGameMode,
+        seaGameCtx?.state?.currentLat,
+        seaGameCtx?.state?.currentLng,
+        seaGameCtx?.isChallengeActive,
+        myObfPos,
+        boatOffsetX,
+        boatOffsetY,
+        panX,
+        panY,
+    ]);
 
     // Auto-pickup loop
     useAnimationFrame(() => {
@@ -59,6 +83,7 @@ export function useSeaBoat({
                     boatOffsetY.stop();
                     panX.stop();
                     panY.stop();
+                    isAnimatingRef.current = false;
                     setBoatTargetPin(null);
                     activePortalRef.current = item.spawnId;
                     seaGameCtx.openFortressStorage?.('portal');
@@ -73,6 +98,7 @@ export function useSeaBoat({
                 boatOffsetY.stop();
                 panX.stop();
                 panY.stop();
+                isAnimatingRef.current = false;
                 setBoatTargetPin(null);
 
                 const rarityStr = item.item?.rarity || '';
@@ -133,6 +159,7 @@ export function useSeaBoat({
         }
 
         console.log('[MapMove] Executing move...', { duration });
+        isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
         seaGameCtx.moveBoat(lat, lng);
 
@@ -145,7 +172,14 @@ export function useSeaBoat({
         const newPanX = -newBoatPxX;
         const newPanY = -newBoatPxY;
         animate(panX, newPanX, { duration, ease: "easeInOut" });
-        animate(panY, newPanY, { duration, ease: "easeInOut", onComplete: () => setBoatTargetPin(null) });
+        animate(panY, newPanY, {
+            duration,
+            ease: "easeInOut",
+            onComplete: () => {
+                isAnimatingRef.current = false;
+                setBoatTargetPin(null);
+            }
+        });
     }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
