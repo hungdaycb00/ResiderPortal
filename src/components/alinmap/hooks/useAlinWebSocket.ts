@@ -20,9 +20,20 @@ interface UseAlinWebSocketParams {
 }
 
 export function useAlinWebSocket({
-  position, myObfPos, setMyObfPos, radius, searchTag,
-  myStatus, isVisibleOnMap, user, externalApi, currentProvince,
-  panX, panY, fetchNotifications, onStatusSync,
+  position,
+  myObfPos,
+  setMyObfPos,
+  radius,
+  searchTag,
+  myStatus,
+  isVisibleOnMap,
+  user,
+  externalApi,
+  currentProvince,
+  panX,
+  panY,
+  fetchNotifications,
+  onStatusSync,
 }: UseAlinWebSocketParams) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -47,15 +58,41 @@ export function useAlinWebSocket({
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const reconnectEnabled = useRef(false);
   const isMounted = useRef(true);
+  const isConnectingRef = useRef(false);
+  const hasOpenedOnceRef = useRef(false);
+  const joinCompletedRef = useRef(false);
+  const pendingJoinRef = useRef(false);
+  const lastPositionKeyRef = useRef('');
+  const reconnectAttemptsRef = useRef(0);
+
+  const positionRef = useRef(position);
+  const myObfPosRef = useRef(myObfPos);
+  const radiusRef = useRef(radius);
+  const myStatusRef = useRef(myStatus);
+  const isVisibleOnMapRef = useRef(isVisibleOnMap);
+  const userRef = useRef(user);
+  const currentProvinceRef = useRef(currentProvince);
+  const externalApiRef = useRef(externalApi);
 
   useEffect(() => {
     isMounted.current = true;
-    return () => { isMounted.current = false; };
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // Keep refs in sync with state
   useEffect(() => { searchTagRef.current = searchTag; }, [searchTag]);
   useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
+  useEffect(() => { positionRef.current = position; }, [position?.[0], position?.[1]]);
+  useEffect(() => { myObfPosRef.current = myObfPos; }, [myObfPos?.lat, myObfPos?.lng]);
+  useEffect(() => { radiusRef.current = radius; }, [radius]);
+  useEffect(() => { myStatusRef.current = myStatus; }, [myStatus]);
+  useEffect(() => { isVisibleOnMapRef.current = isVisibleOnMap; }, [isVisibleOnMap]);
+  useEffect(() => { userRef.current = user; }, [user?.uid, user?.displayName, user?.photoURL]);
+  useEffect(() => { currentProvinceRef.current = currentProvince; }, [currentProvince]);
+  useEffect(() => { externalApiRef.current = externalApi; }, [externalApi]);
+  useEffect(() => { isConnectingRef.current = isConnecting; }, [isConnecting]);
   useEffect(() => {
     if (user?.displayName) setMyDisplayName(user.displayName);
   }, [user?.displayName]);
@@ -65,26 +102,106 @@ export function useAlinWebSocket({
   useEffect(() => {
     setLocalMyStatus(myStatus);
     setStatusInput(myStatus);
+    localStorage.setItem('alinmap_status', myStatus || '');
     if (ws.current && ws.current.readyState === WebSocket.OPEN && user && myStatus?.trim()) {
       ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { status: myStatus } }));
     }
   }, [myStatus, user]);
+
+  // Heartbeat PING
+  useEffect(() => {
+    const pingInterval = setInterval(() => {
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({ type: 'PING' }));
+      }
+    }, 45000);
+    return () => clearInterval(pingInterval);
+  }, []);
+
+  const hasPosition = Array.isArray(position) && position.length >= 2;
 
   const addLog = useCallback((msg: string) => {
     console.log('[Alin]', msg);
     setDebugLog(prev => [...prev.slice(-15), `${new Date().toLocaleTimeString()} ${msg}`]);
   }, []);
 
-  const connectWS = useCallback(() => {
-    if (!Array.isArray(position) || position.length < 2 || isConnecting) return;
-    reconnectEnabled.current = true;
-    setIsConnecting(true);
+  const buildPositionKey = useCallback((pos: [number, number] | null | undefined) => {
+    if (!Array.isArray(pos) || pos.length < 2) return '';
+    return `${pos[0].toFixed(6)}:${pos[1].toFixed(6)}`;
+  }, []);
+
+  const getWsUrl = useCallback(() => {
+    const override = (import.meta.env.VITE_ALIN_SOCIAL_WS_URL as string | undefined)?.trim();
+    if (override) {
+      const normalized = override.replace(/\/$/, '');
+      if (normalized.startsWith('http://')) return normalized.replace('http://', 'ws://');
+      if (normalized.startsWith('https://')) return normalized.replace('https://', 'wss://');
+      return normalized;
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const hostname = window.location.hostname;
-    const wsUrl = hostname === 'localhost'
-      ? `${protocol}//${hostname}:2096`
-      : `wss://alin-social.alin.city`;
+    const isLocalHost =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.endsWith('.local');
+
+    if (isLocalHost) {
+      const localHost = hostname === '::1' ? 'localhost' : hostname;
+      return `${protocol}//${localHost}:2096`;
+    }
+
+    return 'wss://alin-social.alin.city';
+  }, []);
+
+  const sendJoinPayload = useCallback((socket: WebSocket) => {
+    const currentPosition = positionRef.current;
+    if (!Array.isArray(currentPosition) || currentPosition.length < 2) return false;
+
+    const currentUser = userRef.current;
+    const joinType = currentUser ? 'USER_JOIN' : 'OBSERVER_JOIN';
+    const deviceId = currentUser?.uid || externalApiRef.current.getDeviceId();
+
+    socket.send(JSON.stringify({
+      type: joinType,
+      payload: {
+        deviceId,
+        lat: currentPosition[0],
+        lng: currentPosition[1],
+        radiusKm: radiusRef.current,
+        status: myStatusRef.current,
+        visible: currentUser ? isVisibleOnMapRef.current : false,
+        avatar_url: currentUser?.photoURL || '',
+        province: currentProvinceRef.current || '',
+      },
+    }));
+
+    lastPositionKeyRef.current = buildPositionKey(currentPosition);
+    pendingJoinRef.current = false;
+    return true;
+  }, [buildPositionKey]);
+
+  const connectWS = useCallback(() => {
+    const currentPosition = positionRef.current;
+    if (!Array.isArray(currentPosition) || currentPosition.length < 2) return;
+    if (isConnectingRef.current) return;
+    if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    const wsUrl = getWsUrl();
+    if (!wsUrl) {
+      setWsStatus('DISABLED');
+      return;
+    }
+
+    reconnectEnabled.current = true;
+    hasOpenedOnceRef.current = false;
+    joinCompletedRef.current = false;
+    pendingJoinRef.current = false;
+    setIsConnecting(true);
+    isConnectingRef.current = true;
     addLog(`Connecting to ${wsUrl}...`);
     setWsStatus('CONNECTING');
 
@@ -92,76 +209,90 @@ export function useAlinWebSocket({
     try {
       socket = new WebSocket(wsUrl);
     } catch (e: any) {
-      addLog(`❌ WebSocket create failed: ${e.message}`);
+      addLog(`WebSocket create failed: ${e?.message || 'unknown error'}`);
       setWsStatus('ERROR');
       setIsConnecting(false);
+      isConnectingRef.current = false;
+      reconnectEnabled.current = false;
       return;
     }
     ws.current = socket;
 
     socket.onopen = () => {
-      if (!isMounted.current) { socket.close(); return; }
-      addLog(`✅ Connected! Sending USER_JOIN...`);
-      const joinType = user ? 'USER_JOIN' : 'OBSERVER_JOIN';
-      addLog(`Connected! Sending ${joinType}...`);
-      setIsConnecting(false);
-      setWsStatus('OPEN');
-      const deviceId = user?.uid || externalApi.getDeviceId();
-      
-      if (!Array.isArray(position) || position.length < 2) {
-          addLog("⚠️ WebSocket open but no GPS, waiting...");
-          return;
+      if (!isMounted.current) {
+        socket.close();
+        return;
       }
 
-      socket.send(JSON.stringify({
-        type: joinType,
-        payload: {
-          deviceId,
-          lat: position[0],
-          lng: position[1],
-          radiusKm: radius,
-          status: myStatus,
-          visible: user ? isVisibleOnMap : false,
-          avatar_url: user?.photoURL || '',
-          province: currentProvince || ''
-        }
-      }));
-      addLog(`📍 Sent GPS: ${position[0].toFixed(4)}, ${position[1].toFixed(4)}`);
+      reconnectAttemptsRef.current = 0;
+      hasOpenedOnceRef.current = true;
+      addLog('Connected, sending join payload...');
+      setIsConnecting(false);
+      isConnectingRef.current = false;
+      setWsStatus('OPEN');
+
+      const joined = sendJoinPayload(socket);
+      if (!joined) {
+        pendingJoinRef.current = true;
+        addLog('WebSocket open but no GPS, waiting...');
+      } else {
+        addLog(`Sent GPS: ${currentPosition[0].toFixed(4)}, ${currentPosition[1].toFixed(4)}`);
+      }
     };
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      addLog(`📨 Received: ${data.type}`);
+      addLog(`Received: ${data.type}`);
 
       if (data.type === 'JOIN_SUCCESS') {
         const p = data.payload;
-        addLog(`🎯 My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
-        if (!myObfPos && p.lat != null && p.lng != null) {
+        joinCompletedRef.current = true;
+        addLog(`My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
+
+        if (!myObfPosRef.current && p.lat != null && p.lng != null) {
           setMyObfPos({ lat: p.lat, lng: p.lng });
         }
+
         setMyUserId(p.userId);
         myUserIdRef.current = p.userId;
-        const nextDisplayName = user?.displayName || p.displayName || p.username;
+
+        const nextDisplayName = userRef.current?.displayName || p.displayName || p.username;
         if (nextDisplayName) setMyDisplayName(nextDisplayName);
+
         if (p.status) {
           setLocalMyStatus(p.status);
           setStatusInput(p.status);
           onStatusSync?.(p.status);
         }
+
         if (p.gallery) {
           setGalleryTitle(p.gallery.title || '');
           setGalleryImages(p.gallery.images || []);
           setGalleryActive(p.gallery.active || false);
         }
+
         socket.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: p.lat, lng: p.lng, zoom: 13 } }));
-        addLog(`🔍 Sent MAP_MOVE scan`);
+        addLog('Sent MAP_MOVE scan');
+
+        const latestPosition = positionRef.current;
+        const latestPositionKey = buildPositionKey(latestPosition);
+        if (latestPositionKey && latestPositionKey !== lastPositionKeyRef.current && Array.isArray(latestPosition) && latestPosition.length >= 2) {
+          lastPositionKeyRef.current = latestPositionKey;
+          socket.send(JSON.stringify({
+            type: 'MAP_MOVE',
+            payload: { lat: latestPosition[0], lng: latestPosition[1], zoom: 13 },
+          }));
+          addLog(`Updated GPS after join: ${latestPosition[0].toFixed(4)}, ${latestPosition[1].toFixed(4)}`);
+        }
       }
+
       if (data.type === 'NEARBY_USERS') {
         const currentMyUserId = myUserIdRef.current;
         const currentSearchTag = searchTagRef.current;
         const currentSelectedUser = selectedUserRef.current;
         const users = data.payload.map((u: any) => ({ ...u, isSelf: u.id === currentMyUserId }));
         let filtered = users.filter((u: any) => !u.isSelf);
+
         if (currentSearchTag?.trim()) {
           const tag = currentSearchTag.toLowerCase().replace('#', '');
           filtered = filtered.filter((u: any) =>
@@ -170,51 +301,121 @@ export function useAlinWebSocket({
             (u.status && u.status.toLowerCase().includes(tag))
           );
         }
+
         setNearbyUsers(filtered);
         if (currentSelectedUser && !currentSelectedUser.isSelf) {
           const updated = users.find((u: any) => u.id === currentSelectedUser.id);
           if (updated) setSelectedUser(updated);
         }
       }
+
       if (data.type === 'NEW_NOTIFICATION') {
         fetchNotifications();
       }
     };
 
     socket.onclose = () => {
-      if (!isMounted.current || !reconnectEnabled.current) return;
-      addLog('🔌 Disconnected, retrying in 3s...');
+      ws.current = null;
       setIsConnecting(false);
+      isConnectingRef.current = false;
+
+      if (!isMounted.current || !reconnectEnabled.current) return;
+
+      if (!hasOpenedOnceRef.current) {
+        addLog('Initial WebSocket connect failed; retry paused.');
+        setWsStatus('ERROR');
+        reconnectEnabled.current = false;
+        return;
+      }
+
+      const attempt = reconnectAttemptsRef.current;
+      const baseDelay = 2000;
+      const maxDelay = 30000;
+      const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt)) + Math.random() * 2000;
+      reconnectAttemptsRef.current += 1;
+
+      addLog(`Disconnected, retrying in ${(delay / 1000).toFixed(1)}s...`);
       setWsStatus('CLOSED');
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-      reconnectTimeout.current = setTimeout(() => { if (isMounted.current) connectWS(); }, 3000);
+      reconnectTimeout.current = setTimeout(() => {
+        if (isMounted.current) connectWSRef.current();
+      }, delay);
     };
 
-    socket.onerror = (e) => {
-      addLog(`❌ WebSocket error (CSP blocked?)`);
+    socket.onerror = () => {
       setIsConnecting(false);
+      isConnectingRef.current = false;
+
+      if (!hasOpenedOnceRef.current) {
+        addLog('Initial WebSocket error; retry paused.');
+        reconnectEnabled.current = false;
+      } else {
+        addLog('WebSocket error.');
+      }
+
       setWsStatus('ERROR');
     };
-  }, [position, radius, searchTag, isConnecting, user, isVisibleOnMap, myStatus, currentProvince, externalApi]);
+  }, [addLog, getWsUrl, sendJoinPayload]);
+
+  const connectWSRef = useRef(connectWS);
+  useEffect(() => {
+    connectWSRef.current = connectWS;
+  }, [connectWS]);
 
   useEffect(() => {
+    if (!hasPosition) return;
+
     connectWS();
     return () => {
       reconnectEnabled.current = false;
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-      if (ws.current) ws.current.close();
+      if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
+        ws.current.close();
+      }
     };
-  }, [position, user]);
+  }, [connectWS, hasPosition, user?.uid]);
 
-  // Sync avatar/displayName/province
+  // Sync avatar/displayName/province.
   useEffect(() => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && user) {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && userRef.current) {
       ws.current.send(JSON.stringify({
         type: 'UPDATE_PROFILE',
-        payload: { avatar_url: user.photoURL || '', displayName: user.displayName || myDisplayName, province: currentProvince || '' }
+        payload: {
+          avatar_url: userRef.current.photoURL || '',
+          displayName: userRef.current.displayName || myDisplayName,
+          province: currentProvinceRef.current || '',
+        },
       }));
     }
-  }, [user?.photoURL, user?.displayName, currentProvince]);
+  }, [user?.photoURL, user?.displayName, currentProvince, myDisplayName]);
+
+  // Push coordinate updates without reconnecting the socket.
+  useEffect(() => {
+    const socket = ws.current;
+    const currentPosition = positionRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!Array.isArray(currentPosition) || currentPosition.length < 2) return;
+
+    if (!joinCompletedRef.current) {
+      if (pendingJoinRef.current) {
+        const joined = sendJoinPayload(socket);
+        if (!joined) return;
+      } else {
+        return;
+      }
+      return;
+    }
+
+    const positionKey = buildPositionKey(currentPosition);
+    if (!positionKey || positionKey === lastPositionKeyRef.current) return;
+    lastPositionKeyRef.current = positionKey;
+
+    socket.send(JSON.stringify({
+      type: 'MAP_MOVE',
+      payload: { lat: currentPosition[0], lng: currentPosition[1], zoom: 13 },
+    }));
+    addLog(`Updated GPS: ${currentPosition[0].toFixed(4)}, ${currentPosition[1].toFixed(4)}`);
+  }, [addLog, buildPositionKey, position?.[0], position?.[1], sendJoinPayload]);
 
   const handleRefresh = useCallback(() => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
@@ -227,16 +428,29 @@ export function useAlinWebSocket({
   }, [myObfPos, panX, panY]);
 
   return {
-    ws, isConnecting, wsStatus, myUserId, addLog,
-    nearbyUsers, setNearbyUsers,
-    selectedUser, setSelectedUser,
-    myDisplayName, setMyDisplayName,
-    myAvatarUrl, setMyAvatarUrl,
-    myStatus: localMyStatus, setMyStatus: setLocalMyStatus,
-    statusInput, setStatusInput,
-    galleryActive, setGalleryActive,
-    galleryTitle, setGalleryTitle,
-    galleryImages, setGalleryImages,
+    ws,
+    isConnecting,
+    wsStatus,
+    myUserId,
+    addLog,
+    nearbyUsers,
+    setNearbyUsers,
+    selectedUser,
+    setSelectedUser,
+    myDisplayName,
+    setMyDisplayName,
+    myAvatarUrl,
+    setMyAvatarUrl,
+    myStatus: localMyStatus,
+    setMyStatus: setLocalMyStatus,
+    statusInput,
+    setStatusInput,
+    galleryActive,
+    setGalleryActive,
+    galleryTitle,
+    setGalleryTitle,
+    galleryImages,
+    setGalleryImages,
     handleRefresh,
   };
 }

@@ -24,7 +24,9 @@ interface ProfileContextType {
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: boolean, initialStatus?: string }> = ({ children, initialIsVisible, initialStatus = "" }) => {
-    const [myStatus, setMyStatus] = useState(initialStatus);
+    const [myStatus, setMyStatus] = useState(() => {
+        return initialStatus || localStorage.getItem('alinmap_status') || "";
+    });
     const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(initialIsVisible);
 
     useEffect(() => {

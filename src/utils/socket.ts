@@ -1,5 +1,6 @@
 let socket: WebSocket | null = null;
 let reconnectTimeout: any = null;
+let reconnectAttempts = 0;
 const eventHandlers = new Map<string, Set<Function>>();
 
 export function initSocket(): WebSocket {
@@ -33,6 +34,7 @@ export function initSocket(): WebSocket {
 
     socket.onopen = () => {
         console.log('✅ WebSocket connected successfully');
+        reconnectAttempts = 0;
         if (reconnectTimeout) {
             clearTimeout(reconnectTimeout);
             reconnectTimeout = null;
@@ -50,13 +52,18 @@ export function initSocket(): WebSocket {
         
         emitInternal('disconnect', event.reason);
         
-        // Auto-reconnect after 3s if it wasn't a manual disconnect
+        // Auto-reconnect with Exponential Backoff + Jitter
         if (event.code !== 1000 && !reconnectTimeout) {
+            const baseDelay = 2000;
+            const maxDelay = 30000;
+            const delay = Math.min(maxDelay, baseDelay * Math.pow(2, reconnectAttempts)) + Math.random() * 2000;
+            reconnectAttempts += 1;
+
             reconnectTimeout = setTimeout(() => {
                 reconnectTimeout = null;
-                console.log('🔄 Attempting to reconnect socket...');
+                console.log(`🔄 Attempting to reconnect socket (attempt ${reconnectAttempts})...`);
                 initSocket();
-            }, 5000);
+            }, delay);
         }
     };
 
