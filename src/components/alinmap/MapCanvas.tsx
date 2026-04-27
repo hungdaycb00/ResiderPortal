@@ -246,9 +246,9 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Sea Game Curse Bar */}
             {isSeaGameMode && (
-                <div className="absolute top-[72px] md:top-auto md:bottom-2 left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
-                    <div className="flex items-center gap-2 bg-[#0d0f13]/90 backdrop-blur-md rounded-full px-4 py-2 border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.15)]">
-                        <span className="text-red-400 text-xs font-bold shrink-0">☠️ Nguyền rủa</span>
+                <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
+                    <div className="flex items-center gap-2 bg-[#0d0f13]/95 backdrop-blur-xl rounded-full px-4 py-2.5 border border-red-900/40 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+                        <span className="text-red-400 text-xs font-black uppercase tracking-wider shrink-0">☠️ Curse</span>
                         <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden relative">
                             <motion.div
                                 className="h-full rounded-full relative"
@@ -260,10 +260,42 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 transition={{ duration: 0.8, ease: "easeOut" }}
                             />
                         </div>
-                        <span className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(seaState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}>
+                        <motion.span 
+                            className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(seaState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}
+                            initial={false}
+                            animate={{ opacity: [0.5, 1] }}
+                        >
                             {Math.round(seaState?.cursePercent || 0)}%
-                        </span>
+                        </motion.span>
                     </div>
+                </div>
+            )}
+
+            {/* Active Curses List - Top Right Corner */}
+            {isSeaGameMode && seaState?.activeCurses && Object.values(seaState.activeCurses).some(v => (v as number) > 0) && (
+                <div className="absolute top-[130px] right-4 z-[115] flex flex-col items-end gap-2 pointer-events-none">
+                    {Object.entries(seaState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
+                        const CURSE_META: any = {
+                            dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
+                            hp_debuff: { icon: '💔', name: 'HP', color: 'text-rose-400' },
+                            regen_debuff: { icon: '💧', name: 'MANA', color: 'text-blue-400' },
+                            boat_scale: { icon: '🚢', name: 'SIZE', color: 'text-amber-400' },
+                            curse_gain: { icon: '☠️', name: 'CURSE', color: 'text-purple-400' },
+                        };
+                        const meta = CURSE_META[key];
+                        if (!meta) return null;
+                        return (
+                            <motion.div
+                                key={key}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg"
+                            >
+                                <span className="text-sm">{meta.icon}</span>
+                                <span className={`text-[10px] font-black ${meta.color} uppercase tracking-tighter`}>{meta.name} x{value as number}</span>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             )}
 

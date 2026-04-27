@@ -75,6 +75,7 @@ export interface SeaGameState {
   distance: number;
   energyMax: number;
   energyCurrent: number;
+  activeCurses: Record<string, number>;
 }
 
 type StorageAccessMode = 'fortress' | 'portal';
@@ -131,7 +132,7 @@ const defaultState: SeaGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
   cursePercent: 0, seaGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
-  energyMax: 100, energyCurrent: 100,
+  energyMax: 100, energyCurrent: 100, activeCurses: {},
 };
 
 
@@ -253,6 +254,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
           storage: (() => { try { return JSON.parse(s.storage_json || '[]'); } catch(e) { return []; } })(),
           bags,
           distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
+          activeCurses: s.activeCurses || {},
         });
         if (data.settings) {
           setGlobalSettings(data.settings);

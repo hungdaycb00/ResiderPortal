@@ -74,92 +74,220 @@ interface PickupMinigameProps {
 // ==========================================
 // 1. Fruit Game (Fishing Alternative)
 // ==========================================
-const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
-  const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', '🥝', '🥭'];
-  const rows = Math.min(7, 4 + Math.floor(tier / 2));
-  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
-  const config = { rows, cols, time: Math.max(20, 60 - tier * 5) };
+type FruitCell = { f: string | null; id: string };
+type FruitPoint = { r: number; c: number };
+type FruitPathState = { selection: FruitPoint | null; activePath: FruitPoint[] };
 
-  const [grid, setGrid] = useState<{f: string | null, id: number}[][]>([]);
-  const [selection, setSelection] = useState<{r: number, c: number} | null>(null);
+const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', '🥝', '🥭'];
+const FRUIT_PATH_COLORS = ['#34d399', '#22d3ee', '#f59e0b', '#a78bfa'];
+const FRUIT_DIRS = [
+  { dr: -1, dc: 0 },
+  { dr: 1, dc: 0 },
+  { dr: 0, dc: -1 },
+  { dr: 0, dc: 1 },
+];
+
+const cloneFruitGrid = (grid: FruitCell[][]) => grid.map(row => row.map(cell => ({ ...cell })));
+
+const isWalkableFruitCell = (grid: FruitCell[][], r: number, c: number, end: FruitPoint) => {
+  if (r < 0 || c < 0 || r >= grid.length || c >= grid[0].length) return false;
+  if (r === end.r && c === end.c) return true;
+  return grid[r][c].f === null;
+};
+
+const findFruitPath = (grid: FruitCell[][], start: FruitPoint, end: FruitPoint): FruitPoint[] | null => {
+  if (start.r === end.r && start.c === end.c) return null;
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const keyOf = (r: number, c: number, dir: number, turns: number) => `${r},${c},${dir},${turns}`;
+  const parent = new Map<string, string | null>();
+  const stateByKey = new Map<string, { r: number; c: number; dir: number; turns: number }>();
+  const queue: { r: number; c: number; dir: number; turns: number }[] = [];
+  const visited = new Set<string>();
+
+  const push = (state: { r: number; c: number; dir: number; turns: number }, prevKey: string | null) => {
+    const key = keyOf(state.r, state.c, state.dir, state.turns);
+    if (visited.has(key)) return;
+    visited.add(key);
+    parent.set(key, prevKey);
+    stateByKey.set(key, state);
+    queue.push(state);
+  };
+
+  FRUIT_DIRS.forEach((dir, dirIndex) => {
+    const nr = start.r + dir.dr;
+    const nc = start.c + dir.dc;
+    if (isWalkableFruitCell(grid, nr, nc, end)) {
+      push({ r: nr, c: nc, dir: dirIndex, turns: 0 }, keyOf(start.r, start.c, -1, 0));
+    }
+  });
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentKey = keyOf(current.r, current.c, current.dir, current.turns);
+
+    if (current.r === end.r && current.c === end.c) {
+      const path: FruitPoint[] = [{ r: end.r, c: end.c }];
+      let cursor: string | null = currentKey;
+      while (cursor) {
+        const state = stateByKey.get(cursor);
+        if (!state) break;
+        path.push({ r: state.r, c: state.c });
+        cursor = parent.get(cursor) || null;
+      }
+      path.push({ r: start.r, c: start.c });
+      return path.reverse();
+    }
+
+    for (let nextDir = 0; nextDir < FRUIT_DIRS.length; nextDir++) {
+      const { dr, dc } = FRUIT_DIRS[nextDir];
+      const nr = current.r + dr;
+      const nc = current.c + dc;
+      if (!isWalkableFruitCell(grid, nr, nc, end)) continue;
+      const turns = current.turns + (current.dir === nextDir ? 0 : 1);
+      if (turns > 2) continue;
+      push({ r: nr, c: nc, dir: nextDir, turns }, currentKey);
+    }
+  }
+
+  return null;
+};
+
+const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
+  let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
+  let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+  if ((innerRows * innerCols) % 2 !== 0) {
+    if (innerCols < 7) innerCols += 1;
+    else if (innerRows < 7) innerRows += 1;
+  }
+  const boardRows = innerRows + 2;
+  const boardCols = innerCols + 2;
+  const config = { rows: innerRows, cols: innerCols, time: Math.max(20, 60 - tier * 5) };
+
+  const [grid, setGrid] = useState<FruitCell[][]>([]);
+  const [selection, setSelection] = useState<FruitPoint | null>(null);
+  const [activePath, setActivePath] = useState<FruitPoint[]>([]);
   const [timeLeft, setTimeLeft] = useState(config.time);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [isShaking, setIsShaking] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const checkWin = useCallback((nextGrid: FruitCell[][]) => {
+    const hasAnyFruit = nextGrid.slice(1, -1).some(row => row.slice(1, -1).some(cell => cell.f));
+    if (!hasAnyFruit) {
+      setGameState('won');
+      playSound('success');
+      setTimeout(onWin, 1200);
+    }
+  }, [onWin]);
 
   useEffect(() => {
     const total = config.rows * config.cols;
-    const tiles: string[] = [];
-    const pairs = Math.floor(total / 2);
+    const fruitPool: string[] = [];
+    const pairs = total / 2;
     for (let i = 0; i < pairs; i++) {
-      const f = FRUITS[i % FRUITS.length];
-      tiles.push(f, f);
+      const fruit = FRUITS[i % FRUITS.length];
+      fruitPool.push(fruit, fruit);
     }
-    if (total % 2 !== 0) tiles.push('🌟'); // Add a star for odd grids
-    tiles.sort(() => Math.random() - 0.5);
-    
-    const newGrid = [];
-    let idx = 0;
-    for (let r = 0; r < config.rows; r++) {
-      const row = [];
-      for (let c = 0; c < config.cols; c++) {
-        row.push({ f: tiles[idx++], id: idx });
-      }
-      newGrid.push(row);
-    }
-    setGrid(newGrid);
+    fruitPool.sort(() => Math.random() - 0.5);
 
-    const timer = setInterval(() => {
+    const nextGrid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
+      Array.from({ length: boardCols }, (_, c) => ({
+        f: (r === 0 || c === 0 || r === boardRows - 1 || c === boardCols - 1)
+          ? null
+          : fruitPool[(r - 1) * innerCols + (c - 1)] || null,
+        id: `${r}-${c}`,
+      }))
+    );
+
+    setGrid(nextGrid);
+    setSelection(null);
+    setActivePath([]);
+    setGameState('playing');
+    setTimeLeft(config.time);
+    setIsShaking(false);
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { 
-          clearInterval(timer); 
-          setGameState('lost'); 
-          setTimeout(() => { onLose(); }, 1500); 
-          return 0; 
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          setGameState('lost');
+          setTimeout(() => { onLose(); }, 1200);
+          return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [boardRows, boardCols, config.time, innerRows, innerCols, onLose, onWin]);
 
   const handleCellClick = (r: number, c: number) => {
     if (gameState !== 'playing' || !grid[r][c].f) return;
+    if (selection && selection.r === r && selection.c === c) {
+      setSelection(null);
+      return;
+    }
+
     playSound('click');
     triggerHaptic('light');
 
-    if (grid[r][c].f === '🌟') {
-        const newGrid = [...grid.map(row => [...row])];
-        newGrid[r][c].f = null;
-        setGrid(newGrid);
-        playSound('correct');
-        checkWin(newGrid);
-        return;
-    }
-
     if (!selection) {
       setSelection({ r, c });
-    } else {
-      if (selection.r === r && selection.c === c) { setSelection(null); return; }
-      if (grid[r][c].f === grid[selection.r][selection.c].f) {
-        const newGrid = [...grid.map(row => [...row])];
-        newGrid[r][c].f = null;
-        newGrid[selection.r][selection.c].f = null;
-        setGrid(newGrid);
-        setSelection(null);
-        playSound('correct');
-        checkWin(newGrid);
-      } else {
-        setSelection({ r, c });
-      }
+      return;
     }
+
+    const first = grid[selection.r][selection.c];
+    const second = grid[r][c];
+    if (!first.f || !second.f) return;
+
+    if (first.f !== second.f) {
+      setSelection({ r, c });
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 180);
+      return;
+    }
+
+    const path = findFruitPath(grid, selection, { r, c });
+    if (!path) {
+      setIsShaking(true);
+      playSound('wrong');
+      setTimeout(() => {
+        setSelection(null);
+        setIsShaking(false);
+      }, 250);
+      return;
+    }
+
+    setActivePath(path);
+    setTimeout(() => {
+      const nextGrid = cloneFruitGrid(grid);
+      nextGrid[selection.r][selection.c].f = null;
+      nextGrid[r][c].f = null;
+      setGrid(nextGrid);
+      setSelection(null);
+      setActivePath([]);
+      playSound('correct');
+      triggerHaptic('medium');
+      checkWin(nextGrid);
+    }, 280);
   };
 
-  const checkWin = (g: any[][]) => {
-    if (g.every(row => row.every(cell => cell.f === null))) {
-      setGameState('won');
-      playSound('success');
-      setTimeout(onWin, 1500);
-    }
-  };
+  const pathSegments = activePath.length > 1
+    ? activePath.slice(0, -1).map((point, index) => ({
+        key: `${point.r}-${point.c}-${index}`,
+        x1: ((point.c + 0.5) / boardCols) * 100,
+        y1: ((point.r + 0.5) / boardRows) * 100,
+        x2: ((activePath[index + 1].c + 0.5) / boardCols) * 100,
+        y2: ((activePath[index + 1].r + 0.5) / boardRows) * 100,
+        color: FRUIT_PATH_COLORS[index % FRUIT_PATH_COLORS.length],
+      }))
+    : [];
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -167,19 +295,53 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
         <span>Fruit Harvest</span>
         <span>⏱️ {timeLeft}s</span>
       </div>
-      <div className="grid gap-1 bg-black/40 p-2 rounded-xl border border-white/10 overflow-auto max-h-[50vh]" style={{ gridTemplateColumns: `repeat(${config.cols}, 1fr)` }}>
-        {grid.map((row, r) => row.map((cell, c) => (
-          <button
-            key={cell.id}
-            onClick={() => handleCellClick(r, c)}
-            className={`w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-lg rounded-lg transition-all ${
-              cell.f ? 'bg-white/10 hover:bg-white/20 active:scale-90' : 'opacity-0 pointer-events-none'
-            } ${selection?.r === r && selection?.c === c ? 'ring-2 ring-emerald-400' : ''}`}
+
+      <div className={`relative w-full max-h-[50vh] overflow-auto bg-black/40 p-2 rounded-xl border border-white/10 ${isShaking ? 'animate-[shake_0.18s_ease-in-out_1]' : ''}`}>
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${boardCols}, minmax(0, 1fr))` }}
+        >
+          {grid.map((row, r) => row.map((cell, c) => {
+            const isSelected = selection?.r === r && selection?.c === c;
+            const isPathNode = activePath.some(p => p.r === r && p.c === c);
+            const isBorder = r === 0 || c === 0 || r === boardRows - 1 || c === boardCols - 1;
+
+            return (
+              <button
+                key={cell.id}
+                onClick={() => handleCellClick(r, c)}
+                className={`aspect-square min-w-0 flex items-center justify-center rounded-lg transition-all text-lg md:text-xl font-black ${isBorder ? 'bg-transparent pointer-events-none' : 'bg-white/10 hover:bg-white/20 active:scale-90'} ${isSelected ? 'ring-2 ring-emerald-400 scale-95' : ''} ${isPathNode ? 'ring-2 ring-cyan-300' : ''}`}
+              >
+                <span className={`${cell.f ? 'drop-shadow-md' : 'opacity-0'}`}>{cell.f || '·'}</span>
+              </button>
+            );
+          }))}
+        </div>
+
+        {pathSegments.length > 0 && (
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
           >
-            {cell.f}
-          </button>
-        )))}
+            {pathSegments.map(seg => (
+              <line
+                key={seg.key}
+                x1={seg.x1}
+                y1={seg.y1}
+                x2={seg.x2}
+                y2={seg.y2}
+                stroke={seg.color}
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeDasharray="4 3"
+                opacity="0.92"
+              />
+            ))}
+          </svg>
+        )}
       </div>
+
       {gameState !== 'playing' && <p className="font-black text-white">{gameState === 'won' ? '✅ THÀNH CÔNG!' : '❌ THẤT BẠI'}</p>}
     </div>
   );

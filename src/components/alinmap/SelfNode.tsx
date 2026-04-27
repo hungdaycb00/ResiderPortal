@@ -42,10 +42,13 @@ const SelfNode: React.FC<SelfNodeProps> = ({
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
 
     if (isSeaGameMode) {
+        const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+        const finalBoatScale = 1 + boatScaleStack * 0.05;
+
         return (
             <motion.div
                 className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
-                style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY }}
+                style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale }}
                 onClick={(e) => {
                     e.stopPropagation();
                     if (!user) return;

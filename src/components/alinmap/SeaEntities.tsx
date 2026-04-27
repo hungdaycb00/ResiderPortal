@@ -50,7 +50,9 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                         data-sea-entity="true"
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (fDist <= 100) {
+                            const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+                            const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
+                            if (fDist <= fInteractionRadius) {
                                 seaGameCtx?.openFortressStorage?.('fortress');
                             } else {
                                 executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
@@ -92,6 +94,8 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
                 const distMeters = Math.round(distDeg * 111000);
                 const isPortal = item?.item?.type === 'portal';
+                const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+                const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
 
                 return (
                     <motion.div
@@ -107,13 +111,17 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                         onClick={(e) => {
                             e.stopPropagation();
                             if (isPortal) {
-                                if (distMeters <= 100) {
+                                if (distMeters <= interactionRadius) {
                                     seaGameCtx?.openFortressStorage?.('portal');
                                 } else {
                                     executeMoveToExact?.(item.lat, item.lng);
                                 }
                             } else {
-                                executeMoveToExact?.(item.lat, item.lng);
+                                if (distMeters <= interactionRadius) {
+                                   seaGameCtx?.pickupItem?.(item.spawnId);
+                                } else {
+                                   executeMoveToExact?.(item.lat, item.lng);
+                                }
                             }
                         }}
                         onPointerDown={(e) => {}}
