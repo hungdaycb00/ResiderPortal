@@ -41,7 +41,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Social state ---
     const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
-    const [myStatus, setMyStatus] = useState("🚀 Exploring the digital universe");
+    const [myStatus, setMyStatus] = useState("");
     const [friendIdInput, setFriendIdInput] = useState('');
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
     const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(() => {
@@ -93,6 +93,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         panX: undefined as any, // Will be set after nav hook
         panY: undefined as any,
         fetchNotifications,
+        onStatusSync: (status: string) => setMyStatus(status),
     });
 
     const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {

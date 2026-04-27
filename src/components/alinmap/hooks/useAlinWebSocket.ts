@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from '../constants';
 
@@ -16,19 +16,23 @@ interface UseAlinWebSocketParams {
   panX: MotionValue<number>;
   panY: MotionValue<number>;
   fetchNotifications: () => void;
+  onStatusSync?: (status: string) => void;
 }
 
 export function useAlinWebSocket({
   position, myObfPos, setMyObfPos, radius, searchTag,
   myStatus, isVisibleOnMap, user, externalApi, currentProvince,
-  panX, panY, fetchNotifications,
+  panX, panY, fetchNotifications, onStatusSync,
 }: UseAlinWebSocketParams) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [wsStatus, setWsStatus] = useState('IDLE');
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  const myUserIdRef = useRef<string | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const selectedUserRef = useRef<any | null>(null);
+  const searchTagRef = useRef(searchTag);
   const [myDisplayName, setMyDisplayName] = useState(user?.displayName || 'YOU');
   const [myAvatarUrl, setMyAvatarUrl] = useState(user?.photoURL || '');
   const [localMyStatus, setLocalMyStatus] = useState(myStatus);
@@ -48,6 +52,10 @@ export function useAlinWebSocket({
     isMounted.current = true;
     return () => { isMounted.current = false; };
   }, []);
+
+  // Keep refs in sync with state
+  useEffect(() => { searchTagRef.current = searchTag; }, [searchTag]);
+  useEffect(() => { selectedUserRef.current = selectedUser; }, [selectedUser]);
 
   const addLog = useCallback((msg: string) => {
     console.log('[Alin]', msg);
@@ -111,8 +119,13 @@ export function useAlinWebSocket({
         addLog(`🎯 My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
         setMyObfPos({ lat: p.lat, lng: p.lng });
         setMyUserId(p.userId);
+        myUserIdRef.current = p.userId;
         if (p.username) setMyDisplayName(p.username);
-        if (p.status) { setLocalMyStatus(p.status); setStatusInput(p.status); }
+        if (p.status) {
+          setLocalMyStatus(p.status);
+          setStatusInput(p.status);
+          onStatusSync?.(p.status);
+        }
         if (p.gallery) {
           setGalleryTitle(p.gallery.title || '');
           setGalleryImages(p.gallery.images || []);
@@ -122,10 +135,13 @@ export function useAlinWebSocket({
         addLog(`🔍 Sent MAP_MOVE scan`);
       }
       if (data.type === 'NEARBY_USERS') {
-        const users = data.payload.map((u: any) => ({ ...u, isSelf: u.id === myUserId }));
+        const currentMyUserId = myUserIdRef.current;
+        const currentSearchTag = searchTagRef.current;
+        const currentSelectedUser = selectedUserRef.current;
+        const users = data.payload.map((u: any) => ({ ...u, isSelf: u.id === currentMyUserId }));
         let filtered = users.filter((u: any) => !u.isSelf);
-        if (searchTag.trim()) {
-          const tag = searchTag.toLowerCase().replace('#', '');
+        if (currentSearchTag?.trim()) {
+          const tag = currentSearchTag.toLowerCase().replace('#', '');
           filtered = filtered.filter((u: any) =>
             (u.gallery?.title && u.gallery.title.toLowerCase().includes(tag)) ||
             (u.username && u.username.toLowerCase().includes(tag)) ||
@@ -133,8 +149,8 @@ export function useAlinWebSocket({
           );
         }
         setNearbyUsers(filtered);
-        if (selectedUser && !selectedUser.isSelf) {
-          const updated = users.find((u: any) => u.id === selectedUser.id);
+        if (currentSelectedUser && !currentSelectedUser.isSelf) {
+          const updated = users.find((u: any) => u.id === currentSelectedUser.id);
           if (updated) setSelectedUser(updated);
         }
       }

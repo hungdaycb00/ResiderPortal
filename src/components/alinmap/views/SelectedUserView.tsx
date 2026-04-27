@@ -158,7 +158,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         <div className="mt-2">
                             <h4 className="text-[13px] font-bold text-gray-900 mb-3">🎮 Games</h4>
                             <div className="space-y-2">
-                                {games.filter((g) => g.creatorId === selectedUser.id).map((g) => (
+                                {games.map((g) => (
                                     <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
                                         <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
                                             {g.thumbnail ? (
@@ -174,7 +174,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                                         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                     </div>
                                 ))}
-                                {games.filter((g) => g.creatorId === selectedUser.id).length === 0 && (
+                                {games.length === 0 && (
                                     <p className="text-[12px] text-gray-400 text-center py-4">No games created yet.</p>
                                 )}
                             </div>

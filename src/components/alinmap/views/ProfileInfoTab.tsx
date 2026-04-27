@@ -177,14 +177,14 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
             </div>
 
             {/* User Games Section */}
-            {games && games.filter(g => g.creatorId === myUserId).length > 0 && (
+            {games && games.filter(g => g.ownerId === myUserId).length > 0 && (
                 <div className="mt-2">
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-[13px] font-bold text-gray-900">🎮 My Games</h4>
-                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{games.filter(g => g.creatorId === myUserId).length}</span>
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{games.filter(g => g.ownerId === myUserId).length}</span>
                     </div>
                     <div className="space-y-2">
-                        {games.filter(g => g.creatorId === myUserId).map((g) => (
+                        {games.filter(g => g.ownerId === myUserId).map((g) => (
                             <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
                                 <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
                                     {g.thumbnail ? (
