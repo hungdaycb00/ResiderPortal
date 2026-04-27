@@ -114,9 +114,8 @@ export function useMapNavigation({
     }
 
     if (tabId === 'backpack') {
-      if (!user || (requireAuth && !requireAuth('su dung Balo va Sea Game'))) {
-        return;
-      }
+      // Allow guest to access backpack
+      setMainTab('backpack');
 
       setMainTab('backpack');
       setIsSeaGameMode(true);

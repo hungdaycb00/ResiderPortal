@@ -31,7 +31,12 @@ export function useSeaBoat({
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
+    const curseVisual = useMotionValue(0);
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
+
+    useEffect(() => {
+        curseVisual.set(seaGameCtx?.state?.cursePercent || 0);
+    }, [seaGameCtx?.state?.cursePercent, curseVisual]);
 
     useEffect(() => {
         if (!isSeaGameMode || !seaGameCtx?.state || !myObfPos || isAnimatingRef.current) return;
@@ -61,16 +66,19 @@ export function useSeaBoat({
     // Auto-pickup loop
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen || seaGameCtx.encounter || seaGameCtx.showCurseModal) {
+        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen || seaGameCtx.encounter || seaGameCtx.showCurseModal || seaGameCtx.combatResult) {
             // Stop movement if any event is active
             if (boatMoveXRef.current) {
                 boatMoveXRef.current.stop();
                 boatMoveXRef.current = null;
+                isAnimatingRef.current = false;
             }
             if (boatMoveYRef.current) {
                 boatMoveYRef.current.stop();
                 boatMoveYRef.current = null;
+                isAnimatingRef.current = false;
             }
+            setBoatTargetPin(null);
             return;
         }
         if (
@@ -166,6 +174,13 @@ export function useSeaBoat({
             return;
         }
 
+        const currentCurse = seaGameCtx.state.cursePercent || 0;
+        const curseGainMultiplier = seaGameCtx.state.activeCurses?.curse_gain ? 1.5 : 1;
+        const distMeters = distDeg * 111000;
+        const expectedCurseGain = (distMeters / 100) * curseGainMultiplier;
+        const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
+        animate(curseVisual, nextCurse, { duration, ease: "linear" });
+
         console.log('[MapMove] Executing move...', { duration });
         isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
@@ -246,7 +261,7 @@ export function useSeaBoat({
     };
 
     return {
-        boatOffsetX, boatOffsetY,
+        boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
         handleMapDoubleClick, executeMoveToExact, centerOnBoat

@@ -33,7 +33,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
-  const [selectedItem, setSelectedItem] = useState<SeaItem | null>(null);
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
@@ -42,16 +41,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   }, [state.worldTier]);
 
   useEffect(() => {
-    if (!selectedItem) return;
-    const nextSelectedItem = state.inventory.find((item) => item.uid === selectedItem.uid) || null;
-    setSelectedItem(nextSelectedItem);
-  }, [selectedItem, state.inventory]);
-
-  const handleDiscardItem = async (itemUid: string) => {
-    const newInventory = state.inventory.filter((item) => item.uid !== itemUid);
-    await saveInventory(newInventory);
-    setSelectedItem((current) => (current?.uid === itemUid ? null : current));
-  };
+    if (state.inventory.some(i => i.gridX < 0)) {
+      setTab('inventory');
+    }
+  }, [state.inventory]);
 
   const totalStats = state.inventory.filter((item) => item.gridX >= 0).reduce(
     (acc, item) => ({
@@ -144,40 +137,9 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
                 items={state.inventory}
                 bags={state.bags}
                 onItemLayoutChange={(newItems) => saveInventory(newItems)}
-                onItemClick={setSelectedItem}
                 cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>
-
-            {selectedItem && (
-              <div className="w-full rounded-2xl border border-cyan-900/30 bg-[#08131d] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-700/40 bg-[#0d2137] text-4xl shadow-inner">
-                    {selectedItem.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-black text-cyan-100">{selectedItem.name}</p>
-                    <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-400/70">{selectedItem.rarity}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-cyan-100/85">
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">DMG: {selectedItem.weight || 0}</div>
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">HP: {selectedItem.hpBonus || 0}</div>
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">EN: {selectedItem.energyMax || 0}</div>
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Regen: {selectedItem.energyRegen || 0}</div>
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Vang: {selectedItem.price || 0}</div>
-                      <div className="rounded-xl border border-cyan-900/30 bg-[#0a1929] px-3 py-2">Kich thuoc: {selectedItem.gridW}x{selectedItem.gridH}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleDiscardItem(selectedItem.uid)}
-                  className="mt-4 w-full rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm font-black text-red-200 transition-colors hover:bg-red-900/40"
-                >
-                  Vut bo
-                </button>
-              </div>
-            )}
           </div>
         )}
 

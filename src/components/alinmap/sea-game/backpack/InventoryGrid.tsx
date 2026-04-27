@@ -65,6 +65,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
   const [isHoveringTrash, setIsHoveringTrash] = useState(false);
+  const [popupInfo, setPopupInfo] = useState<{ item: SeaItem; x: number; y: number } | null>(null);
   
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
@@ -138,6 +139,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   // Drag Handlers
   // ==========================================
   const handleItemPointerDown = (e: React.PointerEvent, item: SeaItem, mode: DragMode) => {
+    setPopupInfo(null);
     if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
@@ -245,6 +247,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
     if (wasClick) {
       onItemClick?.(dragItem);
+      // Determine position for popup (to the right of the click)
+      setPopupInfo({
+        item: dragItem,
+        x: pointerCurrent.clientX,
+        y: pointerCurrent.clientY,
+      });
     } else {
       if (isHoveringTrash) {
         onItemLayoutChange?.(items.filter(i => i.uid !== dragItem.uid));
@@ -287,6 +295,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     };
     const handleGlobalUp = (e: PointerEvent) => {
       if (dragMode) handlePointerUp(e);
+      // Close popup if clicked outside
+      if (!dragMode && popupInfo) {
+        setPopupInfo(null);
+      }
     };
     window.addEventListener('pointermove', handleGlobalMove);
     window.addEventListener('pointerup', handleGlobalUp);
@@ -541,6 +553,32 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           }}
         >
           <span className="text-xl">{dragItem.icon}</span>
+        </div>
+      )}
+      
+      {/* Item Info Popup */}
+      {popupInfo && (
+        <div 
+          className="fixed z-[10000] rounded-xl border border-cyan-500/50 bg-[#08131d]/95 backdrop-blur-md p-3 shadow-2xl pointer-events-none transform -translate-y-1/2 ml-4"
+          style={{ left: popupInfo.x, top: popupInfo.y, minWidth: '160px' }}
+        >
+          <div className="flex items-center gap-2 border-b border-white/10 pb-2 mb-2">
+            <span className="text-2xl drop-shadow-md">{popupInfo.item.icon}</span>
+            <div className="flex-1">
+              <h3 className={`text-sm font-bold truncate max-w-[120px] ${popupInfo.item.rarity === 'legendary' ? 'text-purple-400' : popupInfo.item.rarity === 'rare' ? 'text-amber-400' : popupInfo.item.rarity === 'uncommon' ? 'text-emerald-400' : 'text-sky-400'}`}>
+                {popupInfo.item.name}
+              </h3>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider">{popupInfo.item.rarity}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            {popupInfo.item.weight > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Sát Thương</span><span className="font-bold text-orange-400">{popupInfo.item.weight}</span></div>}
+            {popupInfo.item.hpBonus > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Máu Tối Đa</span><span className="font-bold text-red-400">+{popupInfo.item.hpBonus}</span></div>}
+            {popupInfo.item.energyMax > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Năng Lượng</span><span className="font-bold text-blue-400">+{popupInfo.item.energyMax}</span></div>}
+            {popupInfo.item.energyRegen > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Hồi Năng Lượng</span><span className="font-bold text-cyan-400">+{popupInfo.item.energyRegen}</span></div>}
+            {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Giá Bán</span><span className="font-bold text-amber-400">{popupInfo.item.price} vàng</span></div>}
+            <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW}x{popupInfo.item.gridH}</span></div>
+          </div>
         </div>
       )}
     </div>

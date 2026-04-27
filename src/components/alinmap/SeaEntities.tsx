@@ -12,6 +12,109 @@ interface SeaEntitiesProps {
     executeMoveToExact?: (lat: number, lng: number) => void;
 }
 
+const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, seaGameCtx }: any) => {
+    const isPortal = item?.item?.type === 'portal';
+    const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
+
+    const distMetersTransform = useTransform(boatOffsetX || new MotionValue(), (ox: number) => {
+        const oy = boatOffsetY?.get() || 0;
+        const dLat = item.lat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const dLng = item.lng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
+        return Math.round(distDeg * 111000);
+    });
+
+    const distText = useTransform(distMetersTransform, (d) => `${d}m`);
+
+    return (
+        <motion.div
+            data-sea-entity="true"
+            data-map-interactive="true"
+            className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
+            style={{
+                top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+            }}
+            animate={{ y: [-2, 2, -2] }}
+            transition={{ duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
+            onClick={(e) => {
+                e.stopPropagation();
+                const currentDist = distMetersTransform.get();
+                if (isPortal) {
+                    if (currentDist <= interactionRadius) {
+                        seaGameCtx?.openFortressStorage?.('portal');
+                    } else {
+                        executeMoveToExact?.(item.lat, item.lng);
+                    }
+                } else {
+                    if (currentDist <= interactionRadius) {
+                       seaGameCtx?.pickupItem?.(item.spawnId);
+                    } else {
+                       executeMoveToExact?.(item.lat, item.lng);
+                    }
+                }
+            }}
+            onPointerDown={(e) => {}}
+            onPointerUp={(e) => {}}
+        >
+            <div className="relative group flex flex-col items-center">
+                <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
+                    {item.item?.icon || '💎'}
+                </span>
+                <div className={`mt-0.5 flex flex-col items-center rounded-lg px-1.5 py-0.5 backdrop-blur-sm ${isPortal ? 'border border-violet-400/30 bg-violet-950/60' : 'border border-white/10 bg-black/40'}`}>
+                    <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap">{item.item?.name}</span>
+                    <motion.span className="text-[6px] font-bold tabular-nums text-white/60">{distText}</motion.span>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact, seaGameCtx }: any) => {
+    const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+    const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
+
+    const fDistTransform = useTransform(boatOffsetX || new MotionValue(), (ox: number) => {
+        const oy = boatOffsetY?.get() || 0;
+        const fLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const fLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
+    });
+
+    const fText = useTransform(fDistTransform, (d) => d <= 100 ? 'Thanh tri cua ban' : `Thanh tri (${d}m)`);
+    const fColorClass = useTransform(fDistTransform, (d) => d <= 100 ? 'text-emerald-400 border-emerald-500/50' : 'text-gray-400 border-gray-500/50');
+
+    return (
+        <div
+            data-sea-entity="true"
+            data-map-interactive="true"
+            onClick={(e) => {
+                e.stopPropagation();
+                const dist = fDistTransform.get();
+                if (dist <= fInteractionRadius) {
+                    seaGameCtx?.openFortressStorage?.('fortress');
+                } else {
+                    executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
+                }
+            }}
+            onPointerDown={(e) => {}}
+            onPointerUp={(e) => {}}
+            className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
+            style={{
+                top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+            }}
+        >
+            <div className="relative flex flex-col items-center group">
+                <span className="text-6xl drop-shadow-lg">🏝️</span>
+                <motion.div className="absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border" style={{ color: fColorClass as any, borderColor: fColorClass as any }}>
+                    <motion.span>{fText}</motion.span>
+                </motion.div>
+            </div>
+        </div>
+    );
+};
+
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
     myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
@@ -40,42 +143,12 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 </svg>
             )}
 
-            {seaState?.fortressLat && (() => {
-                const fLat = seaState.fortressLat - (myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX);
-                const fLng = seaState.fortressLng - (myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX);
-                const fDist = Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
-                
-                return (
-                    <div
-                        data-sea-entity="true"
-                        data-map-interactive="true"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
-                            const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
-                            if (fDist <= fInteractionRadius) {
-                                seaGameCtx?.openFortressStorage?.('fortress');
-                            } else {
-                                executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
-                            }
-                        }}
-                        onPointerDown={(e) => {}}
-                        onPointerUp={(e) => {}}
-                        className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
-                        style={{
-                            top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                            left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                        }}
-                    >
-                        <div className="relative flex flex-col items-center group">
-                            <span className="text-6xl drop-shadow-lg">🏝️</span>
-                            <div className={`absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border ${fDist <= 100 ? 'text-emerald-400 border-emerald-500/50' : 'text-gray-400 border-gray-500/50'}`}>
-                                {fDist <= 100 ? 'Thanh tri cua ban' : `Thanh tri (${fDist}m)`}
-                            </div>
-                        </div>
-                    </div>
-                );
-            })()}
+            {seaState?.fortressLat && (
+                <FortressEntity 
+                    seaState={seaState} myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
+                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} seaGameCtx={seaGameCtx} 
+                />
+            )}
 
             {boatTargetPin && (
                 <div
@@ -89,58 +162,18 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 </div>
             )}
 
-            {seaGameCtx?.worldItems?.map((item: any) => {
-                const dLat = item.lat - (myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX);
-                const dLng = item.lng - (myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX);
-                const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
-                const distMeters = Math.round(distDeg * 111000);
-                const isPortal = item?.item?.type === 'portal';
-                const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
-                const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
-
-                return (
-                    <motion.div
-                        data-sea-entity="true"
-                        data-map-interactive="true"
-                        key={item.spawnId}
-                        className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
-                        style={{
-                            top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                            left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                        }}
-                        animate={{ y: [-2, 2, -2] }}
-                        transition={{ duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (isPortal) {
-                                if (distMeters <= interactionRadius) {
-                                    seaGameCtx?.openFortressStorage?.('portal');
-                                } else {
-                                    executeMoveToExact?.(item.lat, item.lng);
-                                }
-                            } else {
-                                if (distMeters <= interactionRadius) {
-                                   seaGameCtx?.pickupItem?.(item.spawnId);
-                                } else {
-                                   executeMoveToExact?.(item.lat, item.lng);
-                                }
-                            }
-                        }}
-                        onPointerDown={(e) => {}}
-                        onPointerUp={(e) => {}}
-                    >
-                        <div className="relative group flex flex-col items-center">
-                            <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
-                                {item.item?.icon || '💎'}
-                            </span>
-                            <div className={`mt-0.5 flex flex-col items-center rounded-lg px-1.5 py-0.5 backdrop-blur-sm ${isPortal ? 'border border-violet-400/30 bg-violet-950/60' : 'border border-white/10 bg-black/40'}`}>
-                                <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap">{item.item?.name}</span>
-                                <span className="text-[6px] font-bold tabular-nums text-white/60">{distMeters}m</span>
-                            </div>
-                        </div>
-                    </motion.div>
-                );
-            })}
+            {seaGameCtx?.worldItems?.map((item: any) => (
+                <SeaItemEntity 
+                    key={item.spawnId}
+                    item={item}
+                    myObfPos={myObfPos}
+                    boatOffsetX={boatOffsetX}
+                    boatOffsetY={boatOffsetY}
+                    boatScaleStack={seaState?.activeCurses?.boat_scale || 0}
+                    executeMoveToExact={executeMoveToExact}
+                    seaGameCtx={seaGameCtx}
+                />
+            ))}
         </>
     );
 };

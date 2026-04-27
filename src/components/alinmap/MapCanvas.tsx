@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Eye, MapPin, RefreshCw, UserRound } from 'lucide-react';
-import { motion, MotionValue } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import SpatialNode from './SpatialNode';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
@@ -366,11 +366,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             <motion.div
                                 className="h-full rounded-full relative"
                                 style={{
-                                    background: `linear-gradient(90deg, #7f1d1d, #dc2626 ${Math.min(seaState?.cursePercent || 0, 100)}%, #ef4444)`,
+                                    background: useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${seaBoat.curseVisual}%, #ef4444)`,
+                                    width: useMotionTemplate`${seaBoat.curseVisual}%`,
                                     boxShadow: (seaState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
                                 }}
-                                animate={{ width: `${Math.min(seaState?.cursePercent || 0, 100)}%` }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
                             />
                         </div>
                         <motion.span 
@@ -378,7 +377,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                             initial={false}
                             animate={{ opacity: [0.5, 1] }}
                         >
-                            {Math.round(seaState?.cursePercent || 0)}%
+                            <motion.span>{useTransform(seaBoat.curseVisual, (v) => `${Math.round(v)}%`)}</motion.span>
                         </motion.span>
                     </div>
                 </div>

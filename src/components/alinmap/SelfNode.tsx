@@ -1,6 +1,6 @@
 import React from 'react';
 import { Diamond } from 'lucide-react';
-import { motion, MotionValue } from 'framer-motion';
+import { motion, MotionValue, useTransform } from 'framer-motion';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { DEGREES_TO_PX } from './constants';
 
@@ -42,6 +42,15 @@ const SelfNode: React.FC<SelfNodeProps> = ({
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
 
+    const fortressDist = useTransform(boatOffsetX || new MotionValue(), (ox) => {
+        if (!isSeaGameMode || !seaState?.fortressLat) return '';
+        const oy = boatOffsetY?.get() || 0;
+        const dLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const dLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const dist = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 111000);
+        return dist <= 100 ? 'Đang ở Thành' : `${dist}m`;
+    });
+
     if (isSeaGameMode) {
         const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
         const finalBoatScale = 1 + boatScaleStack * 0.05;
@@ -68,6 +77,15 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         <span className="text-4xl drop-shadow-lg">⛵</span>
                     </div>
                 </motion.div>
+                {seaState?.fortressLat && (
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-max">
+                        <div className="bg-[#050b12]/90 backdrop-blur border border-cyan-500/30 px-2.5 py-0.5 rounded-full shadow-lg pointer-events-none">
+                            <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider">
+                                🏰 <motion.span>{fortressDist}</motion.span>
+                            </motion.span>
+                        </div>
+                    </div>
+                )}
             </motion.div>
         );
     }
@@ -169,9 +187,16 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             )}
 
             {/* Status label */}
-            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                {myStatus && (
-                    <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-max">
+                {isSeaGameMode && seaState?.fortressLat && (
+                    <div className="bg-[#050b12]/90 backdrop-blur border border-cyan-500/30 px-2.5 py-0.5 rounded-full shadow-lg pointer-events-none">
+                        <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider">
+                            🏰 <motion.span>{fortressDist}</motion.span>
+                        </motion.span>
+                    </div>
+                )}
+                {myStatus && !isSeaGameMode && (
+                    <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none mt-1">
                         <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
                         <span className="text-[10px] font-bold text-gray-400">#{(galleryImages?.[0] || '').slice(-4).toUpperCase()}</span>
                     </div>

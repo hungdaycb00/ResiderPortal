@@ -242,13 +242,6 @@ export default function FortressStorageModal() {
             </div>
           )}
 
-          <div className="mb-4 flex items-center justify-center gap-2 text-cyan-300/70">
-            <ArrowRightLeft className="h-4 w-4" />
-            <span className="text-xs font-bold uppercase tracking-[0.24em]">
-              {isPortalMode ? 'Nhan nhap dup vao mon do ben trai' : 'Nhap dup vao mon do de chuyen nhanh'}
-            </span>
-          </div>
-
           <div className="flex flex-col lg:grid flex-1 gap-4 lg:grid-cols-2">
             <InventoryPanel />
             <StoragePanel />
