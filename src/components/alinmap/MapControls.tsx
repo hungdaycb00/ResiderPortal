@@ -77,13 +77,15 @@ const MapControls: React.FC<MapControlsProps> = ({
                     </>
                 )}
                 <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
-                    <button
-                        onClick={handleCenter}
-                        className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
-                        title="Your Position"
-                    >
-                        <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
-                    </button>
+                    {!isSeaGameMode && (
+                        <button
+                            onClick={handleCenter}
+                            className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
+                            title="Your Position"
+                        >
+                            <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                    )}
                     <button
                         onClick={() => scale.set(Math.min((scale?.get?.() ?? 1) + 0.3, 3))}
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
@@ -110,8 +112,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                         </button>
                         <button
                             onClick={() => {
-                                if (seaState?.fortressLat && seaState?.fortressLng) {
-                                    handleCenterTo(seaState.fortressLat, seaState.fortressLng);
+                                if (seaState?.currentLat != null && seaState?.currentLng != null) {
+                                    handleCenterTo(seaState.currentLat, seaState.currentLng);
                                 }
                             }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"
