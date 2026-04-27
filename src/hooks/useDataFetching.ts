@@ -15,7 +15,46 @@ export function useDataFetching(
         return saved ? JSON.parse(saved) : [];
     });
 
+    const extractGamesArray = (gamesData: any): any[] => {
+        if (Array.isArray(gamesData)) return gamesData;
+        if (gamesData && typeof gamesData === 'object') {
+            return gamesData.games || gamesData.data || gamesData.list || gamesData.items || [];
+        }
+        return [];
+    };
+
+    const fetchServerGames = useCallback(async () => {
+        try {
+            const gamesData = await externalApi.listServer();
+            const gamesArray = extractGamesArray(gamesData);
+            const normalized = gamesArray.map((game: any) => {
+                const actualFilePath = game.file_path || game.file || game.fileName || game.path || game.id || '';
+                const rawImage = game.image || game.thumbnail || game.thumbnail_url || '';
+
+                return {
+                    ...game,
+                    id: game.id?.toString?.() || actualFilePath || game.title || game.name,
+                    title: game.title || game.name || game.fileName || 'Untitled',
+                    fileName: actualFilePath,
+                    image: normalizeImageUrl(rawImage),
+                    score: game.score || 0,
+                    downloads: game.downloads || 0,
+                    rating: game.rating || 0,
+                    createdAt: game.createdAt || game.created_at,
+                    ownerId: game.ownerId || game.owner_id,
+                    tunnel_url: game.tunnel_url || null,
+                    category: game.category || '',
+                };
+            });
+            setFetchedGames(normalized);
+        } catch (err) {
+            console.warn("[DataFetching] Failed to fetch server games:", err);
+        }
+    }, [cloudflareUrl]);
+
     const fetchExternalData = useCallback(async (retry = true) => {
+        await fetchServerGames();
+
         if (serverStatus !== 'online') return;
 
         // 1. Fetch Profile (May fail for guests)
@@ -37,20 +76,6 @@ export function useDataFetching(
         } catch (err) {
             // Guests will hit 404 here, which is expected
             console.log("[DataFetching] Profile fetch skipped or failed (Guest user)");
-        }
-
-        // 2. Fetch Games (Public data, should always try)
-        try {
-            const gamesData = await externalApi.listServer();
-            if (gamesData && Array.isArray(gamesData.games)) {
-                const normalized = gamesData.games.map(g => ({
-                    ...g,
-                    image: normalizeImageUrl(g.image)
-                }));
-                setFetchedGames(normalized);
-            }
-        } catch (err) {
-            console.warn("[DataFetching] Failed to fetch server games:", err);
         }
 
         // 3. Fetch Friends (Requires auth, usually fails for guests)
@@ -78,7 +103,11 @@ export function useDataFetching(
             // Expected failure for guest users
             console.log("[DataFetching] Friends fetch skipped or failed (Auth required)");
         }
-    }, [serverStatus, setUser]);
+    }, [fetchServerGames, serverStatus, setUser]);
+
+    useEffect(() => {
+        void fetchExternalData();
+    }, [fetchExternalData]);
 
     // Validate recentlyPlayed when fetchedGames changes
     useEffect(() => {
