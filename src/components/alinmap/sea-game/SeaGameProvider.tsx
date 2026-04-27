@@ -438,7 +438,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         for (let c = 0; c < item.gridW; c++) {
           const br = item.gridY + r - newBag.gridY;
           const bc = item.gridX + c - newBag.gridX;
-          if (br < 0 || br >= newBag.height || bc < 0 || bc >= newBag.width || !bagShape[br][bc]) {
+          if (br < 0 || br >= newBag.height || bc < 0 || bc >= newBag.width || !bagShape[br] || !bagShape[br][bc]) {
             inBounds = false;
             break;
           }

@@ -106,8 +106,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     if (x < 0 || y < 0 || x + w > gridW || y + h > gridH) return false;
     for (let r = y; r < y + h; r++) {
       for (let c = x; c < x + w; c++) {
-        if (!bagOcc[r][c]) return false; // Not on the bag
-        if (itemOcc[r][c] !== null) return false; // Overlap
+        if (!bagOcc[r] || !bagOcc[r][c]) return false; // Not on the bag
+        if (!itemOcc[r] || itemOcc[r][c] !== null) return false; // Overlap
       }
     }
     return true;

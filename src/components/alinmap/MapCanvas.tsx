@@ -221,6 +221,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                         const matchesStatus = statusStr.includes(term);
                                         if (!matchesName && !matchesTags && !matchesStatus) return false;
                                     }
+                                    if (u.lat == null || u.lng == null || isNaN(u.lat) || isNaN(u.lng)) return false;
                                     const distKm = Math.sqrt(Math.pow(u.lat - myObfPos!.lat, 2) + Math.pow(u.lng - myObfPos!.lng, 2)) * 111;
                                     if (distKm > filterDistance) return false;
                                     const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;

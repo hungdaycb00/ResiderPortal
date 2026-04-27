@@ -140,7 +140,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                             {galleryTitle || 'MY ADVERTISEMENT'}
                         </p>
                     </div>
-                    {galleryImages?.[0] ? (
+                    {Array.isArray(galleryImages) && galleryImages.length > 0 ? (
                         <div className="w-full aspect-video bg-black/40">
                             <img src={normalizeImageUrl(galleryImages[0])} className="w-full h-full object-cover opacity-80" alt="My Ads" />
                         </div>
@@ -163,6 +163,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                 {myStatus && (
                     <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
                         <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
+                        <span className="text-[10px] font-bold text-gray-400">#{(galleryImages?.[0] || '').slice(-4).toUpperCase()}</span>
                     </div>
                 )}
             </div>

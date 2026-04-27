@@ -288,14 +288,14 @@ const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void
 const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
   const rows = Math.min(7, 4 + Math.floor(tier / 2));
   const cols = Math.min(7, 4 + Math.ceil(tier / 2));
-  const config = { size: rows, cols, mines: Math.floor(rows * cols * 0.15), time: Math.max(30, 60 - tier * 5) };
+  const config = { rows, cols, mines: Math.floor(rows * cols * 0.15), time: Math.max(30, 60 - tier * 5) };
 
   const [grid, setGrid] = useState<{m: boolean, o: boolean, n: number}[][]>([]);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
   const [timeLeft, setTimeLeft] = useState(config.time);
 
   useEffect(() => {
-    const newGrid = Array(config.rows).fill(0).map(() => Array(config.cols).fill(0).map(() => ({ m: false, o: false, n: 0 })));
+    const newGrid = Array(rows).fill(0).map(() => Array(cols).fill(0).map(() => ({ m: false, o: false, n: 0 })));
     let m = 0;
     while (m < config.mines) {
       const r = Math.floor(Math.random() * config.rows);
@@ -309,7 +309,7 @@ const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => voi
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
             const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols && newGrid[nr][nc].m) count++;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && newGrid[nr][nc].m) count++;
           }
         }
         newGrid[r][c].n = count;

@@ -45,7 +45,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 
     const handleCopyLocation = () => {
         if (!myObfPos) return;
-        const text = `${myObfPos.lat.toFixed(5)}, ${myObfPos.lng.toFixed(5)}`;
+        const text = `${(myObfPos?.lat || 0).toFixed(5)}, ${(myObfPos?.lng || 0).toFixed(5)}`;
         navigator.clipboard.writeText(text).then(() => {
             setCopyToast(true);
             setTimeout(() => setCopyToast(false), 3000);
@@ -142,7 +142,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                                     <>
                                         <span className="text-gray-300 text-[10px]">•</span>
                                         <p className="text-[9px] font-mono font-bold text-gray-400">
-                                            {myObfPos.lat.toFixed(4)}, {myObfPos.lng.toFixed(4)}
+                                            {(myObfPos?.lat || 0).toFixed(4)}, {(myObfPos?.lng || 0).toFixed(4)}
                                         </p>
                                     </>
                                 )}
@@ -201,7 +201,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                                         </button>
                                     </div>
                                     <p className="text-[10px] font-mono font-bold text-gray-700 text-center tracking-wide">
-                                        {myObfPos.lat.toFixed(5)}, {myObfPos.lng.toFixed(5)}
+                                        {(myObfPos?.lat || 0).toFixed(5)}, {(myObfPos?.lng || 0).toFixed(5)}
                                     </p>
                                     <AnimatePresence>
                                         {copyToast && (
