@@ -93,7 +93,7 @@ export function useAlinWebSocket({
       addLog(`Connected! Sending ${joinType}...`);
       setIsConnecting(false);
       setWsStatus('OPEN');
-      const deviceId = externalApi.getDeviceId();
+      const deviceId = user?.uid || externalApi.getDeviceId();
       socket.send(JSON.stringify({
         type: joinType,
         payload: {
