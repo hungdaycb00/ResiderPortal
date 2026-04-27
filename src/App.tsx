@@ -216,19 +216,21 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <MultiTaskButton 
-        className="z-[9999]"
-        user={user}
-        activeTab={activeTab} 
-        isInGame={!!playingGame}
-        onFeedback={() => setShowReviewModal(true)}
-        setActiveTab={(id) => {
-          if (id === 'home' && playingGame) { closeGame(); return; }
-          if (id === 'chat') { setIsChatOpen(prev => !prev); setIsFriendsOpen(false); setIsUserInfoOpen(false); }
-          else if (id === 'friends') { setIsFriendsOpen(prev => !prev); setIsChatOpen(false); setIsUserInfoOpen(false); }
-          else { setActiveTab(id); if (playingGame) closeGame(); setIsChatOpen(false); setIsFriendsOpen(false); setIsUserInfoOpen(false); }
-        }} 
-      />
+      {(!playingGame && activeTab === 'home') ? null : (
+        <MultiTaskButton 
+          className="z-[9999]"
+          user={user}
+          activeTab={activeTab} 
+          isInGame={!!playingGame}
+          onFeedback={() => setShowReviewModal(true)}
+          setActiveTab={(id) => {
+            if (id === 'home' && playingGame) { closeGame(); return; }
+            if (id === 'chat') { setIsChatOpen(prev => !prev); setIsFriendsOpen(false); setIsUserInfoOpen(false); }
+            else if (id === 'friends') { setIsFriendsOpen(prev => !prev); setIsChatOpen(false); setIsUserInfoOpen(false); }
+            else { setActiveTab(id); if (playingGame) closeGame(); setIsChatOpen(false); setIsFriendsOpen(false); setIsUserInfoOpen(false); }
+          }} 
+        />
+      )}
 
       {/* Fullscreen Game Iframe Overlay */}
       {playingGame && (
