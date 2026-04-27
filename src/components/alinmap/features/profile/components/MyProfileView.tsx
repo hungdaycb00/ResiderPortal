@@ -16,8 +16,6 @@ interface MyProfileViewProps {
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     galleryActive: boolean;
     setMyDisplayName: (v: string) => void;
-    statusInput: string;
-    setStatusInput: (v: string) => void;
     radius: number;
     handleUpdateRadius: (v: number) => void;
     games: any[];
@@ -50,7 +48,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         myUserId, myDisplayName, myAvatarUrl, currentProvince,
         activeTab, setActiveTab, galleryActive,
         setMyDisplayName,
-        statusInput, setStatusInput, radius, handleUpdateRadius,
+        radius, handleUpdateRadius,
         games, userPosts,
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, isSavingPost,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,

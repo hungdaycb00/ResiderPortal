@@ -48,7 +48,7 @@ interface BottomSheetProps {
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMainTab: (tab: any) => void;
     setSearchTag: (v: string) => void;
-    setStatusInput: (v: string) => void;
+    setSearchTag: (v: string) => void;
     setMyDisplayName: (v: string) => void;
     myAvatarUrl: string;
     setMyAvatarUrl: (v: string) => void;
@@ -74,7 +74,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
         ws, panX, panY, scale, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
-        setStatusInput, setMyDisplayName,
+        setMyDisplayName,
         setIsCreatingPost, setPostTitle, fetchUserPosts,
         handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
@@ -234,7 +234,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl} currentProvince={currentProvince}
                                         activeTab={activeTab as any} setActiveTab={setActiveTab as any} galleryActive={galleryActive}
                                         setMyDisplayName={setMyDisplayName}
-                                        statusInput={statusInput} setStatusInput={setStatusInput}
                                         radius={radius} handleUpdateRadius={handleUpdateRadius} games={games} userPosts={userPosts} isCreatingPost={isCreatingPost}
                                         setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle} isSavingPost={isSavingPost}
                                         ws={ws} myObfPos={myObfPos} user={user} showNotification={showNotification} setIsSheetExpanded={setIsSheetExpanded}

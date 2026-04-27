@@ -17,12 +17,14 @@ interface ProfileContextType {
     setIsEditingName: React.Dispatch<React.SetStateAction<boolean>>;
     nameInput: string;
     setNameInput: React.Dispatch<React.SetStateAction<string>>;
+    statusInput: string;
+    setStatusInput: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
-export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: boolean }> = ({ children, initialIsVisible }) => {
-    const [myStatus, setMyStatus] = useState("");
+export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: boolean, initialStatus?: string }> = ({ children, initialIsVisible, initialStatus = "" }) => {
+    const [myStatus, setMyStatus] = useState(initialStatus);
     const [isVisibleOnMap, setIsVisibleOnMap] = useState<boolean>(initialIsVisible);
 
     useEffect(() => {
@@ -35,6 +37,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: 
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [nameInput, setNameInput] = useState("");
+    const [statusInput, setStatusInput] = useState("");
 
     return (
         <ProfileContext.Provider value={{
@@ -45,7 +48,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: 
             reportStatus, setReportStatus,
             isEditingStatus, setIsEditingStatus,
             isEditingName, setIsEditingName,
-            nameInput, setNameInput
+            nameInput, setNameInput,
+            statusInput, setStatusInput
         }}>
             {children}
         </ProfileContext.Provider>

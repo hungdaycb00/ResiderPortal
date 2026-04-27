@@ -142,10 +142,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     };
 
     return (
-        <ProfileProvider initialIsVisible={(() => {
-            const saved = localStorage.getItem('alinmap_visible');
-            return saved !== null ? saved === 'true' : !!user;
-        })()}>
+        <ProfileProvider 
+            initialIsVisible={(() => {
+                const saved = localStorage.getItem('alinmap_visible');
+                return saved !== null ? saved === 'true' : !!user;
+            })()}
+            initialStatus={wsCtx.myStatus}
+        >
         <SocialProvider
             user={user}
             externalApi={externalApi}
@@ -226,7 +229,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handleUpdateRadius={nav.handleUpdateRadius}
                 setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
                 setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
-                setStatusInput={wsCtx.setStatusInput}
                 setMyDisplayName={wsCtx.setMyDisplayName}
                 myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
                 setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
