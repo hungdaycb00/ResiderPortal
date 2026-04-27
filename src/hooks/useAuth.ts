@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
-import { User } from '../../types';
+import { User } from '../types';
 
 interface UseAuthReturn {
     user: User | null;
@@ -21,18 +21,24 @@ export function useAuth(
     serverStatus: 'online' | 'offline' | 'checking',
     showNotification: (message: string, type: 'success' | 'error' | 'info') => void,
 ): UseAuthReturn {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => {
+        const savedUser = localStorage.getItem('user');
+        if (!savedUser) return null;
+        try {
+            return JSON.parse(savedUser);
+        } catch (e) {
+            console.error("Failed to parse saved user", e);
+            localStorage.removeItem('user');
+            return null;
+        }
+    });
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [isAuthCallbackQueue, setAuthCallbackQueue] = useState<(() => void) | null>(null);
     const gsiInitialized = useRef(false);
 
-    // Load saved user on mount
     useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            try { setUser(JSON.parse(savedUser)); } catch (e) { console.error("Failed to parse saved user", e); }
-        }
-    }, []);
+        if (user) localStorage.setItem('user', JSON.stringify(user));
+    }, [user]);
 
     const handleCredentialResponse = useCallback(async (response: any) => {
         try {

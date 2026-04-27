@@ -662,6 +662,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     } catch (err) { console.error('[SeaGame] loadWorldItems error:', err); }
   }, [deviceId, API, isChallengeActive, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
 
+  useEffect(() => {
+    if (!deviceId || !state.initialized || !isChallengeActive) return;
+    void loadWorldItems(true);
+  }, [deviceId, state.initialized, state.currentLat, state.currentLng, isChallengeActive, loadWorldItems]);
+
   const setWorldTier = useCallback(async (tier: number) => {
     if (!deviceId) return;
     const res = await fetch(`${API}/api/sea/set-tier`, {
