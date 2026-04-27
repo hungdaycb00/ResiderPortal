@@ -14,7 +14,7 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
+    const { showMinigame, setShowMinigame, pickupItem, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state } = useSeaGame();
 
     return (
         <>
@@ -37,9 +37,13 @@ const SeaGameUI: React.FC = () => {
                         setShowMinigame(null);
                     }}
                     onLose={() => {
+                        if (showMinigame?.spawnId) destroyItem(showMinigame.spawnId);
                         setShowMinigame(null);
                     }}
-                    onClose={() => setShowMinigame(null)}
+                    onClose={() => {
+                        if (showMinigame?.spawnId) destroyItem(showMinigame.spawnId);
+                        setShowMinigame(null);
+                    }}
                 />
             )}
 

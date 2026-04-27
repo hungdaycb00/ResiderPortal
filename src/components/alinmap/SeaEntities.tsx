@@ -17,29 +17,39 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
 }) => {
     return (
         <>
-            {seaState?.fortressLat && (
-                <div
-                    data-sea-entity="true"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        seaGameCtx?.openFortressStorage?.('fortress');
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => {}}
-                    className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
-                    style={{
-                        top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                        left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                    }}
-                >
-                    <div className="relative flex flex-col items-center group">
-                        <span className="text-6xl drop-shadow-lg">🏝️</span>
-                        <div className="absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-emerald-400 border border-emerald-500/50 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
-                            Thanh tri cua ban
+            {seaState?.fortressLat && (() => {
+                const fLat = seaState.fortressLat - (myObfPos.lat - boatOffsetY.get() / DEGREES_TO_PX);
+                const fLng = seaState.fortressLng - (myObfPos.lng + boatOffsetX.get() / DEGREES_TO_PX);
+                const fDist = Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
+                
+                return (
+                    <div
+                        data-sea-entity="true"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (fDist <= 100) {
+                                seaGameCtx?.openFortressStorage?.('fortress');
+                            } else {
+                                executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
+                            }
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onPointerUp={(e) => {}}
+                        className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
+                        style={{
+                            top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                            left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                        }}
+                    >
+                        <div className="relative flex flex-col items-center group">
+                            <span className="text-6xl drop-shadow-lg">🏝️</span>
+                            <div className={`absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border ${fDist <= 100 ? 'text-emerald-400 border-emerald-500/50' : 'text-gray-400 border-gray-500/50'}`}>
+                                {fDist <= 100 ? 'Thanh tri cua ban' : `Thanh tri (${fDist}m)`}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {boatTargetPin && (
                 <div
@@ -73,11 +83,15 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                         transition={{ duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (isPortal) seaGameCtx?.openFortressStorage?.('portal');
-                        }}
-                        onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            executeMoveToExact?.(item.lat, item.lng);
+                            if (isPortal) {
+                                if (distMeters <= 100) {
+                                    seaGameCtx?.openFortressStorage?.('portal');
+                                } else {
+                                    executeMoveToExact?.(item.lat, item.lng);
+                                }
+                            } else {
+                                executeMoveToExact?.(item.lat, item.lng);
+                            }
                         }}
                         onPointerDown={(e) => e.stopPropagation()}
                         onPointerUp={(e) => {}}

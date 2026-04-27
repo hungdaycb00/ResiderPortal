@@ -213,7 +213,7 @@ const CombatScreen: React.FC = () => {
       </div>
 
       {/* Bottom: Stats + Inventories */}
-      <div className="flex-1 flex overflow-hidden p-2 gap-2">
+      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden p-2 gap-2">
         {/* Player A side */}
         <div className="flex-1 flex flex-col bg-[#0d2137]/30 rounded-2xl p-3 border border-cyan-800/20">
           <div className="mb-3">

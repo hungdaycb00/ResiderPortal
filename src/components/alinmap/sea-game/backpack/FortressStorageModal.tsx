@@ -81,7 +81,7 @@ export default function FortressStorageModal() {
         e.preventDefault();
         void onDrop();
       }}
-      className={`flex min-h-[360px] flex-col rounded-2xl border p-3 transition-colors ${allowDrop && dragging ? 'border-cyan-400/60 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'}`}
+      className={`flex flex-1 flex-col rounded-2xl border p-3 transition-colors ${allowDrop && dragging ? 'border-cyan-400/60 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'}`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
@@ -130,7 +130,7 @@ export default function FortressStorageModal() {
           e.preventDefault();
           void handleDropToInventory();
         }}
-        className={`flex min-h-[360px] flex-col rounded-2xl border p-3 transition-colors ${
+        className={`flex flex-1 flex-col rounded-2xl border p-3 transition-colors ${
           allowRetrieveDrop ? 'border-cyan-400/60 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'
         }`}
       >
@@ -227,7 +227,7 @@ export default function FortressStorageModal() {
           </span>
         </div>
 
-        <div className="grid flex-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col-reverse lg:grid flex-1 gap-4 lg:grid-cols-2">
           {isPortalMode ? (
             <Column
               title="Hom do tren thuyen"
