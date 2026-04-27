@@ -150,10 +150,24 @@ const CombatScreen: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[400] bg-[#040e1a] flex flex-col"
+      className="fixed inset-0 z-[400] bg-[#040e1a] flex flex-col overflow-hidden"
     >
-      {/* Top: Ocean scene with boats */}
-      <div className="relative h-[28vh] min-h-[160px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0">
+      {/* 1. Enemy Inventory (Top on Mobile, Right on Desktop) */}
+      <div className="md:hidden flex flex-col bg-[#370d0d]/20 p-2 border-b border-red-900/20 shrink-0">
+        <div className="flex justify-between items-end mb-1 px-1">
+           <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
+           <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
+        </div>
+        <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-2 border border-white/5">
+          <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
+        </div>
+        <div className="flex justify-center">
+           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
+        </div>
+      </div>
+
+      {/* 2. Ocean scene with boats (Middle) */}
+      <div className="relative h-[22vh] md:h-[28vh] min-h-[140px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0">
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a1929] to-transparent" />
         <svg className="absolute bottom-0 w-full h-8 text-[#0a1929]" viewBox="0 0 1200 40" preserveAspectRatio="none">
           <path d="M0,20 Q150,0 300,20 Q450,40 600,20 Q750,0 900,20 Q1050,40 1200,20 L1200,40 L0,40 Z" fill="currentColor" />
@@ -214,9 +228,9 @@ const CombatScreen: React.FC = () => {
         )}
       </div>
 
-      {/* Bottom: Stats + Inventories */}
-      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden p-2 gap-2">
-        {/* Player A side */}
+      {/* 3. Stats + Inventories (Desktop Layout / Player Inventory Bottom on Mobile) */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-2 gap-2">
+        {/* Player A side (Bottom on Mobile) */}
         <div className="flex-1 flex flex-col bg-[#0d2137]/30 rounded-2xl p-3 border border-cyan-800/20">
           <div className="mb-3">
             <div className="flex justify-between items-end mb-1">
@@ -237,8 +251,8 @@ const CombatScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Player B side */}
-        <div className="flex-1 flex flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
+        {/* Player B side (Hidden on mobile top, visible on desktop right) */}
+        <div className="hidden md:flex flex-1 flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
           <div className="mb-3">
             <div className="flex justify-between items-end mb-1">
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
