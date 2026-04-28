@@ -498,10 +498,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
               Khu Vực Chờ ({storageItems.length})
             </p>
-            <span className="text-[9px] text-cyan-600">Kéo item xuống đây để cất</span>
+            <span className="text-[9px] text-cyan-600">Kéo xuống để cất</span>
           </div>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-8 gap-1.5">
             {storageItems.map(item => {
               const isDragging = dragItem?.uid === item.uid && dragMode === 'storage-item';
               const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
@@ -509,7 +509,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               return (
                 <div
                   key={item.uid}
-                  className={`w-10 h-10 rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
+                  className={`aspect-square w-full rounded-md border-2 flex items-center justify-center cursor-grab active:cursor-grabbing ${colorClass} ${
                     isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
                   }`}
                   style={{ touchAction: 'none' }}

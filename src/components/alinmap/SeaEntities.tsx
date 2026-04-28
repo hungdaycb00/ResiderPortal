@@ -35,8 +35,13 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
                 top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                 left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
-            animate={{ y: [-2, 2, -2] }}
-            transition={{ duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, y: [-2, 2, -2] }}
+            transition={{ 
+                scale: { type: "spring", stiffness: 260, damping: 20 },
+                opacity: { duration: 0.5 },
+                y: { duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }
+            }}
             onClick={(e) => {
                 e.stopPropagation();
                 const currentDist = distMetersTransform.get();

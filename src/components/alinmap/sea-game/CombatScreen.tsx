@@ -81,6 +81,12 @@ const CombatScreen: React.FC = () => {
     
     const loop = (now: number) => {
       const dt = now - lastTime;
+
+      if (dt < 1000 / 30) { // Lock to 30 FPS
+        frameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
       lastTime = now;
 
       if (currentIdxRef.current >= combatLogRef.current.length) {
@@ -96,7 +102,7 @@ const CombatScreen: React.FC = () => {
       const entry = combatLogRef.current[currentIdxRef.current];
       const side = entry.attacker;
 
-      // Both sides gain mana
+      // Both sides gain mana (dt is ~33ms at 30fps)
       const gainA = (15 + myStats.eRegen) * (dt / 1000) * 10;
       const gainB = (15 + botStats.eRegen) * (dt / 1000) * 10;
       
