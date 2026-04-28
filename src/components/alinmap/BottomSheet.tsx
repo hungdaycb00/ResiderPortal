@@ -87,6 +87,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const [panelWidth, setPanelWidth] = React.useState(400);
     const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
 
+    const handleEnterWorld = React.useCallback(() => {
+        setIsSheetExpanded(false);
+    }, [setIsSheetExpanded]);
+
     return (
         <>
             <div
@@ -257,7 +261,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                     />
                                 )}
                                 {mainTab === 'backpack' && (
-                                    <BackpackView onEnterWorld={() => setIsSheetExpanded(false)} />
+                                    <BackpackView onEnterWorld={handleEnterWorld} />
                                 )}
                             </div>
                         )}

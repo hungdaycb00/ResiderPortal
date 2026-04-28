@@ -41,11 +41,17 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     setSelectedTier(state.worldTier);
   }, [state.worldTier]);
 
+  const memoizedSaveInventory = React.useCallback((newItems: SeaItem[]) => {
+    saveInventory(newItems);
+  }, [saveInventory]);
+
   useEffect(() => {
-    if (state.inventory.some(i => i.gridX < 0)) {
+    // Chỉ tự động chuyển sang tab inventory nếu đang có item "lơ lửng" (chưa xếp vào grid)
+    // và người dùng đang ở tab challenge (để họ thấy item mới nhặt)
+    if (tab === 'challenge' && state.inventory.some(i => i.gridX < 0)) {
       setTab('inventory');
     }
-  }, [state.inventory]);
+  }, [state.inventory, tab]);
 
   const totalStats = state.inventory.filter((item) => item.gridX >= 0).reduce(
     (acc, item) => ({
@@ -172,7 +178,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               <InventoryGrid
                 items={state.inventory}
                 bags={state.bags}
-                onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                onItemLayoutChange={memoizedSaveInventory}
                 cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>
