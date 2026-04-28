@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
 import { isSeaAtFortress, useSeaGame } from '../../../sea-game/SeaGameProvider';
-import { getBagBonuses, MAX_GRID_W, InventoryGrid } from '../../../sea-game/backpack';
-import type { SeaItem } from '../../../sea-game/backpack';
+import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../sea-game/backpack';
+import type { SeaItem, BagItem } from '../../../sea-game/backpack';
 
 const TIER_LABELS = [
   { tier: 0, cost: 0, label: '0' },
@@ -30,9 +30,10 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive } = useSeaGame();
+  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useSeaGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
+  const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
@@ -103,9 +104,44 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a1929] to-[#040b12] px-4 py-6">
         {tab === 'inventory' && (
           <div className="flex flex-col items-center gap-6">
-            <div className="flex w-full items-center justify-between gap-3 rounded-2xl border border-cyan-900/30 bg-[#08131d] px-4 py-3">
-              <div className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300/80">Slot balo</div>
-              <span className="rounded-md bg-cyan-900/50 px-2 py-0.5 text-xs font-bold text-cyan-300">{state.inventory.filter((item) => item.gridX >= 0).length} items</span>
+            <div 
+              className={`flex w-full items-center justify-center gap-3 rounded-2xl border-2 px-4 py-3 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-cyan-900/30 bg-[#08131d]'}`}
+              onPointerEnter={() => {
+                if (draggingItem && (BAG_DEFAULTS[draggingItem.id] || (draggingItem as any).type === 'bag')) {
+                  setIsHoveringBagSlot(true);
+                }
+              }}
+              onPointerLeave={() => setIsHoveringBagSlot(false)}
+              onPointerUp={() => {
+                if (isHoveringBagSlot && draggingItem) {
+                  const bagData = BAG_DEFAULTS[draggingItem.id];
+                  if (bagData) {
+                    const newBag: BagItem = {
+                      uid: draggingItem.uid,
+                      id: draggingItem.id,
+                      name: draggingItem.name,
+                      icon: draggingItem.icon,
+                      rarity: draggingItem.rarity,
+                      price: draggingItem.price,
+                      weight: draggingItem.weight,
+                      hpBonus: draggingItem.hpBonus,
+                      energyMax: draggingItem.energyMax,
+                      energyRegen: draggingItem.energyRegen,
+                      gridX: Math.floor((MAX_GRID_W - (bagData.width || 3)) / 2),
+                      gridY: Math.floor((6 - (bagData.height || 3)) / 2), // Assuming MAX_GRID_H is 6
+                      rotated: false,
+                      shape: bagData.shape || Array.from({ length: bagData.height || 3 }, () => Array(bagData.width || 3).fill(true)),
+                      width: bagData.width || 3,
+                      height: bagData.height || 3,
+                      type: 'bag'
+                    };
+                    acceptBagSwap(newBag);
+                    showNotification(`Đã trang bị ${newBag.name}`, 'success');
+                  }
+                }
+                setIsHoveringBagSlot(false);
+              }}
+            >
               <button
                 type="button"
                 title={formatBagTooltip(activeBag)}

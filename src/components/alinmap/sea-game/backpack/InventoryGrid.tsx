@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import type { SeaItem, BagItem } from './types';
+import { useSeaGame } from '../SeaGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 interface InventoryGridProps {
@@ -58,6 +59,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragItem,
   externalHoverCell,
 }) => {
+  const { setDraggingItem } = useSeaGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -152,6 +154,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     
     setDragMode(mode);
     setDragItem(item);
+    setDraggingItem(item);
     onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage');
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     setDragOffset({
@@ -280,6 +283,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
     setDragMode(null);
     setDragItem(null);
+    setDraggingItem(null);
     updateHoverCell(null);
     setIsHoveringStorage(false);
     setIsHoveringTrash(false);
@@ -559,8 +563,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       {/* Item Info Popup */}
       {popupInfo && (
         <div 
-          className="fixed z-[10000] rounded-xl border border-cyan-500/50 bg-[#08131d]/95 backdrop-blur-md p-3 shadow-2xl pointer-events-none transform -translate-y-1/2 ml-4"
-          style={{ left: popupInfo.x, top: popupInfo.y, minWidth: '160px' }}
+          className="fixed z-[10000] rounded-xl border border-cyan-500/50 bg-[#08131d]/95 backdrop-blur-md p-3 shadow-2xl pointer-events-none transform -translate-y-1/2"
+          style={{ 
+            left: popupInfo.x > window.innerWidth / 2 ? 'auto' : popupInfo.x + 20,
+            right: popupInfo.x > window.innerWidth / 2 ? window.innerWidth - popupInfo.x + 20 : 'auto',
+            top: popupInfo.y, 
+            minWidth: '160px',
+            maxWidth: '220px'
+          }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 pb-2 mb-2">
             <span className="text-2xl drop-shadow-md">{popupInfo.item.icon}</span>

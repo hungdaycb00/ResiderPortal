@@ -127,6 +127,8 @@ interface SeaGameContextType {
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => void;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
+  draggingItem: SeaItem | null;
+  setDraggingItem: (item: SeaItem | null) => void;
 }
 
 const defaultState: SeaGameState = {
@@ -212,6 +214,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [draggingItem, setDraggingItem] = useState<SeaItem | null>(null);
   const API = getBaseUrl();
 
   const loadState = useCallback(async () => {
@@ -433,9 +436,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   }, [deviceId, API]);
 
   const acceptBagSwap = useCallback(async (newBag: BagItem) => {
+    const oldBag = state.bags[0];
+    
     // Determine which items need to be pushed out
     const bagShape = newBag.shape || [];
-    const newItems = state.inventory.map(item => {
+    let newInventory = state.inventory.map(item => {
       if (item.gridX < 0) return item; // Already staging
       let inBounds = true;
       for (let r = 0; r < item.gridH; r++) {
@@ -455,10 +460,40 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       return item;
     });
 
+    // If there was an old bag, convert it back to a SeaItem and put it in staging
+    if (oldBag && !oldBag.isStarter) {
+      const oldBagAsItem: SeaItem = {
+        uid: oldBag.uid || Math.random().toString(36).substring(2, 10),
+        id: oldBag.id,
+        name: oldBag.name,
+        icon: oldBag.icon,
+        rarity: oldBag.rarity,
+        tier: 0, // Bags don't have tiers usually
+        price: oldBag.price || 0,
+        weight: oldBag.weight || 0,
+        hpBonus: oldBag.hpBonus || 0,
+        energyMax: oldBag.energyMax || 0,
+        energyRegen: oldBag.energyRegen || 0,
+        gridW: 1, // Bags take 1x1 in inventory
+        gridH: 1,
+        rotated: false,
+        gridX: -1,
+        gridY: -1,
+        // Carry over shape data if needed, though SeaItem doesn't store it by default
+        // we might want to store it in a JSON string or similar if we want to preserve it
+      };
+      // Remove the new bag from inventory if it was there
+      newInventory = newInventory.filter(i => i.uid !== newBag.uid);
+      newInventory.push(oldBagAsItem);
+    } else {
+      // Just remove the new bag from inventory
+      newInventory = newInventory.filter(i => i.uid !== newBag.uid);
+    }
+
     await saveBags([newBag]);
-    await saveInventory(newItems);
+    await saveInventory(newInventory);
     setPendingBagSwap(null);
-  }, [state.inventory, saveBags, saveInventory]);
+  }, [state.inventory, state.bags, saveBags, saveInventory]);
 
   const confirmDiscard = useCallback(async () => {
     // Delete floating items
@@ -623,7 +658,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
-    showNotification,
+    showNotification, draggingItem, setDraggingItem,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       setFortressStorageMode(mode);
       setIsFortressStorageOpen(true);

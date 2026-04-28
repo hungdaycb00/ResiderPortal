@@ -214,7 +214,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {(!playingGame && activeTab === 'home') ? null : (
+      {(!playingGame && (activeTab === 'home' || activeTab === 'discover')) ? null : (
         <MultiTaskButton 
           className="z-[9999]"
           user={user}

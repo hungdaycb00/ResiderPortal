@@ -161,6 +161,11 @@ export default function MultiTaskButton({ activeTab, setActiveTab, isInGame = fa
                 whileTap={{ scale: 0.9 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (item.id === 'home') {
+                    window.location.href = 'https://alin.city';
+                    setIsOpen(false);
+                    return;
+                  }
                   if (item.id === 'feedback' && onFeedback) {
                     onFeedback();
                   } else {
