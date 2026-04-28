@@ -3,6 +3,7 @@ import { getBaseUrl } from '../../../services/externalApi';
 import type { SeaItem, BagItem, GridExpander, PortalItem } from './backpack/types';
 import { MAX_GRID_W, MAX_GRID_H } from './backpack/constants';
 import { getBagBonuses, countBagCells, createStarterBag, repairBagData } from './backpack/utils';
+import { generateSolvableFruitGrid } from './minigameUtils';
 
 // Re-export for backward compatibility
 export type { SeaItem, BagItem, GridExpander, PortalItem };
