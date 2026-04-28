@@ -68,6 +68,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
   const [isHoveringTrash, setIsHoveringTrash] = useState(false);
   const [popupInfo, setPopupInfo] = useState<{ item: SeaItem; x: number; y: number } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<SeaItem | null>(null);
   
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
@@ -258,7 +259,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       });
     } else {
       if (isHoveringTrash) {
-        onItemLayoutChange?.(items.filter(i => i.uid !== dragItem.uid));
+        setItemToDelete(dragItem);
       } else if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         // Place on grid
         const newItems = items.map(i =>
@@ -474,21 +475,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               </motion.div>
             );
           })}
-
-          {/* Drag Ghost inside Grid bounds */}
-          {dragMode && dragItem && hoverCell && (
-            <div
-              className={`absolute z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
-              style={{
-                left: hoverCell.x * cellSize + 1,
-                top: hoverCell.y * cellSize + 1,
-                width: dragItem.gridW * cellSize - 2,
-                height: dragItem.gridH * cellSize - 2,
-              }}
-            >
-              <span className="text-xl">{dragItem.icon}</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -544,12 +530,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         </div>
       )}
       
-      {/* Free-floating Drag Ghost (follows cursor exactly when not snapped to grid) */}
-      {dragMode && dragItem && (!hoverCell || isHoveringStorage) && (
+      {/* Smooth Drag Ghost (always follows pointer) */}
+      {dragMode && dragItem && (
         <div
           className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
           style={{
-            // Convert relative to viewport coords since it's fixed
             left: (gridRef.current?.getBoundingClientRect().left || 0) + dragPos.x - dragOffset.x,
             top: (gridRef.current?.getBoundingClientRect().top || 0) + dragPos.y - dragOffset.y,
             width: dragItem.gridW * cellSize - 2,
@@ -589,6 +574,40 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Giá Bán</span><span className="font-bold text-amber-400">{popupInfo.item.price} vàng</span></div>}
             <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW}x{popupInfo.item.gridH}</span></div>
           </div>
+        </div>
+      )}
+      {/* Trash Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-xs bg-[#0d2137] border border-red-500/30 rounded-2xl p-6 shadow-2xl text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-red-900/20 border border-red-500/30 flex items-center justify-center mx-auto mb-4 text-3xl">
+              🗑️
+            </div>
+            <h3 className="text-lg font-black text-white mb-2">Vứt bỏ vật phẩm?</h3>
+            <p className="text-sm text-gray-400 mb-6">Bạn có chắc chắn muốn vứt bỏ <span className="text-red-400 font-bold">{itemToDelete.name}</span> không?</p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  onItemLayoutChange?.(items.filter(i => i.uid !== itemToDelete.uid));
+                  setItemToDelete(null);
+                }}
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all active:scale-95"
+              >
+                Vứt bỏ
+              </button>
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 font-bold rounded-xl transition-all"
+              >
+                Giữ lại
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
