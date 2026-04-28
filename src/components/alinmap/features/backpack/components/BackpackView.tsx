@@ -38,8 +38,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const bagStats = getBagBonuses(activeBag);
 
   useEffect(() => {
-    setSelectedTier(state.worldTier);
-  }, [state.worldTier]);
+    // Auto-select the highest tier user can afford
+    const affordable = TIER_LABELS.filter(t => t.cost <= state.seaGold);
+    const bestTier = affordable.length > 0 ? affordable[affordable.length - 1].tier : 0;
+    setSelectedTier(bestTier);
+  }, [state.seaGold, state.worldTier]);
 
   const memoizedSaveInventory = React.useCallback((newItems: SeaItem[]) => {
     saveInventory(newItems);

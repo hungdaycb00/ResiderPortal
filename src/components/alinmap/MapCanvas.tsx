@@ -119,6 +119,10 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             moved: false,
             suppressClick: false,
         };
+        // Detach camera from boat so user can pan freely while boat moves
+        if (isSeaGameMode) {
+            seaBoat.stopPanFollow?.();
+        }
 
         try {
             e.currentTarget.setPointerCapture(e.pointerId);

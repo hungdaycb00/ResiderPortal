@@ -9,6 +9,7 @@ const CombatScreen: React.FC = () => {
   const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useSeaGame();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
   const [showFleeConfirm, setShowFleeConfirm] = useState(false);
+  const [selectedResultItem, setSelectedResultItem] = useState<SeaItem | null>(null);
   const [manaA, setManaA] = useState(0);
   const [manaB, setManaB] = useState(0);
   const [hpA, setHpA] = useState(0);
@@ -442,9 +443,27 @@ const CombatScreen: React.FC = () => {
                   <p className="text-xs font-bold text-amber-300 uppercase tracking-widest mb-3">Vật phẩm thu được</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {combatResult.loot.map(item => (
-                      <div key={item.uid} className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-2xl" title={item.name}>{item.icon}</div>
+                      <div
+                        key={item.uid}
+                        onClick={() => setSelectedResultItem(selectedResultItem?.uid === item.uid ? null : item)}
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition-all active:scale-90 ${selectedResultItem?.uid === item.uid ? 'bg-amber-500/30 ring-2 ring-amber-400' : 'bg-white/5 hover:bg-white/10'}`}
+                      >
+                        {item.icon}
+                      </div>
                     ))}
                   </div>
+                  {selectedResultItem && (
+                    <div className="mt-3 p-3 bg-black/40 rounded-xl border border-white/10 text-left">
+                      <p className="text-sm font-black text-white">{selectedResultItem.name}</p>
+                      <p className="text-[10px] text-gray-400 capitalize">{selectedResultItem.rarity} • {selectedResultItem.gridW}x{selectedResultItem.gridH}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px]">
+                        {selectedResultItem.weight > 0 && <span className="text-orange-300">⚔ {selectedResultItem.weight} DMG</span>}
+                        {selectedResultItem.hpBonus > 0 && <span className="text-red-300">❤ +{selectedResultItem.hpBonus} HP</span>}
+                        {selectedResultItem.energyMax > 0 && <span className="text-blue-300">⚡ +{selectedResultItem.energyMax} EN</span>}
+                        {selectedResultItem.energyRegen > 0 && <span className="text-green-300">✦ +{selectedResultItem.energyRegen} Regen</span>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : combatResult.result === 'lose' && combatResult.droppedItems?.length ? (
                 <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">

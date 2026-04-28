@@ -30,6 +30,9 @@ export function useSeaBoat({
     const boatMoveYRef = useRef<any>(null);
     const lastBlockTimeRef = useRef<number>(0);
     const consecutiveBlockCountRef = useRef<number>(0);
+    const panMoveXRef = useRef<any>(null);
+    const panMoveYRef = useRef<any>(null);
+    const userDraggingRef = useRef(false);
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
@@ -219,8 +222,8 @@ export function useSeaBoat({
 
         const newPanX = -newBoatPxX;
         const newPanY = -newBoatPxY;
-        animate(panX, newPanX, { duration, ease: "easeInOut" });
-        animate(panY, newPanY, {
+        panMoveXRef.current = animate(panX, newPanX, { duration, ease: "easeInOut" });
+        panMoveYRef.current = animate(panY, newPanY, {
             duration,
             ease: "easeInOut",
             onComplete: () => {
@@ -228,16 +231,27 @@ export function useSeaBoat({
                 setBoatTargetPin(null);
                 boatMoveXRef.current = null;
                 boatMoveYRef.current = null;
+                panMoveXRef.current = null;
+                panMoveYRef.current = null;
             }
         });
         }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
 
     const centerOnBoat = useCallback(() => {
+        if (panMoveXRef.current) panMoveXRef.current.stop();
+        if (panMoveYRef.current) panMoveYRef.current.stop();
+        userDraggingRef.current = false;
         const nextPanX = -(boatOffsetX?.get?.() ?? 0);
         const nextPanY = -(boatOffsetY?.get?.() ?? 0);
         animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
         animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
     }, [boatOffsetX, boatOffsetY, panX, panY]);
+
+    const stopPanFollow = useCallback(() => {
+        userDraggingRef.current = true;
+        if (panMoveXRef.current) { panMoveXRef.current.stop(); panMoveXRef.current = null; }
+        if (panMoveYRef.current) { panMoveYRef.current.stop(); panMoveYRef.current = null; }
+    }, []);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
         if (!isSeaGameMode || !myObfPos) return;
@@ -289,11 +303,11 @@ export function useSeaBoat({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, centerOnBoat
+        handleMapDoubleClick, executeMoveToExact, centerOnBoat, stopPanFollow
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, centerOnBoat
+        handleMapDoubleClick, executeMoveToExact, centerOnBoat, stopPanFollow
     ]);
 }
