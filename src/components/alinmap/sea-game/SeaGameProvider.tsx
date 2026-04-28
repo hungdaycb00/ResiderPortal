@@ -766,7 +766,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     }));
 
     try {
-      const res = await fetch(`${API}/api/sea/world-tier`, {
+      const res = await fetch(`${API}/api/sea/tier`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, tier }),
       });

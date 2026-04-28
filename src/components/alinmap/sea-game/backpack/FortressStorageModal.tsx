@@ -153,7 +153,7 @@ export default function FortressStorageModal() {
         <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
           {/* Scroll Indicator for Mobile */}
           <div className="absolute right-1.5 top-4 bottom-4 w-1 bg-cyan-900/20 rounded-full pointer-events-none">
-            <motion.div 
+            <motion.div
               className="w-full bg-cyan-500/40 rounded-full"
               style={{ height: '20%' }}
               animate={{ y: [0, 20, 0] }}
@@ -218,9 +218,6 @@ export default function FortressStorageModal() {
               {isPortalMode ? <Sparkles className="h-5 w-5" /> : <Database className="h-5 w-5" />}
               {isPortalMode ? 'Cong Portal' : 'Kho Thanh Tri'}
             </h2>
-            <p className="mt-1 text-[11px] text-cyan-100/65">
-              {isPortalMode ? 'Gui mon do vao kho tu xa.' : 'Nhanh dup mon do de chuyen qua lai giua thuyen va kho.'}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {isPortalMode && (
