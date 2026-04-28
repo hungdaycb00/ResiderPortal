@@ -360,9 +360,12 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const saveInventory = useCallback(async (inventory: SeaItem[]) => {
     if (!deviceId) return;
     
-    // Optimistic Update
-    const previousInventory = state.inventory;
-    setState(prev => ({ ...prev, inventory }));
+    // Optimistic Update using ref-like variable from prev state
+    let previousInventory: SeaItem[] = [];
+    setState(prev => {
+      previousInventory = prev.inventory;
+      return { ...prev, inventory };
+    });
 
     try {
       const res = await fetch(`${API}/api/sea/inventory`, {
@@ -372,48 +375,51 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       if (!res.ok) throw new Error('Save failed');
     } catch (err) { 
       console.error('[SeaGame] saveInventory error:', err);
-      // Rollback
       setState(prev => ({ ...prev, inventory: previousInventory }));
     }
-  }, [deviceId, API, state.inventory]);
+  }, [deviceId, API]);
 
   const saveStorage = useCallback(async (storage: SeaItem[]) => {
     if (!deviceId) return;
-
-    // Optimistic Update
-    const previousStorage = state.storage;
-    setState(prev => ({ ...prev, storage }));
+    
+    let previousStorage: SeaItem[] = [];
+    setState(prev => {
+      previousStorage = prev.storage;
+      return { ...prev, storage };
+    });
 
     try {
-      const res = await fetch(`${API}/api/sea/storage_layout`, {
+      const res = await fetch(`${API}/api/sea/storage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, storage }),
       });
       if (!res.ok) throw new Error('Save failed');
     } catch (err) { 
       console.error('[SeaGame] saveStorage error:', err);
-      // Rollback
       setState(prev => ({ ...prev, storage: previousStorage }));
     }
-  }, [deviceId, API, state.storage]);
+  }, [deviceId, API]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;
     
-    const previousBags = state.bags;
-    setState(prev => ({ ...prev, bags }));
+    let previousBags: BagItem[] = [];
+    setState(prev => {
+      previousBags = prev.bags;
+      return { ...prev, bags };
+    });
 
     try {
       const res = await fetch(`${API}/api/sea/bags`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, bags }),
       });
-      if (!res.ok) throw new Error('Save bags failed');
+      if (!res.ok) throw new Error('Save failed');
     } catch (err) {
       console.error('[SeaGame] saveBags error:', err);
       setState(prev => ({ ...prev, bags: previousBags }));
     }
-  }, [deviceId, API, state.bags]);
+  }, [deviceId, API]);
 
   const pickupItem = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
@@ -452,7 +458,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       // Có thể cần logic phục hồi vật phẩm nếu cần thiết, nhưng thường hiếm khi lỗi
       return false;
     }
-  }, [deviceId, API, state.inventory, saveInventory]);
+  }, [deviceId, API, saveInventory]);
 
   const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
@@ -557,11 +563,16 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   }, [state.inventory, state.bags, saveBags, saveInventory]);
 
   const confirmDiscard = useCallback(async () => {
-    // Delete floating items
-    const validItems = state.inventory.filter(i => i.gridX >= 0);
-    await saveInventory(validItems);
+    // Delete floating items using functional update to get current inventory
+    let inventoryToSave: SeaItem[] = [];
+    setState(prev => {
+      inventoryToSave = prev.inventory.filter(i => i.gridX >= 0);
+      return { ...prev, inventory: inventoryToSave };
+    });
+    
+    await saveInventory(inventoryToSave);
     setShowDiscardModal(false);
-  }, [state.inventory, saveInventory]);
+  }, [saveInventory]);
 
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: SeaItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
     if (!deviceId) throw new Error('No device');
