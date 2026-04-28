@@ -14,7 +14,7 @@ interface UseSeaBoatParams {
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const PICKUP_RADIUS_DEG = 0.0011; // forgiving pickup radius
+const PICKUP_RADIUS_DEG = 0.00085; // slightly smaller than server 100m (0.0009) to avoid 400 errors
 const PORTAL_RADIUS_DEG = 0.0024;
 const TAP_MOVE_TOLERANCE_PX = 30;
 
@@ -166,6 +166,7 @@ export function useSeaBoat({
                     seaGameCtx.setEncounter(null);
                     seaGameCtx.setShowCurseModal(false);
                     seaGameCtx.setCombatResult(null);
+                    seaGameCtx.setIsChallengeActive(true); // Ensure challenge is active if user is trying to move
                     consecutiveBlockCountRef.current = 0;
                     showNotification?.('Đã tự động sửa lỗi kẹt di chuyển.', 'info');
                 }

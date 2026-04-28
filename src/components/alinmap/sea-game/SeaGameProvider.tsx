@@ -453,9 +453,12 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         return true;
       }
       return false;
-    } catch (err) {
-      console.error('[SeaGame] pickupItem error:', err);
-      // Có thể cần logic phục hồi vật phẩm nếu cần thiết, nhưng thường hiếm khi lỗi
+    } catch (err: any) {
+      if (err.message?.includes('400') || err.message?.includes('Too far')) {
+        console.warn('[Sea Pickup] Too far, skipping');
+      } else {
+        console.error('[Sea Pickup] error:', err);
+      }
       return false;
     }
   }, [deviceId, API, saveInventory]);

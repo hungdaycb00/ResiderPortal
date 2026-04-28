@@ -6,8 +6,9 @@ import type { SeaItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
-  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useSeaGame();
+  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice, showNotification } = useSeaGame();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
+  const [showFleeConfirm, setShowFleeConfirm] = useState(false);
   const [manaA, setManaA] = useState(0);
   const [manaB, setManaB] = useState(0);
   const [hpA, setHpA] = useState(0);
@@ -80,6 +81,11 @@ const CombatScreen: React.FC = () => {
     } catch {
       setPhase('result');
     }
+  };
+
+  const skipCombat = () => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    setPhase('result');
   };
 
   const startCombatLoop = () => {
@@ -167,6 +173,11 @@ const CombatScreen: React.FC = () => {
   };
 
   const handleFlee = async () => {
+    if (!showFleeConfirm) {
+      setShowFleeConfirm(true);
+      return;
+    }
+    setShowFleeConfirm(false);
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     await curseChoice('flee');
     setEncounter(null);
@@ -254,9 +265,27 @@ const CombatScreen: React.FC = () => {
         </AnimatePresence>
 
         {phase === 'ready' && (
-          <div className="absolute top-3 right-3">
-            <button onClick={handleFlee} className="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors">
+          <div className="absolute top-3 right-3 z-30">
+            <button 
+              onClick={() => setShowFleeConfirm(true)} 
+              className="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg"
+            >
               Bỏ Trốn
+            </button>
+          </div>
+        )}
+
+        {phase === 'fighting' && (
+          <div className="absolute right-[20%] top-[20%] -translate-x-1/2 z-30">
+            <button
+              onClick={skipCombat}
+              className="group flex items-center gap-2 px-3 py-1.5 bg-black/60 hover:bg-amber-600/80 border border-amber-500/30 rounded-xl transition-all active:scale-95 shadow-xl"
+            >
+              <span className="text-[10px] font-black text-amber-400 group-hover:text-white uppercase tracking-tighter">Kết thúc nhanh</span>
+              <div className="flex gap-0.5">
+                <div className="w-1 h-3 bg-amber-500 rounded-full animate-pulse" />
+                <div className="w-1 h-3 bg-amber-500 rounded-full animate-pulse [animation-delay:0.2s]" />
+              </div>
             </button>
           </div>
         )}
@@ -330,6 +359,46 @@ const CombatScreen: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Flee Confirmation Overlay */}
+      <AnimatePresence>
+        {showFleeConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#0d2137] border border-red-500/30 p-8 rounded-[32px] text-center max-w-xs mx-4 shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/40">
+                <X className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">Bỏ trốn?</h3>
+              <p className="text-sm text-gray-300 mb-6">Bạn có chắc muốn bỏ trốn? <span className="text-red-400 font-bold">50% tỉ lệ rơi mất vật phẩm</span> trong balo xuống biển!</p>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={handleFlee}
+                  className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl transition-all active:scale-95"
+                >
+                  ĐỒNG Ý BỎ TRỐN
+                </button>
+                <button 
+                  onClick={() => setShowFleeConfirm(false)}
+                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-2xl transition-all"
+                >
+                  Ở LẠI CHIẾN ĐẤU
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Result overlay */}
       <AnimatePresence>
