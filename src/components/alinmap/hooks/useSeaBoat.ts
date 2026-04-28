@@ -286,10 +286,15 @@ export function useSeaBoat({
         pointerDownRef.current = null;
     };
 
-    return {
+    return useMemo(() => ({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
         handleMapDoubleClick, executeMoveToExact, centerOnBoat
-    };
+    }), [
+        boatOffsetX, boatOffsetY, curseVisual,
+        boatTargetPin,
+        handlePointerDown, handlePointerUp, handlePointerCancel,
+        handleMapDoubleClick, executeMoveToExact, centerOnBoat
+    ]);
 }

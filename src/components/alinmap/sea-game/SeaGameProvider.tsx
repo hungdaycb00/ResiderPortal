@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { generateSolvableFruitGrid } from './minigameUtils';
 import { getBaseUrl } from '../../../services/externalApi';
 import type { SeaItem, BagItem, GridExpander, PortalItem } from './backpack/types';
@@ -801,7 +801,12 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   // Auto-load state when deviceId is available
   useEffect(() => { if (deviceId) loadState(); }, [deviceId, loadState]);
 
-  const value: SeaGameContextType = {
+  const openFortressStorage = useCallback((mode: StorageAccessMode = 'fortress') => {
+    setFortressStorageMode(mode);
+    setIsFortressStorageOpen(true);
+  }, []);
+
+  const value: SeaGameContextType = useMemo(() => ({
     state, worldItems,
     isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode,
     pickupRewardItem, setPickupRewardItem,
@@ -823,11 +828,16 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
     showNotification, draggingItem, setDraggingItem,
-    openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
-      setFortressStorageMode(mode);
-      setIsFortressStorageOpen(true);
-    },
-  };
+    openFortressStorage,
+  }), [
+    state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
+    acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isSeaGameMode, openBackpack,
+    setOpenBackpackHandler, isItemDragging, isChallengeActive, preGeneratedMinigame, globalSettings,
+    isMoving, showDiscardModal, confirmDiscard, initGame, loadState, moveBoat, pickupItem,
+    inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
+    curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,
+    showNotification, draggingItem, openFortressStorage
+  ]);
 
   return <SeaGameContext.Provider value={value}>{children}</SeaGameContext.Provider>;
 };

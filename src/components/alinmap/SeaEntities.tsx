@@ -157,7 +157,15 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                     nextVisible.add(item.spawnId);
                 }
             }
-            setVisibleItemIds(nextVisible);
+
+            // Optimization: Only update if the set of IDs actually changed
+            setVisibleItemIds(prev => {
+                if (prev.size !== nextVisible.size) return nextVisible;
+                for (const id of nextVisible) {
+                    if (!prev.has(id)) return nextVisible;
+                }
+                return prev;
+            });
         };
 
         const timer = setInterval(updateVisibility, 500);
