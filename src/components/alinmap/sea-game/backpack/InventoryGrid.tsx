@@ -40,7 +40,7 @@ const BAG_BG: Record<string, string> = {
 const CLICK_MOVE_TOLERANCE = 8;
 
 const formatItemTooltip = (item: SeaItem) =>
-  `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vang | ${item.gridW}x${item.gridH}`;
+  `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vang | ${item.gridW || 1}x${item.gridH || 1}`;
 
 type DragMode = 'item' | 'storage-item' | null;
 
@@ -111,8 +111,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
     for (const item of items) {
       if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
-      const w = item.gridW;
-      const h = item.gridH;
+      const w = item.gridW || 1;
+      const h = item.gridH || 1;
       for (let r = item.gridY; r < item.gridY + h && r < gridH; r++) {
         for (let c = item.gridX; c < item.gridX + w && c < gridW; c++) {
           grid[r][c] = item.uid;
@@ -126,8 +126,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const canPlaceItem = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
     const bagOcc = buildBagOccupancy();
     const itemOcc = buildItemOccupancy(excludeUid);
-    const w = item.gridW;
-    const h = item.gridH;
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
     if (x < 0 || y < 0 || x + w > gridW || y + h > gridH) return false;
     for (let r = y; r < y + h; r++) {
       for (let c = x; c < x + w; c++) {
@@ -322,8 +322,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   
   const highlightCells: { x: number; y: number; valid: boolean }[] = [];
   if (activeHoverCell && activeDragItem) {
-    const w = activeDragItem.gridW;
-    const h = activeDragItem.gridH;
+    const w = activeDragItem.gridW || 1;
+    const h = activeDragItem.gridH || 1;
     const valid = canPlaceItem(activeDragItem, activeHoverCell.x, activeHoverCell.y, activeDragItem.uid);
     for (let r = activeHoverCell.y; r < activeHoverCell.y + h; r++) {
       for (let c = activeHoverCell.x; c < activeHoverCell.x + w; c++) {
@@ -449,8 +449,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
           {/* Grid Items */}
           {gridItems.map(item => {
-            const w = item.gridW;
-            const h = item.gridH;
+            const w = item.gridW || 1;
+            const h = item.gridH || 1;
             const isDragging = activeDragItem?.uid === item.uid && (dragMode === 'item' || externalDragItem);
             const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
 
@@ -539,8 +539,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           style={{
             left: (gridRef.current?.getBoundingClientRect().left || 0) + dragPos.x - dragOffset.x,
             top: (gridRef.current?.getBoundingClientRect().top || 0) + dragPos.y - dragOffset.y,
-            width: dragItem.gridW * cellSize - 2,
-            height: dragItem.gridH * cellSize - 2,
+            width: (dragItem.gridW || 1) * cellSize - 2,
+            height: (dragItem.gridH || 1) * cellSize - 2,
           }}
         >
           <span className="text-xl">{dragItem.icon}</span>
@@ -574,7 +574,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             {popupInfo.item.energyMax > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Năng Lượng</span><span className="font-bold text-blue-400">+{popupInfo.item.energyMax}</span></div>}
             {popupInfo.item.energyRegen > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Hồi Năng Lượng</span><span className="font-bold text-cyan-400">+{popupInfo.item.energyRegen}</span></div>}
             {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Giá Bán</span><span className="font-bold text-amber-400">{popupInfo.item.price} vàng</span></div>}
-            <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW}x{popupInfo.item.gridH}</span></div>
+            <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW || 1}x{popupInfo.item.gridH || 1}</span></div>
           </div>
         </div>
       )}

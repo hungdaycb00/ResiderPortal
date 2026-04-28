@@ -123,8 +123,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               onPointerLeave={() => setIsHoveringBagSlot(false)}
               onPointerUp={() => {
                 if (isHoveringBagSlot && draggingItem) {
+                  const itemAsBag = draggingItem as any;
                   const bagData = BAG_DEFAULTS[draggingItem.id];
-                  if (bagData) {
+                  
+                  if (itemAsBag.type === 'bag' || bagData) {
+                    const width = itemAsBag.width || bagData?.width || 3;
+                    const height = itemAsBag.height || bagData?.height || 3;
                     const newBag: BagItem = {
                       uid: draggingItem.uid,
                       id: draggingItem.id,
@@ -136,12 +140,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
                       hpBonus: draggingItem.hpBonus,
                       energyMax: draggingItem.energyMax,
                       energyRegen: draggingItem.energyRegen,
-                      gridX: Math.floor((MAX_GRID_W - (bagData.width || 3)) / 2),
-                      gridY: Math.floor((6 - (bagData.height || 3)) / 2), // Assuming MAX_GRID_H is 6
+                      gridX: Math.floor((MAX_GRID_W - width) / 2),
+                      gridY: Math.floor((6 - height) / 2),
                       rotated: false,
-                      shape: bagData.shape || Array.from({ length: bagData.height || 3 }, () => Array(bagData.width || 3).fill(true)),
-                      width: bagData.width || 3,
-                      height: bagData.height || 3,
+                      shape: itemAsBag.shape || bagData?.shape || Array.from({ length: height }, () => Array(width).fill(true)),
+                      width: width,
+                      height: height,
                       type: 'bag'
                     };
                     acceptBagSwap(newBag);
@@ -182,6 +186,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
                 items={state.inventory}
                 bags={state.bags}
                 onItemLayoutChange={memoizedSaveInventory}
+                onItemDoubleClick={(item) => {
+                  if ((item as any).type === 'bag') {
+                    acceptBagSwap(item as any);
+                    showNotification(`Đã đổi sang ${item.name}`, 'success');
+                  }
+                }}
                 cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
               />
             </div>

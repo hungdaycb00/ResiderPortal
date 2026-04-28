@@ -443,7 +443,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
             inventoryHeight: data.newHeight,
           }));
         } else if (data.type === 'bag' || data.type === 'item') {
-          const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag' } : data.item;
+          const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag', gridW: 2, gridH: 2 } : data.item;
           const floatingItem = { ...itemData, gridX: -1, gridY: -1 };
           // Use functional setState to always get latest inventory (fix stale closure)
           setState(prev => {
@@ -551,14 +551,16 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         hpBonus: oldBag.hpBonus || 0,
         energyMax: oldBag.energyMax || 0,
         energyRegen: oldBag.energyRegen || 0,
-        gridW: 1, // Bags take 1x1 in inventory
-        gridH: 1,
+        gridW: 2, // Bags take 2x2 in inventory
+        gridH: 2,
         rotated: false,
         gridX: -1,
         gridY: -1,
-        // Carry over shape data if needed, though SeaItem doesn't store it by default
-        // we might want to store it in a JSON string or similar if we want to preserve it
-      };
+        type: 'bag',
+        width: oldBag.width,
+        height: oldBag.height,
+        shape: oldBag.shape,
+      } as any;
       // Remove the new bag from inventory if it was there
       newInventory = newInventory.filter(i => i.uid !== newBag.uid);
       newInventory.push(oldBagAsItem);
