@@ -12,6 +12,7 @@ const CombatScreen: React.FC = () => {
   const [manaB, setManaB] = useState(0);
   const [hpA, setHpA] = useState(0);
   const [hpB, setHpB] = useState(0);
+  const [initialPlayerInventory, setInitialPlayerInventory] = useState<SeaItem[]>([]);
   const [flyingItem, setFlyingItem] = useState<{ item: SeaItem; from: 'A' | 'B'; damage: number } | null>(null);
   const combatLogRef = useRef<any[]>([]);
   const currentIdxRef = useRef(0);
@@ -23,6 +24,12 @@ const CombatScreen: React.FC = () => {
   const hpBRef = useRef(0);
 
   useEffect(() => {
+    if (encounter && initialPlayerInventory.length === 0) {
+      setInitialPlayerInventory(state.inventory);
+    }
+  }, [encounter, state.inventory]);
+
+  useEffect(() => {
     return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
@@ -30,7 +37,7 @@ const CombatScreen: React.FC = () => {
 
   if (!encounter) return null;
 
-  const myStats = state.inventory.filter(i => i.gridX >= 0).reduce(
+  const myStats = (initialPlayerInventory.length > 0 ? initialPlayerInventory : state.inventory).filter(i => i.gridX >= 0).reduce(
     (a, i) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight, eMax: a.eMax + i.energyMax, eRegen: a.eRegen + i.energyRegen }),
     { hp: 0, weight: 0, eMax: 0, eRegen: 0 }
   );
@@ -152,6 +159,7 @@ const CombatScreen: React.FC = () => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     setEncounter(null);
     setPhase('ready');
+    setInitialPlayerInventory([]);
     if (!(combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0)) {
         setCombatResult(null);
     }
@@ -163,6 +171,7 @@ const CombatScreen: React.FC = () => {
     await curseChoice('flee');
     setEncounter(null);
     setPhase('ready');
+    setInitialPlayerInventory([]);
     setCombatResult(null);
   };
 
@@ -290,7 +299,7 @@ const CombatScreen: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0">
-            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
+            <CombatInventoryGrid items={initialPlayerInventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
           </div>
         </div>
 

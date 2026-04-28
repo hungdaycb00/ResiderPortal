@@ -687,8 +687,11 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       }
       await loadState();
     } catch (err: any) { 
-      console.error('[Sea Store]', err);
-      showNotification(err.message || 'Lỗi kết nối máy chủ', 'error');
+      let errorMsg = err.message || 'Lỗi kết nối máy chủ';
+      if (errorMsg.includes('Not enough gold')) {
+        errorMsg = 'Bạn không đủ Vàng để thực hiện thao tác này thông qua Cổng dịch chuyển.';
+      }
+      showNotification(errorMsg, 'error');
       // Rollback
       setState(prev => ({ ...prev, inventory: prevInventory, storage: prevStorage }));
     }
@@ -778,8 +781,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       } else {
         throw new Error('Tier upgrade failed');
       }
-    } catch (err) {
-      console.error('[SeaGame] setWorldTier error:', err);
+    } catch (err: any) {
+      showNotification(err.message || 'Nâng cấp vùng biển thất bại', 'error');
       // Rollback
       setState(prev => ({ ...prev, worldTier: previousTier, seaGold: previousGold }));
     }
