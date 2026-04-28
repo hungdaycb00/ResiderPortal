@@ -171,7 +171,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
         const timer = setInterval(updateVisibility, 500);
         updateVisibility();
         return () => clearInterval(timer);
-    }, [seaGameCtx?.worldItems, myObfPos.lat, myObfPos.lng]);
+    }, [seaGameCtx?.worldItems, myObfPos?.lat, myObfPos?.lng]);
 
     const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
     const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));

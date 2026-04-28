@@ -389,7 +389,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     });
 
     try {
-      const res = await fetch(`${API}/api/sea/storage`, {
+      const res = await fetch(`${API}/api/sea/storage_layout`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, storage }),
       });
@@ -607,7 +607,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       return result;
     }
     throw new Error(data.error || 'Combat failed');
-  }, [deviceId, API, loadState]);
+  }, [deviceId, API, loadState, state.inventory, state.worldTier]);
 
   const curseChoice = useCallback(async (choice: 'flee' | 'challenge') => {
     if (!deviceId) return;
@@ -709,7 +709,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     setIsChallengeActive(false);
 
     try {
-      const res = await fetch(`${API}/api/sea/return-to-fortress`, {
+      const res = await fetch(`${API}/api/sea/return-fortress`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId }),
       });
@@ -766,7 +766,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     }));
 
     try {
-      const res = await fetch(`${API}/api/sea/tier`, {
+      const res = await fetch(`${API}/api/sea/set-tier`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, tier }),
       });

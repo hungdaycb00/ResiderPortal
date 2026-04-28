@@ -55,7 +55,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Sea Game ---
     const seaGame = useSeaGame();
-    const { isSeaGameMode, state: seaState, pickupRewardItem, setPickupRewardItem } = seaGame;
+    const { isSeaGameMode, state: seaState, pickupRewardItem, setPickupRewardItem, setIsSeaGameMode, setOpenBackpackHandler, saveInventory } = seaGame;
 
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
@@ -161,21 +161,21 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
 
     const handleOpenBackpackFromPickup = useCallback(() => {
-        seaGame.setIsSeaGameMode(true);
+        setIsSeaGameMode(true);
         nav.setMainTab('backpack');
         nav.setIsSheetExpanded(true);
         setPickupRewardItem(null);
-    }, [nav, seaGame]);
+    }, [nav.setMainTab, nav.setIsSheetExpanded, setIsSeaGameMode, setPickupRewardItem]);
 
     useEffect(() => {
-        seaGame.setOpenBackpackHandler(() => handleOpenBackpackFromPickup);
-        return () => seaGame.setOpenBackpackHandler(null);
-    }, [handleOpenBackpackFromPickup, seaGame]);
+        setOpenBackpackHandler(() => handleOpenBackpackFromPickup);
+        return () => setOpenBackpackHandler(null);
+    }, [handleOpenBackpackFromPickup, setOpenBackpackHandler]);
 
     const handleDiscardPickupItem = async () => {
         if (!pickupRewardItem) return;
-        const newInventory = seaGame.state.inventory.filter((item) => item.uid !== pickupRewardItem.uid);
-        await seaGame.saveInventory(newInventory);
+        const newInventory = seaState.inventory.filter((item) => item.uid !== pickupRewardItem.uid);
+        await saveInventory(newInventory);
         setPickupRewardItem(null);
     };
 
