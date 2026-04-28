@@ -153,6 +153,48 @@ const findFruitPath = (grid: FruitCell[][], start: FruitPoint, end: FruitPoint):
   return null;
 };
 
+const findAnyMove = (grid: FruitCell[][]) => {
+  const fruitPositions = new Map<string, FruitPoint[]>();
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[0].length; c++) {
+      const f = grid[r][c].f;
+      if (f) {
+        if (!fruitPositions.has(f)) fruitPositions.set(f, []);
+        fruitPositions.get(f)!.push({ r, c });
+      }
+    }
+  }
+
+  for (const [fruit, positions] of fruitPositions.entries()) {
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        if (findFruitPath(grid, positions[i], positions[j])) return true;
+      }
+    }
+  }
+  return false;
+};
+
+const shuffleFruitGrid = (grid: FruitCell[][]) => {
+  const fruits: string[] = [];
+  for (let r = 1; r < grid.length - 1; r++) {
+    for (let c = 1; c < grid[0].length - 1; c++) {
+      if (grid[r][c].f) fruits.push(grid[r][c].f!);
+    }
+  }
+  fruits.sort(() => Math.random() - 0.5);
+  const nextGrid = cloneFruitGrid(grid);
+  let idx = 0;
+  for (let r = 1; r < grid.length - 1; r++) {
+    for (let c = 1; c < grid[0].length - 1; c++) {
+      if (grid[r][c].f) {
+        nextGrid[r][c].f = fruits[idx++];
+      }
+    }
+  }
+  return nextGrid;
+};
+
 const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
   let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
   let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
@@ -170,6 +212,7 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
   const [timeLeft, setTimeLeft] = useState(config.time);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
   const [isShaking, setIsShaking] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const checkWin = useCallback((nextGrid: FruitCell[][]) => {
@@ -191,7 +234,7 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
     }
     fruitPool.sort(() => Math.random() - 0.5);
 
-    const nextGrid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
+    let nextGrid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
       Array.from({ length: boardCols }, (_, c) => ({
         f: (r === 0 || c === 0 || r === boardRows - 1 || c === boardCols - 1)
           ? null
@@ -199,6 +242,13 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
         id: `${r}-${c}`,
       }))
     );
+
+    // Đảm bảo màn chơi đầu tiên có ít nhất 1 nước đi
+    let attempts = 0;
+    while (!findAnyMove(nextGrid) && attempts < 10) {
+      nextGrid = shuffleFruitGrid(nextGrid);
+      attempts++;
+    }
 
     setGrid(nextGrid);
     setSelection(null);
@@ -269,12 +319,24 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
       const nextGrid = cloneFruitGrid(grid);
       nextGrid[selection.r][selection.c].f = null;
       nextGrid[r][c].f = null;
-      setGrid(nextGrid);
+      
       setSelection(null);
       setActivePath([]);
       playSound('correct');
       triggerHaptic('medium');
-      checkWin(nextGrid);
+
+      // Kiểm tra xem còn nước đi không, nếu không còn mà vẫn còn quả thì shuffle
+      const hasAnyFruit = nextGrid.slice(1, -1).some(row => row.slice(1, -1).some(cell => cell.f));
+      if (hasAnyFruit && !findAnyMove(nextGrid)) {
+        setIsShuffling(true);
+        setTimeout(() => {
+          setGrid(shuffleFruitGrid(nextGrid));
+          setIsShuffling(false);
+        }, 600);
+      } else {
+        setGrid(nextGrid);
+        checkWin(nextGrid);
+      }
     }, 280);
   };
 

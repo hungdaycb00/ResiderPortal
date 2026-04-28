@@ -404,25 +404,43 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const saveInventory = useCallback(async (inventory: SeaItem[]) => {
     if (!deviceId) return;
+    
+    // Optimistic Update
+    const previousInventory = state.inventory;
+    setState(prev => ({ ...prev, inventory }));
+
     try {
-      await fetch(`${API}/api/sea/inventory`, {
+      const res = await fetch(`${API}/api/sea/inventory`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, inventory }),
       });
-      setState(prev => ({ ...prev, inventory }));
-    } catch (err) { console.error('[SeaGame] saveInventory error:', err); }
-  }, [deviceId, API]);
+      if (!res.ok) throw new Error('Save failed');
+    } catch (err) { 
+      console.error('[SeaGame] saveInventory error:', err);
+      // Rollback
+      setState(prev => ({ ...prev, inventory: previousInventory }));
+    }
+  }, [deviceId, API, state.inventory]);
 
   const saveStorage = useCallback(async (storage: SeaItem[]) => {
     if (!deviceId) return;
+
+    // Optimistic Update
+    const previousStorage = state.storage;
+    setState(prev => ({ ...prev, storage }));
+
     try {
-      await fetch(`${API}/api/sea/storage_layout`, {
+      const res = await fetch(`${API}/api/sea/storage_layout`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, storage }),
       });
-      setState(prev => ({ ...prev, storage }));
-    } catch (err) { console.error('[SeaGame] saveStorage error:', err); }
-  }, [deviceId, API]);
+      if (!res.ok) throw new Error('Save failed');
+    } catch (err) { 
+      console.error('[SeaGame] saveStorage error:', err);
+      // Rollback
+      setState(prev => ({ ...prev, storage: previousStorage }));
+    }
+  }, [deviceId, API, state.storage]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;

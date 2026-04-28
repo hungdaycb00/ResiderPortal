@@ -166,7 +166,10 @@ const CombatScreen: React.FC = () => {
     >
       {/* 1. Enemy Inventory (Top on Mobile, Right on Desktop) */}
       <div className="md:hidden flex-1 flex flex-col bg-[#370d0d]/20 p-2 border-b border-red-900/20 overflow-hidden">
-        <div className="mb-2">
+        <div className="flex-1 flex justify-center items-center overflow-auto subtle-scrollbar">
+           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
+        </div>
+        <div className="mt-2 pt-2 border-t border-red-900/20">
             <div className="flex justify-between items-end mb-1 px-1">
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
                <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
@@ -174,9 +177,12 @@ const CombatScreen: React.FC = () => {
             <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
-        </div>
-        <div className="flex-1 flex justify-center items-center overflow-auto subtle-scrollbar">
-           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
+            <div className="mt-1 h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 relative">
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
+              <div className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-white mix-blend-difference">
+                {Math.round(manaB)}/{maxManaB} (+{(15 + botStats.eRegen) * 10}/s)
+              </div>
+            </div>
         </div>
       </div>
 
@@ -248,6 +254,9 @@ const CombatScreen: React.FC = () => {
         {/* Player A side (Bottom on Mobile) */}
         <div className="flex-1 flex flex-col bg-[#0d2137]/30 md:rounded-2xl p-2 border-t md:border border-cyan-800/20 overflow-hidden">
           <div className="mb-2 shrink-0 px-1">
+            <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0 mb-2">
+              <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
+            </div>
             <div className="flex justify-between items-end mb-1">
                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">⚔️ DMG: {myStats.weight}</span>
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpA))}/{maxHpA}</span>
@@ -257,18 +266,21 @@ const CombatScreen: React.FC = () => {
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
+            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(manaA / maxManaA) * 100}%` }} transition={{ duration: 0.1 }} />
+              <div className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white mix-blend-difference">
+                {Math.round(manaA)}/{maxManaA} (+{(15 + myStats.eRegen) * 10}/s)
+              </div>
             </div>
-          </div>
-          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0">
-            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
           </div>
         </div>
 
         {/* Player B side (Hidden on mobile top, visible on desktop right) */}
         <div className="hidden md:flex flex-1 flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
-          <div className="mb-3">
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar mb-3">
+            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={cellSize} />
+          </div>
+          <div className="mt-auto">
             <div className="flex justify-between items-end mb-1">
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
                <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
@@ -278,12 +290,12 @@ const CombatScreen: React.FC = () => {
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
+            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
+              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-difference">
+                {Math.round(manaB)}/{maxManaB} (+{(15 + botStats.eRegen) * 10}/s)
+              </div>
             </div>
-          </div>
-          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar">
-            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={cellSize} />
           </div>
         </div>
       </div>
