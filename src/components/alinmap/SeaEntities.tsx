@@ -146,6 +146,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
             if (distMoved < 50 && visibleItemIds.size > 0) return;
 
             lastPosRef.current = { lat: curLat, lng: curLng };
+            const nextVisible = new Set<string>();
             const CULL_DIST = 5000; // 5km visibility range
 
             for (const item of seaGameCtx.worldItems) {
