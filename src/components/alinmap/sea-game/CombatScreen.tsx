@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Heart, Zap, Swords, Shield } from 'lucide-react';
+import { X, Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSeaGame } from './SeaGameProvider';
 import type { SeaItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
-  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice, showNotification } = useSeaGame();
+  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useSeaGame();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
   const [showFleeConfirm, setShowFleeConfirm] = useState(false);
   const [manaA, setManaA] = useState(0);
@@ -25,10 +25,29 @@ const CombatScreen: React.FC = () => {
   const hpBRef = useRef(0);
 
   useEffect(() => {
-    if (encounter && initialPlayerInventory.length === 0) {
-      setInitialPlayerInventory(state.inventory);
+    if (encounter) {
+      if (initialPlayerInventory.length === 0) {
+        setInitialPlayerInventory(state.inventory);
+      }
+      // Initialize HP bars to full when encounter first appears
+      setPhase('ready');
+      setShowFleeConfirm(false);
+      const myStatsInit = state.inventory.filter(i => i.gridX >= 0).reduce(
+        (a, i) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight }),
+        { hp: 0, weight: 0 }
+      );
+      const fullHpA = state.baseMaxHp + myStatsInit.hp;
+      const fullHpB = encounter.totalHp;
+      setHpA(fullHpA);
+      setHpB(fullHpB);
+      hpARef.current = fullHpA;
+      hpBRef.current = fullHpB;
+      setManaA(0);
+      setManaB(0);
+      manaARef.current = 0;
+      manaBRef.current = 0;
     }
-  }, [encounter, state.inventory]);
+  }, [encounter]);
 
   useEffect(() => {
     return () => {
@@ -69,7 +88,7 @@ const CombatScreen: React.FC = () => {
         encounter.id,
         encounter.isBot ? encounter.inventory : undefined,
         encounter.isBot ? encounter.baseMaxHp : undefined,
-        encounter.isBot ? (encounter as any).bags : undefined
+        encounter.isBot ? encounter.bags : undefined
       );
 
       if (result.combatLog?.length) {
@@ -198,7 +217,7 @@ const CombatScreen: React.FC = () => {
       {/* 1. Enemy Inventory (Top on Mobile, Right on Desktop) */}
       <div className="md:hidden flex-1 flex flex-col bg-[#370d0d]/20 p-2 border-b border-red-900/20 overflow-hidden">
         <div className="flex-1 flex justify-center items-center overflow-auto subtle-scrollbar">
-           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
+           <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={encounter.bags?.[0]} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / 6)} />
         </div>
         <div className="mt-2 pt-2 border-t border-red-900/20">
             <div className="flex justify-between items-end mb-1 px-1">
@@ -335,7 +354,7 @@ const CombatScreen: React.FC = () => {
         {/* Player B side (Hidden on mobile top, visible on desktop right) */}
         <div className="hidden md:flex flex-1 flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar mb-3">
-            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={cellSize} />
+            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={encounter.bags?.[0]} readOnly cellSize={cellSize} />
           </div>
           <div className="mt-auto pt-3 border-t border-red-900/20">
             <div className="flex justify-between items-end mb-1">

@@ -158,8 +158,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         }
     }, [isSeaGameMode, nav.mainTab, location.pathname]);
 
-
-
     const handleOpenBackpackFromPickup = useCallback(() => {
         setIsSeaGameMode(true);
         nav.setMainTab('backpack');

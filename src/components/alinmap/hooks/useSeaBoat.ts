@@ -63,8 +63,6 @@ export function useSeaBoat({
         panY,
     ]);
 
-
-
     // Auto-pickup loop
     useAnimationFrame(() => {
         if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;

@@ -114,9 +114,6 @@ export function useMapNavigation({
     }
 
     if (tabId === 'backpack') {
-      // Allow guest to access backpack
-      setMainTab('backpack');
-
       setMainTab('backpack');
       setIsSeaGameMode(true);
       setIsSheetExpanded(true);

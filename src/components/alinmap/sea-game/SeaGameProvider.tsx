@@ -42,6 +42,7 @@ export interface Encounter {
   name: string;
   avatar?: string;
   inventory: SeaItem[];
+  bags?: BagItem[];
   baseMaxHp: number;
   totalWeight: number;
   totalHp: number;
@@ -444,10 +445,16 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         } else if (data.type === 'bag' || data.type === 'item') {
           const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag' } : data.item;
           const floatingItem = { ...itemData, gridX: -1, gridY: -1 };
-          const newInventory = [...state.inventory, floatingItem];
-          // Lưu layout mới ngay lập tức
-          saveInventory(newInventory);
-          setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
+          // Use functional setState to always get latest inventory (fix stale closure)
+          setState(prev => {
+            const newInventory = [...prev.inventory, floatingItem];
+            // Fire-and-forget save with the correct inventory
+            fetch(`${API}/api/sea/inventory`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deviceId, inventory: newInventory }),
+            }).catch(err => console.error('[Sea Pickup] save error:', err));
+            return { ...prev, inventory: newInventory, cursePercent: data.cursePercent };
+          });
           setPickupRewardItem(floatingItem);
         }
         return true;
@@ -461,7 +468,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       }
       return false;
     }
-  }, [deviceId, API, saveInventory]);
+  }, [deviceId, API]);
 
   const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
