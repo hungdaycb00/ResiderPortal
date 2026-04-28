@@ -49,9 +49,26 @@ export function pathToTab(pathname: string): AppTab {
 
     // Handle /profile/:username — still shows profile tab
     if (segments[0] === 'profile') return 'profile';
-
+    if (segments[0] === 'explore' || segments[0] === 'games') return segments[0] === 'games' ? 'home' : 'discover';
+    
     return PATH_TO_TAB[segments[0]] || 'discover';
 }
+
+/**
+ * Extract slug from URL path (e.g. /explore/slug or /games/slug)
+ */
+export function extractSlug(pathname: string): string | null {
+    const segments = pathname.split('/').filter(Boolean);
+    if ((segments[0] === 'explore' || segments[0] === 'games') && segments[1]) {
+        return segments[1].toLowerCase();
+    }
+    return null;
+}
+
+/**
+ * Extract sub-game from /explore/:game path
+ */
+export const extractExploreGame = extractSlug;
 
 /**
  * Convert an internal tab ID to a URL path for navigation.

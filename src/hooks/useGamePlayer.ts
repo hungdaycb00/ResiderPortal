@@ -14,7 +14,7 @@ interface UseGameManagerParams {
 export function useGamePlayer({
     cloudflareUrl, showNotification, fetchExternalData, setRecentlyPlayed, setUserStats, user,
 }: UseGameManagerParams) {
-    const [playingGame, setPlayingGame] = useState<{ title: string, gameUrl: string } | null>(null);
+    const [playingGame, setPlayingGame] = useState<{ title: string, gameUrl: string, slug?: string } | null>(null);
     const [isGameLoading, setIsGameLoading] = useState(false);
     const [gameStartTime, setGameStartTime] = useState<number>(0);
     const [reviewGameId, setReviewGameId] = useState<string | null>(null);
@@ -86,9 +86,11 @@ export function useGamePlayer({
         }
 
         if (!game.id || (typeof game.id === 'number' && game.id <= 6)) {
+            const slug = game.slug || (game.title || game.name || '').toLowerCase().replace(/\s+/g, '-');
             setPlayingGame({
                 title: game.title || game.name,
-                gameUrl: game.gameUrl || createGameUrl(game.title || game.name)
+                gameUrl: game.gameUrl || createGameUrl(game.title || game.name),
+                slug
             });
             return;
         }
@@ -105,7 +107,8 @@ export function useGamePlayer({
         let gameUrl = `${baseUrl}/games/${gamePath}${gamePath.includes('?') ? '&' : '?'}deviceId=${encodeURIComponent(deviceId)}`;
         if (game.tunnel_url) gameUrl += `&tunnel_url=${encodeURIComponent(game.tunnel_url)}`;
 
-        setPlayingGame({ title: game.title || game.name, gameUrl });
+        const slug = game.slug || game.id.toString();
+        setPlayingGame({ title: game.title || game.name, gameUrl, slug });
         setReviewGameId(game.id.toString());
 
         setRecentlyPlayed(prev => {

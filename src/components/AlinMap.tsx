@@ -18,6 +18,8 @@ import { useAlinWebSocket } from './alinmap/hooks/useAlinWebSocket';
 import { usePosts } from './alinmap/features/profile/hooks/usePosts';
 import { useMapNavigation } from './alinmap/hooks/useMapNavigation';
 import { useDesktopSearch } from './alinmap/hooks/useDesktopSearch';
+import { extractExploreGame } from '../utils/routing';
+import { useLocation } from 'react-router-dom';
 
 const AlinMapInner: React.FC<AlinMapProps> = ({
     user,
@@ -42,6 +44,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Geolocation / Weather / Province ---
     const geo = useGeolocation();
+    const location = useLocation();
 
     const [searchTag, setSearchTag] = useState('');
     const [friendIdInput, setFriendIdInput] = useState('');
@@ -130,6 +133,30 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             geo.setMyObfPos({ lat: geo.position[0], lng: geo.position[1] });
         }
     }, [user, geo.position, geo.myObfPos]);
+
+    // --- URL Sub-path Sync ---
+    useEffect(() => {
+        const subGame = extractExploreGame(location.pathname);
+        if (subGame === 'sea-game' && !isSeaGameMode) {
+            seaGame.setIsSeaGameMode(true);
+        }
+    }, []); // Run once on mount
+
+    useEffect(() => {
+        let newPath = '/explore';
+        
+        if (isSeaGameMode) {
+            newPath = '/explore/sea-game';
+        } else if (nav.mainTab !== 'discover') {
+            // Optional: Show main tab in URL if you want, e.g. /explore/social
+            // But per user request, we focus on "games in explore"
+            // If you want more, uncomment: newPath = `/explore/${nav.mainTab}`;
+        }
+
+        if (location.pathname !== newPath) {
+            window.history.replaceState(null, '', newPath);
+        }
+    }, [isSeaGameMode, nav.mainTab, location.pathname]);
 
 
 

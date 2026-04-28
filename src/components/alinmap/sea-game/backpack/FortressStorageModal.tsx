@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { X, Database, Package, Sparkles, ArrowRightLeft, Anchor } from 'lucide-react';
+import { motion } from 'motion/react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
 import { useSeaGame } from '../SeaGameProvider';

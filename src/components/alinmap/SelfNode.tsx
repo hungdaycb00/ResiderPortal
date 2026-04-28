@@ -42,7 +42,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
 
-    const fortressDist = useTransform(boatOffsetX || new MotionValue(), (ox) => {
+    const fortressDist = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         if (!isSeaGameMode || !seaState?.fortressLat) return '';
         const oy = boatOffsetY?.get() || 0;
         const dLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);

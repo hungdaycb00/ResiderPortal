@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { pathToTab, tabToPath, ALIN_MAP_TABS, AppTab } from './utils/routing';
+import { pathToTab, tabToPath, ALIN_MAP_TABS, AppTab, extractSlug } from './utils/routing';
 import { Sword, Shield, Brain, Zap, Trophy, Users, Layout, Gamepad2, Book } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { externalApi } from './services/externalApi';
@@ -145,6 +145,39 @@ export default function App() {
   });
 
   const isSearchActive = searchQuery.length > 0 || selectedCategories.length > 0;
+
+  // --- Sync URL with Playing Game ---
+  useEffect(() => {
+    const currentBase = activeTab === 'home' ? '/games' : '/explore';
+    let newPath = currentBase;
+    
+    if (playingGame?.slug) {
+      newPath = `${currentBase}/${playingGame.slug}`;
+    }
+
+    if (location.pathname !== newPath && !playingGame?.gameUrl.includes('sea-game')) {
+      // Note: Sea Game is handled inside AlinMap.tsx
+      window.history.replaceState(null, '', newPath);
+    }
+  }, [playingGame, activeTab, location.pathname]);
+
+  // --- Auto-Play from URL Slug ---
+  useEffect(() => {
+    if (allGames.length > 0 && !playingGame) {
+      const slug = extractSlug(location.pathname);
+      if (slug && slug !== 'sea-game') {
+        const game = allGames.find((g: any) => 
+          (g.slug?.toLowerCase() === slug) || 
+          (g.id?.toString().toLowerCase() === slug) ||
+          ((g.title || g.name || '').toLowerCase().replace(/\s+/g, '-') === slug)
+        );
+        if (game) {
+          console.log(`[AutoPlay] Launching game from URL: ${slug}`);
+          handlePlayGame(game);
+        }
+      }
+    }
+  }, [allGames.length]); // Run when games are loaded
 
   return (
     <div className="min-h-screen bg-[#13151a] text-white font-sans pb-16 md:pb-0 relative overflow-x-hidden">

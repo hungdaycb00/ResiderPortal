@@ -28,6 +28,8 @@ export function useSeaBoat({
     const isAnimatingRef = useRef(false);
     const boatMoveXRef = useRef<any>(null);
     const boatMoveYRef = useRef<any>(null);
+    const lastBlockTimeRef = useRef<number>(0);
+    const consecutiveBlockCountRef = useRef<number>(0);
 
     const boatOffsetX = useMotionValue(0);
     const boatOffsetY = useMotionValue(0);
@@ -145,8 +147,32 @@ export function useSeaBoat({
             return;
         }
 
-        if (seaGameCtx.showMinigame || seaGameCtx.encounter || seaGameCtx.showCurseModal) {
-            console.log('[MapMove] Blocked by active event');
+        if (seaGameCtx.showMinigame || seaGameCtx.encounter || seaGameCtx.showCurseModal || seaGameCtx.combatResult) {
+            const blockReason = {
+                minigame: !!seaGameCtx.showMinigame,
+                encounter: !!seaGameCtx.encounter,
+                curse: !!seaGameCtx.showCurseModal,
+                combatResult: !!seaGameCtx.combatResult
+            };
+            console.log('[MapMove] Blocked by active event:', blockReason);
+            
+            // Safety Reset Logic: If clicked 3 times within 2 seconds while blocked, offer a reset or auto-reset
+            const now = Date.now();
+            if (now - lastBlockTimeRef.current < 2000) {
+                consecutiveBlockCountRef.current++;
+                if (consecutiveBlockCountRef.current >= 3) {
+                    console.warn('[MapMove] Force resetting blocked states due to consecutive failures');
+                    seaGameCtx.setShowMinigame(null);
+                    seaGameCtx.setEncounter(null);
+                    seaGameCtx.setShowCurseModal(false);
+                    seaGameCtx.setCombatResult(null);
+                    consecutiveBlockCountRef.current = 0;
+                    showNotification?.('Đã tự động sửa lỗi kẹt di chuyển.', 'info');
+                }
+            } else {
+                consecutiveBlockCountRef.current = 1;
+            }
+            lastBlockTimeRef.current = now;
             return;
         }
 

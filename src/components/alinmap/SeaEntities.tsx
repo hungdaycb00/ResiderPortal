@@ -16,7 +16,7 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
 
-    const distMetersTransform = useTransform(boatOffsetX || new MotionValue(), (ox: number) => {
+    const distMetersTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
         const dLat = item.lat - (myObfPos.lat - oy / DEGREES_TO_PX);
         const dLng = item.lng - (myObfPos.lng + ox / DEGREES_TO_PX);
@@ -74,7 +74,7 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
     const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
     const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
 
-    const fDistTransform = useTransform(boatOffsetX || new MotionValue(), (ox: number) => {
+    const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
         const fLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
         const fLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
