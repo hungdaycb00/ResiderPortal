@@ -1,5 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CombatScreen from './CombatScreen';
+import CurseModal from './CurseModal';
+import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import CombatLootModal from './backpack/CombatLootModal';
 import { useSeaGame } from './SeaGameProvider';
