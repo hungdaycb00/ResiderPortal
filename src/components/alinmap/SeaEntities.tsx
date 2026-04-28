@@ -24,7 +24,7 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
         return Math.round(distDeg * 111000);
     });
 
-    const distText = useTransform(distMetersTransform, (d) => `${d}m`);
+    const distText = useTransform(distMetersTransform, (d) => d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`);
 
     return (
         <motion.div
@@ -66,9 +66,9 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
                 <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
                     {item.item?.icon || '💎'}
                 </span>
-                <div className={`mt-0.5 flex flex-col items-center rounded-lg px-1.5 py-0.5 backdrop-blur-sm ${isPortal ? 'border border-violet-400/30 bg-violet-950/60' : 'border border-white/10 bg-black/40'}`}>
-                    <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap">{item.item?.name}</span>
-                    <motion.span className="text-[6px] font-bold tabular-nums text-white/60">{distText}</motion.span>
+                <div className="mt-0 flex flex-col items-center pointer-events-none">
+                    <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap drop-shadow-md">{item.item?.name}</span>
+                    <motion.span className="text-[6px] font-bold tabular-nums text-white drop-shadow-md">{distText}</motion.span>
                 </div>
             </div>
         </motion.div>
@@ -86,8 +86,11 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
         return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
     });
 
-    const fText = useTransform(fDistTransform, (d) => d <= 100 ? 'Thanh tri cua ban' : `Thanh tri (${d}m)`);
-    const fColorClass = useTransform(fDistTransform, (d) => d <= 100 ? 'text-emerald-400 border-emerald-500/50' : 'text-gray-400 border-gray-500/50');
+    const fText = useTransform(fDistTransform, (d) => {
+        if (d <= 100) return 'Thành Trì';
+        return d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
+    });
+    const fColorClass = useTransform(fDistTransform, (d) => d <= 100 ? 'text-emerald-400' : 'text-gray-300');
 
     return (
         <div
@@ -112,7 +115,7 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
         >
             <div className="relative flex flex-col items-center group">
                 <span className="text-6xl drop-shadow-lg">🏝️</span>
-                <motion.div className="absolute -bottom-4 whitespace-nowrap bg-[#1a1d24]/80 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border" style={{ color: fColorClass as any, borderColor: fColorClass as any }}>
+                <motion.div className="absolute -bottom-1 whitespace-nowrap text-[10px] font-black drop-shadow-md" style={{ color: fColorClass as any }}>
                     <motion.span>{fText}</motion.span>
                 </motion.div>
             </div>
@@ -123,6 +126,44 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
 const SeaEntities: React.FC<SeaEntitiesProps> = ({
     myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
+    const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
+    const lastPosRef = React.useRef({ lat: 0, lng: 0 });
+
+    // Culling Logic: Kiểm tra vật phẩm nào trong tầm nhìn mỗi 500ms
+    React.useEffect(() => {
+        if (!seaGameCtx?.worldItems) return;
+
+        const updateVisibility = () => {
+            const ox = boatOffsetX.get();
+            const oy = boatOffsetY.get();
+            const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
+            const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
+
+            // Chỉ tính toán lại nếu di chuyển đáng kể (> 50m)
+            const dLat = curLat - lastPosRef.current.lat;
+            const dLng = curLng - lastPosRef.current.lng;
+            const distMoved = Math.sqrt(dLat * dLat + dLng * dLng) * 111000;
+            if (distMoved < 50 && visibleItemIds.size > 0) return;
+
+            lastPosRef.current = { lat: curLat, lng: curLng };
+            const CULL_DIST = 5000; // 5km visibility range
+
+            for (const item of seaGameCtx.worldItems) {
+                const iLat = item.lat - curLat;
+                const iLng = item.lng - curLng;
+                const dist = Math.sqrt(iLat * iLat + iLng * iLng) * 111000;
+                if (dist < CULL_DIST) {
+                    nextVisible.add(item.spawnId);
+                }
+            }
+            setVisibleItemIds(nextVisible);
+        };
+
+        const timer = setInterval(updateVisibility, 500);
+        updateVisibility();
+        return () => clearInterval(timer);
+    }, [seaGameCtx?.worldItems, myObfPos.lat, myObfPos.lng]);
+
     const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
     const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));
 
@@ -167,7 +208,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 </div>
             )}
 
-            {seaGameCtx?.worldItems?.map((item: any) => (
+            {seaGameCtx?.worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
                 <SeaItemEntity 
                     key={item.spawnId}
                     item={item}

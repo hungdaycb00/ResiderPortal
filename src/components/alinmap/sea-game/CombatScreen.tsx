@@ -6,7 +6,7 @@ import type { SeaItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
-  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState } = useSeaGame();
+  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useSeaGame();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
   const [manaA, setManaA] = useState(0);
   const [manaB, setManaB] = useState(0);
@@ -90,7 +90,10 @@ const CombatScreen: React.FC = () => {
       lastTime = now;
 
       if (currentIdxRef.current >= combatLogRef.current.length) {
-        setPhase('result');
+        if (!isAnimating) {
+          setPhase('result');
+        }
+        frameRef.current = requestAnimationFrame(loop);
         return;
       }
 
@@ -155,6 +158,14 @@ const CombatScreen: React.FC = () => {
     loadState();
   };
 
+  const handleFlee = async () => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    await curseChoice('flee');
+    setEncounter(null);
+    setPhase('ready');
+    setCombatResult(null);
+  };
+
   const cellSize = Math.min(40, (window.innerWidth / 2 - 20) / Math.max(state.inventoryWidth, 6));
 
   return (
@@ -171,16 +182,19 @@ const CombatScreen: React.FC = () => {
         </div>
         <div className="mt-2 pt-2 border-t border-red-900/20">
             <div className="flex justify-between items-end mb-1 px-1">
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
+                 <span className="text-[9px] font-bold text-cyan-400">⚡ REGEN: +{(15 + botStats.eRegen) * 10}/s</span>
+               </div>
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
-               <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
             </div>
-            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5">
+            <div className="h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
-            <div className="mt-1 h-2 bg-gray-900 rounded-full overflow-hidden border border-white/5 relative">
+            <div className="mt-1 h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
-              <div className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-white mix-blend-difference">
-                {Math.round(manaB)}/{maxManaB} (+{(15 + botStats.eRegen) * 10}/s)
+              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-difference">
+                {Math.round(manaB)}/{maxManaB}
               </div>
             </div>
         </div>
@@ -230,11 +244,13 @@ const CombatScreen: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <div className="absolute top-3 right-3">
-          <button onClick={handleClose} className="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors">
-            Rời Khỏi
-          </button>
-        </div>
+        {phase === 'ready' && (
+          <div className="absolute top-3 right-3">
+            <button onClick={handleFlee} className="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors">
+              Bỏ Trốn
+            </button>
+          </div>
+        )}
         
         {phase === 'ready' && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
@@ -253,25 +269,28 @@ const CombatScreen: React.FC = () => {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-0 md:p-2 gap-0 md:gap-2 bg-[#040e1a]">
         {/* Player A side (Bottom on Mobile) */}
         <div className="flex-1 flex flex-col bg-[#0d2137]/30 md:rounded-2xl p-2 border-t md:border border-cyan-800/20 overflow-hidden">
-          <div className="mb-2 shrink-0 px-1">
-            <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0 mb-2">
-              <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
-            </div>
+          <div className="mt-1 mb-2 shrink-0 px-1">
             <div className="flex justify-between items-end mb-1">
-               <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">⚔️ DMG: {myStats.weight}</span>
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">⚔️ DMG: {myStats.weight}</span>
+                 <span className="text-[9px] font-bold text-cyan-300">⚡ REGEN: +{(15 + myStats.eRegen) * 10}/s</span>
+               </div>
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpA))}/{maxHpA}</span>
             </div>
             {/* HP Bar */}
-            <div className="h-3 bg-gray-900 rounded-full overflow-hidden mb-1 border border-white/5 shadow-inner">
+            <div className="h-5 bg-gray-900 rounded-full overflow-hidden mb-1 border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
+            <div className="h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(manaA / maxManaA) * 100}%` }} transition={{ duration: 0.1 }} />
-              <div className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white mix-blend-difference">
-                {Math.round(manaA)}/{maxManaA} (+{(15 + myStats.eRegen) * 10}/s)
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-difference">
+                {Math.round(manaA)}/{maxManaA}
               </div>
             </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0">
+            <CombatInventoryGrid items={state.inventory} gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight} readOnly cellSize={Math.min(32, (window.innerWidth - 40) / Math.max(state.inventoryWidth, 6))} />
           </div>
         </div>
 
@@ -280,20 +299,23 @@ const CombatScreen: React.FC = () => {
           <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar mb-3">
             <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={(encounter as any).bags?.[0]} readOnly cellSize={cellSize} />
           </div>
-          <div className="mt-auto">
+          <div className="mt-auto pt-3 border-t border-red-900/20">
             <div className="flex justify-between items-end mb-1">
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
+                 <span className="text-[9px] font-bold text-cyan-400">⚡ REGEN: +{(15 + botStats.eRegen) * 10}/s</span>
+               </div>
                <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hpB))}/{maxHpB}</span>
-               <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
             </div>
             {/* HP Bar */}
-            <div className="h-4 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
+            <div className="h-6 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
             {/* Mana Bar */}
-            <div className="h-3 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
+            <div className="h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
               <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
-              <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-difference">
-                {Math.round(manaB)}/{maxManaB} (+{(15 + botStats.eRegen) * 10}/s)
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-difference">
+                {Math.round(manaB)}/{maxManaB}
               </div>
             </div>
           </div>

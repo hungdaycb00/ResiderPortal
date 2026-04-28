@@ -10,6 +10,7 @@ import CreatorTabView from './features/creator/components/CreatorTabView';
 import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
 import { useSocial } from './features/social/context/SocialContext';
+import { useSeaGame } from './sea-game/SeaGameProvider';
 
 interface BottomSheetProps {
     isDesktop: boolean;
@@ -81,6 +82,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     } = props;
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
+    const { isItemDragging } = useSeaGame();
 
     const [panelWidth, setPanelWidth] = React.useState(400);
     const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
@@ -103,7 +105,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? 'full' : "collapsed"}
                     transition={{ type: "spring", stiffness: 350, damping: 35 }}
-                    drag={isDesktop ? false : "y"}
+                    drag={isDesktop || isItemDragging ? false : "y"}
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={0.05}
                     onDragEnd={(e, info) => {

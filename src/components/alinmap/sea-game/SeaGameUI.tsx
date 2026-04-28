@@ -1,8 +1,5 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import CombatScreen from './CombatScreen';
-import CurseModal from './CurseModal';
-import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import CombatLootModal from './backpack/CombatLootModal';
 import { useSeaGame } from './SeaGameProvider';
@@ -15,7 +12,7 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult } = useSeaGame();
+    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult, openBackpack, preGeneratedMinigame, setPreGeneratedMinigame } = useSeaGame();
 
     return (
         <>
@@ -40,15 +37,19 @@ const SeaGameUI: React.FC = () => {
                     onWin={() => {
                         pickupItem(showMinigame.spawnId);
                         setShowMinigame(null);
+                        setPreGeneratedMinigame(null);
                     }}
                     onLose={() => {
                         if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
                         setShowMinigame(null);
+                        setPreGeneratedMinigame(null);
                     }}
                     onClose={() => {
-                        if (showMinigame?.spawnId) destroyItem(showMinigame.spawnId);
+                        if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
                         setShowMinigame(null);
+                        setPreGeneratedMinigame(null);
                     }}
+                    preGeneratedGrid={preGeneratedMinigame?.type === 'fishing' ? preGeneratedMinigame.grid : null}
                 />
             )}
 
@@ -101,11 +102,12 @@ const SeaGameUI: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => {
+                                            openBackpack();
                                             setShowDiscardModal(false);
                                         }}
                                         className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 font-bold rounded-xl transition-all"
                                     >
-                                        Quay lại
+                                        Mở Balo
                                     </button>
                                 </div>
                             </div>

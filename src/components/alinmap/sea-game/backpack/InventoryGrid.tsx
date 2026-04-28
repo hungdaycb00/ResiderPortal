@@ -59,7 +59,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragItem,
   externalHoverCell,
 }) => {
-  const { setDraggingItem } = useSeaGame();
+  const { setDraggingItem, setIsItemDragging } = useSeaGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -162,6 +162,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       x: Math.max(0, e.clientX - itemRect.left),
       y: Math.max(0, e.clientY - itemRect.top),
     });
+    setIsItemDragging(true);
     pointerStartRef.current = {
       itemUid: item.uid,
       clientX: e.clientX,
@@ -285,6 +286,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setDragMode(null);
     setDragItem(null);
     setDraggingItem(null);
+    setIsItemDragging(false);
     updateHoverCell(null);
     setIsHoveringStorage(false);
     setIsHoveringTrash(false);
@@ -482,7 +484,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       {!hideStorage && (
         <div 
           ref={storageRef}
-          className={`relative min-h-[80px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
+          className={`relative min-h-[120px] bg-[#0d1a2a] border-2 rounded-lg p-3 transition-colors ${
             isHoveringStorage ? 'border-cyan-400 bg-[#122b46]' : 'border-cyan-800/50'
           }`}
         >
@@ -501,7 +503,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             <span className="text-[9px] text-cyan-600">Kéo xuống để cất</span>
           </div>
           
-          <div className="grid grid-cols-8 gap-1.5">
+          <div className="grid grid-cols-9 gap-1.5">
             {storageItems.map(item => {
               const isDragging = dragItem?.uid === item.uid && dragMode === 'storage-item';
               const colorClass = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;

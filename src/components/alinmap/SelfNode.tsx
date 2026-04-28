@@ -48,7 +48,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
         const dLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
         const dLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         const dist = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 111000);
-        return dist <= 100 ? 'Đang ở Thành' : `${dist}m`;
+        if (dist <= 100) return 'Thành Trì';
+        return dist >= 1000 ? `${(dist / 1000).toFixed(1)}km` : `${dist}m`;
     });
 
     if (isSeaGameMode) {
@@ -78,12 +79,10 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                     </div>
                 </motion.div>
                 {seaState?.fortressLat && (
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-max">
-                        <div className="bg-[#050b12]/90 backdrop-blur border border-cyan-500/30 px-2.5 py-0.5 rounded-full shadow-lg pointer-events-none">
-                            <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider">
-                                🏰 <motion.span>{fortressDist}</motion.span>
-                            </motion.span>
-                        </div>
+                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-max pointer-events-none">
+                        <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider drop-shadow-md">
+                            <motion.span>{fortressDist}</motion.span>
+                        </motion.span>
                     </div>
                 )}
             </motion.div>
@@ -189,9 +188,9 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             {/* Status label */}
             <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-max">
                 {isSeaGameMode && seaState?.fortressLat && (
-                    <div className="bg-[#050b12]/90 backdrop-blur border border-cyan-500/30 px-2.5 py-0.5 rounded-full shadow-lg pointer-events-none">
-                        <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider">
-                            🏰 <motion.span>{fortressDist}</motion.span>
+                    <div className="pointer-events-none">
+                        <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider drop-shadow-md">
+                            <motion.span>{fortressDist}</motion.span>
                         </motion.span>
                     </div>
                 )}

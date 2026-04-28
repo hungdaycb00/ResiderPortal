@@ -219,7 +219,7 @@ export default function FortressStorageModal() {
               {isPortalMode ? 'Cong Portal' : 'Kho Thanh Tri'}
             </h2>
             <p className="mt-1 text-[11px] text-cyan-100/65">
-              {isPortalMode ? 'Nhanh dup mon do de gui vao kho tu xa.' : 'Nhanh dup mon do de chuyen qua lai giua thuyen va kho.'}
+              {isPortalMode ? 'Gui mon do vao kho tu xa.' : 'Nhanh dup mon do de chuyen qua lai giua thuyen va kho.'}
             </p>
           </div>
           <div className="flex items-center gap-2">

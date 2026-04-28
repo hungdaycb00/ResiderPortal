@@ -99,8 +99,14 @@ interface SeaGameContextType {
   setShowMinigame: (item: WorldItem | null) => void;
   isSeaGameMode: boolean;
   setIsSeaGameMode: (v: boolean) => void;
+  openBackpack: () => void;
+  setOpenBackpackHandler: (h: (() => void) | null) => void;
+  isItemDragging: boolean;
+  setIsItemDragging: (v: boolean) => void;
   isChallengeActive: boolean;
   setIsChallengeActive: (v: boolean) => void;
+  preGeneratedMinigame: { type: string, grid: any } | null;
+  setPreGeneratedMinigame: (v: { type: string, grid: any } | null) => void;
   globalSettings: any;
   // Actions
   initGame: (lat: number, lng: number) => Promise<void>;
@@ -215,7 +221,34 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [isMoving, setIsMoving] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [draggingItem, setDraggingItem] = useState<SeaItem | null>(null);
+  const [isItemDragging, setIsItemDragging] = useState(false);
+  const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
+  const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
+
+  const openBackpack = useCallback(() => {
+    if (openBackpackHandler) {
+      openBackpackHandler();
+    }
+  }, [openBackpackHandler]);
   const API = getBaseUrl();
+
+  useEffect(() => {
+    // Tiền tạo grid khi người dùng ở gần vật phẩm thế giới hoặc định kỳ
+    if (!isSeaGameMode) return;
+    
+    const prepareMinigame = () => {
+      if (preGeneratedMinigame) return; // Đã có rồi
+      
+      const tier = state.worldTier;
+      const innerRows = Math.min(7, 4 + Math.floor(tier / 2));
+      const innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+      const grid = generateSolvableFruitGrid(innerRows, innerCols);
+      setPreGeneratedMinigame({ type: 'fishing', grid });
+    };
+
+    const interval = setInterval(prepareMinigame, 5000);
+    return () => clearInterval(interval);
+  }, [isSeaGameMode, preGeneratedMinigame, state.worldTier]);
 
   const loadState = useCallback(async () => {
     if (!deviceId) return;
@@ -323,85 +356,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     } finally { setIsMoving(false); }
   }, [deviceId, API, state.fortressLat, state.fortressLng]);
 
-  const pickupItem = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    try {
-      const res = await fetch(`${API}/api/sea/pickup`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        if (data.type === 'grid_expander') {
-          setState(prev => ({
-            ...prev,
-            cursePercent: data.cursePercent,
-            inventoryWidth: data.newWidth,
-            inventoryHeight: data.newHeight,
-          }));
-        } else if (data.type === 'bag') {
-          setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-          setPendingBagSwap(data.bag);
-        } else if (data.type === 'item') {
-          const floatingItem = { ...data.item, gridX: -1, gridY: -1 };
-          const newInventory = [...state.inventory, floatingItem];
-          await fetch(`${API}/api/sea/inventory`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId, inventory: newInventory }),
-          });
-          setState(prev => ({ ...prev, cursePercent: data.cursePercent, inventory: newInventory }));
-          setPickupRewardItem(floatingItem);
-        }
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('[SeaGame] pickupItem error:', err);
-      return false;
-    }
-  }, [deviceId, API, state.inventory]);
-
-  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    try {
-      const res = await fetch(`${API}/api/sea/minigame-lose`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('[SeaGame] minigamePenalty error:', err);
-      return false;
-    }
-  }, [deviceId, API]);
-
-  const destroyItem = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    try {
-      const res = await fetch(`${API}/api/sea/destroy-item`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('[SeaGame] destroyItem error:', err);
-      return false;
-    }
-  }, [deviceId, API]);
-
   const saveInventory = useCallback(async (inventory: SeaItem[]) => {
     if (!deviceId) return;
     
@@ -444,14 +398,102 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;
+    
+    const previousBags = state.bags;
+    setState(prev => ({ ...prev, bags }));
+
     try {
-      await fetch(`${API}/api/sea/bags`, {
+      const res = await fetch(`${API}/api/sea/bags`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, bags }),
       });
-      setState(prev => ({ ...prev, bags }));
-    } catch (err) { console.error('[SeaGame] saveBags error:', err); }
+      if (!res.ok) throw new Error('Save bags failed');
+    } catch (err) {
+      console.error('[SeaGame] saveBags error:', err);
+      setState(prev => ({ ...prev, bags: previousBags }));
+    }
+  }, [deviceId, API, state.bags]);
+
+  const pickupItem = useCallback(async (spawnId: string) => {
+    if (!deviceId) return false;
+    
+    // Optimistic: Xóa vật phẩm khỏi bản đồ ngay lập tức
+    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+
+    try {
+      const res = await fetch(`${API}/api/sea/pickup`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, spawnId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.type === 'grid_expander') {
+          setState(prev => ({
+            ...prev,
+            cursePercent: data.cursePercent,
+            inventoryWidth: data.newWidth,
+            inventoryHeight: data.newHeight,
+          }));
+        } else if (data.type === 'bag' || data.type === 'item') {
+          const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag' } : data.item;
+          const floatingItem = { ...itemData, gridX: -1, gridY: -1 };
+          const newInventory = [...state.inventory, floatingItem];
+          // Lưu layout mới ngay lập tức
+          saveInventory(newInventory);
+          setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
+          setPickupRewardItem(floatingItem);
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[SeaGame] pickupItem error:', err);
+      // Có thể cần logic phục hồi vật phẩm nếu cần thiết, nhưng thường hiếm khi lỗi
+      return false;
+    }
+  }, [deviceId, API, state.inventory, saveInventory]);
+
+  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
+    if (!deviceId) return false;
+    // Optimistic: Xóa vật phẩm ngay lập tức
+    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+    try {
+      const res = await fetch(`${API}/api/sea/minigame-lose`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, spawnId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[SeaGame] minigamePenalty error:', err);
+      return false;
+    }
   }, [deviceId, API]);
+
+  const destroyItem = useCallback(async (spawnId: string) => {
+    if (!deviceId) return false;
+    // Optimistic: Xóa vật phẩm ngay lập tức
+    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+    try {
+      const res = await fetch(`${API}/api/sea/destroy-item`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, spawnId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[SeaGame] destroyItem error:', err);
+      return false;
+    }
+  }, [deviceId, API]);
+
 
   const acceptBagSwap = useCallback(async (newBag: BagItem) => {
     const oldBag = state.bags[0];
@@ -570,15 +612,58 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;
-    await fetch(`${API}/api/sea/sell`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids }),
-    });
-    await loadState();
-  }, [deviceId, API, loadState]);
+    
+    // Optimistic Update
+    const previousInventory = state.inventory;
+    const previousGold = state.seaGold;
+    
+    const itemsToSell = state.inventory.filter(i => itemUids.includes(i.uid));
+    const totalGain = itemsToSell.reduce((sum, i) => sum + (i.price || 0), 0);
+    
+    setState(prev => ({
+      ...prev,
+      inventory: prev.inventory.filter(i => !itemUids.includes(i.uid)),
+      seaGold: prev.seaGold + totalGain,
+    }));
+
+    try {
+      const res = await fetch(`${API}/api/sea/sell`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, itemUids }),
+      });
+      if (!res.ok) throw new Error('Sell failed');
+      // Không cần loadState() nữa vì đã update ở trên, 
+      // trừ khi muốn đồng bộ chính xác tuyệt đối sau khi server xử lý.
+    } catch (err) {
+      console.error('[SeaGame] sellItems error:', err);
+      // Rollback
+      setState(prev => ({ ...prev, inventory: previousInventory, seaGold: previousGold }));
+    }
+  }, [deviceId, API, state.inventory, state.seaGold]);
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
+
+    // Optimistic Update
+    const prevInventory = state.inventory;
+    const prevStorage = state.storage;
+
+    if (action === 'store') {
+      const itemsToMove = state.inventory.filter(i => itemUids.includes(i.uid));
+      setState(prev => ({
+        ...prev,
+        inventory: prev.inventory.filter(i => !itemUids.includes(i.uid)),
+        storage: [...prev.storage, ...itemsToMove.map(i => ({ ...i, gridX: gridX ?? -1, gridY: gridY ?? -1 }))]
+      }));
+    } else {
+      const itemsToMove = state.storage.filter(i => itemUids.includes(i.uid));
+      setState(prev => ({
+        ...prev,
+        storage: prev.storage.filter(i => !itemUids.includes(i.uid)),
+        inventory: [...prev.inventory, ...itemsToMove.map(i => ({ ...i, gridX: gridX ?? -1, gridY: gridY ?? -1 }))]
+      }));
+    }
+
     try {
       const res = await fetch(`${API}/api/sea/store`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -586,31 +671,45 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        showNotification(data.error || 'Thao tác kho đồ thất bại', 'error');
-        return;
+        throw new Error(data.error || 'Thao tác kho đồ thất bại');
       }
       await loadState();
-    } catch (err) { 
+    } catch (err: any) { 
       console.error('[Sea Store]', err);
-      showNotification('Lỗi kết nối máy chủ', 'error');
+      showNotification(err.message || 'Lỗi kết nối máy chủ', 'error');
+      // Rollback
+      setState(prev => ({ ...prev, inventory: prevInventory, storage: prevStorage }));
     }
-  }, [deviceId, API, loadState, showNotification]);
+  }, [deviceId, API, state.inventory, state.storage, loadState, showNotification]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;
-    const res = await fetch(`${API}/api/sea/return-fortress`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId }),
-    });
-    const data = await res.json();
-    if (!data.success) {
-      console.error('[SeaGame] returnToFortress failed:', data.error);
-      return;
-    }
-    await loadState();
+    
+    // Optimistic Update
+    const prevLat = state.currentLat;
+    const prevLng = state.currentLng;
+    const prevActive = isChallengeActive;
+
+    setState(prev => ({ ...prev, currentLat: state.fortressLat, currentLng: state.fortressLng }));
     setIsChallengeActive(false);
-  }, [deviceId, API, loadState]);
+
+    try {
+      const res = await fetch(`${API}/api/sea/return-to-fortress`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Return to fortress failed');
+      }
+      await loadState();
+    } catch (err) {
+      console.error('[SeaGame] returnToFortress error:', err);
+      // Rollback
+      setState(prev => ({ ...prev, currentLat: prevLat, currentLng: prevLng }));
+      setIsChallengeActive(prevActive);
+    }
+  }, [deviceId, API, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng, isChallengeActive, loadState]);
 
   const loadWorldItems = useCallback(async (forceActive?: boolean) => {
     if (!deviceId) return;
@@ -637,21 +736,47 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const setWorldTier = useCallback(async (tier: number) => {
     if (!deviceId) return;
-    const res = await fetch(`${API}/api/sea/set-tier`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, tier }),
-    });
-    const data = await res.json();
-    if (!data.success) {
-      console.error('[SeaGame] setWorldTier failed:', data.error);
-      return;
+    
+    // Optimistic Update
+    const TIER_COSTS = [0, 10, 100, 1000, 10000, 100000];
+    const cost = TIER_COSTS[tier] || 0;
+    
+    const previousTier = state.worldTier;
+    const previousGold = state.seaGold;
+
+    setState(prev => ({
+      ...prev,
+      worldTier: tier,
+      seaGold: Math.max(0, prev.seaGold - cost),
+    }));
+
+    try {
+      const res = await fetch(`${API}/api/sea/world-tier`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, tier }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setState(prev => ({
+          ...prev,
+          worldTier: data.tier,
+          seaGold: data.seaGold,
+          cursePercent: data.cursePercent,
+        }));
+      } else {
+        throw new Error('Tier upgrade failed');
+      }
+    } catch (err) {
+      console.error('[SeaGame] setWorldTier error:', err);
+      // Rollback
+      setState(prev => ({ ...prev, worldTier: previousTier, seaGold: previousGold }));
     }
-    await loadState();
+    
     // Force challenge active AFTER loadState (loadState resets it based on position)
     setIsChallengeActive(true);
     // Load world items for the new tier (force=true to bypass stale closure)
     await loadWorldItems(true);
-  }, [deviceId, API, loadState, loadWorldItems]);
+  }, [deviceId, API, state.worldTier, state.seaGold, loadWorldItems]);
 
   useEffect(() => {
     const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
@@ -671,8 +796,17 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     pendingBagSwap, setPendingBagSwap, acceptBagSwap,
     encounter, setEncounter,
     combatResult, setCombatResult, showCurseModal, setShowCurseModal,
-    showMinigame, setShowMinigame, isSeaGameMode, setIsSeaGameMode,
-    isChallengeActive, setIsChallengeActive, globalSettings,
+    showMinigame, setShowMinigame,
+    isSeaGameMode,
+    setIsSeaGameMode,
+    openBackpack,
+    setOpenBackpackHandler,
+    isItemDragging,
+    setIsItemDragging,
+    isChallengeActive, setIsChallengeActive,
+    preGeneratedMinigame,
+    setPreGeneratedMinigame,
+    globalSettings,
     isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,

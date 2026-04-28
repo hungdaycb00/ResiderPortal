@@ -160,12 +160,17 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
 
 
-    const handleOpenBackpackFromPickup = () => {
+    const handleOpenBackpackFromPickup = useCallback(() => {
         seaGame.setIsSeaGameMode(true);
         nav.setMainTab('backpack');
         nav.setIsSheetExpanded(true);
         setPickupRewardItem(null);
-    };
+    }, [nav, seaGame]);
+
+    useEffect(() => {
+        seaGame.setOpenBackpackHandler(() => handleOpenBackpackFromPickup);
+        return () => seaGame.setOpenBackpackHandler(null);
+    }, [handleOpenBackpackFromPickup, seaGame]);
 
     const handleDiscardPickupItem = async () => {
         if (!pickupRewardItem) return;

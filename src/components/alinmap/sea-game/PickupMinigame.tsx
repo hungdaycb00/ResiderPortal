@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Trophy, XCircle, Bomb, Apple, Brain, Layers, Search, MousePointer2 } from 'lucide-react';
+import { FruitCell, FruitPoint, generateSolvableFruitGrid, findFruitPath, findAnyMove, cloneFruitGrid } from './minigameUtils';
 
 // ==========================================
 // Utils (Audio & Haptic)
@@ -80,122 +81,8 @@ type FruitPathState = { selection: FruitPoint | null; activePath: FruitPoint[] }
 
 const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', '🥝', '🥭'];
 const FRUIT_PATH_COLORS = ['#34d399', '#22d3ee', '#f59e0b', '#a78bfa'];
-const FRUIT_DIRS = [
-  { dr: -1, dc: 0 },
-  { dr: 1, dc: 0 },
-  { dr: 0, dc: -1 },
-  { dr: 0, dc: 1 },
-];
 
-const cloneFruitGrid = (grid: FruitCell[][]) => grid.map(row => row.map(cell => ({ ...cell })));
-
-const isWalkableFruitCell = (grid: FruitCell[][], r: number, c: number, end: FruitPoint) => {
-  if (r < 0 || c < 0 || r >= grid.length || c >= grid[0].length) return false;
-  if (r === end.r && c === end.c) return true;
-  return grid[r][c].f === null;
-};
-
-const findFruitPath = (grid: FruitCell[][], start: FruitPoint, end: FruitPoint): FruitPoint[] | null => {
-  if (start.r === end.r && start.c === end.c) return null;
-  const rows = grid.length;
-  const cols = grid[0].length;
-  const keyOf = (r: number, c: number, dir: number, turns: number) => `${r},${c},${dir},${turns}`;
-  const parent = new Map<string, string | null>();
-  const stateByKey = new Map<string, { r: number; c: number; dir: number; turns: number }>();
-  const queue: { r: number; c: number; dir: number; turns: number }[] = [];
-  const visited = new Set<string>();
-
-  const push = (state: { r: number; c: number; dir: number; turns: number }, prevKey: string | null) => {
-    const key = keyOf(state.r, state.c, state.dir, state.turns);
-    if (visited.has(key)) return;
-    visited.add(key);
-    parent.set(key, prevKey);
-    stateByKey.set(key, state);
-    queue.push(state);
-  };
-
-  FRUIT_DIRS.forEach((dir, dirIndex) => {
-    const nr = start.r + dir.dr;
-    const nc = start.c + dir.dc;
-    if (isWalkableFruitCell(grid, nr, nc, end)) {
-      push({ r: nr, c: nc, dir: dirIndex, turns: 0 }, keyOf(start.r, start.c, -1, 0));
-    }
-  });
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const currentKey = keyOf(current.r, current.c, current.dir, current.turns);
-
-    if (current.r === end.r && current.c === end.c) {
-      const path: FruitPoint[] = [{ r: end.r, c: end.c }];
-      let cursor: string | null = currentKey;
-      while (cursor) {
-        const state = stateByKey.get(cursor);
-        if (!state) break;
-        path.push({ r: state.r, c: state.c });
-        cursor = parent.get(cursor) || null;
-      }
-      path.push({ r: start.r, c: start.c });
-      return path.reverse();
-    }
-
-    for (let nextDir = 0; nextDir < FRUIT_DIRS.length; nextDir++) {
-      const { dr, dc } = FRUIT_DIRS[nextDir];
-      const nr = current.r + dr;
-      const nc = current.c + dc;
-      if (!isWalkableFruitCell(grid, nr, nc, end)) continue;
-      const turns = current.turns + (current.dir === nextDir ? 0 : 1);
-      if (turns > 2) continue;
-      push({ r: nr, c: nc, dir: nextDir, turns }, currentKey);
-    }
-  }
-
-  return null;
-};
-
-const findAnyMove = (grid: FruitCell[][]) => {
-  const fruitPositions = new Map<string, FruitPoint[]>();
-  for (let r = 0; r < grid.length; r++) {
-    for (let c = 0; c < grid[0].length; c++) {
-      const f = grid[r][c].f;
-      if (f) {
-        if (!fruitPositions.has(f)) fruitPositions.set(f, []);
-        fruitPositions.get(f)!.push({ r, c });
-      }
-    }
-  }
-
-  for (const [fruit, positions] of fruitPositions.entries()) {
-    for (let i = 0; i < positions.length; i++) {
-      for (let j = i + 1; j < positions.length; j++) {
-        if (findFruitPath(grid, positions[i], positions[j])) return true;
-      }
-    }
-  }
-  return false;
-};
-
-const shuffleFruitGrid = (grid: FruitCell[][]) => {
-  const fruits: string[] = [];
-  for (let r = 1; r < grid.length - 1; r++) {
-    for (let c = 1; c < grid[0].length - 1; c++) {
-      if (grid[r][c].f) fruits.push(grid[r][c].f!);
-    }
-  }
-  fruits.sort(() => Math.random() - 0.5);
-  const nextGrid = cloneFruitGrid(grid);
-  let idx = 0;
-  for (let r = 1; r < grid.length - 1; r++) {
-    for (let c = 1; c < grid[0].length - 1; c++) {
-      if (grid[r][c].f) {
-        nextGrid[r][c].f = fruits[idx++];
-      }
-    }
-  }
-  return nextGrid;
-};
-
-const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
+const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void; preGeneratedGrid?: FruitCell[][] }> = ({ tier, onWin, onLose, preGeneratedGrid }) => {
   let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
   let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
   if ((innerRows * innerCols) % 2 !== 0) {
@@ -225,30 +112,7 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
   }, [onWin]);
 
   useEffect(() => {
-    const total = config.rows * config.cols;
-    const fruitPool: string[] = [];
-    const pairs = total / 2;
-    for (let i = 0; i < pairs; i++) {
-      const fruit = FRUITS[i % FRUITS.length];
-      fruitPool.push(fruit, fruit);
-    }
-    fruitPool.sort(() => Math.random() - 0.5);
-
-    let nextGrid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
-      Array.from({ length: boardCols }, (_, c) => ({
-        f: (r === 0 || c === 0 || r === boardRows - 1 || c === boardCols - 1)
-          ? null
-          : fruitPool[(r - 1) * innerCols + (c - 1)] || null,
-        id: `${r}-${c}`,
-      }))
-    );
-
-    // Đảm bảo màn chơi đầu tiên có ít nhất 1 nước đi
-    let attempts = 0;
-    while (!findAnyMove(nextGrid) && attempts < 10) {
-      nextGrid = shuffleFruitGrid(nextGrid);
-      attempts++;
-    }
+    const nextGrid = preGeneratedGrid || generateSolvableFruitGrid(innerRows, innerCols);
 
     setGrid(nextGrid);
     setSelection(null);
@@ -275,7 +139,7 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = null;
     };
-  }, [boardRows, boardCols, config.time, innerRows, innerCols, onLose, onWin]);
+  }, []); // Only run once on mount
 
   const handleCellClick = (r: number, c: number) => {
     if (gameState !== 'playing' || !grid[r][c].f) return;
@@ -325,18 +189,8 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void 
       playSound('correct');
       triggerHaptic('medium');
 
-      // Kiểm tra xem còn nước đi không, nếu không còn mà vẫn còn quả thì shuffle
-      const hasAnyFruit = nextGrid.slice(1, -1).some(row => row.slice(1, -1).some(cell => cell.f));
-      if (hasAnyFruit && !findAnyMove(nextGrid)) {
-        setIsShuffling(true);
-        setTimeout(() => {
-          setGrid(shuffleFruitGrid(nextGrid));
-          setIsShuffling(false);
-        }, 600);
-      } else {
-        setGrid(nextGrid);
-        checkWin(nextGrid);
-      }
+      setGrid(nextGrid);
+      checkWin(nextGrid);
     }, 280);
   };
 
@@ -619,10 +473,20 @@ const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => voi
   );
 };
 
+interface PickupMinigameProps {
+  type: 'fishing' | 'diving' | 'chest'; // fishing=Fruit, diving=Memory, chest=Minesweeper
+  difficulty: number; // 1=Common, 2=Uncommon, 3=Rare, 4=Legendary
+  tier: number; // 0=0g, 1=10g, etc.
+  onWin: () => void;
+  onLose: () => void;
+  onClose: () => void;
+  preGeneratedGrid?: any;
+}
+
 // ==========================================
 // Main Wrapper
 // ==========================================
-const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, tier, onWin, onLose, onClose }) => {
+const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, tier, onWin, onLose, onClose, preGeneratedGrid }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -647,7 +511,7 @@ const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, tier,
           <p className="text-[10px] font-bold text-cyan-500 mt-1 uppercase tracking-widest">Cấp độ thế giới: {tier}</p>
         </div>
 
-        {type === 'fishing' && <FruitGame tier={tier} onWin={onWin} onLose={onLose} />}
+        {type === 'fishing' && <FruitGame tier={tier} onWin={onWin} onLose={onLose} preGeneratedGrid={preGeneratedGrid} />}
         {type === 'diving' && <MemoryGame tier={tier} onWin={onWin} onLose={onLose} />}
         {type === 'chest' && <Minesweeper tier={tier} onWin={onWin} onLose={onLose} />}
       </motion.div>

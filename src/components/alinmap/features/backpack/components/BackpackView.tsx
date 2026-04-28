@@ -101,11 +101,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a1929] to-[#040b12] px-4 py-6">
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a1929] to-[#040b12] px-4 py-4">
         {tab === 'inventory' && (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1">
             <div 
-              className={`flex w-full items-center justify-center gap-3 rounded-2xl border-2 px-4 py-2 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-cyan-900/30 bg-[#08131d]'}`}
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-4 py-1.5 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-cyan-900/30 bg-[#08131d]'}`}
               onPointerEnter={() => {
                 if (draggingItem && (BAG_DEFAULTS[draggingItem.id] || (draggingItem as any).type === 'bag')) {
                   setIsHoveringBagSlot(true);
