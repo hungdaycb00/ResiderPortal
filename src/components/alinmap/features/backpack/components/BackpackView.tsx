@@ -84,48 +84,52 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const isAtFortress = isLooterAtFortress(state);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden text-white">
-      {/* Header with Stats integrated */}
-      <div className="px-4 py-3 bg-black/40 backdrop-blur-md">
-        {/* Top Row: Gold & Bag Icon */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1">
-            <Coins className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-xs font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
-          </div>
-          
-          <div className={`relative h-8 w-8 rounded-lg border flex items-center justify-center shadow-lg transition-transform hover:scale-105 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
-             <span className="text-xl leading-none">{activeBag?.icon || '🎒'}</span>
-          </div>
+    <div className="flex h-full flex-col overflow-visible text-white relative">
+      {/* Floating Stats Row: Outside/Top of the tab */}
+      <div className="absolute -top-10 left-0 right-0 flex items-center justify-around px-2 py-1 pointer-events-none">
+        <div className="flex items-center gap-1">
+          <Heart className="h-3.5 w-3.5 text-red-500 drop-shadow-md" />
+          <span className="text-[11px] font-black drop-shadow-md">{state.currentHp}</span>
         </div>
+        <div className="flex items-center gap-1">
+          <Zap className="h-3.5 w-3.5 text-blue-500 drop-shadow-md" />
+          <span className="text-[11px] font-black drop-shadow-md">{state.energyMax + totalStats.energyMax}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Wind className="h-3.5 w-3.5 text-emerald-500 drop-shadow-md" />
+          <span className="text-[11px] font-black drop-shadow-md">{state.moveSpeed}x</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Swords className="h-3.5 w-3.5 text-orange-500 drop-shadow-md" />
+          <span className="text-[11px] font-black drop-shadow-md">{totalStats.weight}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Skull className="h-3.5 w-3.5 text-purple-500 drop-shadow-md" />
+          <span className="text-[11px] font-black drop-shadow-md">{Math.round(state.cursePercent)}%</span>
+        </div>
+      </div>
 
-        {/* Stats Row: Highest Position */}
-        <div className="grid grid-cols-5 gap-1.5">
-          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-            <Heart className="h-3 w-3 text-red-500 mb-0.5" />
-            <span className="text-[10px] font-black">{state.currentHp}</span>
+      {/* Header with Gold & Bag */}
+      <div className="px-4 py-2 bg-black/60 backdrop-blur-lg border-b border-white/5 shrink-0">
+        <div className="flex items-center justify-between">
+          {/* Bag Slot (Now on the Left) */}
+          <div className={`relative h-9 w-9 rounded-xl border-2 flex items-center justify-center shadow-xl transition-all hover:scale-110 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+             <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
+             <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-cyan-500 rounded-full border-2 border-black flex items-center justify-center">
+                <Anchor className="w-2 h-2 text-white" />
+             </div>
           </div>
-          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-            <Zap className="h-3 w-3 text-blue-500 mb-0.5" />
-            <span className="text-[10px] font-black">{state.energyMax + totalStats.energyMax}</span>
-          </div>
-          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-            <Wind className="h-3 w-3 text-emerald-500 mb-0.5" />
-            <span className="text-[10px] font-black">{state.moveSpeed}x</span>
-          </div>
-          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-            <Swords className="h-3 w-3 text-orange-500 mb-0.5" />
-            <span className="text-[10px] font-black">{totalStats.weight}</span>
-          </div>
-          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-            <Skull className="h-3 w-3 text-purple-500 mb-0.5" />
-            <span className="text-[10px] font-black">{Math.round(state.cursePercent)}%</span>
+
+          {/* Gold (Now on the Right) */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 shadow-lg">
+            <Coins className="h-4 w-4 text-amber-500" />
+            <span className="text-sm font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3 subtle-scrollbar">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex-1 overflow-y-auto p-1 subtle-scrollbar">
+        <div className="flex flex-col items-center gap-2">
           {/* Main Grid: Transparent background, minimal padding */}
           <div className="w-full">
             <InventoryGrid
