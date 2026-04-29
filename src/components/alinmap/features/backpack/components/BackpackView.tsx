@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
-import { isLooterAtFortress, useLooterGame } from '../../../looter-game/LooterGameProvider';
+import { isLooterAtFortress } from '../../../looter-game/LooterGameProvider';
+import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 

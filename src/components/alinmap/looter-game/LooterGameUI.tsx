@@ -5,7 +5,7 @@ import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import CombatLootModal from './backpack/CombatLootModal';
-import { useLooterGame } from './LooterGameProvider';
+import { useLooterGame } from './LooterGameContext';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'bg-sky-100 border-sky-300',

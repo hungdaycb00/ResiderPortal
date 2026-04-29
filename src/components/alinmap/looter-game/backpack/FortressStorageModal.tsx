@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X, Database, Package, Sparkles, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
-import { useLooterGame } from '../LooterGameProvider';
+import { useLooterGame } from '../LooterGameContext';
 import type { LooterItem, BagItem } from './types';
 
 const STORAGE_GRID_W = MAX_GRID_W;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Wind, Heart, Shield } from 'lucide-react';
-import { useLooterGame } from './LooterGameProvider';
+import { useLooterGame } from './LooterGameContext';
 
 const CurseModal: React.FC = () => {
   const { showCurseModal, setShowCurseModal, encounter, curseChoice, setEncounter, state } = useLooterGame();

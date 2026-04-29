@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Package, Trash2, Coins, Swords, ShieldCheck, Heart, Zap, Wind, Skull, Anchor, DollarSign } from 'lucide-react';
 import type { LooterItem, BagItem } from './types';
-import { useLooterGame } from '../LooterGameProvider';
+import { useLooterGame } from '../LooterGameContext';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 interface InventoryGridProps {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLooterGame } from './LooterGameProvider';
+import { useLooterGame } from './LooterGameContext';
 import type { LooterItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 

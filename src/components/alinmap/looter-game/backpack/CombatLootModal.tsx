@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Package } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
-import { useLooterGame } from '../LooterGameProvider';
+import { useLooterGame } from '../LooterGameContext';
 import type { LooterItem } from './types';
 
 const RARITY_COLORS: Record<string, string> = {
