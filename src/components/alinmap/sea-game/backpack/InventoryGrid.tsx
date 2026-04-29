@@ -59,7 +59,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragItem,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging, sellItems } = useSeaGame();
+  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems } = useSeaGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });

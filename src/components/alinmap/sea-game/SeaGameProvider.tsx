@@ -137,6 +137,8 @@ interface SeaGameContextType {
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
   draggingItem: SeaItem | null;
   setDraggingItem: (item: SeaItem | null) => void;
+  isItemDragging: boolean;
+  setIsItemDragging: (v: boolean) => void;
 }
 
 const defaultState: SeaGameState = {
