@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { X, Database, Package, Sparkles, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
@@ -116,108 +116,16 @@ export default function FortressStorageModal() {
 
   if (!isFortressStorageOpen) return null;
 
-  const StoragePanel = () => (
-    <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'storage' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
-          {isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
-          {isPortalMode ? 'Kho Portal' : 'Kho Thành Trì'}
-        </div>
-        <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
-      </div>
-
-      <div
-        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
-        onPointerEnter={() => setHoverTarget('storage')}
-        onPointerLeave={() => {
-          if (dragSource) setHoverTarget(null);
-        }}
-      >
-        <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
-          <InventoryGrid
-            items={storageItems}
-            bags={[VIRTUAL_STORAGE_BAG]}
-            gridH={STORAGE_GRID_H}
-            hideStorage
-            onItemLayoutChange={(newItems) => saveStorage(newItems)}
-            onHoverCellChange={(cell) => {
-              setStorageHoverCell(cell);
-              if (cell) setHoverTarget('storage');
-            }}
-            onDragStart={(item, src, offset) => {
-              setDragItem(item);
-              setDragSource(src);
-              setDragOffset(offset);
-            }}
-            onDragEnd={() => {
-                setDragItem(null);
-                setDragSource(null);
-            }}
-            onExternalDrop={handleMoveToStorage}
-            externalDragItem={dragSource === 'inventory' ? dragItem : null}
-            externalDragOffset={dragSource === 'inventory' ? dragOffset : null}
-            externalHoverCell={dragSource === 'inventory' ? storageHoverCell : null}
-            cellSize={38}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const InventoryPanel = () => (
-    <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'inventory' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
-          <Package className="h-4 w-4" />
-          Hòm Đồ Thuyền
-        </div>
-        <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
-      </div>
-
-      <div
-        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
-        onPointerEnter={() => setHoverTarget('inventory')}
-        onPointerLeave={() => {
-          if (dragSource) setHoverTarget(null);
-        }}
-      >
-        <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
-          <InventoryGrid
-            items={state.inventory}
-            bags={state.bags}
-            hideStorage
-            onItemLayoutChange={(newItems) => saveInventory(newItems)}
-            onHoverCellChange={(cell) => {
-              setInventoryHoverCell(cell);
-              if (cell) setHoverTarget('inventory');
-            }}
-            onDragStart={(item, src, offset) => {
-              setDragItem(item);
-              setDragSource(src);
-              setDragOffset(offset);
-            }}
-            onDragEnd={() => {
-              setDragItem(null);
-              setDragSource(null);
-            }}
-            onExternalDrop={handleMoveToInventory}
-            externalDragItem={dragSource === 'storage' ? dragItem : null}
-            externalDragOffset={dragSource === 'storage' ? dragOffset : null}
-            externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
-            cellSize={38}
-          />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/60 backdrop-blur-sm lg:p-4">
-      <div className="flex h-full w-full flex-col overflow-hidden bg-[#040b12] text-white lg:h-3/4 lg:w-1/3 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl">
-        <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
-          <div>
-            <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
-              {isPortalMode ? <Sparkles className="h-5 w-5" /> : <Database className="h-5 w-5" />}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm">
+      <div className="flex h-[95vh] w-full max-w-5xl flex-col rounded-3xl border border-cyan-500/30 bg-[#03080f] shadow-2xl shadow-cyan-500/10 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+              {isPortalMode ? <Sparkles className="h-6 w-6" /> : <Database className="h-6 w-6" />}
+            </div>
+            <h2 className="text-xl font-black text-white flex items-center gap-2">
               {isPortalMode ? 'Cổng Portal' : 'Kho Thành Trì'}
             </h2>
           </div>
@@ -239,7 +147,7 @@ export default function FortressStorageModal() {
               onClick={() => {
                 setIsFortressStorageOpen(false);
                 setIsLootGameMode(false);
-                setIsItemDragging(false); // Reset dragging state to fix UI freeze
+                setIsItemDragging(false);
               }}
               className="rounded-full p-2 transition-colors hover:bg-white/10"
             >
@@ -250,8 +158,98 @@ export default function FortressStorageModal() {
 
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
           <div className="flex flex-1 flex-col gap-4 lg:grid lg:grid-cols-2">
-            <InventoryPanel />
-            <StoragePanel />
+            {/* Inventory Panel */}
+            <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'inventory' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
+                  <Package className="h-4 w-4" />
+                  Hòm Đồ Thuyền
+                </div>
+                <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
+              </div>
+
+              <div
+                className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
+                onPointerEnter={() => setHoverTarget('inventory')}
+                onPointerLeave={() => {
+                  if (dragSource) setHoverTarget(null);
+                }}
+              >
+                <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
+                  <InventoryGrid
+                    items={state.inventory}
+                    bags={state.bags}
+                    hideStorage
+                    onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                    onHoverCellChange={(cell) => {
+                      setInventoryHoverCell(cell);
+                      if (cell) setHoverTarget('inventory');
+                    }}
+                    onDragStart={(item, src, offset) => {
+                      setDragItem(item);
+                      setDragSource(src);
+                      setDragOffset(offset);
+                    }}
+                    onDragEnd={() => {
+                      setDragItem(null);
+                      setDragSource(null);
+                    }}
+                    onExternalDrop={handleMoveToInventory}
+                    externalDragItem={dragSource === 'storage' ? dragItem : null}
+                    externalDragOffset={dragSource === 'storage' ? dragOffset : null}
+                    externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
+                    cellSize={38}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Storage Panel */}
+            <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'storage' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
+                  {isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
+                  {isPortalMode ? 'Kho Portal' : 'Kho Thành Trì'}
+                </div>
+                <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
+              </div>
+
+              <div
+                className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
+                onPointerEnter={() => setHoverTarget('storage')}
+                onPointerLeave={() => {
+                  if (dragSource) setHoverTarget(null);
+                }}
+              >
+                <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
+                  <InventoryGrid
+                    items={storageItems}
+                    bags={[VIRTUAL_STORAGE_BAG]}
+                    gridH={STORAGE_GRID_H}
+                    hideStorage
+                    onItemLayoutChange={(newItems) => saveStorage(newItems)}
+                    onHoverCellChange={(cell) => {
+                      setStorageHoverCell(cell);
+                      if (cell) setHoverTarget('storage');
+                    }}
+                    onDragStart={(item, src, offset) => {
+                      setDragItem(item);
+                      setDragSource(src);
+                      setDragOffset(offset);
+                    }}
+                    onDragEnd={() => {
+                      setDragItem(null);
+                      setDragSource(null);
+                    }}
+                    onExternalDrop={handleMoveToStorage}
+                    externalDragItem={dragSource === 'inventory' ? dragItem : null}
+                    externalDragOffset={dragSource === 'inventory' ? dragOffset : null}
+                    externalHoverCell={dragSource === 'inventory' ? storageHoverCell : null}
+                    cellSize={38}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
