@@ -266,11 +266,12 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void;
 // ==========================================
 // 2. Memory Game (Diving Alternative)
 // ==========================================
-const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
+const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
   const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱', '⚓', '🌊'];
-  const rows = Math.min(7, 4 + Math.floor(tier / 2));
-  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
-  const config = { rows, cols, time: Math.max(30, 60 - tier * 5) };
+  const effectiveTier = tier + Math.max(0, difficulty - 1);
+  const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
+  const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+  const config = { rows, cols, time: Math.max(20, 60 - effectiveTier * 5) };
 
   const [cards, setCards] = useState<{v: string, f: boolean, m: boolean}[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
@@ -357,7 +358,7 @@ const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void
           <button
             key={i}
             onClick={() => handleClick(i)}
-            className={`w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-lg rounded-lg transition-all ${
+            className={`w-11 h-11 md:w-14 md:h-14 flex items-center justify-center text-xl rounded-lg transition-all ${
               card.f || card.m ? 'bg-white rotate-0' : 'bg-blue-600/40 rotate-180'
             }`}
           >
@@ -373,10 +374,11 @@ const MemoryGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void
 // ==========================================
 // 3. Minesweeper (Chest Alternative)
 // ==========================================
-const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => void }> = ({ tier, onWin, onLose }) => {
-  const rows = Math.min(7, 4 + Math.floor(tier / 2));
-  const cols = Math.min(7, 4 + Math.ceil(tier / 2));
-  const config = { rows, cols, mines: Math.floor(rows * cols * 0.15), time: Math.max(30, 60 - tier * 5) };
+const Minesweeper: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
+  const effectiveTier = tier + Math.max(0, difficulty - 1);
+  const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
+  const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+  const config = { rows, cols, mines: Math.floor(rows * cols * (0.15 + effectiveTier * 0.02)), time: Math.max(20, 60 - effectiveTier * 5) };
 
   const [grid, setGrid] = useState<{m: boolean, o: boolean, n: number}[][]>([]);
   const [gameState, setGameState] = useState<'playing' | 'won' | 'lost'>('playing');
@@ -460,7 +462,7 @@ const Minesweeper: React.FC<{ tier: number; onWin: () => void; onLose: () => voi
           <button
             key={`${r}-${c}`}
             onClick={() => open(r, c)}
-            className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-xs font-black rounded ${
+            className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm font-black rounded ${
               cell.o ? (cell.m ? 'bg-red-600' : 'bg-white/20 text-white') : 'bg-red-900/40 hover:bg-red-800/40 active:scale-90'
             }`}
           >
@@ -508,12 +510,14 @@ const PickupMinigame: React.FC<PickupMinigameProps> = ({ type, difficulty, tier,
               <div key={i} className={`w-3 h-1.5 rounded-full ${i < difficulty ? 'bg-cyan-400' : 'bg-white/10'}`} />
             ))}
           </div>
-          <p className="text-[10px] font-bold text-cyan-500 mt-1 uppercase tracking-widest">Cấp độ thế giới: {tier}</p>
+          <p className="text-[11px] font-bold text-cyan-400 mt-1 uppercase tracking-widest bg-cyan-950/30 px-3 py-1 rounded-full border border-cyan-800/30">
+            Cấp độ thế giới: {tier}
+          </p>
         </div>
 
         {type === 'fishing' && <FruitGame tier={tier} onWin={onWin} onLose={onLose} preGeneratedGrid={preGeneratedGrid} />}
-        {type === 'diving' && <MemoryGame tier={tier} onWin={onWin} onLose={onLose} />}
-        {type === 'chest' && <Minesweeper tier={tier} onWin={onWin} onLose={onLose} />}
+        {type === 'diving' && <MemoryGame tier={tier} difficulty={difficulty} onWin={onWin} onLose={onLose} />}
+        {type === 'chest' && <Minesweeper tier={tier} difficulty={difficulty} onWin={onWin} onLose={onLose} />}
       </motion.div>
     </motion.div>
   );

@@ -186,10 +186,8 @@ const createPortalWorldItems = (
       });
     }
   }
-
   return items;
 };
-
 
 const SeaGameContext = createContext<SeaGameContextType | null>(null);
 
@@ -226,6 +224,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [draggingItem, setDraggingItem] = useState<SeaItem | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
+  const [isLootGameMode, setIsLootGameMode] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
 
@@ -601,7 +600,10 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       opponentTier: state.worldTier,
     };
     const combatUrls: string[] = [];
-    if (API) combatUrls.push(`${API}/api/sea/combat`);
+    if (API) {
+      combatUrls.push(`${API}/api/sea/combat`);
+      combatUrls.push(`${API}/api/seaJourney/combat`);
+    }
     
     // Thêm các URL tiềm năng khác nếu cần, nhưng bỏ qua domain frontend nếu nó là alin.city (static)
     if (typeof window !== 'undefined') {
@@ -745,8 +747,6 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       await loadState();
     } catch (err: any) { 
       let errorMsg = err.message || 'Lỗi kết nối máy chủ';
-
-
       showNotification(errorMsg, 'error');
       // Rollback
       setState(prev => ({ ...prev, inventory: prevInventory, storage: prevStorage }));
@@ -818,7 +818,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     setState(prev => ({
       ...prev,
       worldTier: tier,
-      lootGold: Math.max(0, prev.lootGold - cost),
+      seaGold: Math.max(0, prev.seaGold - cost),
     }));
 
     try {
@@ -831,7 +831,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         setState(prev => ({
           ...prev,
           worldTier: data.tier,
-          lootGold: data.seaGold || data.lootGold,
+          seaGold: data.seaGold || data.seaGold,
           cursePercent: data.cursePercent,
         }));
       } else {
@@ -862,6 +862,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
 
   const openFortressStorage = useCallback((mode: StorageAccessMode = 'fortress') => {
     setFortressStorageMode(mode);
+    setIsLootGameMode(mode === 'portal');
     setIsFortressStorageOpen(true);
   }, []);
 
@@ -879,6 +880,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     setOpenBackpackHandler,
     isItemDragging,
     setIsItemDragging,
+    isLootGameMode,
+    setIsLootGameMode,
     isChallengeActive, setIsChallengeActive,
     preGeneratedMinigame,
     setPreGeneratedMinigame,
@@ -891,7 +894,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
   }), [
     state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
     acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isSeaGameMode, openBackpack,
-    setOpenBackpackHandler, isItemDragging, isChallengeActive, preGeneratedMinigame, globalSettings,
+    setOpenBackpackHandler, isItemDragging, isLootGameMode, isChallengeActive, preGeneratedMinigame, globalSettings,
     isMoving, showDiscardModal, confirmDiscard, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
     curseChoice, sellItems, storeItems, setWorldTier, returnToFortress, loadWorldItems,

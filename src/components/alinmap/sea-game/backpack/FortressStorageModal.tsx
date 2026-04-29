@@ -231,7 +231,10 @@ export default function FortressStorageModal() {
               </button>
             )}
             <button
-              onClick={() => setIsFortressStorageOpen(false)}
+              onClick={() => {
+                setIsFortressStorageOpen(false);
+                setIsLootGameMode(false);
+              }}
               className="rounded-full p-2 transition-colors hover:bg-white/10"
             >
               <X className="h-6 w-6 text-gray-400" />

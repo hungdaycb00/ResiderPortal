@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Trash2 } from 'lucide-react';
 import type { SeaItem, BagItem } from './types';
 import { useSeaGame } from '../SeaGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
@@ -63,7 +63,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragOffset,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems } = useSeaGame();
+  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems, isLootGameMode, isChallengeActive, items: allItems, saveInventory } = useSeaGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -271,7 +271,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       });
     } else {
       if (isHoveringSell) {
-        sellItems([dragItem.uid]);
+        if (isLootGameMode) {
+          // Discard items in Loot Mode
+          const newItems = items.filter(i => i.uid !== dragItem.uid);
+          saveInventory(newItems);
+        } else {
+          sellItems([dragItem.uid]);
+        }
       } else if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         // Place on grid
         const newItems = items.map(i =>
@@ -508,10 +514,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           <div
             ref={trashRef}
             className={`absolute bottom-2 right-2 z-20 flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-transform ${
-              isHoveringSell ? 'scale-125 border-amber-400 bg-amber-600 text-white shadow-lg shadow-amber-900/40' : 'border-amber-600/40 bg-amber-950/50 text-amber-200'
+              isHoveringSell 
+                ? `scale-125 border-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-400 bg-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-600 text-white shadow-lg shadow-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-900/40` 
+                : `border-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-600/40 bg-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-950/50 text-${(isLootGameMode || isChallengeActive) ? 'red' : 'amber'}-200`
             }`}
           >
-            <DollarSign className="h-5 w-5" />
+            {(isLootGameMode || isChallengeActive) ? <Trash2 className="h-5 w-5" /> : <DollarSign className="h-5 w-5" />}
           </div>
           <div className="mb-2 flex items-center justify-between pr-12">
             <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
@@ -597,13 +605,19 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           <button
              onPointerDown={(e) => {
                e.stopPropagation();
-               sellItems([popupInfo.item.uid]);
+               const isTrash = isLootGameMode || isChallengeActive;
+               if (isTrash) {
+                 const newItems = items.filter(i => i.uid !== popupInfo.item.uid);
+                 saveInventory(newItems);
+               } else {
+                 sellItems([popupInfo.item.uid]);
+               }
                setPopupInfo(null);
              }}
-             className="w-full mt-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black rounded-lg transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5"
+             className={`w-full mt-3 py-2 ${(isLootGameMode || isChallengeActive) ? 'bg-red-600 hover:bg-red-500' : 'bg-amber-600 hover:bg-amber-500'} text-white text-[10px] font-black rounded-lg transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5`}
           >
-            <DollarSign className="w-3 h-3" />
-            Bán nhanh
+            {(isLootGameMode || isChallengeActive) ? <Trash2 className="w-3 h-3" /> : <DollarSign className="w-3 h-3" />}
+            {(isLootGameMode || isChallengeActive) ? 'Vứt bỏ' : 'Bán nhanh'}
           </button>
         </div>
       )}
