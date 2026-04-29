@@ -105,10 +105,16 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     return grid;
   }, [activeBag, gridW, gridH]);
 
-  // Sync internal hoverCell to external if needed
   const updateHoverCell = useCallback((cell: { x: number; y: number } | null) => {
-    setHoverCell(cell);
-    onHoverCellChange?.(cell);
+    setHoverCell((prev) => {
+      // Avoid re-renders if cell hasn't changed
+      if (prev === null && cell === null) return prev;
+      if (prev && cell && prev.x === cell.x && prev.y === cell.y) return prev;
+      
+      // Call external callback only when changed
+      onHoverCellChange?.(cell);
+      return cell;
+    });
   }, [onHoverCellChange]);
 
   const buildItemOccupancy = useCallback((excludeUid?: string) => {
