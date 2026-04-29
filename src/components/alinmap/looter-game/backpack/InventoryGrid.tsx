@@ -58,8 +58,15 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragOffset,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems, dropItem, saveInventory } = useLooterGame();
+  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems, dropItem: looterDropItem, saveInventory } = useLooterGame();
   const [dragItem, setDragItem] = useState<LooterItem | null>(null);
+  
+  const handleDropItem = useCallback((uid: string) => {
+    if (typeof looterDropItem === 'function') {
+      looterDropItem(uid);
+    }
+  }, [looterDropItem]);
+
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
@@ -213,7 +220,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           const isOutside = pointerCurrent.clientX < gridRect.left || pointerCurrent.clientX > gridRect.right ||
                             pointerCurrent.clientY < gridRect.top || pointerCurrent.clientY > gridRect.bottom;
           if (isOutside) {
-            dropItem(dragItem.uid);
+            handleDropItem(dragItem.uid);
           }
         }
       }
@@ -227,7 +234,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
     onDragEnd?.();
-  }, [dragItem, externalDragItem, hoverCell, items, canPlaceItem, onItemClick, onItemLayoutChange, onHoverCellChange, onDragEnd, dropItem, setDraggingItem, setIsItemDragging]);
+  }, [dragItem, externalDragItem, hoverCell, items, canPlaceItem, onItemClick, onItemLayoutChange, onHoverCellChange, onDragEnd, handleDropItem, setDraggingItem, setIsItemDragging]);
 
   React.useEffect(() => {
     const handleGlobalMove = (e: PointerEvent) => { if (dragItem || externalDragItem) updateDragPosition(e.clientX, e.clientY); };
@@ -320,7 +327,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
              {popupInfo.item.weight > 0 && <div className="flex justify-between"><span className="text-gray-500 font-bold uppercase">Sát thương</span><span className="font-black text-orange-400">{popupInfo.item.weight}</span></div>}
              {popupInfo.item.price > 0 && <div className="flex justify-between"><span className="text-gray-500 font-bold uppercase">Giá bán</span><span className="font-black text-amber-400">{popupInfo.item.price}</span></div>}
           </div>
-          <button onClick={() => { dropItem(popupInfo.item.uid); setPopupInfo(null); }} className="w-full py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-500/20"><Trash2 className="w-3.5 h-3.5" /> Ném ra biển</button>
+          <button onClick={() => { handleDropItem(popupInfo.item.uid); setPopupInfo(null); }} className="w-full py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-500/20"><Trash2 className="w-3.5 h-3.5" /> Ném ra biển</button>
         </div>
       )}
     </div>
