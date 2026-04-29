@@ -103,6 +103,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
   const [draggingMapItem, setDraggingMapItem] = useState<WorldItem | null>(null);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+
   const openBackpack = useCallback(() => {
     if (openBackpackHandler) {
       openBackpackHandler();
@@ -334,6 +337,15 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       // Không cần rollback vì ném đồ thường là hành động cuối cùng và server sẽ sync lại sau
     }
   }, [deviceId, API, loadWorldItems, showNotification]);
+
+  const confirmDiscard = useCallback(async () => {
+    const stagingItems = state.inventory.filter(i => i.gridX < 0);
+    for (const item of stagingItems) {
+      await dropItem(item.uid);
+    }
+    setShowDiscardModal(false);
+    showNotification(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
+  }, [state.inventory, dropItem, showNotification]);
 
   const saveStorage = useCallback(async (storage: LooterItem[]) => {
     if (!deviceId) return;
@@ -900,6 +912,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification, draggingItem, setDraggingItem,
     draggingMapItem, setDraggingMapItem,
     openFortressStorage,
+    showDiscardModal, setShowDiscardModal, confirmDiscard
   }), [
     state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
     acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isLooterGameMode, isLootGameMode, openBackpack,
@@ -907,7 +920,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isMoving, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
     curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
-    showNotification, draggingItem, draggingMapItem, openFortressStorage
+    showNotification, draggingItem, draggingMapItem, openFortressStorage,
+    showDiscardModal, confirmDiscard
   ]);
 
   return <LooterGameContext.Provider value={value}>{children}</LooterGameContext.Provider>;

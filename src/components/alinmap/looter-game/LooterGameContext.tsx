@@ -129,6 +129,9 @@ export interface LooterGameContextType {
   setDraggingItem: (item: LooterItem | null) => void;
   draggingMapItem: WorldItem | null;
   setDraggingMapItem: (item: WorldItem | null) => void;
+  showDiscardModal: boolean;
+  setShowDiscardModal: (v: boolean) => void;
+  confirmDiscard: () => Promise<void>;
 }
 
 export const LooterGameContext = createContext<LooterGameContextType | null>(null);
