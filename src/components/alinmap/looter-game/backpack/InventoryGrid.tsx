@@ -214,12 +214,22 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         const newItems = items.map(i => i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i);
         onItemLayoutChange?.(newItems);
       } else if (dragItem) {
-        // Drop outside logic
+        // Drop outside Grid but inside Looter Tab (Staging)
         const gridRect = gridRef.current?.getBoundingClientRect();
         if (gridRect && pointerCurrent) {
           const isOutside = pointerCurrent.clientX < gridRect.left || pointerCurrent.clientX > gridRect.right ||
                             pointerCurrent.clientY < gridRect.top || pointerCurrent.clientY > gridRect.bottom;
-          if (isOutside) {
+          
+          if (!isOutside) {
+              // Thả lơ lửng xung quanh Grid
+              const newItems = items.map(i => i.uid === dragItem.uid ? { 
+                  ...i, 
+                  gridX: -1, gridY: -1,
+                  stagingX: dragPos.x - dragOffset.x,
+                  stagingY: dragPos.y - dragOffset.y
+              } : i);
+              onItemLayoutChange?.(newItems);
+          } else {
             handleDropItem(dragItem.uid);
           }
         }
@@ -261,13 +271,41 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   }
 
   const gridItems = items.filter(i => i.gridX >= 0);
+  const stagingItems = items.filter(i => i.gridX < 0);
 
   return (
-    <div className="flex flex-col gap-4 select-none touch-none w-full" onPointerMove={(e) => { if (isItemDragging) e.stopPropagation(); updateDragPosition(e.clientX, e.clientY); }}>
-      <div className="w-full overflow-x-auto overflow-y-hidden subtle-scrollbar pb-1">
+    <div className="flex flex-col gap-4 select-none touch-none w-full h-full relative" onPointerMove={(e) => { if (isItemDragging) e.stopPropagation(); updateDragPosition(e.clientX, e.clientY); }}>
+       {/* Staging Items (Floating around the grid) */}
+       {stagingItems.map(item => (
+         <motion.div
+           key={item.uid}
+           className={`absolute z-20 cursor-grab active:cursor-grabbing ${activeDragItem?.uid === item.uid ? 'opacity-20' : ''}`}
+           style={{ 
+             left: (item as any).stagingX ?? (Math.random() * 50), 
+             top: (item as any).stagingY ?? (Math.random() * 50), 
+             width: (item.gridW || 1) * cellSize, 
+             height: (item.gridH || 1) * cellSize 
+           }}
+           onPointerDown={(e) => handleItemPointerDown(e, item)}
+           onDoubleClick={() => onItemDoubleClick?.(item)}
+         >
+           {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
+             if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
+             return (
+               <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
+                 {((!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true))) && (
+                   <span className="text-xl drop-shadow-md">{item.icon}</span>
+                 )}
+               </div>
+             );
+           }))}
+         </motion.div>
+       ))}
+
+      <div className="w-full h-full flex items-center justify-center pointer-events-none">
         <div
           ref={gridRef}
-          className="relative rounded-[32px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
+          className="pointer-events-auto relative rounded-[32px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
           style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
         >
           <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)`, backgroundSize: `${cellSize}px ${cellSize}px` }} />

@@ -86,7 +86,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [state, setState] = useState<LooterGameState>(defaultState);
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [pickupRewardItem, setPickupRewardItem] = useState<LooterItem | null>(null);
-  const [pendingBagSwap, setPendingBagSwap] = useState<BagItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
   const [showCurseModal, setShowCurseModal] = useState(false);
@@ -232,6 +231,15 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
   const moveBoat = useCallback(async (toLat: number, toLng: number) => {
     if (!deviceId) return { curseTrigger: false, encounter: null };
+    // Tự động vứt bỏ vật phẩm đang ở hàng chờ (staging area) ra biển trước khi di chuyển
+    const stagingItems = state.inventory.filter(i => (i.gridX ?? -1) < 0);
+    if (stagingItems.length > 0) {
+      for (const item of stagingItems) {
+        await dropItem(item.uid);
+      }
+      showNotification(`${stagingItems.length} vật phẩm thừa đã rơi xuống biển tại đây.`, 'info');
+    }
+
     setIsMoving(true);
     try {
       const res = await fetch(`${API}/api/looter/move`, {
@@ -273,7 +281,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       console.error('[LooterGame] moveBoat error:', err);
       return { curseTrigger: false, encounter: null };
     } finally { setIsMoving(false); }
-  }, [deviceId, API, state.fortressLat, state.fortressLng]);
+  }, [deviceId, API, state.fortressLat, state.fortressLng, state.inventory, dropItem, showNotification]);
 
   const saveInventory = useCallback(async (inventory: LooterItem[]) => {
     if (!deviceId) return;
@@ -405,8 +413,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
       if (data.success) {
         setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        if (data.type === 'item') {
-          const item = data.item;
+        
+        // Xử lý cả item thường và balo như vật phẩm inventory
+        if (data.type === 'item' || data.type === 'bag') {
+          const item = data.item || data.bag;
           const activeBag = state.bags[0];
           
           let slot = (gridX !== undefined && gridY !== undefined) ? { x: gridX, y: gridY } : null;
@@ -417,7 +427,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           const newItem = { 
             ...item, 
             gridX: slot ? slot.x : -1, 
-            gridY: slot ? slot.y : -1 
+            gridY: slot ? slot.y : -1,
+            stagingX: slot ? undefined : Math.random() * 200, // Vị trí ngẫu nhiên ban đầu
+            stagingY: slot ? undefined : Math.random() * 300
           };
 
           setState(prev => ({
@@ -431,14 +443,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           } else {
             showNotification(`Đã nhặt ${item.name}`, 'success');
           }
-        } else if (data.type === 'bag') {
-          const bag = data.bag;
-          setState(prev => ({
-            ...prev,
-            bags: Array.isArray(data.bags) ? data.bags : [...prev.bags, bag],
-            cursePercent: typeof data.cursePercent === 'number' ? data.cursePercent : prev.cursePercent
-          }));
-          showNotification(`Đã nhặt Túi đồ: ${bag.name}`, 'success');
         }
         
         setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
@@ -582,18 +586,34 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   }, [pickupItem]);
 
 
-  const acceptBagSwap = useCallback(async (newBag: BagItem) => {
-    const oldBag = state.bags[0];
-    const bagShape = newBag.shape || [];
-    
-    const itemsToKeep: LooterItem[] = [];
-    const itemsToDrop: LooterItem[] = [];
+  const equipBag = useCallback(async (itemUid: string) => {
+    const itemToEquip = state.inventory.find(i => i.uid === itemUid);
+    if (!itemToEquip || itemToEquip.type !== 'bag') {
+      showNotification('Vật phẩm này không phải là Balo', 'error');
+      return;
+    }
 
+    const currentBag = state.bags[0];
+    const newBagData = (itemToEquip as any).bagData || itemToEquip; 
+    
+    // Tạo object BagItem từ LooterItem
+    const newBag: BagItem = {
+      ...newBagData,
+      gridX: currentBag?.gridX ?? 0,
+      gridY: currentBag?.gridY ?? 0,
+    };
+
+    const bagShape = newBag.shape || [];
+    const itemsToKeep: LooterItem[] = [];
+
+    // Lọc ra các item vẫn còn nằm trong vùng của túi mới
     for (const item of state.inventory) {
+      if (item.uid === itemUid) continue; // Không giữ lại chính cái túi đang mặc
+
       let inBounds = true;
       if (item.gridX >= 0) {
-        for (let r = 0; r < item.gridH; r++) {
-          for (let c = 0; c < item.gridW; c++) {
+        for (let r = 0; r < (item.gridH || 1); r++) {
+          for (let c = 0; c < (item.gridW || 1); c++) {
             const br = item.gridY + r - newBag.gridY;
             const bc = item.gridX + c - newBag.gridX;
             if (br < 0 || br >= newBag.height || bc < 0 || bc >= newBag.width || !bagShape[br] || !bagShape[br][bc]) {
@@ -604,35 +624,40 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           if (!inBounds) break;
         }
       } else {
-        inBounds = false; // Items in staging (if any left) are dropped
+        inBounds = false; 
       }
-
-
 
       if (inBounds) {
         itemsToKeep.push(item);
       } else {
-        itemsToDrop.push(item);
+        // Đưa các item không vừa vào hàng chờ (gridX = -1)
+        itemsToKeep.push({ 
+          ...item, 
+          gridX: -1, gridY: -1,
+          stagingX: Math.random() * 200,
+          stagingY: Math.random() * 300
+        });
       }
     }
 
-    // Process drops
-    for (const item of itemsToDrop) {
-      await dropItem(item.uid);
+    // Biến túi cũ thành item trong inventory
+    if (currentBag && !currentBag.isStarter) {
+      const oldBagAsItem: LooterItem = {
+        ...currentBag,
+        uid: `bag_${Date.now()}`,
+        type: 'bag',
+        gridX: -1, gridY: -1, // Cho vào hàng chờ
+        stagingX: Math.random() * 200,
+        stagingY: Math.random() * 300
+      };
+      itemsToKeep.push(oldBagAsItem);
     }
 
-    // Convert old bag to item and drop it too (since no staging)
-    if (oldBag && !oldBag.isStarter) {
-       // We'll just let the server handle bag conversions if needed, 
-       // but here we'll just drop the old bag as an item.
-       // For now, let's just save the new bag and keep the compatible items.
-    }
-
+    // Cập nhật lên server
     await saveBags([newBag]);
     await saveInventory(itemsToKeep);
-    setPendingBagSwap(null);
-    showNotification(`Đã đổi balo. ${itemsToDrop.length} vật phẩm không vừa đã rơi ra biển.`, 'info');
-  }, [state.inventory, state.bags, saveBags, saveInventory, dropItem, showNotification]);
+    showNotification(`Đã trang bị ${newBag.name}. Đồ dư đã được đẩy vào hàng chờ.`, 'success');
+  }, [state.inventory, state.bags, saveBags, saveInventory, showNotification]);
 
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
     if (!deviceId) throw new Error('No device');
@@ -946,11 +971,12 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
     showNotification, draggingItem, setDraggingItem,
     draggingMapItem, setDraggingMapItem, dragPointerPos,
+    equipBag,
     openFortressStorage,
     showDiscardModal, setShowDiscardModal, confirmDiscard
   }), [
-    state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
-    acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isLooterGameMode, isLootGameMode, openBackpack,
+    state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem,
+    encounter, combatResult, showCurseModal, showMinigame, isLooterGameMode, isLootGameMode, openBackpack,
     setOpenBackpackHandler, isItemDragging, isChallengeActive, preGeneratedMinigame, globalSettings,
     isMoving, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,

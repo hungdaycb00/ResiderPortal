@@ -31,7 +31,7 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [externalHoverCell, setExternalHoverCell] = useState<{ x: number, y: number } | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
@@ -143,8 +143,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               onItemLayoutChange={memoizedSaveInventory}
               onItemDoubleClick={(item) => {
                 if ((item as any).type === 'bag') {
-                  acceptBagSwap(item as any);
-                  showNotification(`Đã đổi sang ${item.name}`, 'success');
+                  equipBag(item.uid);
                 }
               }}
               cellSize={cellSize}

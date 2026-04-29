@@ -111,9 +111,7 @@ export interface LooterGameContextType {
   saveInventory: (inventory: LooterItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
-  pendingBagSwap: BagItem | null;
-  setPendingBagSwap: (bag: BagItem | null) => void;
-  acceptBagSwap: (newBag: BagItem) => void;
+  equipBag: (itemUid: string) => Promise<void>;
   executeCombat: (opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) => Promise<CombatResult>;
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
