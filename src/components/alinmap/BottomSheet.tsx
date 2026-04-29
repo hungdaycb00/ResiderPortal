@@ -94,7 +94,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     }, [setIsSheetExpanded]);
 
     const [panelWidth, setPanelWidth] = React.useState(400);
-    const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
+    const [exploreSubTab, setExploreSubTab] = React.useState<'games' | 'creator'>('games');
+    const shouldHideSearch = ['profile', 'backpack'].includes(mainTab);
 
     const handleEnterWorld = React.useCallback(() => {
         setIsSheetExpanded(false);
@@ -240,7 +241,39 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         ) : (
                             <div className={mainTab === 'backpack' ? 'pt-0' : 'pt-2'}>
                                 {mainTab === 'discover' && (
-                                    <DiscoverView games={games} nearbyUsers={nearbyUsers} setSearchTag={setSearchTag} handlePlayGame={handlePlayGame} />
+                                    <div className="flex flex-col h-full">
+                                        {exploreSubTab === 'games' ? (
+                                            <DiscoverView games={games} nearbyUsers={nearbyUsers} setSearchTag={setSearchTag} handlePlayGame={handlePlayGame} />
+                                        ) : (
+                                            <CreatorTabView 
+                                                user={user} 
+                                                externalApi={externalApi} 
+                                                showNotification={showNotification} 
+                                                cloudflareUrl={cloudflareUrl}
+                                                onPublishSuccess={onPublishSuccess}
+                                            />
+                                        )}
+
+                                        {/* Explore Sub-tabs Switcher */}
+                                        {!selectedUser && (
+                                            <div className="fixed bottom-[72px] md:bottom-6 left-0 right-0 md:left-[72px] md:right-auto md:w-[400px] z-[160] px-6 pb-2 pointer-events-none">
+                                                <div className="flex bg-white/90 backdrop-blur-xl p-1 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto">
+                                                    <button 
+                                                        onClick={() => setExploreSubTab('games')}
+                                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'games' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    >
+                                                        Games
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setExploreSubTab('creator')}
+                                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'creator' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                    >
+                                                        Creator
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                                 {mainTab === 'friends' && (
                                     <SocialView

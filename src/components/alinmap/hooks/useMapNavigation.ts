@@ -13,7 +13,7 @@ interface UseMapNavigationParams {
   user?: any;
 }
 
-export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'creator' | 'backpack';
+export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'backpack';
 
 export function useMapNavigation({
   initialMainTab, myObfPos, ws, looterState, looterGame, onTabChange, handleRefresh, requireAuth, user,
@@ -28,7 +28,7 @@ export function useMapNavigation({
 
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' && window.innerWidth >= 768);
-  const [mainTab, setMainTab] = useState<MainTab>((initialMainTab as MainTab) || 'discover');
+  const [mainTab, setMainTab] = useState<MainTab>((initialMainTab as MainTab) === 'creator' ? 'discover' : (initialMainTab as MainTab) || 'discover');
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
   const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -43,20 +43,16 @@ export function useMapNavigation({
 
   useEffect(() => {
     if (initialMainTab) {
-      if (initialMainTab === 'creator' && !user) {
-        setMainTab('discover');
-        setIsSheetExpanded(isDesktop);
-        return;
-      }
-
+      const resolvedTab = initialMainTab === 'creator' ? 'discover' : initialMainTab;
+      
       setMainTab(prev => {
         // Không tự động co lại khi chuyển sang discover để tránh hiệu ứng giật
-        if (prev !== initialMainTab && initialMainTab !== 'discover') {
+        if (prev !== resolvedTab && resolvedTab !== 'discover') {
             setIsSheetExpanded(true);
         } else if (isDesktop) {
             setIsSheetExpanded(true);
         }
-        return initialMainTab as MainTab;
+        return resolvedTab as MainTab;
       });
     }
   }, [initialMainTab, isDesktop, user]);
@@ -110,11 +106,11 @@ export function useMapNavigation({
       return;
     }
 
-    if (tabId === 'creator' && !user) {
-      setMainTab('discover');
-      setIsSheetExpanded(true);
-      onTabChange?.('discover');
-      return;
+    if (tabId === 'creator') {
+        setMainTab('discover');
+        setIsSheetExpanded(true);
+        onTabChange?.('discover');
+        return;
     }
 
     if (tabId === 'backpack') {
