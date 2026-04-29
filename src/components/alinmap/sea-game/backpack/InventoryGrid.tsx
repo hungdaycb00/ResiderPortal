@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+﻿import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign } from 'lucide-react';
 import type { SeaItem, BagItem } from './types';
@@ -40,7 +40,7 @@ const BAG_BG: Record<string, string> = {
 const CLICK_MOVE_TOLERANCE = 8;
 
 const formatItemTooltip = (item: SeaItem) =>
-  `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vang | ${item.gridW || 1}x${item.gridH || 1}`;
+  `${item.name}\nâš” ${item.weight || 0} DMG | â¤ +${item.hpBonus || 0} HP\nâš¡ +${item.energyMax || 0} EN | âœ¦ +${item.energyRegen || 0} Regen\nðŸ’° ${item.price || 0} vang | ${item.gridW || 1}x${item.gridH || 1}`;
 
 type DragMode = 'item' | 'storage-item' | null;
 
@@ -158,8 +158,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage');
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     setDragOffset({
-      x: itemRect.width / 2,
-      y: itemRect.height / 2,
+      x: Math.max(0, e.clientX - itemRect.left),
+      y: Math.max(0, e.clientY - itemRect.top),
     });
     setIsItemDragging(true);
     pointerStartRef.current = {
@@ -290,7 +290,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     // Delay resetting isItemDragging to prevent "click-through" on mobile navigation
     setTimeout(() => {
       setIsItemDragging(false);
-    }, 150);
+    }, 400);
     updateHoverCell(null);
     setIsHoveringStorage(false);
     setIsHoveringSell(false);
@@ -494,17 +494,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         >
           <div
             ref={trashRef}
-            className={`absolute left-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-transform ${
+            className={`absolute bottom-2 right-2 z-20 flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-transform ${
               isHoveringSell ? 'scale-125 border-amber-400 bg-amber-600 text-white shadow-lg shadow-amber-900/40' : 'border-amber-600/40 bg-amber-950/50 text-amber-200'
             }`}
           >
             <DollarSign className="h-5 w-5" />
           </div>
-          <div className="mb-2 flex items-center justify-between pl-10">
+          <div className="mb-2 flex items-center justify-between pr-12">
             <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
-              Khu Vực Chờ ({storageItems.length})
+              Khu Vá»±c Chá»
             </p>
-            <span className="text-[9px] text-cyan-600">Kéo xuống để cất</span>
+            <span className="text-[9px] text-cyan-600">KÃ©o xuá»‘ng Ä‘á»ƒ cáº¥t</span>
           </div>
           
           <div className="grid grid-cols-9 gap-1.5">
@@ -528,8 +528,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               );
             })}
             {storageItems.length === 0 && (
-               <div className="text-xs text-slate-500 italic w-full text-center py-2">
-                 Kho trống
+               <div className="col-span-full flex items-center justify-center py-6 text-center text-xs italic text-slate-500">
+                 Kho trá»‘ng
                </div>
             )}
           </div>
@@ -573,12 +573,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {popupInfo.item.weight > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Sát Thương</span><span className="font-bold text-orange-400">{popupInfo.item.weight}</span></div>}
-            {popupInfo.item.hpBonus > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Máu Tối Đa</span><span className="font-bold text-red-400">+{popupInfo.item.hpBonus}</span></div>}
-            {popupInfo.item.energyMax > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Năng Lượng</span><span className="font-bold text-blue-400">+{popupInfo.item.energyMax}</span></div>}
-            {popupInfo.item.energyRegen > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Hồi Năng Lượng</span><span className="font-bold text-cyan-400">+{popupInfo.item.energyRegen}</span></div>}
-            {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Giá Bán</span><span className="font-bold text-amber-400">{popupInfo.item.price} vàng</span></div>}
-            <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW || 1}x{popupInfo.item.gridH || 1}</span></div>
+            {popupInfo.item.weight > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">SÃ¡t ThÆ°Æ¡ng</span><span className="font-bold text-orange-400">{popupInfo.item.weight}</span></div>}
+            {popupInfo.item.hpBonus > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">MÃ¡u Tá»‘i Äa</span><span className="font-bold text-red-400">+{popupInfo.item.hpBonus}</span></div>}
+            {popupInfo.item.energyMax > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">NÄƒng LÆ°á»£ng</span><span className="font-bold text-blue-400">+{popupInfo.item.energyMax}</span></div>}
+            {popupInfo.item.energyRegen > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Há»“i NÄƒng LÆ°á»£ng</span><span className="font-bold text-cyan-400">+{popupInfo.item.energyRegen}</span></div>}
+            {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">GiÃ¡ BÃ¡n</span><span className="font-bold text-amber-400">{popupInfo.item.price} vÃ ng</span></div>}
+            <div className="flex justify-between text-xs"><span className="text-gray-400">KÃ­ch ThÆ°á»›c</span><span className="font-bold text-gray-300">{popupInfo.item.gridW || 1}x{popupInfo.item.gridH || 1}</span></div>
           </div>
           {/* Quick Sell Button for Mobile */}
           <button
@@ -590,7 +590,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
              className="w-full mt-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black rounded-lg transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5"
           >
             <DollarSign className="w-3 h-3" />
-            Bán Nhanh
+            BÃ¡n Nhanh
           </button>
         </div>
       )}
@@ -600,3 +600,4 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 };
 
 export default InventoryGrid;
+

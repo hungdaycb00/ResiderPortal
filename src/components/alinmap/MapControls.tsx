@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, Plus, Minus, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home } from 'lucide-react';
+import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -94,14 +94,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                         title="Zoom In"
                     >
-                        <Plus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
+                        <span className="flex h-full w-full items-center justify-center text-lg font-black leading-none md:text-[26px]">+</span>
                     </button>
                     <button
                         onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
                         title="Zoom Out"
                     >
-                        <Minus className="w-4 h-4 md:w-6 md:h-6 md:stroke-[2.5]" />
+                        <span className="flex h-full w-full items-center justify-center text-xl font-black leading-none md:text-[26px]">-</span>
                     </button>
                 </div>
                 {isSeaGameMode && (

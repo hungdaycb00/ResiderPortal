@@ -148,7 +148,13 @@ export default function FortressStorageModal() {
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
       </div>
 
-      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group">
+      <div
+        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group"
+        onPointerEnter={() => setHoverTarget('storage')}
+        onPointerLeave={() => {
+          if (dragSource) setHoverTarget(null);
+        }}
+      >
         <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
           <InventoryGrid
             items={storageItems}
@@ -156,11 +162,7 @@ export default function FortressStorageModal() {
             gridH={STORAGE_GRID_H}
             hideStorage
             onItemLayoutChange={(newItems) => saveStorage(newItems)}
-            onHoverCellChange={(c) => {
-              setHoverCell(c);
-              if (c) setHoverTarget('storage');
-              else if (hoverTarget === 'storage') setHoverTarget(null);
-            }}
+            onHoverCellChange={setHoverCell}
             onDragStart={(item, src) => {
               setDragItem(item);
               setDragSource(src);
@@ -184,17 +186,19 @@ export default function FortressStorageModal() {
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
       </div>
 
-      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2">
+      <div
+        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2"
+        onPointerEnter={() => setHoverTarget('inventory')}
+        onPointerLeave={() => {
+          if (dragSource) setHoverTarget(null);
+        }}
+      >
         <InventoryGrid
           items={state.inventory}
           bags={state.bags}
           hideStorage
           onItemLayoutChange={(newItems) => saveInventory(newItems)}
-          onHoverCellChange={(c) => {
-            setHoverCell(c);
-            if (c) setHoverTarget('inventory');
-            else if (hoverTarget === 'inventory') setHoverTarget(null);
-          }}
+          onHoverCellChange={setHoverCell}
           onDragStart={(item, src) => {
             setDragItem(item);
             setDragSource(src);
