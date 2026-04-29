@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { generateSolvableFruitGrid } from './minigameUtils';
-import { getBaseUrl } from '../../../services/externalApi';
+import { getBaseUrl, getSeaServerUrl } from '../../../services/externalApi';
 import type { SeaItem, BagItem, GridExpander, PortalItem } from './backpack/types';
 import { MAX_GRID_W, MAX_GRID_H } from './backpack/constants';
 import { getBagBonuses, countBagCells, createStarterBag, repairBagData } from './backpack/utils';
@@ -233,7 +233,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       openBackpackHandler();
     }
   }, [openBackpackHandler]);
-  const API = getBaseUrl();
+  const API = getSeaServerUrl();
 
   useEffect(() => {
     // Tiền tạo grid khi người dùng ở gần vật phẩm thế giới hoặc định kỳ

@@ -23,6 +23,14 @@ export const getBaseUrl = (urlOverride?: string): string => {
   return url;
 };
 
+export const getSeaServerUrl = (): string => {
+  const baseUrl = getBaseUrl();
+  if (baseUrl.includes('alin.city')) {
+    return 'https://sea.alin.city';
+  }
+  return 'http://localhost:3002';
+};
+
 export const getServerVpsBaseUrl = (): string => {
   let url = SERVER_VPS_API_URL;
   if (url.includes('alin-api.alin.city')) {
