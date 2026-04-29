@@ -600,11 +600,14 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       playerItemCount: state.inventory.filter((item) => item.gridX >= 0).length,
       opponentTier: state.worldTier,
     };
-    const combatUrls = [`${API}/api/sea/combat`];
+    const combatUrls: string[] = [];
+    if (API) combatUrls.push(`${API}/api/sea/combat`);
+    
+    // Thêm các URL tiềm năng khác nếu cần, nhưng bỏ qua domain frontend nếu nó là alin.city (static)
     if (typeof window !== 'undefined') {
-      const sameOriginCombatUrl = `${window.location.origin}/api/sea/combat`;
-      if (!combatUrls.includes(sameOriginCombatUrl)) {
-        combatUrls.push(sameOriginCombatUrl);
+      const origin = window.location.origin;
+      if (!origin.includes('alin.city') && !combatUrls.includes(`${origin}/api/sea/combat`)) {
+        combatUrls.push(`${origin}/api/sea/combat`);
       }
     }
 
@@ -612,19 +615,31 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     let lastError = 'Combat failed';
 
     for (const combatUrl of combatUrls) {
-      const res = await fetch(combatUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const responseData = await res.json().catch(() => ({}));
-      if (res.ok && responseData?.success) {
-        data = responseData;
-        break;
-      }
-      lastError = responseData?.error || `Combat failed (${res.status})`;
-      if (res.status !== 404) {
-        throw new Error(lastError);
+      try {
+        console.log(`[SeaCombat] Attempting: ${combatUrl}`);
+        const res = await fetch(combatUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        
+        if (res.status === 404) {
+          console.warn(`[SeaCombat] 404 Not Found at ${combatUrl}`);
+          continue;
+        }
+
+        const responseData = await res.json().catch(() => ({}));
+        if (res.ok && responseData?.success) {
+          data = responseData;
+          break;
+        }
+        
+        lastError = responseData?.error || `Combat failed (${res.status})`;
+        // Nếu không phải 404 mà vẫn lỗi (ví dụ 405, 500), ta vẫn thử URL tiếp theo thay vì throw ngay
+        console.error(`[SeaCombat] Error at ${combatUrl}: ${lastError}`);
+      } catch (err: any) {
+        lastError = err.message;
+        console.error(`[SeaCombat] Fetch failed for ${combatUrl}:`, err);
       }
     }
 

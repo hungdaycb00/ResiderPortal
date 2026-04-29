@@ -180,7 +180,7 @@ export default function App() {
   }, [allGames.length]); // Run when games are loaded
 
   return (
-    <div className="min-h-screen bg-[#13151a] text-white font-sans pb-16 md:pb-0 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#13151a] text-white font-sans md:pb-0 relative overflow-x-hidden">
       {/* Premium Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse-slow" />
@@ -279,8 +279,10 @@ export default function App() {
       )}
 
       {notification && (
-        <div className={`fixed bottom-1 right-1 z-[500] p-4 rounded-xl border shadow-lg animate-in slide-in-from-right-4 duration-300 ${notification.type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-100' : notification.type === 'info' ? 'bg-blue-900/90 border-blue-500/50 text-blue-100' : 'bg-red-900/90 border-red-500/50 text-red-100'}`}>
-          {notification.message}
+        <div className={`fixed bottom-0 right-0 z-[500] p-4 m-2 rounded-xl border shadow-lg animate-in slide-in-from-right-4 duration-300 ${notification.type === 'success' ? 'bg-green-900/95 border-green-500/50 text-green-100' : notification.type === 'info' ? 'bg-blue-900/95 border-blue-500/50 text-blue-100' : 'bg-red-900/95 border-red-500/50 text-red-100'}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold">{notification.message}</span>
+          </div>
         </div>
       )}
 

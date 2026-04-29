@@ -41,6 +41,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     onOpenListChange
 }) => {
     const API_BASE = getBaseUrl();
+    const hasInitialCenteredRef = React.useRef(false);
 
     // --- Geolocation / Weather / Province ---
     const geo = useGeolocation();
@@ -99,6 +100,23 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         requireAuth,
         user,
     });
+
+    // --- Auto-focus Camera after initial load ---
+    useEffect(() => {
+        if (!wsCtx.isConnecting && wsCtx.wsStatus === 'OPEN' && !hasInitialCenteredRef.current) {
+            hasInitialCenteredRef.current = true;
+            console.log('[AlinMap] Initial auto-focus trigger');
+            
+            // Wait a bit for map layers to settle
+            setTimeout(() => {
+                if (isSeaGameMode) {
+                    centerBoatHandler?.();
+                } else {
+                    nav.handleCenter();
+                }
+            }, 500);
+        }
+    }, [wsCtx.isConnecting, wsCtx.wsStatus, isSeaGameMode, centerBoatHandler, nav]);
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
