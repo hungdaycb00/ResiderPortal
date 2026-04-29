@@ -11,36 +11,22 @@ import {
   type WorldItem, 
   type Encounter, 
   type CombatResult, 
-  type StorageAccessMode 
+  type StorageAccessMode,
+  FORTRESS_INTERACTION_METERS,
+  getDistanceMeters,
+  isLooterAtFortress
 } from './LooterGameContext';
 
 // Re-export for backward compatibility
 export { useLooterGame } from './LooterGameContext';
+export { FORTRESS_INTERACTION_METERS, getDistanceMeters, isLooterAtFortress };
 export type { LooterItem, BagItem, GridExpander, PortalItem, WorldItem, Encounter, CombatResult, LooterGameState };
 export { MAX_GRID_W, MAX_GRID_H, getBagBonuses };
-
-export const FORTRESS_INTERACTION_METERS = 200;
-
-export const getDistanceMeters = (
-  fromLat?: number | null,
-  fromLng?: number | null,
-  toLat?: number | null,
-  toLng?: number | null
-) => {
-  if (fromLat == null || fromLng == null || toLat == null || toLng == null) return Number.POSITIVE_INFINITY;
-  const cosLat = Math.max(0.25, Math.cos((fromLat * Math.PI) / 180));
-  const dLat = (toLat - fromLat) * 111000;
-  const dLng = (toLng - fromLng) * 111000 * cosLat;
-  return Math.sqrt(dLat * dLat + dLng * dLng);
-};
-
-export const isLooterAtFortress = (state: Pick<LooterGameState, 'currentLat' | 'currentLng' | 'fortressLat' | 'fortressLng'>) =>
-  getDistanceMeters(state.currentLat, state.currentLng, state.fortressLat, state.fortressLng) <= FORTRESS_INTERACTION_METERS;
 
 const defaultState: LooterGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
-  cursePercent: 0, lootGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
+  cursePercent: 0, looterGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100, activeCurses: {},
 };
 
@@ -111,19 +97,36 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [fortressStorageMode, setFortressStorageMode] = useState<StorageAccessMode>('fortress');
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
-  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [isLootGameMode, setIsLootGameMode] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
-
   const openBackpack = useCallback(() => {
     if (openBackpackHandler) {
       openBackpackHandler();
     }
   }, [openBackpackHandler]);
+
   const API = getLooterServerUrl();
+
+  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/world-items?deviceId=${encodeURIComponent(deviceId)}`);
+      const data = await res.json();
+      if (data.success) {
+          const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+          const mapItems: WorldItem[] = Array.isArray(data.items) ? data.items : [];
+          const normalItems = mapItems.filter((item) => (item as any)?.item?.type !== 'portal');
+          let items = [...portalItems, ...normalItems];
+          if (!forceActive && !isChallengeActive) {
+              items = [...portalItems, ...normalItems.slice(0, 3)];
+          }
+          setWorldItems(items);
+      }
+    } catch (err) { console.error('[LooterGame] loadWorldItems error:', err); }
+  }, [deviceId, API, isChallengeActive, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
 
   useEffect(() => {
     // Tiền tạo grid khi người dùng ở gần vật phẩm thế giới hoặc định kỳ
@@ -757,23 +760,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [deviceId, API, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng, isChallengeActive, loadState]);
 
-  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/world-items?deviceId=${encodeURIComponent(deviceId)}`);
-      const data = await res.json();
-      if (data.success) {
-          const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
-          const mapItems: WorldItem[] = Array.isArray(data.items) ? data.items : [];
-          const normalItems = mapItems.filter((item) => (item as any)?.item?.type !== 'portal');
-          let items = [...portalItems, ...normalItems];
-          if (!forceActive && !isChallengeActive) {
-              items = [...portalItems, ...normalItems.slice(0, 3)];
-          }
-          setWorldItems(items);
-      }
-    } catch (err) { console.error('[LooterGame] loadWorldItems error:', err); }
-  }, [deviceId, API, isChallengeActive, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
 
   useEffect(() => {
     if (!deviceId || !state.initialized || !isChallengeActive) return;
@@ -851,26 +837,25 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showMinigame, setShowMinigame,
     isLooterGameMode,
     setIsLooterGameMode,
+    isLootGameMode, setIsLootGameMode,
     openBackpack,
     setOpenBackpackHandler,
     isItemDragging,
     setIsItemDragging,
-    isLootGameMode,
-    setIsLootGameMode,
     isChallengeActive, setIsChallengeActive,
     preGeneratedMinigame,
     setPreGeneratedMinigame,
     globalSettings,
-    isMoving, showDiscardModal, setShowDiscardModal, confirmDiscard,
+    isMoving,
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
     showNotification, draggingItem, setDraggingItem,
     openFortressStorage,
   }), [
     state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
-    acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isLooterGameMode, openBackpack,
-    setOpenBackpackHandler, isItemDragging, isLootGameMode, isChallengeActive, preGeneratedMinigame, globalSettings,
-    isMoving, showDiscardModal, confirmDiscard, initGame, loadState, moveBoat, pickupItem,
+    acceptBagSwap, encounter, combatResult, showCurseModal, showMinigame, isLooterGameMode, isLootGameMode, openBackpack,
+    setOpenBackpackHandler, isItemDragging, isChallengeActive, preGeneratedMinigame, globalSettings,
+    isMoving, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
     curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
     showNotification, draggingItem, openFortressStorage

@@ -75,8 +75,6 @@ interface PickupMinigameProps {
 // ==========================================
 // 1. Fruit Game (Fishing Alternative)
 // ==========================================
-type FruitCell = { f: string | null; id: string };
-type FruitPoint = { r: number; c: number };
 type FruitPathState = { selection: FruitPoint | null; activePath: FruitPoint[] };
 
 const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', '🥝', '🥭'];

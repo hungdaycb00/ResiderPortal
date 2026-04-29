@@ -10,7 +10,7 @@ import CreatorTabView from './features/creator/components/CreatorTabView';
 import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
 import { useSocial } from './features/social/context/SocialContext';
-import { useLooterGame } from './looter-game/LooterGameProvider';
+import { useLooterGame } from './looter-game/LooterGameContext';
 
 interface BottomSheetProps {
     isDesktop: boolean;

@@ -1,6 +1,21 @@
 import { createContext, useContext } from 'react';
 import type { LooterItem, BagItem, GridExpander, PortalItem } from './backpack/types';
 
+export const FORTRESS_INTERACTION_METERS = 200;
+
+export const getDistanceMeters = (
+  fromLat?: number | null,
+  fromLng?: number | null,
+  toLat?: number | null,
+  toLng?: number | null
+) => {
+  if (fromLat == null || fromLng == null || toLat == null || toLng == null) return Number.POSITIVE_INFINITY;
+  const cosLat = Math.max(0.25, Math.cos((fromLat * Math.PI) / 180));
+  const dLat = (toLat - fromLat) * 111000;
+  const dLng = (toLng - fromLng) * 111000 * cosLat;
+  return Math.sqrt(dLat * dLat + dLng * dLng);
+};
+
 export interface WorldItem {
   spawnId: string;
   lat: number;
@@ -54,6 +69,9 @@ export interface LooterGameState {
   activeCurses: Record<string, number>;
 }
 
+export const isLooterAtFortress = (state: Pick<LooterGameState, 'currentLat' | 'currentLng' | 'fortressLat' | 'fortressLng'>) =>
+  getDistanceMeters(state.currentLat, state.currentLng, state.fortressLat, state.fortressLng) <= FORTRESS_INTERACTION_METERS;
+
 export type StorageAccessMode = 'fortress' | 'portal';
 
 export interface LooterGameContextType {
@@ -106,14 +124,9 @@ export interface LooterGameContextType {
   returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   isMoving: boolean;
-  showDiscardModal: boolean;
-  setShowDiscardModal: (v: boolean) => void;
-  confirmDiscard: () => void;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
   draggingItem: LooterItem | null;
   setDraggingItem: (item: LooterItem | null) => void;
-  isItemDragging: boolean;
-  setIsItemDragging: (v: boolean) => void;
 }
 
 export const LooterGameContext = createContext<LooterGameContextType | null>(null);

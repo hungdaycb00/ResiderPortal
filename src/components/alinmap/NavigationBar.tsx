@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package } from 'lucide-react';
 import { useSocial } from './features/social/context/SocialContext';
-import { useLooterGame } from './looter-game/LooterGameProvider';
+import { useLooterGame } from './looter-game/LooterGameContext';
 
 interface NavigationBarProps {
     mainTab: string;

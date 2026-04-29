@@ -51,6 +51,7 @@ interface MapCanvasProps {
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
+    setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = ({
@@ -60,7 +61,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
     mapMode, setContextMenu, isLooterGameMode, looterState, looterGameCtx, isLooterLoading, setMainTab, showNotification,
-    setBoatCenterHandler
+    setBoatCenterHandler, setIsTierSelectorOpen
 }) => {
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
@@ -74,7 +75,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
     const curseBarBg = useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${looterBoat.curseVisual}%, #ef4444)`;
     const curseBarWidth = useMotionTemplate`${looterBoat.curseVisual}%`;
-    const curseText = useTransform(looterBoat.curseVisual, (v) => `${Math.round(v)}%`);
+    const curseText = useTransform(looterBoat.curseVisual, (v: any) => `${Math.round(v)}%`);
 
     useEffect(() => {
         setBoatCenterHandler?.(looterBoat.centerOnBoat);
@@ -174,12 +175,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         if (isLooterGameMode && looterState && !looterGameCtx.isChallengeActive && !dragState.moved) {
              // User clicked on map while at fortress and NOT in a challenge
              // Instead of moving, show the Tier Selection Overlay
-             (props as any).setIsTierSelectorOpen?.(true);
+             setIsTierSelectorOpen?.(true);
              return;
         }
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, looterState, looterGameCtx.isChallengeActive, props]);
+    }, [looterBoat, isLooterGameMode, looterState, looterGameCtx.isChallengeActive, setIsTierSelectorOpen]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
