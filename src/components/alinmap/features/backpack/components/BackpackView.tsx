@@ -86,17 +86,17 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative">
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden p-0.5 subtle-scrollbar">
-        {/* Left Floating Controls: Gold (Top), Bag (Bottom) */}
-        <div className="absolute top-4 left-0.5 flex flex-col gap-4 z-[60] pointer-events-none">
+      <div className="flex-1 relative overflow-hidden subtle-scrollbar">
+        {/* Left Floating Controls: Gold (Top), Bag (Bottom) - Snapped to edge */}
+        <div className="absolute top-4 left-0 flex flex-col gap-4 z-[60] pointer-events-none">
           {/* Gold - Small Pill */}
-          <div className="flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md border border-amber-500/40 px-2 py-1 shadow-2xl pointer-events-auto">
+          <div className="flex items-center gap-1.5 rounded-r-full bg-black/80 backdrop-blur-md border border-amber-500/40 border-l-0 px-2 py-1 shadow-2xl pointer-events-auto">
             <Coins className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-[11px] font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
           </div>
 
           {/* Bag Slot - Floating with extra shadow */}
-          <div className={`relative h-12 w-12 rounded-2xl border-2 flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all hover:scale-110 pointer-events-auto ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+          <div className={`relative h-12 w-12 rounded-r-2xl border-2 border-l-0 flex items-center justify-center shadow-[4px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all hover:scale-110 pointer-events-auto ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
              <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
              <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-cyan-500 rounded-full border-2 border-[#121417] flex items-center justify-center">
                 <Anchor className="w-2.5 h-2.5 text-white" />
@@ -104,29 +104,29 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
           </div>
         </div>
 
-        {/* Right Floating Stats: Vertical column at the edge */}
-        <div className="absolute top-4 right-0.5 flex flex-col gap-2 z-[60] pointer-events-none items-end">
-          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+        {/* Right Floating Stats: Vertical column snapped to right edge */}
+        <div className="absolute top-4 right-0 flex flex-col gap-2 z-[60] pointer-events-none items-end">
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-l-full px-2.5 py-1.5 border border-white/10 border-r-0 shadow-2xl">
             <Heart className="h-3.5 w-3.5 text-red-500" />
             <span className="text-[11px] font-black">{state.currentHp}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-l-full px-2.5 py-1.5 border border-white/10 border-r-0 shadow-2xl">
             <Zap className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-[11px] font-black">{state.energyMax + totalStats.energyMax}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-l-full px-2.5 py-1.5 border border-white/10 border-r-0 shadow-2xl">
             <Wind className="h-3.5 w-3.5 text-emerald-500" />
             <span className="text-[11px] font-black">{state.moveSpeed}x</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-l-full px-2.5 py-1.5 border border-white/10 border-r-0 shadow-2xl">
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[11px] font-black">{totalStats.weight}</span>
           </div>
         </div>
 
-        {/* Main Grid: Centered with rounded corners */}
-        <div className="w-full h-full flex flex-col items-center justify-start pt-1">
-          <div className="w-full rounded-[32px] overflow-hidden shadow-2xl border border-white/5">
+        {/* Main Grid: Fills the whole space, no padding */}
+        <div className="w-full h-full flex flex-col items-center justify-start">
+          <div className="w-full h-full overflow-hidden">
             <InventoryGrid
               items={state.inventory}
               bags={state.bags}
