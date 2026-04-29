@@ -291,18 +291,23 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
         );
         onItemLayoutChange?.(newItems);
-      } else if (isHoveringStorage && !hideStorage && dragMode === 'item') {
-        // Move from grid to storage
-        const newItems = items.map(i =>
-          i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
-        );
-        onItemLayoutChange?.(newItems);
-      } else if (isHoveringStorage && !hideStorage && dragMode === 'storage-item') {
-        // Reorder storage: move to front
-        const filtered = items.filter(i => i.uid !== dragItem.uid);
-        const movingItem = items.find(i => i.uid === dragItem.uid);
-        if (movingItem) {
-          onItemLayoutChange?.([movingItem, ...filtered]);
+      } else if (isHoveringStorage && !hideStorage) {
+        if (dragMode === 'item') {
+          // Move from grid to storage
+          const newItems = items.map(i =>
+            i.uid === dragItem.uid ? { ...i, gridX: -1, gridY: -1 } : i
+          );
+          onItemLayoutChange?.(newItems);
+        } else if (dragMode === 'storage-item') {
+          // Reorder storage: move to front
+          const filtered = items.filter(i => i.uid !== dragItem.uid);
+          const movingItem = items.find(i => i.uid === dragItem.uid);
+          if (movingItem) {
+            onItemLayoutChange?.([movingItem, ...filtered]);
+          }
+        } else if (externalDragItem) {
+          // Drop external item into storage
+          onExternalDrop?.(externalDragItem, -1, -1);
         }
       } else if (externalDragItem && hoverCell) {
         // Drop external item here

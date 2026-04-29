@@ -24,50 +24,7 @@ const VIRTUAL_STORAGE_BAG: BagItem = {
 };
 
 const buildStorageItems = (storage: LooterItem[]) => {
-  const current = storage.map((item) => ({ ...item }));
-  const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
-
-  current.forEach((item) => {
-    if (item.gridX >= 0) {
-      for (let r = 0; r < item.gridH; r += 1) {
-        for (let c = 0; c < item.gridW; c += 1) {
-          if (item.gridY + r < STORAGE_GRID_H && item.gridX + c < STORAGE_GRID_W) {
-            occ[item.gridY + r][item.gridX + c] = true;
-          }
-        }
-      }
-    }
-  });
-
-  return current.map((item) => {
-    if (item.gridX < 0) {
-      for (let r = 0; r <= STORAGE_GRID_H - item.gridH; r += 1) {
-        for (let c = 0; c <= STORAGE_GRID_W - item.gridW; c += 1) {
-          let canFit = true;
-          for (let ir = 0; ir < item.gridH; ir += 1) {
-            for (let ic = 0; ic < item.gridW; ic += 1) {
-              if (occ[r + ir][c + ic]) {
-                canFit = false;
-                break;
-              }
-            }
-            if (!canFit) break;
-          }
-
-          if (canFit) {
-            const placed = { ...item, gridX: c, gridY: r };
-            for (let ir = 0; ir < item.gridH; ir += 1) {
-              for (let ic = 0; ic < item.gridW; ic += 1) {
-                occ[r + ir][c + ic] = true;
-              }
-            }
-            return placed;
-          }
-        }
-      }
-    }
-    return item;
-  });
+  return storage.map((item) => ({ ...item }));
 };
 
 export default function FortressStorageModal() {
@@ -81,6 +38,7 @@ export default function FortressStorageModal() {
     saveInventory,
     saveStorage,
     storeItems,
+    setIsLootGameMode,
   } = useLooterGame();
 
   const [dragItem, setDragItem] = useState<LooterItem | null>(null);
@@ -136,7 +94,6 @@ export default function FortressStorageModal() {
             items={storageItems}
             bags={[VIRTUAL_STORAGE_BAG]}
             gridH={STORAGE_GRID_H}
-            hideStorage
             onItemLayoutChange={(newItems) => saveStorage(newItems)}
             onHoverCellChange={(cell) => {
               setStorageHoverCell(cell);
@@ -173,17 +130,17 @@ export default function FortressStorageModal() {
       </div>
 
       <div
-        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2"
+        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group"
         onPointerEnter={() => setHoverTarget('inventory')}
         onPointerLeave={() => {
           if (dragSource) setHoverTarget(null);
         }}
       >
-        <InventoryGrid
-          items={state.inventory}
-          bags={state.bags}
-          hideStorage
-          onItemLayoutChange={(newItems) => saveInventory(newItems)}
+        <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
+          <InventoryGrid
+            items={state.inventory}
+            bags={state.bags}
+            onItemLayoutChange={(newItems) => saveInventory(newItems)}
           onHoverCellChange={(cell) => {
             setInventoryHoverCell(cell);
             if (cell) setHoverTarget('inventory');
@@ -203,6 +160,7 @@ export default function FortressStorageModal() {
           externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
           cellSize={38}
         />
+        </div>
       </div>
     </div>
   );
