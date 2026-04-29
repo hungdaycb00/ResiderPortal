@@ -339,82 +339,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [deviceId, API, loadWorldItems, showNotification]);
 
-  // Handle Map Item Dragging
-  useEffect(() => {
-    if (!draggingMapItem) return;
-
-    const handlePointerMove = (e: PointerEvent) => {
-      setDragPointerPos({ x: e.clientX, y: e.clientY });
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-      // Check if dropped in backpack area (bottom 30% of screen)
-      if (e.clientY > window.innerHeight * 0.65) {
-        pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
-        showNotification(`Đang nhặt ${draggingMapItem.item.name}...`, 'info');
-      }
-      setDraggingMapItem(null);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [draggingMapItem, pickupItem, showNotification]);
-
-  const confirmDiscard = useCallback(async () => {
-    const stagingItems = state.inventory.filter(i => i.gridX < 0);
-    for (const item of stagingItems) {
-      await dropItem(item.uid);
-    }
-    setShowDiscardModal(false);
-    showNotification(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
-  }, [state.inventory, dropItem, showNotification]);
-
-  const saveStorage = useCallback(async (storage: LooterItem[]) => {
-    if (!deviceId) return;
-    
-    let previousStorage: LooterItem[] = [];
-    setState(prev => {
-      previousStorage = prev.storage;
-      return { ...prev, storage };
-    });
-
-    try {
-      const res = await fetch(`${API}/api/looter/storage_layout`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, storage }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-    } catch (err) { 
-      console.error('[LooterGame] saveStorage error:', err);
-      setState(prev => ({ ...prev, storage: previousStorage }));
-    }
-  }, [deviceId, API]);
-
-  const saveBags = useCallback(async (bags: BagItem[]) => {
-    if (!deviceId) return;
-    
-    let previousBags: BagItem[] = [];
-    setState(prev => {
-      previousBags = prev.bags;
-      return { ...prev, bags };
-    });
-
-    try {
-      const res = await fetch(`${API}/api/looter/bags`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, bags }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-    } catch (err) {
-      console.error('[LooterGame] saveBags error:', err);
-      setState(prev => ({ ...prev, bags: previousBags }));
-    }
-  }, [deviceId, API]);
-
   const findEmptySlotFor = useCallback((item: LooterItem, inventory: LooterItem[], bag: BagItem | undefined) => {
     if (!bag) return null;
     const w = item.gridW || 1;
@@ -525,10 +449,92 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       console.error('[Looter Pickup]', err);
       showNotification(err.message || 'Lỗi khi nhặt vật phẩm', 'error');
       loadWorldItems(true);
-      void loadState(); // Đồng bộ lại tọa độ thực từ server
+      void loadState(); 
       return false;
     }
   }, [deviceId, API, state.inventory, state.bags, findEmptySlotFor, saveInventory, dropItem, loadWorldItems, showNotification]);
+
+  // Handle Map Item Dragging
+  useEffect(() => {
+    if (!draggingMapItem) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      setDragPointerPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      // Check if dropped in backpack area (bottom 30% of screen)
+      if (e.clientY > window.innerHeight * 0.65) {
+        pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
+        showNotification(`Đang nhặt ${draggingMapItem.item.name}...`, 'info');
+      }
+      setDraggingMapItem(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [draggingMapItem, pickupItem, showNotification]);
+
+  const confirmDiscard = useCallback(async () => {
+    const stagingItems = state.inventory.filter(i => i.gridX < 0);
+    for (const item of stagingItems) {
+      await dropItem(item.uid);
+    }
+    setShowDiscardModal(false);
+    showNotification(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
+  }, [state.inventory, dropItem, showNotification]);
+
+  const saveStorage = useCallback(async (storage: LooterItem[]) => {
+    if (!deviceId) return;
+    
+    let previousStorage: LooterItem[] = [];
+    setState(prev => {
+      previousStorage = prev.storage;
+      return { ...prev, storage };
+    });
+
+    try {
+      const res = await fetch(`${API}/api/looter/storage_layout`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, storage }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+    } catch (err) { 
+      console.error('[LooterGame] saveStorage error:', err);
+      setState(prev => ({ ...prev, storage: previousStorage }));
+    }
+  }, [deviceId, API]);
+
+  const saveBags = useCallback(async (bags: BagItem[]) => {
+    if (!deviceId) return;
+    
+    let previousBags: BagItem[] = [];
+    setState(prev => {
+      previousBags = prev.bags;
+      return { ...prev, bags };
+    });
+
+    try {
+      const res = await fetch(`${API}/api/looter/bags`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, bags }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+    } catch (err) {
+      console.error('[LooterGame] saveBags error:', err);
+      setState(prev => ({ ...prev, bags: previousBags }));
+    }
+  }, [deviceId, API]);
+
+
+
+
+
+
 
   const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
