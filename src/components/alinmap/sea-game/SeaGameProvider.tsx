@@ -434,7 +434,18 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, spawnId }),
       });
+      
       const data = await res.json();
+      
+      if (!res.ok) {
+        // If it's a 400 (Too far), we don't treat it as a hard error in console
+        if (res.status === 400) {
+          console.warn(`[Sea Pickup] ${data.error || 'Too far'}`);
+          return false;
+        }
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
       if (data.success) {
         if (data.type === 'bag' || data.type === 'item') {
           const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag', gridW: 2, gridH: 2 } : data.item;
@@ -455,11 +466,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       }
       return false;
     } catch (err: any) {
-      if (err.message?.includes('400') || err.message?.includes('Too far')) {
-        console.warn('[Sea Pickup] Too far, skipping');
-      } else {
-        console.error('[Sea Pickup] error:', err);
-      }
+      console.error('[Sea Pickup] error:', err.message);
       return false;
     }
   }, [deviceId, API]);
@@ -637,10 +644,10 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         }
         
         lastError = responseData?.error || `Combat failed (${res.status})`;
-        // Nếu không phải 404 mà vẫn lỗi (ví dụ 405, 500), ta vẫn thử URL tiếp theo thay vì throw ngay
         console.error(`[SeaCombat] Error at ${combatUrl}: ${lastError}`);
       } catch (err: any) {
         lastError = err.message;
+        if (err.name === 'AbortError') lastError = 'Request timeout';
         console.error(`[SeaCombat] Fetch failed for ${combatUrl}:`, err);
       }
     }

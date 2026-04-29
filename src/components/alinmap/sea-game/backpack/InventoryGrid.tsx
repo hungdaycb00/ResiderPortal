@@ -215,8 +215,15 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         setIsHoveringSell(true);
       } else if (isInsideGrid) {
         const currentOffset = externalDragOffset || dragOffset;
-        const topLeftX = relX - currentOffset.x;
-        const topLeftY = relY - currentOffset.y;
+        
+        // Get scroll offset of the grid container if it exists
+        const scrollContainer = gridRef.current?.parentElement;
+        const scrollTop = scrollContainer?.scrollTop || 0;
+        const scrollLeft = scrollContainer?.scrollLeft || 0;
+
+        const topLeftX = relX - currentOffset.x + scrollLeft;
+        const topLeftY = relY - currentOffset.y + scrollTop;
+        
         updateHoverCell({
           x: Math.round(topLeftX / cellSize),
           y: Math.round(topLeftY / cellSize),
@@ -376,22 +383,36 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           }}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {/* Layer 1: Background grid cells */}
+          {/* Layer 1: Background grid cells optimized with CSS */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, rgba(25, 45, 65, 0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(25, 45, 65, 0.2) 1px, transparent 1px)
+              `,
+              backgroundSize: `${cellSize}px ${cellSize}px`,
+            }}
+          />
+          
+          {/* Layer 1.5: Out-of-bag cells darkening */}
           {Array.from({ length: gridH }).map((_, r) =>
-            Array.from({ length: gridW }).map((_, c) => (
-              <div
-                key={`bg-${r}-${c}`}
-                className="absolute"
-                style={{
-                  left: c * cellSize,
-                  top: r * cellSize,
-                  width: cellSize,
-                  height: cellSize,
-                  border: '1px solid rgba(25, 45, 65, 0.2)',
-                  background: bagOcc[r][c] ? undefined : 'rgba(8, 12, 20, 0.6)',
-                }}
-              />
-            ))
+            Array.from({ length: gridW }).map((_, c) => {
+              if (bagOcc[r][c]) return null;
+              return (
+                <div
+                  key={`bg-off-${r}-${c}`}
+                  className="absolute"
+                  style={{
+                    left: c * cellSize,
+                    top: r * cellSize,
+                    width: cellSize,
+                    height: cellSize,
+                    background: 'rgba(8, 12, 20, 0.6)',
+                  }}
+                />
+              );
+            })
           )}
 
           {/* Layer 2: Bag active cells */}
@@ -557,18 +578,18 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         </div>
       )}
       
-      {/* Smooth Drag Ghost (always follows pointer) */}
-      {(dragMode || externalDragItem) && (dragItem || externalDragItem) && (
+      {/* Smooth Drag Ghost (Only if this is the source grid) */}
+      {dragMode && dragItem && (
         <div
-          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[(dragItem || externalDragItem)!.rarity] || RARITY_COLORS.common}`}
+          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
           style={{
-            left: dragPos.clientX - (externalDragOffset?.x ?? dragOffset.x),
-            top: dragPos.clientY - (externalDragOffset?.y ?? dragOffset.y),
-            width: ((dragItem || externalDragItem)!.gridW || 1) * cellSize - 2,
-            height: ((dragItem || externalDragItem)!.gridH || 1) * cellSize - 2,
+            left: dragPos.clientX - dragOffset.x,
+            top: dragPos.clientY - dragOffset.y,
+            width: (dragItem.gridW || 1) * cellSize - 2,
+            height: (dragItem.gridH || 1) * cellSize - 2,
           }}
         >
-          <span className="text-xl">{(dragItem || externalDragItem)!.icon}</span>
+          <span className="text-xl">{dragItem.icon}</span>
         </div>
       )}
       

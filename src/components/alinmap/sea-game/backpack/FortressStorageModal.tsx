@@ -87,7 +87,8 @@ export default function FortressStorageModal() {
   const [dragSource, setDragSource] = useState<'inventory' | 'storage' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoverTarget, setHoverTarget] = useState<'inventory' | 'storage' | null>(null);
-  const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
+  const [inventoryHoverCell, setInventoryHoverCell] = useState<{ x: number; y: number } | null>(null);
+  const [storageHoverCell, setStorageHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
   const storageItems = buildStorageItems(state.storage);
@@ -138,7 +139,7 @@ export default function FortressStorageModal() {
             hideStorage
             onItemLayoutChange={(newItems) => saveStorage(newItems)}
             onHoverCellChange={(cell) => {
-              setHoverCell(cell);
+              setStorageHoverCell(cell);
               if (cell) setHoverTarget('storage');
             }}
             onDragStart={(item, src, offset) => {
@@ -153,7 +154,7 @@ export default function FortressStorageModal() {
             onExternalDrop={handleMoveToStorage}
             externalDragItem={dragSource === 'inventory' ? dragItem : null}
             externalDragOffset={dragSource === 'inventory' ? dragOffset : null}
-            externalHoverCell={dragSource === 'inventory' ? hoverCell : null}
+            externalHoverCell={dragSource === 'inventory' ? storageHoverCell : null}
             cellSize={38}
           />
         </div>
@@ -184,7 +185,7 @@ export default function FortressStorageModal() {
           hideStorage
           onItemLayoutChange={(newItems) => saveInventory(newItems)}
           onHoverCellChange={(cell) => {
-            setHoverCell(cell);
+            setInventoryHoverCell(cell);
             if (cell) setHoverTarget('inventory');
           }}
           onDragStart={(item, src, offset) => {
@@ -199,7 +200,7 @@ export default function FortressStorageModal() {
           onExternalDrop={handleMoveToInventory}
           externalDragItem={dragSource === 'storage' ? dragItem : null}
           externalDragOffset={dragSource === 'storage' ? dragOffset : null}
-          externalHoverCell={dragSource === 'storage' ? hoverCell : null}
+          externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
           cellSize={38}
         />
       </div>
