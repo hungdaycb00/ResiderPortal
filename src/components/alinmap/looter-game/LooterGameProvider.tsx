@@ -137,16 +137,18 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       if (preGeneratedMinigame) return; 
       
       const tier = state.worldTier;
-      let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
-      let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+      let innerRows = 4;
+      let innerCols = 4;
 
-      // Ghép đôi cần số ô chẵn
+      if (tier === 1) { innerRows = 4; innerCols = 5; }
+      else if (tier === 2) { innerRows = 4; innerCols = 6; }
+      else if (tier === 3) { innerRows = 5; innerCols = 6; }
+      else if (tier === 4) { innerRows = 6; innerCols = 6; }
+      else if (tier >= 5) { innerRows = 7; innerCols = 6; }
+
+      // Đảm bảo số ô chẵn
       if ((innerRows * innerCols) % 2 !== 0) {
-        if (innerRows === 5 && innerCols === 5) innerCols = 6;
-        else if (innerRows === 7 && innerCols === 7) innerCols = 6;
-        else if (innerCols < 7) innerCols += 1;
-        else if (innerRows < 7) innerRows += 1;
-        else innerCols -= 1;
+        innerCols += 1;
       }
 
       const grid = generateSolvableFruitGrid(innerRows, innerCols);

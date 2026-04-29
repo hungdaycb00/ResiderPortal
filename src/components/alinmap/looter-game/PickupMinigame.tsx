@@ -81,16 +81,19 @@ const FRUITS = ['🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒', 
 const FRUIT_PATH_COLORS = ['#34d399', '#22d3ee', '#f59e0b', '#a78bfa'];
 
 const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void; preGeneratedGrid?: FruitCell[][] }> = ({ tier, onWin, onLose, preGeneratedGrid }) => {
-  let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
-  let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+  // Quy định kích thước lưới theo Tier: T0:4x4, T1:4x5, T2:4x6, T3:5x6, T4:6x6, T5:7x6
+  let innerRows = 4;
+  let innerCols = 4;
 
-  // Ghép đôi cần số ô chẵn. Theo yêu cầu: 5x5 -> 5x6, 7x7 -> 7x6
+  if (tier === 1) { innerRows = 4; innerCols = 5; }
+  else if (tier === 2) { innerRows = 4; innerCols = 6; }
+  else if (tier === 3) { innerRows = 5; innerCols = 6; }
+  else if (tier === 4) { innerRows = 6; innerCols = 6; }
+  else if (tier >= 5) { innerRows = 7; innerCols = 6; }
+
+  // Đảm bảo số ô chẵn cho game ghép đôi (Fruit/Memory)
   if ((innerRows * innerCols) % 2 !== 0) {
-    if (innerRows === 5 && innerCols === 5) innerCols = 6;
-    else if (innerRows === 7 && innerCols === 7) innerCols = 6;
-    else if (innerCols < 7) innerCols += 1;
-    else if (innerRows < 7) innerRows += 1;
-    else innerCols -= 1; 
+    innerCols += 1; // 4x5 -> 4x6, v.v. để đảm bảo có cặp
   }
   const boardRows = innerRows + 2;
   const boardCols = innerCols + 2;
@@ -272,16 +275,18 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void;
 const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
   const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱', '⚓', '🌊'];
   const effectiveTier = tier === 0 ? 0 : tier + Math.max(0, difficulty - 1);
-  let rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
-  let cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+  
+  let rows = 4;
+  let cols = 4;
+  if (effectiveTier === 1) { rows = 4; cols = 5; }
+  else if (effectiveTier === 2) { rows = 4; cols = 6; }
+  else if (effectiveTier === 3) { rows = 5; cols = 6; }
+  else if (effectiveTier === 4) { rows = 6; cols = 6; }
+  else if (effectiveTier >= 5) { rows = 7; cols = 6; }
 
-  // Ghép đôi cần số ô chẵn
+  // Đảm bảo số ô chẵn
   if ((rows * cols) % 2 !== 0) {
-    if (rows === 5 && cols === 5) cols = 6;
-    else if (rows === 7 && cols === 7) cols = 6;
-    else if (cols < 7) cols += 1;
-    else if (rows < 7) rows += 1;
-    else cols -= 1;
+    cols += 1;
   }
   const config = { rows, cols, time: Math.max(20, 60 - effectiveTier * 5) };
 
@@ -390,9 +395,15 @@ const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void
 // ==========================================
 const Minesweeper: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
   const effectiveTier = tier === 0 ? 0 : tier + Math.max(0, difficulty - 1);
-  const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
-  const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
-  // Minesweeper không cần ô chẵn, tuân thủ đúng 4x4 -> 7x7
+  
+  let rows = 4;
+  let cols = 4;
+  if (effectiveTier === 1) { rows = 4; cols = 5; }
+  else if (effectiveTier === 2) { rows = 4; cols = 6; }
+  else if (effectiveTier === 3) { rows = 5; cols = 6; }
+  else if (effectiveTier === 4) { rows = 6; cols = 6; }
+  else if (effectiveTier >= 5) { rows = 7; cols = 6; }
+
   const config = { rows, cols, mines: Math.floor(rows * cols * (0.15 + effectiveTier * 0.02)), time: Math.max(20, 60 - effectiveTier * 5) };
 
   const [grid, setGrid] = useState<{m: boolean, o: boolean, n: number}[][]>([]);
