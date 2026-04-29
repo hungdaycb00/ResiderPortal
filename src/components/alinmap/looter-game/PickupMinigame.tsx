@@ -271,7 +271,7 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void;
 // ==========================================
 const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
   const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱', '⚓', '🌊'];
-  const effectiveTier = tier + Math.max(0, difficulty - 1);
+  const effectiveTier = tier === 0 ? 0 : tier + Math.max(0, difficulty - 1);
   let rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
   let cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
 
@@ -389,7 +389,7 @@ const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void
 // 3. Minesweeper (Chest Alternative)
 // ==========================================
 const Minesweeper: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
-  const effectiveTier = tier + Math.max(0, difficulty - 1);
+  const effectiveTier = tier === 0 ? 0 : tier + Math.max(0, difficulty - 1);
   const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
   const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
   // Minesweeper không cần ô chẵn, tuân thủ đúng 4x4 -> 7x7

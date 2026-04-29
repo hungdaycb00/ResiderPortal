@@ -256,19 +256,19 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
                                         {/* Explore Sub-tabs Switcher */}
                                         {!selectedUser && (
-                                            <div className="fixed bottom-[72px] md:bottom-6 left-0 right-0 md:left-[72px] md:right-auto md:w-[400px] z-[160] px-6 pb-2 pointer-events-none">
-                                                <div className="flex bg-white/90 backdrop-blur-xl p-1 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto">
+                                            <div className="absolute bottom-[72px] left-0 right-0 z-[160] px-6 pb-4 pointer-events-none">
+                                                <div className="flex bg-white/80 backdrop-blur-2xl p-1.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto max-w-[400px] mx-auto">
                                                     <button 
                                                         onClick={() => setExploreSubTab('games')}
-                                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'games' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'games' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
                                                     >
-                                                        Games
+                                                        <span>🎮 Games</span>
                                                     </button>
                                                     <button 
                                                         onClick={() => setExploreSubTab('creator')}
-                                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'creator' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${exploreSubTab === 'creator' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
                                                     >
-                                                        Creator
+                                                        <span>🎨 Creator</span>
                                                     </button>
                                                 </div>
                                             </div>

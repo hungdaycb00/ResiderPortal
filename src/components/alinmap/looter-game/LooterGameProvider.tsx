@@ -296,11 +296,26 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const dropItem = useCallback(async (itemUid: string) => {
     if (!deviceId) return;
     
-    // Optimistic Update: Xóa khỏi inventory
+    const droppedItem = state.inventory.find(i => i.uid === itemUid);
+    
+    // Optimistic Update: Xóa khỏi inventory và thêm vào world items
     setState(prev => ({
       ...prev,
       inventory: prev.inventory.filter(i => i.uid !== itemUid)
     }));
+
+    if (droppedItem) {
+      setWorldItems(prev => [
+        ...prev,
+        {
+          spawnId: `temp_${itemUid}_${Date.now()}`,
+          lat: (state.currentLat || 0) + (Math.random() - 0.5) * 0.0004,
+          lng: (state.currentLng || 0) + (Math.random() - 0.5) * 0.0004,
+          item: droppedItem,
+          minigameType: null as any
+        }
+      ]);
+    }
 
     try {
       const res = await fetch(`${API}/api/looter/drop`, {
@@ -310,7 +325,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       const data = await res.json();
       if (data.success) {
         showNotification('Đã ném vật phẩm ra biển', 'info');
-        loadWorldItems(true);
+        setTimeout(() => loadWorldItems(true), 500);
       }
     } catch (err) {
       console.error('[LooterGame] dropItem error:', err);

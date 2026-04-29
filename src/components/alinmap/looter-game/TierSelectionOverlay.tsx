@@ -124,7 +124,7 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
               
               {!canAfford && (
                 <p className="text-center text-[10px] font-bold text-red-400/80 animate-pulse">
-                  Bạn cần thêm {(selectedData.cost - (currentGold || 0)).toLocaleString()} vàng để bắt đầu Tier {selected}
+                  Bạn cần thêm {(Math.max(0, (selectedData?.cost || 0) - (currentGold || 0))).toLocaleString()} vàng để bắt đầu Tier {selected}
                 </p>
               )}
             </div>
