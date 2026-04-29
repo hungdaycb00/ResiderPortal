@@ -30,31 +30,14 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useLooterGame();
-  const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
-  const [selectedTier, setSelectedTier] = useState(state.worldTier);
+  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
-  useEffect(() => {
-    // Auto-select the highest tier user can afford
-    const affordable = TIER_LABELS.filter(t => t.cost <= state.looterGold);
-    const bestTier = affordable.length > 0 ? affordable[affordable.length - 1].tier : 0;
-    setSelectedTier(bestTier);
-  }, [state.looterGold, state.worldTier]);
-
   const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
     saveInventory(newItems);
   }, [saveInventory]);
-
-  useEffect(() => {
-    // Chỉ tự động chuyển sang tab inventory nếu đang có item "lơ lửng" (chưa xếp vào grid)
-    // và người dùng đang ở tab challenge (để họ thấy item mới nhặt)
-    if (tab === 'challenge' && state.inventory.some(i => i.gridX < 0)) {
-      setTab('inventory');
-    }
-  }, [state.inventory, tab]);
 
   const totalStats = state.inventory.filter((item) => item.gridX >= 0).reduce(
     (acc, item) => ({
@@ -67,228 +50,133 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   );
 
   const isAtFortress = isLooterAtFortress(state);
-  const selectedTierCost = TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0;
-  const hasEnoughGold = state.looterGold >= selectedTierCost;
-  const isWorldEntryLocked = isChallengeActive || !isAtFortress;
-  const canEnterWorld = !isWorldEntryLocked && hasEnoughGold;
 
   return (
-    <div className="flex min-h-[600px] flex-col overflow-hidden rounded-3xl border border-cyan-900/50 bg-[#0a1929] text-white shadow-2xl">
-      <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0d2137] px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Package className="h-5 w-5 text-cyan-400" />
-          <h2 className="text-lg font-black tracking-tight">Hom Do Bien Ca</h2>
-        </div>
-        <div className="flex flex-col items-end gap-0.5">
-          <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-900/40 px-3 py-1">
-            <Coins className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-bold text-amber-300">{state.looterGold}</span>
+    <div className="flex h-full flex-col overflow-hidden rounded-[32px] border border-cyan-900/40 bg-[#060d17]/95 backdrop-blur-xl text-white shadow-2xl shadow-black/50">
+      {/* Header with Stats integrated */}
+      <div className="border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent px-5 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+              <Package className="h-4 w-4 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black text-white leading-tight uppercase tracking-widest">Kho Đồ</h2>
+              <p className="text-[10px] font-bold text-gray-500">Looter Inventory</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-1.5">
+            <Coins className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-xs font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
           </div>
         </div>
-      </div>
 
-      <div className="subtle-scrollbar flex items-center gap-3 overflow-x-auto border-b border-cyan-800/20 bg-[#0d2137]/50 px-4 py-3">
-        <div className="flex shrink-0 items-center gap-1"><Heart className="h-4 w-4 text-red-400" /><span className="text-sm font-bold">{state.currentHp}/{state.baseMaxHp + totalStats.hp}</span></div>
-        <div className="flex shrink-0 items-center gap-1"><Zap className="h-4 w-4 text-blue-400" /><span className="text-sm font-bold">{state.energyMax + totalStats.energyMax}</span></div>
-        <div className="flex shrink-0 items-center gap-1"><Wind className="h-4 w-4 text-emerald-400" /><span className="text-sm font-bold">{state.moveSpeed}x</span></div>
-        <div className="flex shrink-0 items-center gap-1"><Swords className="h-4 w-4 text-orange-400" /><span className="text-sm font-bold">{totalStats.weight} DMG</span></div>
-        <div className="flex shrink-0 items-center gap-1"><Skull className="h-4 w-4 text-purple-400" /><span className="text-sm font-bold">{Math.round(state.cursePercent)}%</span></div>
-        {isAtFortress && (
-          <div className="flex shrink-0 items-center gap-1 rounded border border-cyan-500/30 bg-cyan-900/40 px-2 py-0.5">
-            <Anchor className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="text-[10px] font-bold text-cyan-300">Thanh Tri</span>
+        <div className="grid grid-cols-5 gap-2">
+          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <Heart className="h-3 w-3 text-red-500 mb-1" />
+            <span className="text-[10px] font-black">{state.currentHp}</span>
           </div>
-        )}
+          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <Zap className="h-3 w-3 text-blue-500 mb-1" />
+            <span className="text-[10px] font-black">{state.energyMax + totalStats.energyMax}</span>
+          </div>
+          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <Wind className="h-3 w-3 text-emerald-500 mb-1" />
+            <span className="text-[10px] font-black">{state.moveSpeed}x</span>
+          </div>
+          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <Swords className="h-3 w-3 text-orange-500 mb-1" />
+            <span className="text-[10px] font-black">{totalStats.weight}</span>
+          </div>
+          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
+            <Skull className="h-3 w-3 text-purple-500 mb-1" />
+            <span className="text-[10px] font-black">{Math.round(state.cursePercent)}%</span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex border-b border-cyan-800/30 bg-[#0a1929]">
-        <button onClick={() => setTab('inventory')} className={`flex-1 py-3 text-sm font-bold transition-colors ${tab === 'inventory' ? 'border-b-2 border-cyan-400 bg-cyan-900/20 text-cyan-400' : 'text-gray-500 hover:text-gray-300'}`}>
-          <Package className="mr-1.5 inline h-4 w-4" />Inventory
-        </button>
-        <button onClick={() => setTab('challenge')} className={`flex-1 py-3 text-sm font-bold transition-colors ${tab === 'challenge' ? 'border-b-2 border-amber-400 bg-amber-900/20 text-amber-400' : 'text-gray-500 hover:text-gray-300'}`}>
-          <Swords className="mr-1.5 inline h-4 w-4" />Thu Thach
-        </button>
-      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 subtle-scrollbar">
+        <div className="flex flex-col items-center gap-4">
+          {/* Bag Slot */}
+          <div 
+            className={`flex w-full items-center justify-center gap-4 rounded-2xl border-2 px-4 py-3 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-white/5 bg-white/[0.02]'}`}
+            onPointerEnter={() => {
+              if (draggingItem && (BAG_DEFAULTS[draggingItem.id] || (draggingItem as any).type === 'bag')) {
+                setIsHoveringBagSlot(true);
+              }
+            }}
+            onPointerLeave={() => setIsHoveringBagSlot(false)}
+            onPointerUp={() => {
+              if (isHoveringBagSlot && draggingItem) {
+                const itemAsBag = draggingItem as any;
+                const bagData = BAG_DEFAULTS[draggingItem.id];
+                
+                if (itemAsBag.type === 'bag' || bagData) {
+                  const width = itemAsBag.width || bagData?.width || 3;
+                  const height = itemAsBag.height || bagData?.height || 3;
+                  const newBag: BagItem = {
+                    uid: draggingItem.uid,
+                    id: draggingItem.id,
+                    name: draggingItem.name,
+                    icon: draggingItem.icon,
+                    rarity: draggingItem.rarity,
+                    price: draggingItem.price,
+                    weight: draggingItem.weight,
+                    hpBonus: draggingItem.hpBonus,
+                    energyMax: draggingItem.energyMax,
+                    energyRegen: draggingItem.energyRegen,
+                    gridX: Math.floor((MAX_GRID_W - width) / 2),
+                    gridY: Math.floor((6 - height) / 2),
+                    rotated: false,
+                    shape: itemAsBag.shape || bagData?.shape || Array.from({ length: height }, () => Array(width).fill(true)),
+                    width: width,
+                    height: height,
+                    type: 'bag'
+                  };
+                  acceptBagSwap(newBag);
+                  showNotification(`Đã trang bị ${newBag.name}`, 'success');
+                }
+              }
+              setIsHoveringBagSlot(false);
+            }}
+          >
+            <div className={`relative h-14 w-14 rounded-2xl border-2 flex items-center justify-center shadow-lg transition-transform hover:scale-105 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+               <span className="text-3xl leading-none">{activeBag?.icon || '🎒'}</span>
+               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full border-2 border-[#060d17] flex items-center justify-center">
+                  <Anchor className="w-2.5 h-2.5 text-white" />
+               </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xs font-black text-white uppercase">{activeBag?.name || 'Balo Co Ban'}</h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">{activeBag?.rarity || 'common'} | {activeBag?.cells || 9} O TRONG</p>
+            </div>
+          </div>
 
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a1929] to-[#040b12] px-4 py-4">
-        {tab === 'inventory' && (
-          <div className="flex flex-col items-center gap-1">
-            <div 
-              className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-4 py-1.5 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-cyan-900/30 bg-[#08131d]'}`}
-              onPointerEnter={() => {
-                if (draggingItem && (BAG_DEFAULTS[draggingItem.id] || (draggingItem as any).type === 'bag')) {
-                  setIsHoveringBagSlot(true);
+          {/* Main Grid */}
+          <div className="w-full rounded-[24px] border border-white/5 bg-black/20 p-2 shadow-inner">
+            <InventoryGrid
+              items={state.inventory}
+              bags={state.bags}
+              onItemLayoutChange={memoizedSaveInventory}
+              onItemDoubleClick={(item) => {
+                if ((item as any).type === 'bag') {
+                  acceptBagSwap(item as any);
+                  showNotification(`Đã đổi sang ${item.name}`, 'success');
                 }
               }}
-              onPointerLeave={() => setIsHoveringBagSlot(false)}
-              onPointerUp={() => {
-                if (isHoveringBagSlot && draggingItem) {
-                  const itemAsBag = draggingItem as any;
-                  const bagData = BAG_DEFAULTS[draggingItem.id];
-                  
-                  if (itemAsBag.type === 'bag' || bagData) {
-                    const width = itemAsBag.width || bagData?.width || 3;
-                    const height = itemAsBag.height || bagData?.height || 3;
-                    const newBag: BagItem = {
-                      uid: draggingItem.uid,
-                      id: draggingItem.id,
-                      name: draggingItem.name,
-                      icon: draggingItem.icon,
-                      rarity: draggingItem.rarity,
-                      price: draggingItem.price,
-                      weight: draggingItem.weight,
-                      hpBonus: draggingItem.hpBonus,
-                      energyMax: draggingItem.energyMax,
-                      energyRegen: draggingItem.energyRegen,
-                      gridX: Math.floor((MAX_GRID_W - width) / 2),
-                      gridY: Math.floor((6 - height) / 2),
-                      rotated: false,
-                      shape: itemAsBag.shape || bagData?.shape || Array.from({ length: height }, () => Array(width).fill(true)),
-                      width: width,
-                      height: height,
-                      type: 'bag'
-                    };
-                    acceptBagSwap(newBag);
-                    showNotification(`Đã trang bị ${newBag.name}`, 'success');
-                  }
-                }
-                setIsHoveringBagSlot(false);
-              }}
-            >
-              <button
-                type="button"
-                title={formatBagTooltip(activeBag)}
-                className={`flex h-16 w-16 items-center justify-center rounded-2xl border-2 shadow-inner transition-transform hover:scale-[1.04] ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}
-              >
-                <span className="text-4xl leading-none">{activeBag?.icon || '🎒'}</span>
-              </button>
-            </div>
-
-            <div className="grid w-full gap-3">
-            {isAtFortress && (
-              <button
-                onClick={() => openFortressStorage('fortress')}
-                className="w-full rounded-2xl border border-cyan-700/40 bg-gradient-to-r from-cyan-900/40 to-sky-900/20 px-3 py-2 text-left transition-all hover:border-cyan-500/60 hover:bg-cyan-900/40"
-              >
-                <div className="flex items-center gap-2">
-                  <Anchor className="h-4 w-4 text-cyan-300" />
-                  <div>
-                    <p className="text-[11px] font-black text-cyan-200">Mở kho thành trì</p>
-                    <p className="text-[9px] text-cyan-100/70">Kho có dung lượng gấp 4 lần balo.</p>
-                  </div>
-                </div>
-              </button>
-            )}
-            </div>
-
-            <div className="rounded-xl border border-cyan-900/20 bg-[#06111a] p-2 shadow-inner">
-              <InventoryGrid
-                items={state.inventory}
-                bags={state.bags}
-                onItemLayoutChange={memoizedSaveInventory}
-                onItemDoubleClick={(item) => {
-                  if ((item as any).type === 'bag') {
-                    acceptBagSwap(item as any);
-                    showNotification(`Đã đổi sang ${item.name}`, 'success');
-                  }
-                }}
-                cellSize={Math.min(44, (window.innerWidth - 64) / MAX_GRID_W)}
-              />
-            </div>
+              cellSize={Math.min(42, (window.innerWidth - 64) / MAX_GRID_W)}
+            />
           </div>
-        )}
-
-        {tab === 'challenge' && (
-          <div className="mx-auto flex max-w-sm flex-col items-center gap-6">
-            <div className="w-full">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-300">
-                <ShieldCheck className="h-5 w-5" /> Chon The Gioi
-              </h3>
-              
-              {!isChallengeActive && (
-                <p className="mb-6 rounded-lg border border-cyan-900/30 bg-[#0d2137] p-3 text-xs leading-relaxed text-gray-400">
-                  Chi phi vao the gioi cang cao, <strong className="text-cyan-300">trang bi nhan duoc</strong> va <strong className="text-red-400">chi so doi thu</strong> cang lon.
-                </p>
-              )}
-
-              <div className="relative px-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={5}
-                  step={1}
-                  value={isChallengeActive ? state.worldTier : selectedTier}
-                  disabled={isChallengeActive}
-                  onChange={(e) => setSelectedTier(Number(e.target.value))}
-                  className={`w-full appearance-none rounded-full border border-cyan-800/50 bg-[#0d2137] outline-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(251,191,36,0.6)] [&::-webkit-slider-thumb]:transition-transform ${isChallengeActive ? 'cursor-default opacity-80' : 'cursor-pointer hover:[&::-webkit-slider-thumb]:scale-110'}`}
-                  style={{
-                    height: '12px',
-                    background: `linear-gradient(90deg, rgba(251,191,36,0.95) 0%, rgba(251,191,36,0.95) ${((isChallengeActive ? state.worldTier : selectedTier) / 5) * 100}%, rgba(13,33,55,1) ${((isChallengeActive ? state.worldTier : selectedTier) / 5) * 100}%, rgba(13,33,55,1) 100%)`,
-                  }}
-                />
-                <div className="mt-4 flex justify-between">
-                  {TIER_LABELS.map((tier) => (
-                    <div key={tier.tier} className={`flex flex-col items-center transition-colors ${(isChallengeActive ? state.worldTier : selectedTier) === tier.tier ? 'scale-110 text-amber-400' : 'text-gray-600'}`}>
-                      <span className="text-sm font-black">{tier.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {!isChallengeActive && (
-                <div className="relative mt-8 overflow-hidden rounded-2xl border border-amber-900/50 bg-gradient-to-br from-[#1a0f08] to-[#0f172a] p-6 text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
-                  <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500/60">Tier {selectedTier}</p>
-                  <p className="mb-2 text-3xl font-black text-transparent drop-shadow-sm bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text">
-                    {TIER_LABELS.find((tier) => tier.tier === selectedTier)?.label || '0'} <span className="text-lg">Vang</span>
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-700/30 bg-amber-950/50 px-3 py-1">
-                    <span className="text-[10px] font-bold uppercase text-gray-400">Multiplier</span>
-                    <span className="text-sm font-black text-amber-400">x{TIER_MULTIPLIERS[selectedTier]}</span>
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={() => {
-                  if (isChallengeActive) {
-                    onEnterWorld?.(); // Cho phép bấm để đóng modal/trở lại game
-                    return;
-                  }
-                  if (!canEnterWorld) return;
-                  setWorldTier(selectedTier);
-                  onEnterWorld?.();
-                }}
-                disabled={!isChallengeActive && !canEnterWorld}
-                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-lg font-black transition-all ${
-                  isChallengeActive || canEnterWorld
-                    ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.4)] hover:from-amber-500 hover:via-orange-400 hover:to-amber-500 active:scale-[0.98]'
-                    : 'cursor-not-allowed border border-gray-800 bg-[#1a2332] text-gray-600'
-                }`}
-                style={(isChallengeActive || canEnterWorld) ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
-              >
-                <Swords className="h-5 w-5" />
-                {isChallengeActive ? 'VAO THE GIOI' : (isWorldEntryLocked ? 'DANG TRONG THE GIOI' : 'VAO THE GIOI')}
-              </button>
-              {isChallengeActive && (
-                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-amber-300/80">
-                  <Anchor className="h-4 w-4" /> Ban dang o Tier {state.worldTier}.
-                </p>
-              )}
-              {!isChallengeActive && isWorldEntryLocked && (
-                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-amber-300/80">
-                  <Anchor className="h-4 w-4" /> Ve Thanh Tri de mo lai nut vao the gioi.
-                </p>
-              )}
-              {!isChallengeActive && !isWorldEntryLocked && !hasEnoughGold && (
-                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-red-400/80">
-                  <span className="text-base">!</span> Ban can them {selectedTierCost - state.looterGold} vang
-                </p>
-              )}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Action Area (Optional) */}
+      {isChallengeActive && (
+        <div className="px-5 py-3 bg-amber-500/5 border-t border-amber-500/10 flex items-center justify-center gap-2">
+           <Swords className="w-3 h-3 text-amber-500" />
+           <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Dang trong thu thach Tier {state.worldTier}</p>
+        </div>
+      )}
     </div>
   );
 };

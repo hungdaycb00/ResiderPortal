@@ -170,8 +170,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             return;
         }
 
+        // --- Looter Challenge Initiation Logic ---
+        if (isLooterGameMode && looterState && !looterGameCtx.isChallengeActive && !dragState.moved) {
+             // User clicked on map while at fortress and NOT in a challenge
+             // Instead of moving, show the Tier Selection Overlay
+             (props as any).setIsTierSelectorOpen?.(true);
+             return;
+        }
+
         looterBoat.handlePointerUp(e);
-    }, [looterBoat]);
+    }, [looterBoat, isLooterGameMode, looterState, looterGameCtx.isChallengeActive, props]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;

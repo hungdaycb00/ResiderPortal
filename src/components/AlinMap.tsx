@@ -258,6 +258,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
                 setBoatCenterHandler={setCenterBoatHandler}
+                setIsTierSelectorOpen={setIsTierSelectorOpen}
             />
 
             <MapControls
