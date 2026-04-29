@@ -583,25 +583,53 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     if (!deviceId) throw new Error('No device');
     const normalizedOpponentId = opponentId || '';
     const isBotOpponent = normalizedOpponentId.startsWith('bot_');
-    const res = await fetch(`${API}/api/sea/combat`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId,
-        opponentId: normalizedOpponentId,
-        targetUserId: normalizedOpponentId,
-        targetId: normalizedOpponentId,
-        opponentInventory,
-        opponentHp,
-        opponentBags,
-        botItems: opponentInventory,
-        botHp: opponentHp,
-        botBags: opponentBags,
-        isBot: isBotOpponent,
-        playerItemCount: state.inventory.filter((item) => item.gridX >= 0).length,
-        opponentTier: state.worldTier,
-      }),
-    });
-    const data = await res.json();
+    const payload = {
+      deviceId,
+      opponentId: normalizedOpponentId,
+      targetUserId: normalizedOpponentId,
+      targetId: normalizedOpponentId,
+      opponentInventory,
+      opponentHp,
+      opponentBags,
+      botItems: opponentInventory,
+      botHp: opponentHp,
+      botBags: opponentBags,
+      isBot: isBotOpponent,
+      playerItemCount: state.inventory.filter((item) => item.gridX >= 0).length,
+      opponentTier: state.worldTier,
+    };
+    const combatUrls = [`${API}/api/sea/combat`];
+    if (typeof window !== 'undefined') {
+      const sameOriginCombatUrl = `${window.location.origin}/api/sea/combat`;
+      if (!combatUrls.includes(sameOriginCombatUrl)) {
+        combatUrls.push(sameOriginCombatUrl);
+      }
+    }
+
+    let data: any = null;
+    let lastError = 'Combat failed';
+
+    for (const combatUrl of combatUrls) {
+      const res = await fetch(combatUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const responseData = await res.json().catch(() => ({}));
+      if (res.ok && responseData?.success) {
+        data = responseData;
+        break;
+      }
+      lastError = responseData?.error || `Combat failed (${res.status})`;
+      if (res.status !== 404) {
+        throw new Error(lastError);
+      }
+    }
+
+    if (!data?.success) {
+      throw new Error(lastError);
+    }
+
     if (data.success) {
       await loadState();
       const result: CombatResult = { result: data.result, combatLog: data.combatLog, loot: data.loot, droppedItems: data.droppedItems, finalHp: data.finalHp };
