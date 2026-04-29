@@ -10,8 +10,8 @@ const CombatScreen: React.FC = () => {
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
   const [showFleeConfirm, setShowFleeConfirm] = useState(false);
   const [selectedResultItem, setSelectedResultItem] = useState<SeaItem | null>(null);
-  const [manaA, setManaA] = useState(0);
-  const [manaB, setManaB] = useState(0);
+  const [actionProgressA, setActionProgressA] = useState(0);
+  const [actionProgressB, setActionProgressB] = useState(0);
   const [hpA, setHpA] = useState(0);
   const [hpB, setHpB] = useState(0);
   const [initialPlayerInventory, setInitialPlayerInventory] = useState<SeaItem[]>([]);
@@ -20,8 +20,8 @@ const CombatScreen: React.FC = () => {
   const currentIdxRef = useRef(0);
   const frameRef = useRef<number>();
 
-  const manaARef = useRef(0);
-  const manaBRef = useRef(0);
+  const actionProgressARef = useRef(0);
+  const actionProgressBRef = useRef(0);
   const hpARef = useRef(0);
   const hpBRef = useRef(0);
 
@@ -43,10 +43,10 @@ const CombatScreen: React.FC = () => {
       setHpB(fullHpB);
       hpARef.current = fullHpA;
       hpBRef.current = fullHpB;
-      setManaA(0);
-      setManaB(0);
-      manaARef.current = 0;
-      manaBRef.current = 0;
+      setActionProgressA(0);
+      setActionProgressB(0);
+      actionProgressARef.current = 0;
+      actionProgressBRef.current = 0;
     }
   }, [encounter]);
 
@@ -64,24 +64,24 @@ const CombatScreen: React.FC = () => {
   );
 
   const maxHpA = state.baseMaxHp + myStats.hp;
-  const maxManaA = 100 + myStats.eMax;
+  const maxActionBarA = 100 + myStats.eMax;
   const maxHpB = encounter.totalHp;
-  const botStats = encounter.isBot ? (encounter.inventory || []).reduce(
+  const botStats = (encounter.isBot || encounter.isGhost) ? (encounter.inventory || []).reduce(
     (a: any, i: any) => ({ hp: a.hp + i.hpBonus, weight: a.weight + i.weight, eMax: a.eMax + i.energyMax, eRegen: a.eRegen + i.energyRegen }),
     { hp: 0, weight: 0, eMax: 0, eRegen: 0 }
   ) : { hp: 0, weight: 0, eMax: 0, eRegen: 0 };
-  const maxManaB = 100 + botStats.eMax;
+  const maxActionBarB = 100 + botStats.eMax;
 
   const handleStart = async () => {
     setPhase('fighting');
     hpARef.current = maxHpA;
     hpBRef.current = maxHpB;
-    manaARef.current = 0;
-    manaBRef.current = 0;
+    actionARef.current = 0;
+    actionBRef.current = 0;
     setHpA(maxHpA);
     setHpB(maxHpB);
-    setManaA(0);
-    setManaB(0);
+    setActionProgressA(0);
+    setActionProgressB(0);
     currentIdxRef.current = 0;
 
     try {
@@ -138,17 +138,17 @@ const CombatScreen: React.FC = () => {
       const entry = combatLogRef.current[currentIdxRef.current];
       const side = entry.attacker;
 
-      // Both sides gain mana (dt is ~33ms at 30fps)
+      // Both sides gain action (dt is ~33ms at 30fps)
       const gainA = (15 + myStats.eRegen) * (dt / 1000) * 10;
       const gainB = (15 + botStats.eRegen) * (dt / 1000) * 10;
       
-      manaARef.current = Math.min(manaARef.current + gainA, maxManaA);
-      manaBRef.current = Math.min(manaBRef.current + gainB, maxManaB);
-      setManaA(manaARef.current);
-      setManaB(manaBRef.current);
+      actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA);
+      actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB);
+      setActionProgressA(actionProgressARef.current);
+      setActionProgressB(actionProgressBRef.current);
 
       if (side === 'A') {
-        if (manaARef.current >= maxManaA) {
+        if (actionProgressARef.current >= maxActionBarA) {
           isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
           hpBRef.current = Math.max(0, entry.targetHp);
@@ -158,10 +158,10 @@ const CombatScreen: React.FC = () => {
               setFlyingItem(null);
               isAnimating = false;
           }, 800);
-          manaARef.current = 0;
+          actionProgressARef.current = 0;
         }
       } else {
-        if (manaBRef.current >= maxManaB) {
+        if (actionProgressBRef.current >= maxActionBarB) {
           isAnimating = true;
           setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
           hpARef.current = Math.max(0, entry.targetHp);
@@ -171,7 +171,7 @@ const CombatScreen: React.FC = () => {
               setFlyingItem(null);
               isAnimating = false;
           }, 800);
-          manaBRef.current = 0;
+          actionProgressBRef.current = 0;
         }
       }
 
@@ -193,10 +193,6 @@ const CombatScreen: React.FC = () => {
   };
 
   const handleFlee = async () => {
-    if (!showFleeConfirm) {
-      setShowFleeConfirm(true);
-      return;
-    }
     setShowFleeConfirm(false);
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     await curseChoice('flee');
@@ -232,9 +228,9 @@ const CombatScreen: React.FC = () => {
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
             <div className="mt-1 h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
-              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(actionProgressB / maxActionBarB) * 100}%` }} transition={{ duration: 0.1 }} />
               <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-difference">
-                {Math.round(manaB)}/{maxManaB}
+                {Math.round(actionProgressB)}/{maxActionBarB}
               </div>
             </div>
         </div>
@@ -339,11 +335,11 @@ const CombatScreen: React.FC = () => {
             <div className="h-5 bg-gray-900 rounded-full overflow-hidden mb-1 border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full" animate={{ width: `${Math.max(0, (hpA / maxHpA) * 100)}%` }} />
             </div>
-            {/* Mana Bar */}
+            {/* Action Bar */}
             <div className="h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
-              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(manaA / maxManaA) * 100}%` }} transition={{ duration: 0.1 }} />
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full shadow-[0_0_8px_#3b82f6]" animate={{ width: `${(actionProgressA / maxActionBarA) * 100}%` }} transition={{ duration: 0.1 }} />
               <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-difference">
-                {Math.round(manaA)}/{maxManaA}
+                {Math.round(actionProgressA)}/{maxActionBarA}
               </div>
             </div>
           </div>
@@ -369,11 +365,11 @@ const CombatScreen: React.FC = () => {
             <div className="h-6 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5 shadow-inner">
               <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full" animate={{ width: `${Math.max(0, (hpB / maxHpB) * 100)}%` }} />
             </div>
-            {/* Mana Bar */}
+            {/* Action Bar */}
             <div className="h-5 bg-gray-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative">
-              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(manaB / maxManaB) * 100}%` }} transition={{ duration: 0.1 }} />
+              <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500 rounded-full" animate={{ width: `${(actionProgressB / maxActionBarB) * 100}%` }} transition={{ duration: 0.1 }} />
               <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-difference">
-                {Math.round(manaB)}/{maxManaB}
+                {Math.round(actionProgressB)}/{maxActionBarB}
               </div>
             </div>
           </div>
@@ -398,21 +394,24 @@ const CombatScreen: React.FC = () => {
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/40">
                 <X className="w-8 h-8 text-red-500" />
               </div>
-              <h3 className="text-xl font-black text-white mb-2">Bỏ trốn?</h3>
-              <p className="text-sm text-gray-300 mb-6">Bạn có chắc muốn bỏ trốn? <span className="text-red-400 font-bold">50% tỉ lệ rơi mất vật phẩm</span> trong balo xuống biển!</p>
+              <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Thoát khỏi Ghost?</h3>
+              <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                Bạn đang cố gắng chạy trốn! Cái giá của sự hèn nhát là không hề nhỏ.
+              </p>
               
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={handleFlee}
-                  className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl transition-all active:scale-95"
+                  onClick={() => handleFlee()}
+                  className="w-full py-4 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-400 font-bold rounded-2xl transition-all flex flex-col items-center leading-tight shadow-lg shadow-red-900/40"
                 >
-                  ĐỒNG Ý BỎ TRỐN
+                  <span className="text-sm uppercase">Chấp nhận số phận</span>
+                  <span className="text-[9px] text-red-400/70">Mất 75% vật phẩm trong Balo</span>
                 </button>
                 <button 
                   onClick={() => setShowFleeConfirm(false)}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-2xl transition-all"
+                  className="w-full py-3 text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-gray-300 transition-colors mt-2"
                 >
-                  Ở LẠI CHIẾN ĐẤU
+                  Ở lại chiến đấu
                 </button>
               </div>
             </motion.div>

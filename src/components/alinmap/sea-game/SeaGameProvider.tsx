@@ -99,8 +99,8 @@ interface SeaGameContextType {
   setShowCurseModal: (v: boolean) => void;
   showMinigame: WorldItem | null;
   setShowMinigame: (item: WorldItem | null) => void;
-  isSeaGameMode: boolean;
-  setIsSeaGameMode: (v: boolean) => void;
+  isLootGameMode: boolean;
+  setIsLootGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
   isItemDragging: boolean;
@@ -142,7 +142,7 @@ interface SeaGameContextType {
 const defaultState: SeaGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
-  cursePercent: 0, seaGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
+  cursePercent: 0, lootGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100, activeCurses: {},
 };
 
@@ -435,14 +435,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       });
       const data = await res.json();
       if (data.success) {
-        if (data.type === 'grid_expander') {
-          setState(prev => ({
-            ...prev,
-            cursePercent: data.cursePercent,
-            inventoryWidth: data.newWidth,
-            inventoryHeight: data.newHeight,
-          }));
-        } else if (data.type === 'bag' || data.type === 'item') {
+        if (data.type === 'bag' || data.type === 'item') {
           const itemData = data.type === 'bag' ? { ...data.bag, type: 'bag', gridW: 2, gridH: 2 } : data.item;
           const floatingItem = { ...itemData, gridX: -1, gridY: -1 };
           // Use functional setState to always get latest inventory (fix stale closure)
@@ -628,7 +621,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       body: JSON.stringify({ deviceId, choice }),
     });
     const data = await res.json();
-    if (data.success && choice === 'flee') {
+    if (data.success) {
       await loadState();
     }
     setShowCurseModal(false);
@@ -774,7 +767,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
     setState(prev => ({
       ...prev,
       worldTier: tier,
-      seaGold: Math.max(0, prev.seaGold - cost),
+      lootGold: Math.max(0, prev.lootGold - cost),
     }));
 
     try {
@@ -787,7 +780,7 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         setState(prev => ({
           ...prev,
           worldTier: data.tier,
-          seaGold: data.seaGold,
+          lootGold: data.seaGold || data.lootGold,
           cursePercent: data.cursePercent,
         }));
       } else {

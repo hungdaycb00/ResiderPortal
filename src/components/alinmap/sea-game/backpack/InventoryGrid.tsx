@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import type { SeaItem, BagItem } from './types';
 import { useSeaGame } from '../SeaGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
@@ -66,9 +66,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
-  const [isHoveringTrash, setIsHoveringTrash] = useState(false);
+  const [isHoveringSell, setIsHoveringSell] = useState(false);
   const [popupInfo, setPopupInfo] = useState<{ item: SeaItem; x: number; y: number } | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<SeaItem | null>(null);
   
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
@@ -194,13 +193,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       const relY = clientY - gridRect.top;
       pointerCurrentRef.current = { clientX, clientY };
       setDragPos({ x: relX, y: relY });
-      
       if (trashRect &&
           clientX >= trashRect.left && clientX <= trashRect.right &&
           clientY >= trashRect.top && clientY <= trashRect.bottom) {
         updateHoverCell(null);
         setIsHoveringStorage(false);
-        setIsHoveringTrash(true);
+        setIsHoveringSell(true);
       }
       // Check if hovering grid
       else if (clientX >= gridRect.left && clientX <= gridRect.right &&
@@ -212,7 +210,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           y: Math.round(topLeftY / cellSize),
         });
         setIsHoveringStorage(false);
-        setIsHoveringTrash(false);
+        setIsHoveringSell(false);
       } 
       // Check if hovering storage
       else if (storageRect && 
@@ -220,12 +218,12 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
                clientY >= storageRect.top && clientY <= storageRect.bottom) {
         updateHoverCell(null);
         setIsHoveringStorage(true);
-        setIsHoveringTrash(false);
+        setIsHoveringSell(false);
       } 
       else {
         updateHoverCell(null);
         setIsHoveringStorage(false);
-        setIsHoveringTrash(false);
+        setIsHoveringSell(false);
       }
     }
   }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, updateHoverCell]);
@@ -259,8 +257,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         y: pointerCurrent.clientY,
       });
     } else {
-      if (isHoveringTrash) {
-        setItemToDelete(dragItem);
+      if (isHoveringSell) {
+        sellItems([dragItem.uid]);
       } else if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         // Place on grid
         const newItems = items.map(i =>
@@ -289,7 +287,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setIsItemDragging(false);
     updateHoverCell(null);
     setIsHoveringStorage(false);
-    setIsHoveringTrash(false);
+    setIsHoveringSell(false);
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
     onDragEnd?.();
@@ -490,11 +488,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         >
           <div
             ref={trashRef}
-            className={`absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/50 text-red-200 transition-transform ${
-              isHoveringTrash ? 'scale-150 border-red-300 bg-red-800 text-white shadow-lg shadow-red-900/40' : 'scale-100'
+            className={`absolute left-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-transform ${
+              isHoveringSell ? 'scale-125 border-amber-400 bg-amber-600 text-white shadow-lg shadow-amber-900/40' : 'border-amber-600/40 bg-amber-950/50 text-amber-200'
             }`}
           >
-            <Trash2 className="h-4 w-4" />
+            <DollarSign className="h-5 w-5" />
           </div>
           <div className="mb-2 flex items-center justify-between pl-10">
             <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-widest">
@@ -576,42 +574,21 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             {popupInfo.item.price > 0 && <div className="flex justify-between text-xs"><span className="text-gray-400">Giá Bán</span><span className="font-bold text-amber-400">{popupInfo.item.price} vàng</span></div>}
             <div className="flex justify-between text-xs"><span className="text-gray-400">Kích Thước</span><span className="font-bold text-gray-300">{popupInfo.item.gridW || 1}x{popupInfo.item.gridH || 1}</span></div>
           </div>
-        </div>
-      )}
-      {/* Trash Confirmation Modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-xs bg-[#0d2137] border border-red-500/30 rounded-2xl p-6 shadow-2xl text-center"
+          {/* Quick Sell Button for Mobile */}
+          <button
+             onPointerDown={(e) => {
+               e.stopPropagation();
+               sellItems([popupInfo.item.uid]);
+               setPopupInfo(null);
+             }}
+             className="w-full mt-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black rounded-lg transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5"
           >
-            <div className="w-16 h-16 rounded-full bg-red-900/20 border border-red-500/30 flex items-center justify-center mx-auto mb-4 text-3xl">
-              🗑️
-            </div>
-            <h3 className="text-lg font-black text-white mb-2">Vứt bỏ vật phẩm?</h3>
-            <p className="text-sm text-gray-400 mb-6">Bạn có chắc chắn muốn vứt bỏ <span className="text-red-400 font-bold">{itemToDelete.name}</span> không?</p>
-            
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  onItemLayoutChange?.(items.filter(i => i.uid !== itemToDelete.uid));
-                  setItemToDelete(null);
-                }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all active:scale-95"
-              >
-                Vứt bỏ
-              </button>
-              <button
-                onClick={() => setItemToDelete(null)}
-                className="w-full py-3 bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 font-bold rounded-xl transition-all"
-              >
-                Giữ lại
-              </button>
-            </div>
-          </motion.div>
+            <DollarSign className="w-3 h-3" />
+            Bán Nhanh
+          </button>
         </div>
       )}
+
     </div>
   );
 };
