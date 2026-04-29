@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
-import { isSeaAtFortress, useSeaGame } from '../../../sea-game/SeaGameProvider';
-import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../sea-game/backpack';
-import type { SeaItem, BagItem } from '../../../sea-game/backpack';
+import { isLooterAtFortress, useLooterGame } from '../../../looter-game/LooterGameProvider';
+import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
+import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 
 const TIER_LABELS = [
   { tier: 0, cost: 0, label: '0' },
@@ -30,7 +30,7 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useSeaGame();
+  const { state, saveInventory, setWorldTier, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useLooterGame();
   const [tab, setTab] = useState<'inventory' | 'challenge'>('inventory');
   const [selectedTier, setSelectedTier] = useState(state.worldTier);
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
@@ -39,12 +39,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
 
   useEffect(() => {
     // Auto-select the highest tier user can afford
-    const affordable = TIER_LABELS.filter(t => t.cost <= state.seaGold);
+    const affordable = TIER_LABELS.filter(t => t.cost <= state.looterGold);
     const bestTier = affordable.length > 0 ? affordable[affordable.length - 1].tier : 0;
     setSelectedTier(bestTier);
-  }, [state.seaGold, state.worldTier]);
+  }, [state.looterGold, state.worldTier]);
 
-  const memoizedSaveInventory = React.useCallback((newItems: SeaItem[]) => {
+  const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
     saveInventory(newItems);
   }, [saveInventory]);
 
@@ -66,9 +66,9 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
   );
 
-  const isAtFortress = isSeaAtFortress(state);
+  const isAtFortress = isLooterAtFortress(state);
   const selectedTierCost = TIER_LABELS.find((tier) => tier.tier === selectedTier)?.cost || 0;
-  const hasEnoughGold = state.seaGold >= selectedTierCost;
+  const hasEnoughGold = state.looterGold >= selectedTierCost;
   const isWorldEntryLocked = isChallengeActive || !isAtFortress;
   const canEnterWorld = !isWorldEntryLocked && hasEnoughGold;
 
@@ -82,7 +82,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         <div className="flex flex-col items-end gap-0.5">
           <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-900/40 px-3 py-1">
             <Coins className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-bold text-amber-300">{state.seaGold}</span>
+            <span className="text-sm font-bold text-amber-300">{state.looterGold}</span>
           </div>
         </div>
       </div>
@@ -282,7 +282,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               )}
               {!isChallengeActive && !isWorldEntryLocked && !hasEnoughGold && (
                 <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-red-400/80">
-                  <span className="text-base">!</span> Ban can them {selectedTierCost - state.seaGold} vang
+                  <span className="text-base">!</span> Ban can them {selectedTierCost - state.looterGold} vang
                 </p>
               )}
             </div>

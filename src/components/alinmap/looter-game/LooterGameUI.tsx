@@ -5,7 +5,7 @@ import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import CombatLootModal from './backpack/CombatLootModal';
-import { useSeaGame } from './SeaGameProvider';
+import { useLooterGame } from './LooterGameProvider';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'bg-sky-100 border-sky-300',
@@ -14,8 +14,8 @@ const RARITY_COLORS: Record<string, string> = {
   legendary: 'bg-purple-100 border-purple-400',
 };
 
-const SeaGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult, openBackpack, preGeneratedMinigame, setPreGeneratedMinigame } = useSeaGame();
+const LooterGameUI: React.FC = () => {
+    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult, openBackpack, preGeneratedMinigame, setPreGeneratedMinigame } = useLooterGame();
 
     return (
         <>
@@ -122,4 +122,4 @@ const SeaGameUI: React.FC = () => {
     );
 };
 
-export default SeaGameUI;
+export default LooterGameUI;

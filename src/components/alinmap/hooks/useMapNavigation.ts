@@ -5,8 +5,8 @@ interface UseMapNavigationParams {
   initialMainTab: string;
   myObfPos: { lat: number; lng: number } | null;
   ws: React.MutableRefObject<WebSocket | null>;
-  seaState: any;
-  seaGame: any;
+  looterState: any;
+  looterGame: any;
   onTabChange?: (tab: string) => void;
   handleRefresh: () => void;
   requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
@@ -16,9 +16,9 @@ interface UseMapNavigationParams {
 export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'creator' | 'backpack';
 
 export function useMapNavigation({
-  initialMainTab, myObfPos, ws, seaState, seaGame, onTabChange, handleRefresh, requireAuth, user,
+  initialMainTab, myObfPos, ws, looterState, looterGame, onTabChange, handleRefresh, requireAuth, user,
 }: UseMapNavigationParams) {
-  const { setIsSeaGameMode, isSeaGameMode, initGame, loadWorldItems } = seaGame;
+  const { setIsLooterGameMode, isLooterGameMode, initGame, loadWorldItems } = looterGame;
 
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
@@ -32,7 +32,7 @@ export function useMapNavigation({
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
   const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
-  const [isSeaLoading, setIsSeaLoading] = useState(false);
+  const [isLooterLoading, setIsSeaLoading] = useState(false);
   const [radius, setRadius] = useState(50);
 
   useEffect(() => {
@@ -62,10 +62,10 @@ export function useMapNavigation({
   }, [initialMainTab, isDesktop, user]);
 
   useEffect(() => {
-    if (mainTab === 'backpack' && seaState.initialized && !isSeaGameMode) {
-      setIsSeaGameMode(true);
+    if (mainTab === 'backpack' && looterState.initialized && !isLooterGameMode) {
+      setIsLooterGameMode(true);
     }
-  }, [mainTab, seaState.initialized, isSeaGameMode, setIsSeaGameMode]);
+  }, [mainTab, looterState.initialized, isLooterGameMode, setIsLooterGameMode]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -99,7 +99,7 @@ export function useMapNavigation({
 
   const handleTabClick = useCallback((tabId: string) => {
     // Prevent toggling sheet if currently dragging an item (fixes click-through bug)
-    const { isItemDragging } = seaGame;
+    const { isItemDragging } = looterGame;
     if (isItemDragging) return;
 
     setSelectedUser(null);
@@ -119,28 +119,28 @@ export function useMapNavigation({
 
     if (tabId === 'backpack') {
       setMainTab('backpack');
-      setIsSeaGameMode(true);
+      setIsLooterGameMode(true);
       setIsSheetExpanded(true);
 
       const doLoad = async () => {
-        if (!seaState.initialized && myObfPos) {
+        if (!looterState.initialized && myObfPos) {
           await initGame(myObfPos.lat, myObfPos.lng);
         }
         await loadWorldItems(true);
       };
       void doLoad();
 
-      const targetLat = seaState.currentLat ?? myObfPos?.lat;
-      const targetLng = seaState.currentLng ?? myObfPos?.lng;
+      const targetLat = looterState.currentLat ?? myObfPos?.lat;
+      const targetLng = looterState.currentLng ?? myObfPos?.lng;
       if (targetLat != null && targetLng != null) handleCenterTo(targetLat, targetLng);
     } else {
-      setIsSeaGameMode(false);
+      setIsLooterGameMode(false);
       setMainTab(tabId as MainTab);
       setIsSheetExpanded(true);
     }
 
     onTabChange?.(tabId);
-  }, [mainTab, myObfPos, seaState, requireAuth, user, onTabChange, setIsSeaGameMode, initGame, loadWorldItems, handleCenterTo]);
+  }, [mainTab, myObfPos, looterState, requireAuth, user, onTabChange, setIsLooterGameMode, initGame, loadWorldItems, handleCenterTo]);
 
   return {
     panX, panY, scale, selfDragX, selfDragY,
@@ -150,7 +150,7 @@ export function useMapNavigation({
     mapMode, setMapMode,
     selectedUser, setSelectedUser,
     radius, setRadius,
-    isSeaLoading, setIsSeaLoading,
+    isLooterLoading, setIsSeaLoading,
     handleWheel, handleCenter, handleCenterTo,
     handleUpdateRadius, handleTabClick,
   };

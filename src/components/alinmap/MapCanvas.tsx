@@ -4,9 +4,9 @@ import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-mot
 import SpatialNode from './SpatialNode';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
-import SeaEntities from './SeaEntities';
+import LooterEntities from './LooterEntities';
 import { DEGREES_TO_PX } from './constants';
-import { useSeaBoat } from './hooks/useSeaBoat';
+import { useLooterBoat } from './hooks/useLooterBoat';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -44,10 +44,10 @@ interface MapCanvasProps {
     handleWheel: (e: React.WheelEvent) => void;
     mapMode: 'grid' | 'satellite';
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
-    isSeaGameMode?: boolean;
-    seaState?: any;
-    seaGameCtx?: any;
-    isSeaLoading?: boolean;
+    isLooterGameMode?: boolean;
+    looterState?: any;
+    looterGameCtx?: any;
+    isLooterLoading?: boolean;
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
@@ -59,27 +59,27 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isSeaGameMode, seaState, seaGameCtx, isSeaLoading, setMainTab, showNotification,
+    mapMode, setContextMenu, isLooterGameMode, looterState, looterGameCtx, isLooterLoading, setMainTab, showNotification,
     setBoatCenterHandler
 }) => {
-    const seaBoat = useSeaBoat({
-        isSeaGameMode: !!isSeaGameMode,
-        seaGameCtx,
+    const looterBoat = useLooterBoat({
+        isLooterGameMode: !!isLooterGameMode,
+        looterGameCtx,
         myObfPos,
         scale, panX, panY,
         setMainTab, setIsSheetExpanded, showNotification
     });
 
-    const curseBarBg = useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${seaBoat.curseVisual}%, #ef4444)`;
-    const curseBarWidth = useMotionTemplate`${seaBoat.curseVisual}%`;
-    const curseText = useTransform(seaBoat.curseVisual, (v) => `${Math.round(v)}%`);
+    const curseBarBg = useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${looterBoat.curseVisual}%, #ef4444)`;
+    const curseBarWidth = useMotionTemplate`${looterBoat.curseVisual}%`;
+    const curseText = useTransform(looterBoat.curseVisual, (v) => `${Math.round(v)}%`);
 
     useEffect(() => {
-        setBoatCenterHandler?.(seaBoat.centerOnBoat);
+        setBoatCenterHandler?.(looterBoat.centerOnBoat);
         return () => {
             setBoatCenterHandler?.(null);
         };
-    }, [seaBoat.centerOnBoat, setBoatCenterHandler]);
+    }, [looterBoat.centerOnBoat, setBoatCenterHandler]);
 
     const mapDragRef = useRef<{
         active: boolean;
@@ -104,11 +104,11 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
-        if (interactiveTarget && !isSeaGameMode) {
-            seaBoat.handlePointerDown(e);
+        if (interactiveTarget && !isLooterGameMode) {
+            looterBoat.handlePointerDown(e);
             return;
         }
-        seaBoat.handlePointerDown(e);
+        looterBoat.handlePointerDown(e);
         mapDragRef.current = {
             active: true,
             pointerId: e.pointerId,
@@ -120,15 +120,15 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             suppressClick: false,
         };
         // Detach camera from boat so user can pan freely while boat moves
-        if (isSeaGameMode) {
-            seaBoat.stopPanFollow?.();
+        if (isLooterGameMode) {
+            looterBoat.stopPanFollow?.();
         }
 
         try {
             e.currentTarget.setPointerCapture(e.pointerId);
         } catch {}
         e.preventDefault();
-    }, [isSeaGameMode, panX, panY, seaBoat]);
+    }, [isLooterGameMode, panX, panY, looterBoat]);
 
     const handleMapPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
@@ -158,18 +158,18 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             if (dragState.moved) {
                 dragState.suppressClick = true;
-                seaBoat.handlePointerCancel();
+                looterBoat.handlePointerCancel();
                 return;
             }
         }
 
         if (interactiveTarget) {
-            seaBoat.handlePointerCancel();
+            looterBoat.handlePointerCancel();
             return;
         }
 
-        seaBoat.handlePointerUp(e);
-    }, [seaBoat]);
+        looterBoat.handlePointerUp(e);
+    }, [looterBoat]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
@@ -179,8 +179,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 e.currentTarget.releasePointerCapture(e.pointerId);
             } catch {}
         }
-        seaBoat.handlePointerCancel();
-    }, [seaBoat]);
+        looterBoat.handlePointerCancel();
+    }, [looterBoat]);
 
     const handleMapClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
@@ -231,7 +231,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         onClickCapture={handleMapClickCapture}
                         onContextMenu={(e) => {
                             e.preventDefault();
-                            if (isSeaGameMode || !myObfPos) return;
+                            if (isLooterGameMode || !myObfPos) return;
                             const currentScale = scale?.get?.() || 1;
                             const offsetX = e.clientX - window.innerWidth / 2;
                             const offsetY = e.clientY - window.innerHeight / 2;
@@ -276,16 +276,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 {/* Self Node */}
                                 {user ? (
                                     <SelfNode
-                                        isSeaGameMode={!!isSeaGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
+                                        isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
                                         myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
                                         user={user} myUserId={myUserId} galleryActive={galleryActive}
                                         galleryTitle={galleryTitle} galleryImages={galleryImages}
                                         scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
                                         panX={panX} panY={panY}
-                                        boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
+                                        boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                         ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                                         setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                        setMainTab={setMainTab} addLog={addLog} seaState={seaState}
+                                        setMainTab={setMainTab} addLog={addLog} looterState={looterState}
                                     />
                                 ) : (
                                     <div
@@ -320,13 +320,13 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     </div>
                                 )}
 
-                                {/* Sea Game Entities */}
-                                {isSeaGameMode && (
-                                    <SeaEntities
-                                        myObfPos={myObfPos} seaState={seaState} seaGameCtx={seaGameCtx}
-                                        boatTargetPin={seaBoat.boatTargetPin}
-                                        boatOffsetX={seaBoat.boatOffsetX} boatOffsetY={seaBoat.boatOffsetY}
-                                        executeMoveToExact={seaBoat.executeMoveToExact}
+                                {/* Looter Game Entities */}
+                                {isLooterGameMode && (
+                                    <LooterEntities
+                                        myObfPos={myObfPos} looterState={looterState} looterGameCtx={looterGameCtx}
+                                        boatTargetPin={looterBoat.boatTargetPin}
+                                        boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                        executeMoveToExact={looterBoat.executeMoveToExact}
                                     />
                                 )}
 
@@ -349,12 +349,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     if (age < filterAgeMin || age > filterAgeMax) return false;
                                     return true;
                                 }).map(u => (
-                                    <div key={u.id} className={`transition-opacity duration-500 ${isSeaGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
+                                    <div key={u.id} className={`transition-opacity duration-500 ${isLooterGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
                                         <SpatialNode
                                             user={u} myPos={myObfPos!} mapScale={scale}
-                                            onClick={() => !isSeaGameMode && setSelectedUser(u)}
+                                            onClick={() => !isLooterGameMode && setSelectedUser(u)}
                                             onContextMenu={(e, uData) => {
-                                                if (!isSeaGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
+                                                if (!isLooterGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
                                             }}
                                         />
                                     </div>
@@ -365,8 +365,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 </motion.div>
             )}
 
-            {/* Sea Game Curse Bar */}
-            {isSeaGameMode && (
+            {/* Looter Game Curse Bar */}
+            {isLooterGameMode && (
                 <div className="absolute top-[12px] left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
                     <div className="bg-black/60 backdrop-blur-xl border border-red-500/30 rounded-full p-1.5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
                         <span className="text-red-400 text-xs font-black uppercase tracking-wider shrink-0">☠️ Curse</span>
@@ -376,12 +376,12 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                 style={{
                                     background: curseBarBg,
                                     width: curseBarWidth,
-                                    boxShadow: (seaState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
+                                    boxShadow: (looterState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
                                 }}
                             />
                         </div>
                         <motion.span 
-                            className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(seaState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}
+                            className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(looterState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}
                             initial={false}
                             animate={{ opacity: [0.5, 1] }}
                         >
@@ -392,9 +392,9 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
             )}
 
             {/* Active Curses List - Top Right Corner */}
-            {isSeaGameMode && seaState?.activeCurses && Object.values(seaState.activeCurses).some(v => (v as number) > 0) && (
+            {isLooterGameMode && looterState?.activeCurses && Object.values(looterState.activeCurses).some(v => (v as number) > 0) && (
                 <div className="absolute top-[60px] right-4 z-[115] flex flex-col items-end gap-2 pointer-events-none">
-                    {Object.entries(seaState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
+                    {Object.entries(looterState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
                         const CURSE_META: any = {
                             dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
                             hp_debuff: { icon: '💔', name: 'HP', color: 'text-rose-400' },
@@ -419,8 +419,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 </div>
             )}
 
-            {/* Sea Game Loading Overlay */}
-            {isSeaGameMode && isSeaLoading && (
+            {/* Looter Game Loading Overlay */}
+            {isLooterGameMode && isLooterLoading && (
                 <div className="absolute inset-0 z-[200] bg-[#001424]/95 backdrop-blur-md flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative w-20 h-20">

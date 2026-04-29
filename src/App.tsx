@@ -155,8 +155,8 @@ export default function App() {
       newPath = `${currentBase}/${playingGame.slug}`;
     }
 
-    if (location.pathname !== newPath && !playingGame?.gameUrl.includes('sea-game')) {
-      // Note: Sea Game is handled inside AlinMap.tsx
+    if (location.pathname !== newPath && !playingGame?.gameUrl.includes('looter-game')) {
+      // Note: Looter Game is handled inside AlinMap.tsx
       window.history.replaceState(null, '', newPath);
     }
   }, [playingGame, activeTab, location.pathname]);
@@ -165,7 +165,7 @@ export default function App() {
   useEffect(() => {
     if (allGames.length > 0 && !playingGame) {
       const slug = extractSlug(location.pathname);
-      if (slug && slug !== 'sea-game') {
+      if (slug && slug !== 'looter-game') {
         const game = allGames.find((g: any) => 
           (g.slug?.toLowerCase() === slug) || 
           (g.id?.toString().toLowerCase() === slug) ||

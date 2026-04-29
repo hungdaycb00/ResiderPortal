@@ -10,7 +10,7 @@ import CreatorTabView from './features/creator/components/CreatorTabView';
 import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
 import { useSocial } from './features/social/context/SocialContext';
-import { useSeaGame } from './sea-game/SeaGameProvider';
+import { useLooterGame } from './looter-game/LooterGameProvider';
 
 interface BottomSheetProps {
     isDesktop: boolean;
@@ -82,7 +82,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     } = props;
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
-    const { isItemDragging } = useSeaGame();
+    const { isItemDragging } = useLooterGame();
 
     const [panelWidth, setPanelWidth] = React.useState(400);
     const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);

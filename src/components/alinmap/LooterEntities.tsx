@@ -2,17 +2,17 @@ import React from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import { DEGREES_TO_PX } from './constants';
 
-interface SeaEntitiesProps {
+interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
-    seaState: any;
-    seaGameCtx: any;
+    looterState: any;
+    looterGameCtx: any;
     boatTargetPin: { lat: number; lng: number } | null;
     boatOffsetX: MotionValue<number>;
     boatOffsetY: MotionValue<number>;
     executeMoveToExact?: (lat: number, lng: number) => void;
 }
 
-const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, seaGameCtx }: any) => {
+const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, looterGameCtx }: any) => {
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
 
@@ -47,13 +47,13 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
                 const currentDist = distMetersTransform.get();
                 if (isPortal) {
                     if (currentDist <= interactionRadius) {
-                        seaGameCtx?.openFortressStorage?.('portal');
+                        looterGameCtx?.openFortressStorage?.('portal');
                     } else {
                         executeMoveToExact?.(item.lat, item.lng);
                     }
                 } else {
                     if (currentDist <= interactionRadius) {
-                       seaGameCtx?.pickupItem?.(item.spawnId);
+                       looterGameCtx?.pickupItem?.(item.spawnId);
                     } else {
                        executeMoveToExact?.(item.lat, item.lng);
                     }
@@ -75,14 +75,14 @@ const SeaItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStac
     );
 };
 
-const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact, seaGameCtx }: any) => {
-    const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+const FortressEntity = ({ looterState, myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact, looterGameCtx }: any) => {
+    const boatScaleStack = looterState?.activeCurses?.boat_scale || 0;
     const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
 
     const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
-        const fLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const fLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const fLat = looterState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const fLng = looterState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
     });
 
@@ -100,17 +100,17 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
                 e.stopPropagation();
                 const dist = fDistTransform.get();
                 if (dist <= fInteractionRadius) {
-                    seaGameCtx?.openFortressStorage?.('fortress');
+                    looterGameCtx?.openFortressStorage?.('fortress');
                 } else {
-                    executeMoveToExact?.(seaState.fortressLat, seaState.fortressLng);
+                    executeMoveToExact?.(looterState.fortressLat, looterState.fortressLng);
                 }
             }}
             onPointerDown={(e) => {}}
             onPointerUp={(e) => {}}
             className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
             style={{
-                top: `calc(50% + ${-(seaState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                left: `calc(50% + ${(seaState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                top: `calc(50% + ${-(looterState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                left: `calc(50% + ${(looterState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
         >
             <div className="relative flex flex-col items-center group">
@@ -123,15 +123,15 @@ const FortressEntity = ({ seaState, myObfPos, boatOffsetX, boatOffsetY, executeM
     );
 };
 
-const SeaEntities: React.FC<SeaEntitiesProps> = ({
-    myObfPos, seaState, seaGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
+const LooterEntities: React.FC<LooterEntitiesProps> = ({
+    myObfPos, looterState, looterGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
 
     // Culling Logic: Kiểm tra vật phẩm nào trong tầm nhìn mỗi 500ms
     React.useEffect(() => {
-        if (!seaGameCtx?.worldItems) return;
+        if (!looterGameCtx?.worldItems) return;
 
         const updateVisibility = () => {
             const ox = boatOffsetX.get();
@@ -149,7 +149,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
             const nextVisible = new Set<string>();
             const CULL_DIST = 5000; // 5km visibility range
 
-            for (const item of seaGameCtx.worldItems) {
+            for (const item of looterGameCtx.worldItems) {
                 const iLat = item.lat - curLat;
                 const iLng = item.lng - curLng;
                 const dist = Math.sqrt(iLat * iLat + iLng * iLng) * 111000;
@@ -171,7 +171,7 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
         const timer = setInterval(updateVisibility, 500);
         updateVisibility();
         return () => clearInterval(timer);
-    }, [seaGameCtx?.worldItems, myObfPos?.lat, myObfPos?.lng]);
+    }, [looterGameCtx?.worldItems, myObfPos?.lat, myObfPos?.lng]);
 
     const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
     const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));
@@ -198,10 +198,10 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 </svg>
             )}
 
-            {seaState?.fortressLat && (
+            {looterState?.fortressLat && (
                 <FortressEntity 
-                    seaState={seaState} myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
-                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} seaGameCtx={seaGameCtx} 
+                    looterState={looterState} myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
+                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} looterGameCtx={looterGameCtx} 
                 />
             )}
 
@@ -217,20 +217,20 @@ const SeaEntities: React.FC<SeaEntitiesProps> = ({
                 </div>
             )}
 
-            {seaGameCtx?.worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
-                <SeaItemEntity 
+            {looterGameCtx?.worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
+                <LooterItemEntity 
                     key={item.spawnId}
                     item={item}
                     myObfPos={myObfPos}
                     boatOffsetX={boatOffsetX}
                     boatOffsetY={boatOffsetY}
-                    boatScaleStack={seaState?.activeCurses?.boat_scale || 0}
+                    boatScaleStack={looterState?.activeCurses?.boat_scale || 0}
                     executeMoveToExact={executeMoveToExact}
-                    seaGameCtx={seaGameCtx}
+                    looterGameCtx={looterGameCtx}
                 />
             ))}
         </>
     );
 };
 
-export default SeaEntities;
+export default LooterEntities;

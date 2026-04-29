@@ -8,7 +8,7 @@ interface SearchHeaderProps {
   isDesktop: boolean;
   isSheetExpanded: boolean;
   setIsSheetExpanded: (v: boolean) => void;
-  isSeaGameMode: boolean;
+  isLooterGameMode: boolean;
   mainTab: string;
   myAvatarUrl: string;
   myDisplayName: string;
@@ -29,11 +29,11 @@ interface SearchHeaderProps {
 
 const SearchHeader: React.FC<SearchHeaderProps> = ({
   searchTag, setSearchTag, isDesktop, isSheetExpanded, setIsSheetExpanded,
-  isSeaGameMode, mainTab, myAvatarUrl, myDisplayName, handleTabClick,
+  isLooterGameMode, mainTab, myAvatarUrl, myDisplayName, handleTabClick,
   showDesktopResults, setShowDesktopResults, isSearchingDesktop, desktopSearchResults,
   setSelectedUser, setActiveTab, weatherData, currentProvince, myObfPos, onWeatherClick
 }) => {
-  const shouldHideSearch = isSeaGameMode || ['profile', 'creator', 'backpack'].includes(mainTab);
+  const shouldHideSearch = isLooterGameMode || ['profile', 'creator', 'backpack'].includes(mainTab);
 
   return (
     <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${shouldHideSearch ? 'hidden' : ''}`}>
@@ -76,7 +76,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
       </button>
 
       {/* Mobile Location/Coords Widget - Bound to SearchHeader visibility */}
-      {!isDesktop && !isSeaGameMode && (
+      {!isDesktop && !isLooterGameMode && (
           <div className="md:hidden absolute top-[105%] left-4 pointer-events-none flex flex-col gap-1 items-start mt-1">
               <div 
                   className="pointer-events-auto flex items-center gap-2 px-1 active:scale-95 transition-transform cursor-pointer"

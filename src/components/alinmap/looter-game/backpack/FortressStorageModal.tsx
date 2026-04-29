@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X, Database, Package, Sparkles, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
-import { useSeaGame } from '../SeaGameProvider';
-import type { SeaItem, BagItem } from './types';
+import { useLooterGame } from '../LooterGameProvider';
+import type { LooterItem, BagItem } from './types';
 
 const STORAGE_GRID_W = MAX_GRID_W;
 const STORAGE_GRID_H = 24;
@@ -23,7 +23,7 @@ const VIRTUAL_STORAGE_BAG: BagItem = {
   cells: STORAGE_GRID_W * STORAGE_GRID_H,
 };
 
-const buildStorageItems = (storage: SeaItem[]) => {
+const buildStorageItems = (storage: LooterItem[]) => {
   const current = storage.map((item) => ({ ...item }));
   const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
 
@@ -81,9 +81,9 @@ export default function FortressStorageModal() {
     saveInventory,
     saveStorage,
     storeItems,
-  } = useSeaGame();
+  } = useLooterGame();
 
-  const [dragItem, setDragItem] = useState<SeaItem | null>(null);
+  const [dragItem, setDragItem] = useState<LooterItem | null>(null);
   const [dragSource, setDragSource] = useState<'inventory' | 'storage' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoverTarget, setHoverTarget] = useState<'inventory' | 'storage' | null>(null);
@@ -104,11 +104,11 @@ export default function FortressStorageModal() {
     }
   };
 
-  const handleMoveToStorage = useCallback(async (item: SeaItem, x: number, y: number) => {
+  const handleMoveToStorage = useCallback(async (item: LooterItem, x: number, y: number) => {
     await storeItems([item.uid], 'store', fortressStorageMode, x, y);
   }, [storeItems, fortressStorageMode]);
 
-  const handleMoveToInventory = useCallback(async (item: SeaItem, x: number, y: number) => {
+  const handleMoveToInventory = useCallback(async (item: LooterItem, x: number, y: number) => {
     await storeItems([item.uid], 'retrieve', fortressStorageMode, x, y);
   }, [storeItems, fortressStorageMode]);
 

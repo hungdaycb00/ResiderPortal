@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Package } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
-import { useSeaGame } from '../SeaGameProvider';
-import type { SeaItem } from './types';
+import { useLooterGame } from '../LooterGameProvider';
+import type { LooterItem } from './types';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'bg-sky-100 border-sky-300',
@@ -12,8 +12,8 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 export default function CombatLootModal() {
-  const { state, combatResult, setCombatResult, saveInventory, showNotification } = useSeaGame();
-  const [lootLeft, setLootLeft] = useState<SeaItem[]>([]);
+  const { state, combatResult, setCombatResult, saveInventory, showNotification } = useLooterGame();
+  const [lootLeft, setLootLeft] = useState<LooterItem[]>([]);
 
   React.useEffect(() => {
     if (combatResult?.loot) {
@@ -27,7 +27,7 @@ export default function CombatLootModal() {
     setCombatResult(null);
   };
 
-  const handleLootItem = async (item: SeaItem) => {
+  const handleLootItem = async (item: LooterItem) => {
     const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
     if (!activeBag || activeBag.gridX < 0) return;
 

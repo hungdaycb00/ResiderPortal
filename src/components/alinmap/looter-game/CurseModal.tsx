@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Wind, Heart, Shield } from 'lucide-react';
-import { useSeaGame } from './SeaGameProvider';
+import { useLooterGame } from './LooterGameProvider';
 
 const CurseModal: React.FC = () => {
-  const { showCurseModal, setShowCurseModal, encounter, curseChoice, setEncounter, state } = useSeaGame();
+  const { showCurseModal, setShowCurseModal, encounter, curseChoice, setEncounter, state } = useLooterGame();
 
   if (!showCurseModal || !encounter) return null;
 

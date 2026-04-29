@@ -1,26 +1,26 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, Trash2 } from 'lucide-react';
-import type { SeaItem, BagItem } from './types';
-import { useSeaGame } from '../SeaGameProvider';
+import type { LooterItem, BagItem } from './types';
+import { useLooterGame } from '../LooterGameProvider';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 interface InventoryGridProps {
-  items: SeaItem[];
+  items: LooterItem[];
   bags: BagItem[]; // We only use the first bag now
   readOnly?: boolean;
-  onItemLayoutChange?: (items: SeaItem[]) => void;
-  onItemDoubleClick?: (item: SeaItem) => void;
-  onItemClick?: (item: SeaItem) => void;
+  onItemLayoutChange?: (items: LooterItem[]) => void;
+  onItemDoubleClick?: (item: LooterItem) => void;
+  onItemClick?: (item: LooterItem) => void;
   cellSize?: number;
   gridW?: number;
   gridH?: number;
   hideStorage?: boolean;
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
-  onDragStart?: (item: SeaItem, source: 'inventory' | 'storage', offset: { x: number; y: number }) => void;
+  onDragStart?: (item: LooterItem, source: 'inventory' | 'storage', offset: { x: number; y: number }) => void;
   onDragEnd?: () => void;
-  onExternalDrop?: (item: SeaItem, x: number, y: number) => void;
-  externalDragItem?: SeaItem | null;
+  onExternalDrop?: (item: LooterItem, x: number, y: number) => void;
+  externalDragItem?: LooterItem | null;
   externalDragOffset?: { x: number; y: number } | null;
   externalHoverCell?: { x: number; y: number } | null;
 }
@@ -41,7 +41,7 @@ const BAG_BG: Record<string, string> = {
 
 const CLICK_MOVE_TOLERANCE = 8;
 
-const formatItemTooltip = (item: SeaItem) =>
+const formatItemTooltip = (item: LooterItem) =>
   `${item.name}\n⚔ ${item.weight || 0} DMG | ❤ +${item.hpBonus || 0} HP\n⚡ +${item.energyMax || 0} EN | ✦ +${item.energyRegen || 0} Regen\n💰 ${item.price || 0} vàng | ${item.gridW || 1}x${item.gridH || 1}`;
 
 type DragMode = 'item' | 'storage-item' | null;
@@ -63,15 +63,15 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragOffset,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems, isLootGameMode, isChallengeActive, items: allItems, saveInventory } = useSeaGame();
+  const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems, isLootGameMode, isChallengeActive, items: allItems, saveInventory } = useLooterGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
-  const [dragItem, setDragItem] = useState<SeaItem | null>(null);
+  const [dragItem, setDragItem] = useState<LooterItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
   const [isHoveringSell, setIsHoveringSell] = useState(false);
-  const [popupInfo, setPopupInfo] = useState<{ item: SeaItem; x: number; y: number } | null>(null);
+  const [popupInfo, setPopupInfo] = useState<{ item: LooterItem; x: number; y: number } | null>(null);
   
   const gridRef = useRef<HTMLDivElement>(null);
   const storageRef = useRef<HTMLDivElement>(null);
@@ -126,7 +126,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   }, [items, gridW, gridH]);
 
   // Can place item: all cells must be on the bag AND not occupied by another item
-  const canPlaceItem = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
+  const canPlaceItem = useCallback((item: LooterItem, x: number, y: number, excludeUid?: string) => {
     const bagOcc = buildBagOccupancy();
     const itemOcc = buildItemOccupancy(excludeUid);
     const w = item.gridW || 1;
@@ -144,7 +144,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   // ==========================================
   // Drag Handlers
   // ==========================================
-  const handleItemPointerDown = (e: React.PointerEvent, item: SeaItem, mode: DragMode) => {
+  const handleItemPointerDown = (e: React.PointerEvent, item: LooterItem, mode: DragMode) => {
     setPopupInfo(null);
     if (readOnly) return;
     e.preventDefault();

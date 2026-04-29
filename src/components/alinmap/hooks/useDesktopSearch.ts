@@ -19,7 +19,7 @@ export function useDesktopSearch(searchTag: string, isDesktop: boolean) {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(async () => {
       try {
-        const resp = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(searchTag.trim())}`);
+        const resp = await fetch(`${API_BASE}/api/looterrch?q=${encodeURIComponent(searchTag.trim())}`);
         const data = await resp.json();
         if (data.success) {
           setDesktopSearchResults({ posts: data.posts, users: data.users });

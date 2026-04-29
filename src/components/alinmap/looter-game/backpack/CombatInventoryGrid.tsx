@@ -1,13 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import type { SeaItem } from './types';
+import type { LooterItem } from './types';
 
 interface CombatInventoryGridProps {
-  items: SeaItem[];
+  items: LooterItem[];
   gridWidth: number;
   gridHeight: number;
   readOnly?: boolean;
-  onLayoutChange?: (items: SeaItem[]) => void;
+  onLayoutChange?: (items: LooterItem[]) => void;
   cellSize?: number;
   bag?: any;
 }
@@ -35,7 +35,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
   cellSize = 48,
   bag,
 }) => {
-  const [dragItem, setDragItem] = useState<SeaItem | null>(null);
+  const [dragItem, setDragItem] = useState<LooterItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
@@ -63,7 +63,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
     return grid;
   }, [items, gridWidth, gridHeight]);
 
-  const canPlace = useCallback((item: SeaItem, x: number, y: number, excludeUid?: string) => {
+  const canPlace = useCallback((item: LooterItem, x: number, y: number, excludeUid?: string) => {
     const occ = buildOccupancy(excludeUid);
     const w = item.rotated ? item.gridH : item.gridW;
     const h = item.rotated ? item.gridW : item.gridH;
@@ -79,7 +79,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
     return true;
   }, [buildOccupancy, gridWidth, gridHeight]);
 
-  const handleItemPointerDown = (e: React.PointerEvent, item: SeaItem) => {
+  const handleItemPointerDown = (e: React.PointerEvent, item: LooterItem) => {
     if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
@@ -150,7 +150,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
     dragOffset.y,
   ]);
 
-  const handleRotate = (item: SeaItem) => {
+  const handleRotate = (item: LooterItem) => {
     if (readOnly) return;
 
     const rotated = !item.rotated;

@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSeaGame } from './SeaGameProvider';
-import type { SeaItem } from './backpack';
+import { useLooterGame } from './LooterGameProvider';
+import type { LooterItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
-  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useSeaGame();
+  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useLooterGame();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
   const [showFleeConfirm, setShowFleeConfirm] = useState(false);
-  const [selectedResultItem, setSelectedResultItem] = useState<SeaItem | null>(null);
+  const [selectedResultItem, setSelectedResultItem] = useState<LooterItem | null>(null);
   const [actionProgressA, setActionProgressA] = useState(0);
   const [actionProgressB, setActionProgressB] = useState(0);
   const [hpA, setHpA] = useState(0);
   const [hpB, setHpB] = useState(0);
-  const [initialPlayerInventory, setInitialPlayerInventory] = useState<SeaItem[]>([]);
-  const [flyingItem, setFlyingItem] = useState<{ item: SeaItem; from: 'A' | 'B'; damage: number } | null>(null);
+  const [initialPlayerInventory, setInitialPlayerInventory] = useState<LooterItem[]>([]);
+  const [flyingItem, setFlyingItem] = useState<{ item: LooterItem; from: 'A' | 'B'; damage: number } | null>(null);
   const combatLogRef = useRef<any[]>([]);
   const currentIdxRef = useRef(0);
   const frameRef = useRef<number>();

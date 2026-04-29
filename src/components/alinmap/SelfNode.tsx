@@ -5,7 +5,7 @@ import { normalizeImageUrl } from '../../services/externalApi';
 import { DEGREES_TO_PX } from './constants';
 
 interface SelfNodeProps {
-    isSeaGameMode: boolean;
+    isLooterGameMode: boolean;
     myObfPos: { lat: number; lng: number };
     myDisplayName: string;
     myStatus: string;
@@ -30,30 +30,30 @@ interface SelfNodeProps {
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     setMainTab?: (tab: string) => void;
     addLog: (msg: string) => void;
-    seaState?: any;
+    looterState?: any;
 }
 
 const SelfNode: React.FC<SelfNodeProps> = ({
-    isSeaGameMode, myObfPos, myDisplayName, myStatus, isVisibleOnMap, isDesktop,
+    isLooterGameMode, myObfPos, myDisplayName, myStatus, isVisibleOnMap, isDesktop,
     user, myUserId, galleryActive, galleryTitle, galleryImages,
     scale, selfDragX, selfDragY, panX, panY, boatOffsetX, boatOffsetY,
-    ws, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, setMainTab, addLog, seaState,
+    ws, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, setMainTab, addLog, looterState,
 }) => {
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
 
     const fortressDist = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
-        if (!isSeaGameMode || !seaState?.fortressLat) return '';
+        if (!isLooterGameMode || !looterState?.fortressLat) return '';
         const oy = boatOffsetY?.get() || 0;
-        const dLat = seaState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const dLng = seaState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const dLat = looterState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const dLng = looterState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         const dist = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 111000);
         if (dist <= 100) return 'Thành Trì';
         return dist >= 1000 ? `${(dist / 1000).toFixed(1)}km` : `${dist}m`;
     });
 
-    if (isSeaGameMode) {
-        const boatScaleStack = seaState?.activeCurses?.boat_scale || 0;
+    if (isLooterGameMode) {
+        const boatScaleStack = looterState?.activeCurses?.boat_scale || 0;
         const finalBoatScale = 1 + boatScaleStack * 0.05;
 
         return (
@@ -78,7 +78,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         <span className="text-4xl drop-shadow-lg">⛵</span>
                     </div>
                 </motion.div>
-                {seaState?.fortressLat && (
+                {looterState?.fortressLat && (
                     <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-max pointer-events-none">
                         <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider drop-shadow-md">
                             <motion.span>{fortressDist}</motion.span>
@@ -187,14 +187,14 @@ const SelfNode: React.FC<SelfNodeProps> = ({
 
             {/* Status label */}
             <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 w-max">
-                {isSeaGameMode && seaState?.fortressLat && (
+                {isLooterGameMode && looterState?.fortressLat && (
                     <div className="pointer-events-none">
                         <motion.span className="text-[10px] font-black text-cyan-300 tracking-wider drop-shadow-md">
                             <motion.span>{fortressDist}</motion.span>
                         </motion.span>
                     </div>
                 )}
-                {myStatus && !isSeaGameMode && (
+                {myStatus && !isLooterGameMode && (
                     <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none mt-1">
                         <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{myStatus}</span>
                         <span className="text-[10px] font-bold text-gray-400">#{(galleryImages?.[0] || '').slice(-4).toUpperCase()}</span>

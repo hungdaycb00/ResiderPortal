@@ -31,8 +31,8 @@ interface MapControlsProps {
     handleCenterBoat?: () => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
-    isSeaGameMode?: boolean;
-    seaState?: any;
+    isLooterGameMode?: boolean;
+    looterState?: any;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
 }
@@ -42,7 +42,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isSeaGameMode, seaState,
+    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isLooterGameMode, looterState,
     isWidgetExpanded, setIsWidgetExpanded
 }) => {
     const [copyToast, setCopyToast] = useState(false);
@@ -60,7 +60,7 @@ const MapControls: React.FC<MapControlsProps> = ({
         <>
             {/* Floating Controls - Right Side */}
             <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
-                {!isSeaGameMode && (
+                {!isLooterGameMode && (
                     <>
                     <button
                         onClick={handleRefresh}
@@ -80,7 +80,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                     </>
                 )}
                 <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
-                    {!isSeaGameMode && (
+                    {!isLooterGameMode && (
                         <button
                             onClick={handleCenter}
                             className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
@@ -104,7 +104,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                         <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">－</span>
                     </button>
                 </div>
-                {isSeaGameMode && (
+                {isLooterGameMode && (
                     <div className="flex flex-col gap-2 mt-2">
                         <button
                             onClick={() => {
@@ -112,8 +112,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                                     handleCenterBoat();
                                     return;
                                 }
-                                if (seaState?.currentLat != null && seaState?.currentLng != null) {
-                                    handleCenterTo(seaState.currentLat, seaState.currentLng);
+                                if (looterState?.currentLat != null && looterState?.currentLng != null) {
+                                    handleCenterTo(looterState.currentLat, looterState.currentLng);
                                 }
                             }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"
@@ -123,8 +123,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                         </button>
                         <button
                             onClick={() => {
-                                if (seaState?.fortressLat != null && seaState?.fortressLng != null) {
-                                    handleCenterTo(seaState.fortressLat, seaState.fortressLng);
+                                if (looterState?.fortressLat != null && looterState?.fortressLng != null) {
+                                    handleCenterTo(looterState.fortressLat, looterState.fortressLng);
                                 } else {
                                     handleCenter();
                                 }
@@ -140,7 +140,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 
 
             {/* Weather & Coordinates Widget - Top Left on Mobile, Top Right on Desktop */}
-            {!isSeaGameMode && (
+            {!isLooterGameMode && (
                 <div 
                     className={`${isWidgetExpanded ? 'flex' : 'hidden md:flex'} absolute top-[105px] left-4 md:top-6 md:right-8 md:left-auto z-[185] pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 flex-col gap-1 min-w-[180px] max-w-[calc(100vw-32px)] cursor-pointer hover:bg-white transition-all duration-300 animate-in fade-in slide-in-from-top-2`}
                     onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}

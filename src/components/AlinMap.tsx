@@ -7,8 +7,8 @@ import NavigationBar from './alinmap/NavigationBar';
 import BottomSheet from './alinmap/BottomSheet';
 import SearchHeader from './alinmap/SearchHeader';
 import ContextMenu from './alinmap/ContextMenu';
-import SeaGameProvider, { useSeaGame } from './alinmap/sea-game/SeaGameProvider';
-import SeaGameUI from './alinmap/sea-game/SeaGameUI';
+import LooterGameProvider, { useLooterGame } from './alinmap/looter-game/LooterGameProvider';
+import LooterGameUI from './alinmap/looter-game/LooterGameUI';
 import { SocialProvider } from './alinmap/features/social/context/SocialContext';
 import { ProfileProvider } from './alinmap/features/profile/context/ProfileContext';
 
@@ -54,9 +54,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [centerBoatHandler, setCenterBoatHandler] = useState<(() => void) | null>(null);
     const [isWeatherWidgetExpanded, setIsWeatherWidgetExpanded] = useState(false);
 
-    // --- Sea Game ---
-    const seaGame = useSeaGame();
-    const { isSeaGameMode, state: seaState, pickupRewardItem, setPickupRewardItem, setIsSeaGameMode, setOpenBackpackHandler, saveInventory } = seaGame;
+    // --- Looter Game ---
+    const looterGame = useLooterGame();
+    const { isLooterGameMode, state: looterState, pickupRewardItem, setPickupRewardItem, setIsLooterGameMode, setOpenBackpackHandler, saveInventory } = looterGame;
 
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
@@ -93,8 +93,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         initialMainTab,
         myObfPos: geo.myObfPos,
         ws: wsCtx.ws,
-        seaState,
-        seaGame,
+        looterState,
+        looterGame,
         onTabChange,
         handleRefresh: wsCtx.handleRefresh,
         requireAuth,
@@ -109,14 +109,14 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             
             // Wait a bit for map layers to settle
             setTimeout(() => {
-                if (isSeaGameMode) {
+                if (isLooterGameMode) {
                     centerBoatHandler?.();
                 } else {
                     nav.handleCenter();
                 }
             }, 500);
         }
-    }, [wsCtx.isConnecting, wsCtx.wsStatus, isSeaGameMode, centerBoatHandler, nav]);
+    }, [wsCtx.isConnecting, wsCtx.wsStatus, isLooterGameMode, centerBoatHandler, nav]);
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
@@ -155,16 +155,16 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     // --- URL Sub-path Sync ---
     useEffect(() => {
         const subGame = extractExploreGame(location.pathname);
-        if (subGame === 'sea-game' && !isSeaGameMode) {
-            seaGame.setIsSeaGameMode(true);
+        if (subGame === 'looter-game' && !isLooterGameMode) {
+            looterGame.setIsLooterGameMode(true);
         }
     }, []); // Run once on mount
 
     useEffect(() => {
         let newPath = '/explore';
         
-        if (isSeaGameMode) {
-            newPath = '/explore/sea-game';
+        if (isLooterGameMode) {
+            newPath = '/explore/looter-game';
         } else if (nav.mainTab !== 'discover') {
             // Optional: Show main tab in URL if you want, e.g. /explore/social
             // But per user request, we focus on "games in explore"
@@ -174,14 +174,14 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         if (location.pathname !== newPath) {
             window.history.replaceState(null, '', newPath);
         }
-    }, [isSeaGameMode, nav.mainTab, location.pathname]);
+    }, [isLooterGameMode, nav.mainTab, location.pathname]);
 
     const handleOpenBackpackFromPickup = useCallback(() => {
-        setIsSeaGameMode(true);
+        setIsLooterGameMode(true);
         nav.setMainTab('backpack');
         nav.setIsSheetExpanded(true);
         setPickupRewardItem(null);
-    }, [nav.setMainTab, nav.setIsSheetExpanded, setIsSeaGameMode, setPickupRewardItem]);
+    }, [nav.setMainTab, nav.setIsSheetExpanded, setIsLooterGameMode, setPickupRewardItem]);
 
     useEffect(() => {
         setOpenBackpackHandler(() => handleOpenBackpackFromPickup);
@@ -190,7 +190,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 
     const handleDiscardPickupItem = async () => {
         if (!pickupRewardItem) return;
-        const newInventory = seaState.inventory.filter((item) => item.uid !== pickupRewardItem.uid);
+        const newInventory = looterState.inventory.filter((item) => item.uid !== pickupRewardItem.uid);
         await saveInventory(newInventory);
         setPickupRewardItem(null);
     };
@@ -220,7 +220,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isDesktop={nav.isDesktop}
                 isSheetExpanded={nav.isSheetExpanded}
                 setIsSheetExpanded={nav.setIsSheetExpanded}
-                isSeaGameMode={isSeaGameMode}
+                isLooterGameMode={isLooterGameMode}
                 mainTab={nav.mainTab}
                 myAvatarUrl={wsCtx.myAvatarUrl}
                 myDisplayName={wsCtx.myDisplayName}
@@ -249,10 +249,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
                 mapMode={nav.mapMode}
                 setContextMenu={setContextMenu}
-                isSeaGameMode={isSeaGameMode}
-                seaState={seaState}
-                seaGameCtx={seaGame}
-                isSeaLoading={nav.isSeaLoading}
+                isLooterGameMode={isLooterGameMode}
+                looterState={looterState}
+                looterGameCtx={looterGame}
+                isLooterLoading={nav.isLooterLoading}
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
                 setBoatCenterHandler={setCenterBoatHandler}
@@ -269,8 +269,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handleRefresh={handleRefresh} handleCenter={nav.handleCenter} handleCenterTo={nav.handleCenterTo} handleUpdateRadius={nav.handleUpdateRadius}
                 handleCenterBoat={centerBoatHandler}
                 setMapMode={nav.setMapMode}
-                isSeaGameMode={isSeaGameMode}
-                seaState={seaState}
+                isLooterGameMode={isLooterGameMode}
+                looterState={looterState}
                 isWidgetExpanded={isWeatherWidgetExpanded}
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
             />
@@ -363,10 +363,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
 const AlinMap: React.FC<AlinMapProps> = (props) => {
     const activeDeviceId = props.externalApi.getDeviceId();
     return (
-        <SeaGameProvider deviceId={activeDeviceId} showNotification={props.showNotification || (() => {})}>
-            <SeaGameUI />
+        <LooterGameProvider deviceId={activeDeviceId} showNotification={props.showNotification || (() => {})}>
+            <LooterGameUI />
             <AlinMapInner {...props} />
-        </SeaGameProvider>
+        </LooterGameProvider>
     );
 };
 

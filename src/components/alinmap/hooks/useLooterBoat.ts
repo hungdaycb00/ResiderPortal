@@ -3,8 +3,8 @@ import { useMotionValue, animate, useAnimationFrame, MotionValue } from 'framer-
 import { DEGREES_TO_PX } from '../constants';
 
 interface UseSeaBoatParams {
-    isSeaGameMode: boolean;
-    seaGameCtx: any;
+    isLooterGameMode: boolean;
+    looterGameCtx: any;
     myObfPos: { lat: number; lng: number } | null;
     scale: MotionValue<number>;
     panX: MotionValue<number>;
@@ -18,8 +18,8 @@ const PICKUP_RADIUS_DEG = 0.00085; // slightly smaller than server 100m (0.0009)
 const PORTAL_RADIUS_DEG = 0.0024;
 const TAP_MOVE_TOLERANCE_PX = 30;
 
-export function useSeaBoat({
-    isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY,
+export function useLooterBoat({
+    isLooterGameMode, looterGameCtx, myObfPos, scale, panX, panY,
     setMainTab, setIsSheetExpanded, showNotification
 }: UseSeaBoatParams) {
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
@@ -40,12 +40,12 @@ export function useSeaBoat({
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
 
     useEffect(() => {
-        curseVisual.set(seaGameCtx?.state?.cursePercent || 0);
-    }, [seaGameCtx?.state?.cursePercent, curseVisual]);
+        curseVisual.set(looterGameCtx?.state?.cursePercent || 0);
+    }, [looterGameCtx?.state?.cursePercent, curseVisual]);
 
     useEffect(() => {
-        if (!isSeaGameMode || !seaGameCtx?.state || !myObfPos || isAnimatingRef.current) return;
-        const { currentLat, currentLng } = seaGameCtx.state;
+        if (!isLooterGameMode || !looterGameCtx?.state || !myObfPos || isAnimatingRef.current) return;
+        const { currentLat, currentLng } = looterGameCtx.state;
         if (currentLat == null || currentLng == null) return;
 
         const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
@@ -55,10 +55,10 @@ export function useSeaBoat({
         panX.set(-nextBoatX);
         panY.set(-nextBoatY);
     }, [
-        isSeaGameMode,
-        seaGameCtx?.state?.currentLat,
-        seaGameCtx?.state?.currentLng,
-        seaGameCtx?.isChallengeActive,
+        isLooterGameMode,
+        looterGameCtx?.state?.currentLat,
+        looterGameCtx?.state?.currentLng,
+        looterGameCtx?.isChallengeActive,
         myObfPos,
         boatOffsetX,
         boatOffsetY,
@@ -68,8 +68,8 @@ export function useSeaBoat({
 
     // Auto-pickup loop
     useAnimationFrame(() => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos) return;
-        if (seaGameCtx.showMinigame || seaGameCtx.isFortressStorageOpen || seaGameCtx.encounter || seaGameCtx.showCurseModal || seaGameCtx.combatResult) {
+        if (!isLooterGameMode || !looterGameCtx || !myObfPos) return;
+        if (looterGameCtx.showMinigame || looterGameCtx.isFortressStorageOpen || looterGameCtx.encounter || looterGameCtx.showCurseModal || looterGameCtx.combatResult) {
             // Stop movement if any event is active
             if (boatMoveXRef.current) {
                 boatMoveXRef.current.stop();
@@ -85,16 +85,16 @@ export function useSeaBoat({
             return;
         }
         if (
-            !seaGameCtx.worldItems?.length ||
-            seaGameCtx.pickupRewardItem ||
-            seaGameCtx.pendingBagSwap ||
-            seaGameCtx.showMinigame
+            !looterGameCtx.worldItems?.length ||
+            looterGameCtx.pickupRewardItem ||
+            looterGameCtx.pendingBagSwap ||
+            looterGameCtx.showMinigame
         ) return;
 
         const currentLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
         const currentLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
 
-        seaGameCtx.worldItems.forEach((item: any) => {
+        looterGameCtx.worldItems.forEach((item: any) => {
             if (pickingItemsRef.current.has(item.spawnId)) return;
             const dLat = item.lat - currentLat;
             const dLng = item.lng - currentLng;
@@ -108,7 +108,7 @@ export function useSeaBoat({
                     isAnimatingRef.current = false;
                     setBoatTargetPin(null);
                     activePortalRef.current = item.spawnId;
-                    seaGameCtx.openFortressStorage?.('portal');
+                    looterGameCtx.openFortressStorage?.('portal');
                 } else if (dist >= PORTAL_RADIUS_DEG && activePortalRef.current === item.spawnId) {
                     activePortalRef.current = null;
                 }
@@ -127,13 +127,13 @@ export function useSeaBoat({
                 const isRare = rarityStr === 'rare' || rarityStr === 'legendary' || item.isExpander;
 
                 if (isRare) {
-                    seaGameCtx.setShowMinigame(item);
+                    looterGameCtx.setShowMinigame(item);
                     pickingItemsRef.current.add(item.spawnId);
                     return;
                 }
 
                 pickingItemsRef.current.add(item.spawnId);
-                seaGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
+                looterGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
                     if (!success) {
                         setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000);
                     }
@@ -143,17 +143,17 @@ export function useSeaBoat({
     });
 
     const executeMoveToExact = useCallback((lat: number, lng: number) => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos) {
-            console.log('[MapMove] Pre-conditions failed:', { isSeaGameMode, hasCtx: !!seaGameCtx, hasPos: !!myObfPos });
+        if (!isLooterGameMode || !looterGameCtx || !myObfPos) {
+            console.log('[MapMove] Pre-conditions failed:', { isLooterGameMode, hasCtx: !!looterGameCtx, hasPos: !!myObfPos });
             return;
         }
 
-        if (seaGameCtx.showMinigame || seaGameCtx.encounter || seaGameCtx.showCurseModal || seaGameCtx.combatResult) {
+        if (looterGameCtx.showMinigame || looterGameCtx.encounter || looterGameCtx.showCurseModal || looterGameCtx.combatResult) {
             const blockReason = {
-                minigame: !!seaGameCtx.showMinigame,
-                encounter: !!seaGameCtx.encounter,
-                curse: !!seaGameCtx.showCurseModal,
-                combatResult: !!seaGameCtx.combatResult
+                minigame: !!looterGameCtx.showMinigame,
+                encounter: !!looterGameCtx.encounter,
+                curse: !!looterGameCtx.showCurseModal,
+                combatResult: !!looterGameCtx.combatResult
             };
             console.log('[MapMove] Blocked by active event:', blockReason);
             
@@ -163,11 +163,11 @@ export function useSeaBoat({
                 consecutiveBlockCountRef.current++;
                 if (consecutiveBlockCountRef.current >= 3) {
                     console.warn('[MapMove] Force resetting blocked states due to consecutive failures');
-                    seaGameCtx.setShowMinigame(null);
-                    seaGameCtx.setEncounter(null);
-                    seaGameCtx.setShowCurseModal(false);
-                    seaGameCtx.setCombatResult(null);
-                    seaGameCtx.setIsChallengeActive(true); // Ensure challenge is active if user is trying to move
+                    looterGameCtx.setShowMinigame(null);
+                    looterGameCtx.setEncounter(null);
+                    looterGameCtx.setShowCurseModal(false);
+                    looterGameCtx.setCombatResult(null);
+                    looterGameCtx.setIsChallengeActive(true); // Ensure challenge is active if user is trying to move
                     consecutiveBlockCountRef.current = 0;
                     showNotification?.('Đã tự động sửa lỗi kẹt di chuyển.', 'info');
                 }
@@ -178,7 +178,7 @@ export function useSeaBoat({
             return;
         }
 
-        if (!seaGameCtx.isChallengeActive) {
+        if (!looterGameCtx.isChallengeActive) {
             showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
             return;
         }
@@ -191,19 +191,19 @@ export function useSeaBoat({
         const distLat = lat - boatLat;
         const distDeg = Math.sqrt(distLng * distLng + distLat * distLat);
 
-        const multiplier = seaGameCtx?.globalSettings?.speedMultiplier || 1.0;
+        const multiplier = looterGameCtx?.globalSettings?.speedMultiplier || 1.0;
         const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
         const duration = baseDuration / multiplier;
 
-        const hasFloatingItems = seaGameCtx.state.inventory.some((i: any) => i.gridX < 0);
+        const hasFloatingItems = looterGameCtx.state.inventory.some((i: any) => i.gridX < 0);
         if (hasFloatingItems) {
             console.log('[MapMove] Blocked by floating items');
-            seaGameCtx.setShowDiscardModal(true);
+            looterGameCtx.setShowDiscardModal(true);
             return;
         }
 
-        const currentCurse = seaGameCtx.state.cursePercent || 0;
-        const curseGainMultiplier = seaGameCtx.state.activeCurses?.curse_gain ? 1.5 : 1;
+        const currentCurse = looterGameCtx.state.cursePercent || 0;
+        const curseGainMultiplier = looterGameCtx.state.activeCurses?.curse_gain ? 1.5 : 1;
         const distMeters = distDeg * 111000;
         const expectedCurseGain = (distMeters / 100) * curseGainMultiplier;
         const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
@@ -212,7 +212,7 @@ export function useSeaBoat({
         console.log('[MapMove] Executing move...', { duration });
         isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
-        seaGameCtx.moveBoat(lat, lng);
+        looterGameCtx.moveBoat(lat, lng);
 
         const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
         const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
@@ -235,7 +235,7 @@ export function useSeaBoat({
                 panMoveYRef.current = null;
             }
         });
-        }, [isSeaGameMode, seaGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+        }, [isLooterGameMode, looterGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
 
     const centerOnBoat = useCallback(() => {
         if (panMoveXRef.current) panMoveXRef.current.stop();
@@ -243,8 +243,8 @@ export function useSeaBoat({
         userDraggingRef.current = false;
 
         // Directly calculate from state to ensure accuracy even before first move or if sync lags
-        const currentLat = seaGameCtx?.state?.currentLat;
-        const currentLng = seaGameCtx?.state?.currentLng;
+        const currentLat = looterGameCtx?.state?.currentLat;
+        const currentLng = looterGameCtx?.state?.currentLng;
 
         if (currentLat != null && currentLng != null && myObfPos) {
             const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
@@ -264,7 +264,7 @@ export function useSeaBoat({
             animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
             animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
         }
-    }, [boatOffsetX, boatOffsetY, panX, panY, seaGameCtx?.state?.currentLat, seaGameCtx?.state?.currentLng, myObfPos]);
+    }, [boatOffsetX, boatOffsetY, panX, panY, looterGameCtx?.state?.currentLat, looterGameCtx?.state?.currentLng, myObfPos]);
 
     const stopPanFollow = useCallback(() => {
         userDraggingRef.current = true;
@@ -273,7 +273,7 @@ export function useSeaBoat({
     }, []);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
-        if (!isSeaGameMode || !myObfPos) return;
+        if (!isLooterGameMode || !myObfPos) return;
 
         const currentScale = scale?.get?.() || 1;
         const offsetX = clientX - window.innerWidth / 2;
@@ -284,7 +284,7 @@ export function useSeaBoat({
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
         
         executeMoveToExact(lat, lng);
-    }, [isSeaGameMode, myObfPos, scale, panX, panY, executeMoveToExact]);
+    }, [isLooterGameMode, myObfPos, scale, panX, panY, executeMoveToExact]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;
@@ -298,7 +298,7 @@ export function useSeaBoat({
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isSeaGameMode || !seaGameCtx || !myObfPos) {
+        if (!isLooterGameMode || !looterGameCtx || !myObfPos) {
             pointerDownRef.current = null;
             return;
         }

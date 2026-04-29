@@ -23,10 +23,10 @@ export const getBaseUrl = (urlOverride?: string): string => {
   return url;
 };
 
-export const getSeaServerUrl = (): string => {
+export const getLooterServerUrl = (): string => {
   const baseUrl = getBaseUrl();
   if (baseUrl.includes('alin.city')) {
-    return 'https://sea.alin.city';
+    return 'https://looter.alin.city';
   }
   return 'http://localhost:3002';
 };

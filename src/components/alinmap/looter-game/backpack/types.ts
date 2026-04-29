@@ -2,7 +2,7 @@
 // Backpack / Inventory Types
 // ==========================================
 
-export interface SeaItem {
+export interface LooterItem {
   uid: string;
   id: string;
   name: string;

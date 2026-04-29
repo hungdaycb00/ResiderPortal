@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package } from 'lucide-react';
 import { useSocial } from './features/social/context/SocialContext';
-import { useSeaGame } from './sea-game/SeaGameProvider';
+import { useLooterGame } from './looter-game/LooterGameProvider';
 
 interface NavigationBarProps {
     mainTab: string;
@@ -13,7 +13,7 @@ interface NavigationBarProps {
 
 const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user }) => {
     const { unreadCount } = useSocial();
-    const { isItemDragging } = useSeaGame();
+    const { isItemDragging } = useLooterGame();
 
     return (
         <div className={isItemDragging ? 'pointer-events-none' : ''}>
