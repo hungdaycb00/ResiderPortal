@@ -98,7 +98,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 style={isDesktop ? { width: panelWidth } : {}}
             >
                 <motion.div
-                    className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
+                    className="absolute top-0 left-0 right-0 h-full bg-[#121417] rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-[4px_0_24px_rgba(0,0,0,0.2)] md:border-r border-white/5 flex flex-col pointer-events-auto"
                     variants={{
                         full: { 
                             y: (!isDesktop && mainTab === 'backpack') ? '60%' : 0, 

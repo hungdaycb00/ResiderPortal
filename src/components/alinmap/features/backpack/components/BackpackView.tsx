@@ -86,51 +86,52 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative">
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden p-1 subtle-scrollbar">
+      <div className="flex-1 relative overflow-hidden p-0.5 subtle-scrollbar">
         {/* Left Floating Controls: Gold (Top), Bag (Bottom) */}
-        <div className="absolute top-3 left-3 flex flex-col gap-3 z-[60] pointer-events-none">
-          {/* Gold - Always visible */}
-          <div className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/30 px-2.5 py-1 shadow-lg pointer-events-auto">
+        <div className="absolute top-4 left-1.5 flex flex-col gap-4 z-[60] pointer-events-none">
+          {/* Gold - Small Pill */}
+          <div className="flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md border border-amber-500/40 px-2 py-1 shadow-2xl pointer-events-auto">
             <Coins className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-xs font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
+            <span className="text-[11px] font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
           </div>
 
-          {/* Bag Slot - Floating */}
-          <div className={`relative h-11 w-11 rounded-2xl border-2 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 pointer-events-auto ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+          {/* Bag Slot - Floating with extra shadow */}
+          <div className={`relative h-12 w-12 rounded-2xl border-2 flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all hover:scale-110 pointer-events-auto ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
              <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
-             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full border-2 border-black flex items-center justify-center">
+             <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-cyan-500 rounded-full border-2 border-[#121417] flex items-center justify-center">
                 <Anchor className="w-2.5 h-2.5 text-white" />
              </div>
           </div>
         </div>
 
-        {/* Right Floating Stats: Vertical column */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 z-[60] pointer-events-none items-end">
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
-            <Heart className="h-3 w-3 text-red-500" />
-            <span className="text-[10px] font-black">{state.currentHp}</span>
+        {/* Right Floating Stats: Vertical column at the edge */}
+        <div className="absolute top-4 right-1.5 flex flex-col gap-2 z-[60] pointer-events-none items-end">
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+            <Heart className="h-3.5 w-3.5 text-red-500" />
+            <span className="text-[11px] font-black">{state.currentHp}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
-            <Zap className="h-3 w-3 text-blue-500" />
-            <span className="text-[10px] font-black">{state.energyMax + totalStats.energyMax}</span>
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+            <Zap className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-[11px] font-black">{state.energyMax + totalStats.energyMax}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
-            <Wind className="h-3 w-3 text-emerald-500" />
-            <span className="text-[10px] font-black">{state.moveSpeed}x</span>
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+            <Wind className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-[11px] font-black">{state.moveSpeed}x</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
-            <Swords className="h-3 w-3 text-orange-500" />
-            <span className="text-[10px] font-black">{totalStats.weight}</span>
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
+            <Swords className="h-3.5 w-3.5 text-orange-500" />
+            <span className="text-[11px] font-black">{totalStats.weight}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
-            <Skull className="h-3 w-3 text-purple-500" />
-            <span className="text-[10px] font-black">{Math.round(state.cursePercent)}%</span>
+          {/* Curse Info - Highlighted at the bottom of the list or corner */}
+          <div className="flex items-center gap-1.5 bg-purple-500/20 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+            <Skull className="h-3.5 w-3.5 text-purple-400 animate-pulse" />
+            <span className="text-[11px] font-black text-purple-300">{Math.round(state.cursePercent)}%</span>
           </div>
         </div>
 
-        {/* Main Grid: Fills the whole container */}
-        <div className="w-full h-full flex flex-col items-center justify-start pt-2">
-          <div className="w-full">
+        {/* Main Grid: Centered with rounded corners */}
+        <div className="w-full h-full flex flex-col items-center justify-start pt-1">
+          <div className="w-full rounded-[32px] overflow-hidden shadow-2xl border border-white/5">
             <InventoryGrid
               items={state.inventory}
               bags={state.bags}

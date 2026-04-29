@@ -267,7 +267,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       <div className="w-full overflow-x-auto overflow-y-hidden subtle-scrollbar pb-1">
         <div
           ref={gridRef}
-          className="relative rounded-[24px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
+          className="relative rounded-[32px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
           style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
         >
           <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)`, backgroundSize: `${cellSize}px ${cellSize}px` }} />
