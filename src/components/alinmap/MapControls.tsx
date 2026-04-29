@@ -62,7 +62,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            <div className="absolute right-2 md:right-8 bottom-[75px] md:bottom-12 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto">
+            <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 {!isLooterGameMode && (
                     <>
                     <button

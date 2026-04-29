@@ -84,6 +84,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
     const { isItemDragging } = useLooterGame();
 
+    React.useEffect(() => {
+        (window as any).collapseLooterTab = () => {
+            setIsSheetExpanded(false);
+        };
+        return () => {
+            delete (window as any).collapseLooterTab;
+        };
+    }, [setIsSheetExpanded]);
+
     const [panelWidth, setPanelWidth] = React.useState(400);
     const shouldHideSearch = ['profile', 'creator', 'backpack'].includes(mainTab);
 
