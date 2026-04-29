@@ -392,6 +392,31 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [deviceId, API]);
 
+  const dropItem = useCallback(async (itemUid: string) => {
+    if (!deviceId) return;
+    
+    // Optimistic Update: Xóa khỏi inventory
+    setState(prev => ({
+      ...prev,
+      inventory: prev.inventory.filter(i => i.uid !== itemUid)
+    }));
+
+    try {
+      const res = await fetch(`${API}/api/looter/drop`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, itemUid }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Đã ném vật phẩm ra biển', 'info');
+        loadWorldItems(true);
+      }
+    } catch (err) {
+      console.error('[LooterGame] dropItem error:', err);
+      // Không cần rollback vì ném đồ thường là hành động cuối cùng và server sẽ sync lại sau
+    }
+  }, [deviceId, API, loadWorldItems, showNotification]);
+
   const saveStorage = useCallback(async (storage: LooterItem[]) => {
     if (!deviceId) return;
     
