@@ -59,7 +59,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragItem,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging } = useSeaGame();
+  const { setDraggingItem, setIsItemDragging, sellItems } = useSeaGame();
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -291,7 +291,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
     onDragEnd?.();
-  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringTrash, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell, onDragEnd]);
+  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringSell, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell, onDragEnd, sellItems]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
