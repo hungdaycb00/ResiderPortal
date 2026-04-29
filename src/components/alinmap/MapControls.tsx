@@ -139,10 +139,10 @@ const MapControls: React.FC<MapControlsProps> = ({
             </div>
 
 
-            {/* Weather & Coordinates Widget - Top Right */}
+            {/* Weather & Coordinates Widget - Top Left on Mobile, Top Right on Desktop */}
             {!isSeaGameMode && (
                 <div 
-                    className={`${isWidgetExpanded ? 'flex' : 'hidden md:flex'} absolute top-2 md:top-6 right-4 md:right-8 z-[120] pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/50 flex-col gap-1 min-w-[160px] cursor-pointer hover:bg-white transition-colors`}
+                    className={`${isWidgetExpanded ? 'flex' : 'hidden md:flex'} absolute top-[105px] left-4 md:top-6 md:right-8 md:left-auto z-[185] pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 flex-col gap-1 min-w-[180px] max-w-[calc(100vw-32px)] cursor-pointer hover:bg-white transition-all duration-300 animate-in fade-in slide-in-from-top-2`}
                     onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}
                 >
                 <div className="flex items-center justify-between gap-2 px-1">
