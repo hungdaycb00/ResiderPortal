@@ -592,19 +592,20 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         </div>
       )}
       
-      {/* Smooth Drag Ghost (Rendered via Portal to avoid clipping) */}
+      {/* Smooth Drag Ghost (Rendered via Portal to avoid clipping and coordinate issues) */}
       {dragMode && dragItem && dragPos.clientX > 0 && createPortal(
         <div
-          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-110 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+          className={`fixed pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-110 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
           style={{
             left: dragPos.clientX - dragOffset.x,
             top: dragPos.clientY - dragOffset.y,
             width: (dragItem.gridW || 1) * cellSize - 2,
             height: (dragItem.gridH || 1) * cellSize - 2,
+            zIndex: 999999,
             transition: 'transform 0.1s ease-out',
           }}
         >
-          <span className="text-2xl drop-shadow-lg">{dragItem.icon}</span>
+          <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>
         </div>,
         document.body
       )}
