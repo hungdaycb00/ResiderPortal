@@ -94,14 +94,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                         title="Zoom In"
                     >
-                        <span className="flex h-full w-full items-center justify-center text-lg font-black leading-none md:text-[26px]">+</span>
+                        <span className="flex h-full w-full items-center justify-center text-lg font-black leading-none md:text-[26px] pt-0.5">+</span>
                     </button>
                     <button
                         onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
                         className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
                         title="Zoom Out"
                     >
-                        <span className="flex h-full w-full items-center justify-center text-xl font-black leading-none md:text-[26px]">-</span>
+                        <span className="flex h-full w-full items-center justify-center text-xl font-black leading-none md:text-[26px] pb-1.5 md:pb-2">-</span>
                     </button>
                 </div>
                 {isSeaGameMode && (

@@ -120,14 +120,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 setIsSheetExpanded(true);
                             }
                         } else if (info.offset.y > threshold) {
-                            setIsSheetExpanded(false);
-                            setSelectedUser(null);
+                            if (!isItemDragging) {
+                                setIsSheetExpanded(false);
+                                setSelectedUser(null);
+                            }
                         }
                     }}
                 >
                     {/* PC Hinge Toggle Button */}
                     <button
-                        onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+                        onClick={() => {
+                            if (!isItemDragging) setIsSheetExpanded(!isSheetExpanded);
+                        }}
                         className="hidden md:flex absolute top-1/2 -right-[23px] -translate-y-1/2 w-6 h-14 bg-white border border-l-0 border-gray-200 rounded-r-[10px] shadow-[4px_0_10px_rgba(0,0,0,0.05)] items-center justify-center cursor-pointer hover:bg-gray-50 z-50 text-gray-500 hover:text-gray-700 transition-colors"
                         title={isSheetExpanded ? "Collapse panel" : "Expand panel"}
                     >

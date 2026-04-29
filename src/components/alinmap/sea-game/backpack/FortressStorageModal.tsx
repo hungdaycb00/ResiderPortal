@@ -120,13 +120,8 @@ export default function FortressStorageModal() {
       await storeItems([item.uid], 'store', fortressStorageMode, cell.x, cell.y);
     } else if (source === 'storage' && target === 'inventory') {
       await storeItems([item.uid], 'retrieve', fortressStorageMode, cell.x, cell.y);
-    } else if (source === 'storage' && target === 'storage') {
-      const newStorage = storageItems.map((currentItem) =>
-        currentItem.uid === item.uid ? { ...currentItem, gridX: cell.x, gridY: cell.y } : currentItem
-      );
-      await saveStorage(newStorage);
     }
-  }, [dragItem, dragSource, hoverTarget, hoverCell, storageItems, fortressStorageMode, saveStorage, storeItems]);
+  }, [dragItem, dragSource, hoverTarget, hoverCell, fortressStorageMode, storeItems]);
 
   useEffect(() => {
     window.addEventListener('pointerup', handleGlobalPointerUp);
@@ -159,7 +154,10 @@ export default function FortressStorageModal() {
             gridH={STORAGE_GRID_H}
             hideStorage
             onItemLayoutChange={(newItems) => saveStorage(newItems)}
-            onHoverCellChange={setHoverCell}
+            onHoverCellChange={(cell) => {
+              setHoverCell(cell);
+              if (cell) setHoverTarget('storage');
+            }}
             onDragStart={(item, src) => {
               setDragItem(item);
               setDragSource(src);
@@ -195,7 +193,10 @@ export default function FortressStorageModal() {
           bags={state.bags}
           hideStorage
           onItemLayoutChange={(newItems) => saveInventory(newItems)}
-          onHoverCellChange={setHoverCell}
+          onHoverCellChange={(cell) => {
+            setHoverCell(cell);
+            if (cell) setHoverTarget('inventory');
+          }}
           onDragStart={(item, src) => {
             setDragItem(item);
             setDragSource(src);

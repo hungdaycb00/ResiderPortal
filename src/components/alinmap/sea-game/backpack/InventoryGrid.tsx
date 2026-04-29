@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign } from 'lucide-react';
 import type { SeaItem, BagItem } from './types';
@@ -63,7 +63,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const [dragMode, setDragMode] = useState<DragMode>(null);
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isHoveringStorage, setIsHoveringStorage] = useState(false);
   const [isHoveringSell, setIsHoveringSell] = useState(false);
@@ -192,7 +192,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       const relX = clientX - gridRect.left;
       const relY = clientY - gridRect.top;
       pointerCurrentRef.current = { clientX, clientY };
-      setDragPos({ x: relX, y: relY });
+      setDragPos({ x: relX, y: relY, clientX, clientY });
 
       const isInsideGrid = clientX >= gridRect.left && clientX <= gridRect.right &&
                            clientY >= gridRect.top && clientY <= gridRect.bottom;
@@ -232,8 +232,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, updateHoverCell]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (isItemDragging) {
+      e.stopPropagation();
+    }
     updateDragPosition(e.clientX, e.clientY);
-  }, [updateDragPosition]);
+  }, [updateDragPosition, isItemDragging]);
 
   const handlePointerUp = useCallback((e?: React.PointerEvent | PointerEvent) => {
     if (!dragMode || !dragItem) return;
@@ -537,17 +540,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       )}
       
       {/* Smooth Drag Ghost (always follows pointer) */}
-      {dragMode && dragItem && (
+      {(dragMode || externalDragItem) && (dragItem || externalDragItem) && (
         <div
-          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[(dragItem || externalDragItem)!.rarity] || RARITY_COLORS.common}`}
           style={{
-            left: (gridRef.current?.getBoundingClientRect().left || 0) + dragPos.x - dragOffset.x,
-            top: (gridRef.current?.getBoundingClientRect().top || 0) + dragPos.y - dragOffset.y,
-            width: (dragItem.gridW || 1) * cellSize - 2,
-            height: (dragItem.gridH || 1) * cellSize - 2,
+            left: dragPos.clientX - dragOffset.x,
+            top: dragPos.clientY - dragOffset.y,
+            width: ((dragItem || externalDragItem)!.gridW || 1) * cellSize - 2,
+            height: ((dragItem || externalDragItem)!.gridH || 1) * cellSize - 2,
           }}
         >
-          <span className="text-xl">{dragItem.icon}</span>
+          <span className="text-xl">{(dragItem || externalDragItem)!.icon}</span>
         </div>
       )}
       
