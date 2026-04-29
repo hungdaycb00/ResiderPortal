@@ -36,12 +36,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         <User className={`w-6 h-6 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
                         <span className={`text-[9px] font-bold ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Profile</span>
                     </button>
-                    {user && (
-                        <button onClick={() => handleTabClick('creator')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
-                            <Gamepad2 className={`w-6 h-6 ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`} />
-                            <span className={`text-[9px] font-bold ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}`}>Creator</span>
-                        </button>
-                    )}
                     
                     {/* Looter Button */}
                     <button onClick={() => handleTabClick('backpack')} className="w-12 h-12 flex flex-col items-center justify-center gap-1 group transition-all">
@@ -65,12 +59,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     <User className="w-5 h-5" />
                     <span className="text-[9px] font-black uppercase">Profile</span>
                 </button>
-                {user && (
-                    <button onClick={() => handleTabClick('creator')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'creator' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                        <Gamepad2 className="w-5 h-5" />
-                        <span className="text-[9px] font-black uppercase">Creator</span>
-                    </button>
-                )}
                 
                 {/* Looter Button */}
                 <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
