@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { DollarSign, Trash2 } from 'lucide-react';
 import type { LooterItem, BagItem } from './types';
@@ -253,12 +254,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   }, [updateDragPosition, isItemDragging]);
 
   const handlePointerUp = useCallback((e?: React.PointerEvent | PointerEvent) => {
-    if (!dragMode || !dragItem) return;
+    if ((!dragMode || !dragItem) && !externalDragItem) return;
 
-    if (e && 'currentTarget' in e && e.currentTarget) {
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture?.((e as any).pointerId);
-      } catch {}
+    if (dragMode && dragItem) {
+      if (e && 'currentTarget' in e && e.currentTarget) {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture?.((e as any).pointerId);
+        } catch {}
+      }
     }
 
     const pointerStart = pointerStartRef.current;
@@ -285,7 +288,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         } else {
           sellItems([dragItem.uid]);
         }
-      } else if (hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
+      } else if (dragMode && dragItem && hoverCell && canPlaceItem(dragItem, hoverCell.x, hoverCell.y, dragItem.uid)) {
         // Place on grid
         const newItems = items.map(i =>
           i.uid === dragItem.uid ? { ...i, gridX: hoverCell.x, gridY: hoverCell.y } : i
@@ -328,7 +331,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     pointerStartRef.current = null;
     pointerCurrentRef.current = null;
     onDragEnd?.();
-  }, [dragMode, dragItem, hoverCell, isHoveringStorage, isHoveringSell, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell, onDragEnd, sellItems]);
+  }, [dragMode, dragItem, externalDragItem, hoverCell, isHoveringStorage, isHoveringSell, items, canPlaceItem, onItemClick, onItemLayoutChange, hideStorage, updateHoverCell, onDragEnd, sellItems, onExternalDrop]);
 
   // Global mouse up to catch drops outside
   React.useEffect(() => {
@@ -583,19 +586,21 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         </div>
       )}
       
-      {/* Smooth Drag Ghost (Only if this is the source grid) */}
-      {dragMode && dragItem && dragPos.clientX > 0 && (
+      {/* Smooth Drag Ghost (Rendered via Portal to avoid clipping) */}
+      {dragMode && dragItem && dragPos.clientX > 0 && createPortal(
         <div
-          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+          className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-110 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
           style={{
             left: dragPos.clientX - dragOffset.x,
             top: dragPos.clientY - dragOffset.y,
             width: (dragItem.gridW || 1) * cellSize - 2,
             height: (dragItem.gridH || 1) * cellSize - 2,
+            transition: 'transform 0.1s ease-out',
           }}
         >
-          <span className="text-xl">{dragItem.icon}</span>
-        </div>
+          <span className="text-2xl drop-shadow-lg">{dragItem.icon}</span>
+        </div>,
+        document.body
       )}
       
       {/* Item Info Popup */}
