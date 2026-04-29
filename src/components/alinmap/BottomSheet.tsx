@@ -38,7 +38,7 @@ interface BottomSheetProps {
     ws: React.MutableRefObject<WebSocket | null>;
     panX: any;
     panY: any;
-    scale: any;
+    onLocateUser?: (lat: number, lng: number) => void;
     externalApi: any;
     onOpenChat?: (id: string, name: string, avatar?: string) => void;
     handlePlayGame?: (game: any) => void;
@@ -72,7 +72,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         isDesktop, isSheetExpanded, selectedUser, activeTab, mainTab, nearbyUsers, friends, games, userGames, userPosts,
         myUserId, myDisplayName, myObfPos, user, searchTag,
         isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
-        ws, panX, panY, scale, externalApi, onOpenChat, showNotification, handlePlayGame,
+        ws, panX, panY, onLocateUser, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setMyDisplayName,
         setIsCreatingPost, setPostTitle, fetchUserPosts,
@@ -216,7 +216,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 selectedUser={selectedUser} setSelectedUser={setSelectedUser} activeTab={activeTab as any} setActiveTab={setActiveTab as any}
                                 fetchUserPosts={fetchUserPosts} friends={friends}
                                 myObfPos={myObfPos}
-                                panX={panX} panY={panY} scale={scale}
+                                panX={panX} panY={panY} onLocateUser={onLocateUser!}
                                 ws={ws} games={userGames} userPosts={userPosts}
                                 handleStarPost={handleStarPost} handleDeletePost={handleDeletePost} externalApi={externalApi}
                                 requireAuth={requireAuth}

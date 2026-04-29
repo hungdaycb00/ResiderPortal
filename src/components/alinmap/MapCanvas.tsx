@@ -220,149 +220,151 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Map Canvas */}
             {position && (
-                <motion.div style={{ scale }} className="w-full h-full absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <motion.div
-                        style={{ x: panX, y: panY, touchAction: 'none' }}
-                        className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
-                        onPointerDown={handleMapPointerDown}
-                        onPointerMove={handleMapPointerMove}
-                        onPointerUp={handleMapPointerUp}
-                        onPointerCancel={handleMapPointerCancel}
-                        onClickCapture={handleMapClickCapture}
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            if (isLooterGameMode || !myObfPos) return;
-                            const currentScale = scale?.get?.() || 1;
-                            const offsetX = e.clientX - window.innerWidth / 2;
-                            const offsetY = e.clientY - window.innerHeight / 2;
-                            const mapX = offsetX / currentScale - (panX?.get?.() ?? 0);
-                            const mapY = offsetY / currentScale - (panY?.get?.() ?? 0);
-                            const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
-                            const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
-                            setContextMenu({ x: e.clientX, y: e.clientY, target: 'map', data: { lat, lng } });
-                        }}
-                    >
-                        {/* Grid styling */}
-                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
-                            backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
-                            backgroundSize: "100px 100px",
-                            backgroundPosition: "center center",
-                        }} />
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <motion.div style={{ scale }} className="w-full h-full flex items-center justify-center">
+                        <motion.div
+                            style={{ x: panX, y: panY, touchAction: 'none' }}
+                            className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
+                            onPointerDown={handleMapPointerDown}
+                            onPointerMove={handleMapPointerMove}
+                            onPointerUp={handleMapPointerUp}
+                            onPointerCancel={handleMapPointerCancel}
+                            onClickCapture={handleMapClickCapture}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                if (isLooterGameMode || !myObfPos) return;
+                                const currentScale = scale?.get?.() || 1;
+                                const offsetX = e.clientX - window.innerWidth / 2;
+                                const offsetY = e.clientY - window.innerHeight / 2;
+                                const mapX = offsetX / currentScale - (panX?.get?.() ?? 0);
+                                const mapY = offsetY / currentScale - (panY?.get?.() ?? 0);
+                                const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
+                                const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+                                setContextMenu({ x: e.clientX, y: e.clientY, target: 'map', data: { lat, lng } });
+                            }}
+                        >
+                            {/* Grid styling */}
+                            <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-20' : 'opacity-100'}`} style={{
+                                backgroundImage: "linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)",
+                                backgroundSize: "100px 100px",
+                                backgroundPosition: "center center",
+                            }} />
 
-                        {/* Real Map Tiles */}
-                        <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
+                            {/* Real Map Tiles */}
+                            <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
 
-                        {/* Loading spinner */}
-                        {!myObfPos && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
-                                    <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {myObfPos && (
-                            <>
-                                {/* Province Boundary */}
-                                {currentProvince && (
-                                    <div className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none" style={{ left: 'calc(50% - 1000px)', top: 'calc(50% - 1000px)' }}>
-                                        <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm">
-                                            {currentProvince} BOUNDARY
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Self Node */}
-                                {user ? (
-                                    <SelfNode
-                                        isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
-                                        myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
-                                        user={user} myUserId={myUserId} galleryActive={galleryActive}
-                                        galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                        scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
-                                        panX={panX} panY={panY}
-                                        boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                        ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
-                                        setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                        setMainTab={setMainTab} addLog={addLog} looterState={looterState}
-                                    />
-                                ) : (
-                                    <div
-                                        className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none"
-                                        style={{ top: '50%', left: '50%' }}
-                                        title="Guest see-only mode"
-                                    >
-                                        <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
-                                        <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
-                                            <UserRound className="w-6 h-6 text-slate-200" />
-                                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-800 border border-slate-500 flex items-center justify-center">
-                                                <Eye className="w-3 h-3 text-cyan-300" />
+                            {myObfPos && (
+                                <>
+                                    {/* Province Boundary */}
+                                    {currentProvince && (
+                                        <div className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none" style={{ left: 'calc(50% - 1000px)', top: 'calc(50% - 1000px)' }}>
+                                            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm">
+                                                {currentProvince} BOUNDARY
                                             </div>
                                         </div>
-                                        <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
-                                            <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {/* Search Marker Pin */}
-                                {searchMarkerPos && (
-                                    <div className="absolute w-10 h-10 -ml-5 -mt-10 flex items-center justify-center pointer-events-none z-[105]" style={{
-                                        top: `calc(50% + ${-(searchMarkerPos.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                                        left: `calc(50% + ${(searchMarkerPos.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                                    }}>
-                                        <div className="relative flex flex-col items-center">
-                                            <div className="absolute -top-6 whitespace-nowrap bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Target</div>
-                                            <MapPin className="w-8 h-8 text-red-500 fill-red-100" />
-                                            <div className="w-2 h-1 bg-black/30 rounded-[100%] blur-[1px] -mt-1" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Looter Game Entities */}
-                                {isLooterGameMode && (
-                                    <LooterEntities
-                                        myObfPos={myObfPos} looterState={looterState} looterGameCtx={looterGameCtx}
-                                        boatTargetPin={looterBoat.boatTargetPin}
-                                        boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                        executeMoveToExact={looterBoat.executeMoveToExact}
-                                    />
-                                )}
-
-                                {/* Other User Nodes */}
-                                {nearbyUsers.filter(u => {
-                                    if (u.id === myUserId || u.id === user?.uid) return false;
-                                    if (searchTag) {
-                                        const term = searchTag.toLowerCase();
-                                        const matchesName = (u.displayName || u.username || '').toLowerCase().includes(term);
-                                        const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase();
-                                        const matchesTags = tagsStr.includes(term);
-                                        const statusStr = (u.status || '').toLowerCase();
-                                        const matchesStatus = statusStr.includes(term);
-                                        if (!matchesName && !matchesTags && !matchesStatus) return false;
-                                    }
-                                    if (u.lat == null || u.lng == null || isNaN(u.lat) || isNaN(u.lng)) return false;
-                                    const distKm = Math.sqrt(Math.pow(u.lat - myObfPos!.lat, 2) + Math.pow(u.lng - myObfPos!.lng, 2)) * 111;
-                                    if (distKm > filterDistance) return false;
-                                    const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
-                                    if (age < filterAgeMin || age > filterAgeMax) return false;
-                                    return true;
-                                }).map(u => (
-                                    <div key={u.id} className={`transition-opacity duration-500 ${isLooterGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
-                                        <SpatialNode
-                                            user={u} myPos={myObfPos!} mapScale={scale}
-                                            onClick={() => !isLooterGameMode && setSelectedUser(u)}
-                                            onContextMenu={(e, uData) => {
-                                                if (!isLooterGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
-                                            }}
+                                    {/* Self Node */}
+                                    {user ? (
+                                        <SelfNode
+                                            isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
+                                            myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
+                                            user={user} myUserId={myUserId} galleryActive={galleryActive}
+                                            galleryTitle={galleryTitle} galleryImages={galleryImages}
+                                            scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
+                                            panX={panX} panY={panY}
+                                            boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                            ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
+                                            setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
+                                            setMainTab={setMainTab} addLog={addLog} looterState={looterState}
                                         />
-                                    </div>
-                                ))}
-                            </>
-                        )}
+                                    ) : (
+                                        <div
+                                            className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none"
+                                            style={{ top: '50%', left: '50%' }}
+                                            title="Guest see-only mode"
+                                        >
+                                            <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
+                                            <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
+                                                <UserRound className="w-6 h-6 text-slate-200" />
+                                                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-800 border border-slate-500 flex items-center justify-center">
+                                                    <Eye className="w-3 h-3 text-cyan-300" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+                                                <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Search Marker Pin */}
+                                    {searchMarkerPos && (
+                                        <div className="absolute w-10 h-10 -ml-5 -mt-10 flex items-center justify-center pointer-events-none z-[105]" style={{
+                                            top: `calc(50% + ${-(searchMarkerPos.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                                            left: `calc(50% + ${(searchMarkerPos.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                                        }}>
+                                            <div className="relative flex flex-col items-center">
+                                                <div className="absolute -top-6 whitespace-nowrap bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Target</div>
+                                                <MapPin className="w-8 h-8 text-red-500 fill-red-100" />
+                                                <div className="w-2 h-1 bg-black/30 rounded-[100%] blur-[1px] -mt-1" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Looter Game Entities */}
+                                    {isLooterGameMode && (
+                                        <LooterEntities
+                                            myObfPos={myObfPos} looterState={looterState} looterGameCtx={looterGameCtx}
+                                            boatTargetPin={looterBoat.boatTargetPin}
+                                            boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                            executeMoveToExact={looterBoat.executeMoveToExact}
+                                        />
+                                    )}
+
+                                    {/* Other User Nodes */}
+                                    {nearbyUsers.filter(u => {
+                                        if (u.id === myUserId || u.id === user?.uid) return false;
+                                        if (searchTag) {
+                                            const term = searchTag.toLowerCase();
+                                            const matchesName = (u.displayName || u.username || '').toLowerCase().includes(term);
+                                            const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase();
+                                            const matchesTags = tagsStr.includes(term);
+                                            const statusStr = (u.status || '').toLowerCase();
+                                            const matchesStatus = statusStr.includes(term);
+                                            if (!matchesName && !matchesTags && !matchesStatus) return false;
+                                        }
+                                        if (u.lat == null || u.lng == null || isNaN(u.lat) || isNaN(u.lng)) return false;
+                                        const distKm = Math.sqrt(Math.pow(u.lat - myObfPos!.lat, 2) + Math.pow(u.lng - myObfPos!.lng, 2)) * 111;
+                                        if (distKm > filterDistance) return false;
+                                        const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
+                                        if (age < filterAgeMin || age > filterAgeMax) return false;
+                                        return true;
+                                    }).map(u => (
+                                        <div key={u.id} className={`transition-opacity duration-500 ${isLooterGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
+                                            <SpatialNode
+                                                user={u} myPos={myObfPos!} mapScale={scale}
+                                                onClick={() => !isLooterGameMode && setSelectedUser(u)}
+                                                onContextMenu={(e, uData) => {
+                                                    if (!isLooterGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                        </motion.div>
                     </motion.div>
-                </motion.div>
+
+                    {/* Loading spinner - Moved outside scale/pan for stability */}
+                    {!myObfPos && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                                <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Looter Game Curse Bar */}

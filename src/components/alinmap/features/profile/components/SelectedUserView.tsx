@@ -17,7 +17,7 @@ interface SelectedUserViewProps {
     myObfPos: any;
     panX: any;
     panY: any;
-    scale: any;
+    onLocateUser: (lat: number, lng: number) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     games: any[];
     userPosts: any[];
@@ -30,7 +30,7 @@ interface SelectedUserViewProps {
 const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     selectedUser, setSelectedUser, activeTab, setActiveTab, fetchUserPosts,
     friends,
-    myObfPos, panX, panY, scale, ws,
+    myObfPos, panX, panY, onLocateUser, ws,
     games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth
 }) => {
     const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
@@ -102,7 +102,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                             <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
                                 <MessageCircle className="w-5 h-5" /> Message
                             </button>
-                            <button onClick={() => { const pxX = (selectedUser.lng - (myObfPos?.lng || 0)) * DEGREES_TO_PX; const pxY = -(selectedUser.lat - (myObfPos?.lat || 0)) * DEGREES_TO_PX; panX.set(-pxX); panY.set(-pxY); scale.set(2); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
+                            <button onClick={() => { onLocateUser(selectedUser.lat, selectedUser.lng); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
                                 <MapPin className="w-5 h-5" />
                             </button>
                         </div>
