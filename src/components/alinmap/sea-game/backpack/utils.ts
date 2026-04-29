@@ -80,10 +80,8 @@ export const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boole
   }
   if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
   if (!bag.id) { bag.id = 'basic_bag'; repaired = true; }
-  if (!bag.name) { bag.name = bagDefaults.name || 'Balo Co Ban'; repaired = true; }
+  if (!bag.name) { bag.name = bagDefaults.name || 'Balo Cơ Bản'; repaired = true; }
   if (!bag.icon) { bag.icon = bagDefaults.icon || '🎒'; repaired = true; }
-  if (!bag.name) { bag.name = 'Balo Cơ Bản'; repaired = true; }
-  if (!bag.icon) { bag.icon = '🎒'; repaired = true; }
   if (!bag.rarity) { bag.rarity = bagDefaults.rarity || 'common'; repaired = true; }
   if (bag.price == null) { bag.price = Number(bagDefaults.price) || 0; repaired = true; }
   if (bag.weight == null) { bag.weight = Number(bagDefaults.weight) || 0; repaired = true; }

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { X, Database, Package, Sparkles, ArrowRightLeft, Anchor } from 'lucide-react';
-import { motion } from 'motion/react';
+import { X, Database, Package, Sparkles, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
 import { useSeaGame } from '../SeaGameProvider';
@@ -23,8 +22,6 @@ const VIRTUAL_STORAGE_BAG: BagItem = {
   shape: Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(true)),
   cells: STORAGE_GRID_W * STORAGE_GRID_H,
 };
-
-
 
 const buildStorageItems = (storage: SeaItem[]) => {
   const current = storage.map((item) => ({ ...item }));
@@ -95,8 +92,6 @@ export default function FortressStorageModal() {
   const storageItems = buildStorageItems(state.storage);
   const isPortalMode = fortressStorageMode === 'portal';
 
-
-
   const handleReturnToFortress = async () => {
     setIsReturning(true);
     try {
@@ -126,7 +121,9 @@ export default function FortressStorageModal() {
     } else if (source === 'storage' && target === 'inventory') {
       await storeItems([item.uid], 'retrieve', fortressStorageMode, cell.x, cell.y);
     } else if (source === 'storage' && target === 'storage') {
-      const newStorage = storageItems.map((i) => (i.uid === item.uid ? { ...i, gridX: cell.x, gridY: cell.y } : i));
+      const newStorage = storageItems.map((currentItem) =>
+        currentItem.uid === item.uid ? { ...currentItem, gridX: cell.x, gridY: cell.y } : currentItem
+      );
       await saveStorage(newStorage);
     }
   }, [dragItem, dragSource, hoverTarget, hoverCell, storageItems, fortressStorageMode, saveStorage, storeItems]);
@@ -143,7 +140,7 @@ export default function FortressStorageModal() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
           {isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
-          {isPortalMode ? 'Kho Portal' : 'Kho Thanh Tri'}
+          {isPortalMode ? 'Kho Portal' : 'Kho Thành Trì'}
         </div>
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
       </div>
@@ -181,7 +178,7 @@ export default function FortressStorageModal() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
           <Package className="h-4 w-4" />
-          Hom do thuyen
+          Hòm Đồ Thuyền
         </div>
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
       </div>
@@ -212,13 +209,13 @@ export default function FortressStorageModal() {
   );
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center lg:p-4 bg-black/60 backdrop-blur-sm">
-      <div className="flex flex-col bg-[#040b12] text-white w-full h-full lg:w-1/3 lg:h-3/4 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/60 backdrop-blur-sm lg:p-4">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-[#040b12] text-white lg:h-3/4 lg:w-1/3 lg:rounded-3xl lg:border lg:border-cyan-900/50 lg:shadow-2xl">
         <div className="flex items-center justify-between border-b border-cyan-800/30 bg-[#0a1929] p-4">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-cyan-400">
               {isPortalMode ? <Sparkles className="h-5 w-5" /> : <Database className="h-5 w-5" />}
-              {isPortalMode ? 'Cong Portal' : 'Kho Thanh Tri'}
+              {isPortalMode ? 'Cổng Portal' : 'Kho Thành Trì'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -232,7 +229,7 @@ export default function FortressStorageModal() {
                 className="flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-3 py-2 text-xs font-black text-emerald-100 transition-colors hover:bg-emerald-900/40 disabled:cursor-wait disabled:opacity-60"
               >
                 <Anchor className="h-4 w-4" />
-                {isReturning ? 'Dang ve...' : 'Ve thanh'}
+                {isReturning ? 'Đang về...' : 'Về thành'}
               </button>
             )}
             <button
@@ -245,18 +242,10 @@ export default function FortressStorageModal() {
         </div>
 
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
-          {isPortalMode && (
-            <div className="mb-4">
-              {/* Text description removed by user request */}
-            </div>
-          )}
-
-          <div className="flex flex-col lg:grid flex-1 gap-4 lg:grid-cols-2">
+          <div className="flex flex-1 flex-col gap-4 lg:grid lg:grid-cols-2">
             <InventoryPanel />
             <StoragePanel />
           </div>
-
-
         </div>
       </div>
     </div>
