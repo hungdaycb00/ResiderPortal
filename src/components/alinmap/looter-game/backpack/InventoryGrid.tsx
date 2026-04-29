@@ -201,11 +201,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const storageRect = storageRef.current?.getBoundingClientRect();
     const trashRect = trashRef.current?.getBoundingClientRect();
     
+    // Always update visual drag position regardless of gridRect
+    const relX = gridRect ? clientX - gridRect.left : 0;
+    const relY = gridRect ? clientY - gridRect.top : 0;
+    pointerCurrentRef.current = { clientX, clientY };
+    setDragPos({ x: relX, y: relY, clientX, clientY });
+
     if (gridRect) {
-      const relX = clientX - gridRect.left;
-      const relY = clientY - gridRect.top;
-      pointerCurrentRef.current = { clientX, clientY };
-      setDragPos({ x: relX, y: relY, clientX, clientY });
 
       const isInsideGrid = clientX >= gridRect.left && clientX <= gridRect.right &&
                            clientY >= gridRect.top && clientY <= gridRect.bottom;
@@ -345,7 +347,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       if (dragMode || externalDragItem) updateDragPosition(e.clientX, e.clientY);
     };
     const handleGlobalUp = (e: PointerEvent) => {
-      if (dragMode) handlePointerUp(e);
+      if (dragMode || externalDragItem) handlePointerUp(e);
       // Close popup if clicked outside
       if (!dragMode && popupInfo) {
         setPopupInfo(null);

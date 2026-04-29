@@ -187,25 +187,25 @@ export default function FortressStorageModal() {
             bags={state.bags}
             hideStorage
             onItemLayoutChange={(newItems) => saveInventory(newItems)}
-          onHoverCellChange={(cell) => {
-            setInventoryHoverCell(cell);
-            if (cell) setHoverTarget('inventory');
-          }}
-          onDragStart={(item, src, offset) => {
-            setDragItem(item);
-            setDragSource(src);
-            setDragOffset(offset);
-          }}
-          onDragEnd={() => {
+            onHoverCellChange={(cell) => {
+              setInventoryHoverCell(cell);
+              if (cell) setHoverTarget('inventory');
+            }}
+            onDragStart={(item, src, offset) => {
+              setDragItem(item);
+              setDragSource(src);
+              setDragOffset(offset);
+            }}
+            onDragEnd={() => {
               setDragItem(null);
               setDragSource(null);
-          }}
-          onExternalDrop={handleMoveToInventory}
-          externalDragItem={dragSource === 'storage' ? dragItem : null}
-          externalDragOffset={dragSource === 'storage' ? dragOffset : null}
-          externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
-          cellSize={38}
-        />
+            }}
+            onExternalDrop={handleMoveToInventory}
+            externalDragItem={dragSource === 'storage' ? dragItem : null}
+            externalDragOffset={dragSource === 'storage' ? dragOffset : null}
+            externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
+            cellSize={38}
+          />
         </div>
       </div>
     </div>
