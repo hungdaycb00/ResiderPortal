@@ -21,7 +21,7 @@ const TIER_LABELS = [
 const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onClose, currentGold, onSelectTier }) => {
   const [selected, setSelected] = useState(1);
 
-  const selectedData = TIER_LABELS[selected];
+  const selectedData = TIER_LABELS[selected] || TIER_LABELS[1];
   const canAfford = currentGold >= selectedData.cost;
 
   return (

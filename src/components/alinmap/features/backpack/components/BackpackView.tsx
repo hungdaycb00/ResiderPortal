@@ -100,7 +100,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
           {/* Gold - Icon & Text only */}
           <div className="flex items-center gap-1.5 px-3 py-1 pointer-events-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             <Coins className="h-4 w-4 text-amber-500" />
-            <span className="text-[13px] font-black text-amber-400">{state.looterGold.toLocaleString()}</span>
+            <span className="text-[13px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
           </div>
 
           {/* Bag Slot - Floating at Bottom Left */}

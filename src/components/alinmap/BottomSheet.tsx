@@ -100,6 +100,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsSheetExpanded(false);
     }, [setIsSheetExpanded]);
 
+    const isWhiteBg = mainTab !== 'backpack';
+
     return (
         <>
             <div
@@ -107,7 +109,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 style={isDesktop ? { width: panelWidth } : {}}
             >
                 <motion.div
-                    className="absolute top-0 left-0 right-0 h-full bg-[#121417] rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-[4px_0_24px_rgba(0,0,0,0.2)] md:border-r border-white/5 flex flex-col pointer-events-auto"
+                    className={`absolute top-0 left-0 right-0 h-full ${isWhiteBg ? 'bg-white' : 'bg-[#121417]'} rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] md:border-r ${isWhiteBg ? 'border-gray-100' : 'border-white/5'} flex flex-col pointer-events-auto`}
                     variants={{
                         full: { 
                             y: (!isDesktop && mainTab === 'backpack') ? '60%' : 0, 
@@ -165,10 +167,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     )}
 
                     {/* Header Part (Search & Handle) */}
-                    <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
+                    <div className={`backdrop-blur-md sticky top-0 z-[110] shrink-0 border-b ${isWhiteBg ? 'bg-white/80 border-gray-100' : 'bg-[#121417]/80 border-white/5'}`}>
                         {/* Hover Area / Handle (Mobile Only) */}
                         {!isDesktop && mainTab !== 'backpack' && (
-                            <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" 
+                            <div className={`w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer transition-colors ${isWhiteBg ? 'active:bg-gray-50' : 'active:bg-white/5'}`} 
                                 onClick={() => {
                                     if (!isSheetExpanded) {
                                         setIsSheetExpanded(true);

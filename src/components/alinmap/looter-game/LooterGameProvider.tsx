@@ -194,7 +194,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           currentLat: s.current_lat, currentLng: s.current_lng,
           baseMaxHp: s.base_max_hp || 100, currentHp: s.current_hp || 100,
           moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
-          cursePercent: s.curse_percent || 0, looterGold: s.looter_gold || 0, worldTier: s.world_tier || 1,
+          cursePercent: s.curse_percent || 0, looterGold: Number(s.looter_gold || 0), worldTier: s.world_tier || 1,
           inventory: (() => { try { return JSON.parse(s.inventory_json || '[]'); } catch(e) { return []; } })(),
           storage: (() => { try { return JSON.parse(s.storage_json || '[]'); } catch(e) { return []; } })(),
           bags,
@@ -786,8 +786,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     const TIER_COSTS = [0, 10, 100, 1000, 10000, 100000];
     const cost = TIER_COSTS[tier] || 0;
     
-    const previousTier = state.worldTier;
-    const previousGold = state.looterGold;
+    const previousTier = state.worldTier ?? 0;
+    const previousGold = state.looterGold ?? 0;
 
     setState(prev => ({
       ...prev,
@@ -805,7 +805,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         setState(prev => ({
           ...prev,
           worldTier: data.tier,
-          looterGold: data.looterGold || data.looterGold,
+          looterGold: Number(data.looterGold ?? data.looter_gold ?? 0),
           cursePercent: data.cursePercent,
         }));
       } else {
