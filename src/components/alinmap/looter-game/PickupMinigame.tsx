@@ -85,9 +85,14 @@ const FRUIT_PATH_COLORS = ['#34d399', '#22d3ee', '#f59e0b', '#a78bfa'];
 const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void; preGeneratedGrid?: FruitCell[][] }> = ({ tier, onWin, onLose, preGeneratedGrid }) => {
   let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
   let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+
+  // Ghép đôi cần số ô chẵn. Theo yêu cầu: 5x5 -> 5x6, 7x7 -> 7x6
   if ((innerRows * innerCols) % 2 !== 0) {
-    if (innerCols < 7) innerCols += 1;
+    if (innerRows === 5 && innerCols === 5) innerCols = 6;
+    else if (innerRows === 7 && innerCols === 7) innerCols = 6;
+    else if (innerCols < 7) innerCols += 1;
     else if (innerRows < 7) innerRows += 1;
+    else innerCols -= 1; 
   }
   const boardRows = innerRows + 2;
   const boardCols = innerCols + 2;
@@ -269,8 +274,17 @@ const FruitGame: React.FC<{ tier: number; onWin: () => void; onLose: () => void;
 const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void; onLose: () => void }> = ({ tier, difficulty, onWin, onLose }) => {
   const ICONS = ['🐬', '🐚', '🦀', '🐳', '🐡', '🐙', '🦈', '🐠', '🧜‍♀️', '🔱', '⚓', '🌊'];
   const effectiveTier = tier + Math.max(0, difficulty - 1);
-  const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
-  const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+  let rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
+  let cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+
+  // Ghép đôi cần số ô chẵn
+  if ((rows * cols) % 2 !== 0) {
+    if (rows === 5 && cols === 5) cols = 6;
+    else if (rows === 7 && cols === 7) cols = 6;
+    else if (cols < 7) cols += 1;
+    else if (rows < 7) rows += 1;
+    else cols -= 1;
+  }
   const config = { rows, cols, time: Math.max(20, 60 - effectiveTier * 5) };
 
   const [cards, setCards] = useState<{v: string, f: boolean, m: boolean}[]>([]);
@@ -286,7 +300,9 @@ const MemoryGame: React.FC<{ tier: number; difficulty: number; onWin: () => void
       const icon = ICONS[i % ICONS.length];
       icons.push(icon, icon);
     }
-    if (total % 2 !== 0) icons.push('🐚'); // Filler for odd grids
+    // (Logic điều chỉnh kích thước ở trên đã đảm bảo total luôn chẵn, 
+    // nhưng giữ filler này làm fallback an toàn)
+    if (total % 2 !== 0) icons.push('🐚'); 
     icons.sort(() => Math.random() - 0.5);
     setCards(icons.map(v => ({ v, f: false, m: false })));
 
@@ -378,6 +394,7 @@ const Minesweeper: React.FC<{ tier: number; difficulty: number; onWin: () => voi
   const effectiveTier = tier + Math.max(0, difficulty - 1);
   const rows = Math.min(7, 4 + Math.floor(effectiveTier / 2));
   const cols = Math.min(7, 4 + Math.ceil(effectiveTier / 2));
+  // Minesweeper không cần ô chẵn, tuân thủ đúng 4x4 -> 7x7
   const config = { rows, cols, mines: Math.floor(rows * cols * (0.15 + effectiveTier * 0.02)), time: Math.max(20, 60 - effectiveTier * 5) };
 
   const [grid, setGrid] = useState<{m: boolean, o: boolean, n: number}[][]>([]);

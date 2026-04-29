@@ -240,11 +240,21 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     if (!isLooterGameMode) return;
     
     const prepareMinigame = () => {
-      if (preGeneratedMinigame) return; // Đã có rồi
+      if (preGeneratedMinigame) return; 
       
       const tier = state.worldTier;
-      const innerRows = Math.min(7, 4 + Math.floor(tier / 2));
-      const innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+      let innerRows = Math.min(7, 4 + Math.floor(tier / 2));
+      let innerCols = Math.min(7, 4 + Math.ceil(tier / 2));
+
+      // Ghép đôi cần số ô chẵn
+      if ((innerRows * innerCols) % 2 !== 0) {
+        if (innerRows === 5 && innerCols === 5) innerCols = 6;
+        else if (innerRows === 7 && innerCols === 7) innerCols = 6;
+        else if (innerCols < 7) innerCols += 1;
+        else if (innerRows < 7) innerRows += 1;
+        else innerCols -= 1;
+      }
+
       const grid = generateSolvableFruitGrid(innerRows, innerCols);
       setPreGeneratedMinigame({ type: 'fishing', grid });
     };

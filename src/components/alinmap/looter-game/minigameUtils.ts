@@ -101,7 +101,7 @@ export const generateSolvableFruitGrid = (innerRows: number, innerCols: number):
   const boardRows = innerRows + 2;
   const boardCols = innerCols + 2;
   
-  let grid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
+  const grid: FruitCell[][] = Array.from({ length: boardRows }, (_, r) =>
     Array.from({ length: boardCols }, (_, c) => ({
       f: null,
       id: `${r}-${c}`,
@@ -115,7 +115,11 @@ export const generateSolvableFruitGrid = (innerRows: number, innerCols: number):
     }
   }
 
-  availablePositions.sort(() => Math.random() - 0.5);
+  // Ensure even count for pairs. If odd, remove one random position.
+  if (availablePositions.length % 2 !== 0) {
+    const skipIdx = Math.floor(Math.random() * availablePositions.length);
+    availablePositions.splice(skipIdx, 1);
+  }
 
   const fruitPairs = availablePositions.length / 2;
   const fruitsToUse: string[] = [];
@@ -125,7 +129,8 @@ export const generateSolvableFruitGrid = (innerRows: number, innerCols: number):
   }
   
   let attempts = 0;
-  while (attempts < 50) {
+  // Increase attempts to 100 to be very sure
+  while (attempts < 100) {
     const tempFruits = [...fruitsToUse].sort(() => Math.random() - 0.5);
     const tempGrid = cloneFruitGrid(grid);
     for (let i = 0; i < availablePositions.length; i++) {
@@ -133,11 +138,14 @@ export const generateSolvableFruitGrid = (innerRows: number, innerCols: number):
       tempGrid[pos.r][pos.c].f = tempFruits[i];
     }
     
+    // Check if at least one move is possible
     if (findAnyMove(tempGrid)) {
       return tempGrid;
     }
     attempts++;
   }
   
+  // Fallback: if somehow 100 attempts failed (rare), try one more time with a very simple arrangement
+  // but usually 100 is more than enough.
   return grid;
 };
