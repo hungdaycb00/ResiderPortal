@@ -204,9 +204,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-amber-300">
                 <ShieldCheck className="h-5 w-5" /> Chon The Gioi
               </h3>
-              <p className="mb-6 rounded-lg border border-cyan-900/30 bg-[#0d2137] p-3 text-xs leading-relaxed text-gray-400">
-                Chi phi vao the gioi cang cao, <strong className="text-cyan-300">trang bi nhan duoc</strong> va <strong className="text-red-400">chi so doi thu</strong> cang lon.
-              </p>
+              
+              {!isChallengeActive && (
+                <p className="mb-6 rounded-lg border border-cyan-900/30 bg-[#0d2137] p-3 text-xs leading-relaxed text-gray-400">
+                  Chi phi vao the gioi cang cao, <strong className="text-cyan-300">trang bi nhan duoc</strong> va <strong className="text-red-400">chi so doi thu</strong> cang lon.
+                </p>
+              )}
 
               <div className="relative px-2">
                 <input
@@ -214,58 +217,70 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
                   min={0}
                   max={5}
                   step={1}
-                  value={selectedTier}
+                  value={isChallengeActive ? state.worldTier : selectedTier}
+                  disabled={isChallengeActive}
                   onChange={(e) => setSelectedTier(Number(e.target.value))}
-                  className="w-full cursor-pointer appearance-none rounded-full border border-cyan-800/50 bg-[#0d2137] outline-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(251,191,36,0.6)] [&::-webkit-slider-thumb]:transition-transform hover:[&::-webkit-slider-thumb]:scale-110"
+                  className={`w-full appearance-none rounded-full border border-cyan-800/50 bg-[#0d2137] outline-none [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(251,191,36,0.6)] [&::-webkit-slider-thumb]:transition-transform ${isChallengeActive ? 'cursor-default opacity-80' : 'cursor-pointer hover:[&::-webkit-slider-thumb]:scale-110'}`}
                   style={{
                     height: '12px',
-                    background: `linear-gradient(90deg, rgba(251,191,36,0.95) 0%, rgba(251,191,36,0.95) ${(selectedTier / 5) * 100}%, rgba(13,33,55,1) ${(selectedTier / 5) * 100}%, rgba(13,33,55,1) 100%)`,
+                    background: `linear-gradient(90deg, rgba(251,191,36,0.95) 0%, rgba(251,191,36,0.95) ${((isChallengeActive ? state.worldTier : selectedTier) / 5) * 100}%, rgba(13,33,55,1) ${((isChallengeActive ? state.worldTier : selectedTier) / 5) * 100}%, rgba(13,33,55,1) 100%)`,
                   }}
                 />
                 <div className="mt-4 flex justify-between">
                   {TIER_LABELS.map((tier) => (
-                    <div key={tier.tier} className={`flex flex-col items-center transition-colors ${selectedTier === tier.tier ? 'scale-110 text-amber-400' : 'text-gray-600'}`}>
+                    <div key={tier.tier} className={`flex flex-col items-center transition-colors ${(isChallengeActive ? state.worldTier : selectedTier) === tier.tier ? 'scale-110 text-amber-400' : 'text-gray-600'}`}>
                       <span className="text-sm font-black">{tier.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="relative mt-8 overflow-hidden rounded-2xl border border-amber-900/50 bg-gradient-to-br from-[#1a0f08] to-[#0f172a] p-6 text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
-                <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500/60">Tier {selectedTier}</p>
-                <p className="mb-2 text-3xl font-black text-transparent drop-shadow-sm bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text">
-                  {TIER_LABELS.find((tier) => tier.tier === selectedTier)?.label || '0'} <span className="text-lg">Vang</span>
-                </p>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-700/30 bg-amber-950/50 px-3 py-1">
-                  <span className="text-[10px] font-bold uppercase text-gray-400">Multiplier</span>
-                  <span className="text-sm font-black text-amber-400">x{TIER_MULTIPLIERS[selectedTier]}</span>
+              {!isChallengeActive && (
+                <div className="relative mt-8 overflow-hidden rounded-2xl border border-amber-900/50 bg-gradient-to-br from-[#1a0f08] to-[#0f172a] p-6 text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                  <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500/60">Tier {selectedTier}</p>
+                  <p className="mb-2 text-3xl font-black text-transparent drop-shadow-sm bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text">
+                    {TIER_LABELS.find((tier) => tier.tier === selectedTier)?.label || '0'} <span className="text-lg">Vang</span>
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-700/30 bg-amber-950/50 px-3 py-1">
+                    <span className="text-[10px] font-bold uppercase text-gray-400">Multiplier</span>
+                    <span className="text-sm font-black text-amber-400">x{TIER_MULTIPLIERS[selectedTier]}</span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <button
                 onClick={() => {
+                  if (isChallengeActive) {
+                    onEnterWorld?.(); // Cho phép bấm để đóng modal/trở lại game
+                    return;
+                  }
                   if (!canEnterWorld) return;
                   setWorldTier(selectedTier);
                   onEnterWorld?.();
                 }}
-                disabled={!canEnterWorld}
+                disabled={!isChallengeActive && !canEnterWorld}
                 className={`mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-lg font-black transition-all ${
-                  canEnterWorld
+                  isChallengeActive || canEnterWorld
                     ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.4)] hover:from-amber-500 hover:via-orange-400 hover:to-amber-500 active:scale-[0.98]'
                     : 'cursor-not-allowed border border-gray-800 bg-[#1a2332] text-gray-600'
                 }`}
-                style={canEnterWorld ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
+                style={(isChallengeActive || canEnterWorld) ? { backgroundSize: '200% auto', animation: 'shine 3s linear infinite' } : {}}
               >
                 <Swords className="h-5 w-5" />
-                {isWorldEntryLocked ? 'DANG TRONG THE GIOI' : 'VAO THE GIOI'}
+                {isChallengeActive ? 'VAO THE GIOI' : (isWorldEntryLocked ? 'DANG TRONG THE GIOI' : 'VAO THE GIOI')}
               </button>
-              {isWorldEntryLocked && (
+              {isChallengeActive && (
+                <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-amber-300/80">
+                  <Anchor className="h-4 w-4" /> Ban dang o Tier {state.worldTier}.
+                </p>
+              )}
+              {!isChallengeActive && isWorldEntryLocked && (
                 <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-amber-300/80">
                   <Anchor className="h-4 w-4" /> Ve Thanh Tri de mo lai nut vao the gioi.
                 </p>
               )}
-              {!isWorldEntryLocked && !hasEnoughGold && (
+              {!isChallengeActive && !isWorldEntryLocked && !hasEnoughGold && (
                 <p className="mt-3 flex items-center justify-center gap-1 text-center text-xs font-medium text-red-400/80">
                   <span className="text-base">!</span> Ban can them {selectedTierCost - state.seaGold} vang
                 </p>
