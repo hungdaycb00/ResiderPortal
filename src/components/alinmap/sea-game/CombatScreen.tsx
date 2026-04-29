@@ -478,7 +478,7 @@ const CombatScreen: React.FC = () => {
               )}
               
               <button onClick={handleClose} className="w-full py-4 bg-white text-black rounded-2xl font-black hover:bg-gray-200 transition-colors active:scale-95 shadow-xl">
-                TIẾP TỤC
+                {combatResult.result === 'lose' ? 'THÀNH TRÌ' : 'TIẾP TỤC'}
               </button>
             </motion.div>
           </motion.div>

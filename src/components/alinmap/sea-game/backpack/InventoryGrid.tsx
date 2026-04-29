@@ -193,16 +193,21 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       const relY = clientY - gridRect.top;
       pointerCurrentRef.current = { clientX, clientY };
       setDragPos({ x: relX, y: relY });
-      if (trashRect &&
-          clientX >= trashRect.left && clientX <= trashRect.right &&
-          clientY >= trashRect.top && clientY <= trashRect.bottom) {
+
+      const isInsideGrid = clientX >= gridRect.left && clientX <= gridRect.right &&
+                           clientY >= gridRect.top && clientY <= gridRect.bottom;
+      const isInsideStorage = !hideStorage && storageRect && 
+                              clientX >= storageRect.left && clientX <= storageRect.right &&
+                              clientY >= storageRect.top && clientY <= storageRect.bottom;
+      const isInsideTrash = trashRect &&
+                            clientX >= trashRect.left && clientX <= trashRect.right &&
+                            clientY >= trashRect.top && clientY <= trashRect.bottom;
+
+      if (isInsideTrash) {
         updateHoverCell(null);
         setIsHoveringStorage(false);
         setIsHoveringSell(true);
-      }
-      // Check if hovering grid
-      else if (clientX >= gridRect.left && clientX <= gridRect.right &&
-          clientY >= gridRect.top && clientY <= gridRect.bottom) {
+      } else if (isInsideGrid) {
         const topLeftX = relX - dragOffset.x;
         const topLeftY = relY - dragOffset.y;
         updateHoverCell({
@@ -211,19 +216,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         });
         setIsHoveringStorage(false);
         setIsHoveringSell(false);
-      } 
-      // Check if hovering storage
-      else if (storageRect && 
-               clientX >= storageRect.left && clientX <= storageRect.right &&
-               clientY >= storageRect.top && clientY <= storageRect.bottom) {
+      } else if (isInsideStorage) {
         updateHoverCell(null);
         setIsHoveringStorage(true);
         setIsHoveringSell(false);
-      } 
-      else {
-        updateHoverCell(null);
-        setIsHoveringStorage(false);
-        setIsHoveringSell(false);
+      } else {
+        // Only clear hover cell if it was previously set by THIS grid
+        if (hoverCell || isHoveringStorage || isHoveringSell) {
+          updateHoverCell(null);
+          setIsHoveringStorage(false);
+          setIsHoveringSell(false);
+        }
       }
     }
   }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, updateHoverCell]);

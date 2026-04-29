@@ -24,7 +24,7 @@ const VIRTUAL_STORAGE_BAG: BagItem = {
   cells: STORAGE_GRID_W * STORAGE_GRID_H,
 };
 
-const PORTAL_FEE_RATE = 0.05;
+
 
 const buildStorageItems = (storage: SeaItem[]) => {
   const current = storage.map((item) => ({ ...item }));
@@ -95,7 +95,7 @@ export default function FortressStorageModal() {
   const storageItems = buildStorageItems(state.storage);
   const isPortalMode = fortressStorageMode === 'portal';
 
-  const portalFeeForItem = (item: SeaItem) => Math.max(1, Math.ceil((item.price || 0) * PORTAL_FEE_RATE));
+
 
   const handleReturnToFortress = async () => {
     setIsReturning(true);
@@ -124,13 +124,12 @@ export default function FortressStorageModal() {
     if (source === 'inventory' && target === 'storage') {
       await storeItems([item.uid], 'store', fortressStorageMode, cell.x, cell.y);
     } else if (source === 'storage' && target === 'inventory') {
-      if (isPortalMode) return;
-      await storeItems([item.uid], 'retrieve', 'fortress', cell.x, cell.y);
+      await storeItems([item.uid], 'retrieve', fortressStorageMode, cell.x, cell.y);
     } else if (source === 'storage' && target === 'storage') {
       const newStorage = storageItems.map((i) => (i.uid === item.uid ? { ...i, gridX: cell.x, gridY: cell.y } : i));
       await saveStorage(newStorage);
     }
-  }, [dragItem, dragSource, hoverTarget, hoverCell, storageItems, fortressStorageMode, isPortalMode, saveStorage, storeItems, returnToFortress, openFortressStorage]);
+  }, [dragItem, dragSource, hoverTarget, hoverCell, storageItems, fortressStorageMode, saveStorage, storeItems]);
 
   useEffect(() => {
     window.addEventListener('pointerup', handleGlobalPointerUp);
@@ -140,7 +139,7 @@ export default function FortressStorageModal() {
   if (!isFortressStorageOpen) return null;
 
   const StoragePanel = () => (
-    <div className="flex flex-1 flex-col rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 transition-colors">
+    <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'storage' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
           {isPortalMode ? <Sparkles className="h-4 w-4" /> : <Database className="h-4 w-4" />}
@@ -149,24 +148,19 @@ export default function FortressStorageModal() {
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{storageItems.length} items</span>
       </div>
 
-      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group" onPointerEnter={() => setHoverTarget('storage')}>
+      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group">
         <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
-          {/* Scroll Indicator for Mobile */}
-          <div className="absolute right-1.5 top-4 bottom-4 w-1 bg-cyan-900/20 rounded-full pointer-events-none">
-            <motion.div
-              className="w-full bg-cyan-500/40 rounded-full"
-              style={{ height: '20%' }}
-              animate={{ y: [0, 20, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
           <InventoryGrid
             items={storageItems}
             bags={[VIRTUAL_STORAGE_BAG]}
             gridH={STORAGE_GRID_H}
             hideStorage
             onItemLayoutChange={(newItems) => saveStorage(newItems)}
-            onHoverCellChange={(c) => setHoverCell(c)}
+            onHoverCellChange={(c) => {
+              setHoverCell(c);
+              if (c) setHoverTarget('storage');
+              else if (hoverTarget === 'storage') setHoverTarget(null);
+            }}
             onDragStart={(item, src) => {
               setDragItem(item);
               setDragSource(src);
@@ -181,7 +175,7 @@ export default function FortressStorageModal() {
   );
 
   const InventoryPanel = () => (
-    <div className="flex flex-1 flex-col rounded-2xl border border-cyan-900/30 bg-[#08131d] p-3 transition-colors">
+    <div className={`flex flex-1 flex-col rounded-2xl border ${hoverTarget === 'inventory' ? 'border-cyan-400 bg-cyan-950/20' : 'border-cyan-900/30 bg-[#08131d]'} p-3 transition-colors`}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-cyan-300">
           <Package className="h-4 w-4" />
@@ -190,13 +184,17 @@ export default function FortressStorageModal() {
         <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-bold text-cyan-200">{state.inventory.length} items</span>
       </div>
 
-      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2" onPointerEnter={() => setHoverTarget('inventory')}>
+      <div className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2">
         <InventoryGrid
           items={state.inventory}
           bags={state.bags}
           hideStorage
           onItemLayoutChange={(newItems) => saveInventory(newItems)}
-          onHoverCellChange={(c) => setHoverCell(c)}
+          onHoverCellChange={(c) => {
+            setHoverCell(c);
+            if (c) setHoverTarget('inventory');
+            else if (hoverTarget === 'inventory') setHoverTarget(null);
+          }}
           onDragStart={(item, src) => {
             setDragItem(item);
             setDragSource(src);
@@ -254,11 +252,7 @@ export default function FortressStorageModal() {
             <StoragePanel />
           </div>
 
-          {isPortalMode && dragItem && dragSource === 'inventory' && (
-            <div className="mt-4 rounded-2xl border border-violet-500/20 bg-violet-950/20 px-4 py-3 text-xs text-violet-100/80">
-              {`Dang keo ${dragItem.name}. Phi gui: ${portalFeeForItem(dragItem)} vang.`}
-            </div>
-          )}
+
         </div>
       </div>
     </div>

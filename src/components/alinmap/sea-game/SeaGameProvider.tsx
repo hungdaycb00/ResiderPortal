@@ -700,9 +700,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       await loadState();
     } catch (err: any) { 
       let errorMsg = err.message || 'Lỗi kết nối máy chủ';
-      if (errorMsg.includes('Not enough gold')) {
-        errorMsg = 'Bạn không đủ Vàng để thực hiện thao tác này thông qua Cổng dịch chuyển.';
-      }
+
+
       showNotification(errorMsg, 'error');
       // Rollback
       setState(prev => ({ ...prev, inventory: prevInventory, storage: prevStorage }));

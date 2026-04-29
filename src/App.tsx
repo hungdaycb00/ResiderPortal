@@ -279,7 +279,7 @@ export default function App() {
       )}
 
       {notification && (
-        <div className={`fixed bottom-4 right-4 z-[500] p-4 rounded-xl border shadow-lg animate-in slide-in-from-right-4 duration-300 ${notification.type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-100' : notification.type === 'info' ? 'bg-blue-900/90 border-blue-500/50 text-blue-100' : 'bg-red-900/90 border-red-500/50 text-red-100'}`}>
+        <div className={`fixed bottom-1 right-1 z-[500] p-4 rounded-xl border shadow-lg animate-in slide-in-from-right-4 duration-300 ${notification.type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-100' : notification.type === 'info' ? 'bg-blue-900/90 border-blue-500/50 text-blue-100' : 'bg-red-900/90 border-red-500/50 text-red-100'}`}>
           {notification.message}
         </div>
       )}
