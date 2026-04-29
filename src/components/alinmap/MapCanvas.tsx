@@ -439,9 +439,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Connection Status */}
             {isConnecting && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] bg-blue-600/90 backdrop-blur-xl border border-white/20 text-white px-6 py-3 rounded-2xl text-xs font-black flex flex-col items-center gap-3 shadow-[0_0_40px_rgba(59,130,246,0.6)] animate-in fade-in zoom-in duration-300">
-                    <RefreshCw className="w-6 h-6 animate-spin text-white" />
-                    <span className="tracking-[0.2em]">SCANNING SECTOR...</span>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] bg-blue-600/90 backdrop-blur-xl border border-white/20 text-white p-6 rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.6)] animate-in fade-in zoom-in duration-300">
+                    <RefreshCw className="w-8 h-8 animate-spin text-white" />
                 </div>
             )}
         </div>

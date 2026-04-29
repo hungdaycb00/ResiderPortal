@@ -17,9 +17,11 @@ interface InventoryGridProps {
   gridH?: number;
   hideStorage?: boolean;
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
-  onDragStart?: (item: SeaItem, source: 'inventory' | 'storage') => void;
+  onDragStart?: (item: SeaItem, source: 'inventory' | 'storage', offset: { x: number; y: number }) => void;
   onDragEnd?: () => void;
+  onExternalDrop?: (item: SeaItem, x: number, y: number) => void;
   externalDragItem?: SeaItem | null;
+  externalDragOffset?: { x: number; y: number } | null;
   externalHoverCell?: { x: number; y: number } | null;
 }
 
@@ -56,7 +58,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   onHoverCellChange,
   onDragStart,
   onDragEnd,
+  onExternalDrop,
   externalDragItem,
+  externalDragOffset,
   externalHoverCell,
 }) => {
   const { setDraggingItem, setIsItemDragging, isItemDragging, sellItems } = useSeaGame();
@@ -155,12 +159,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setDragMode(mode);
     setDragItem(item);
     setDraggingItem(item);
-    onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage');
+    
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    setDragOffset({
+    const offset = {
       x: Math.max(0, e.clientX - itemRect.left),
       y: Math.max(0, e.clientY - itemRect.top),
-    });
+    };
+    setDragOffset(offset);
+    onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage', offset);
     setIsItemDragging(true);
     pointerStartRef.current = {
       itemUid: item.uid,
@@ -208,8 +214,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         setIsHoveringStorage(false);
         setIsHoveringSell(true);
       } else if (isInsideGrid) {
-        const topLeftX = relX - dragOffset.x;
-        const topLeftY = relY - dragOffset.y;
+        const currentOffset = externalDragOffset || dragOffset;
+        const topLeftX = relX - currentOffset.x;
+        const topLeftY = relY - currentOffset.y;
         updateHoverCell({
           x: Math.round(topLeftX / cellSize),
           y: Math.round(topLeftY / cellSize),
@@ -229,7 +236,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         }
       }
     }
-  }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, updateHoverCell]);
+  }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, externalDragOffset, updateHoverCell, hideStorage]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (isItemDragging) {
@@ -284,6 +291,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         if (movingItem) {
           onItemLayoutChange?.([movingItem, ...filtered]);
         }
+      } else if (externalDragItem && hoverCell) {
+        // Drop external item here
+        onExternalDrop?.(externalDragItem, hoverCell.x, hoverCell.y);
       }
     }
 
@@ -544,8 +554,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         <div
           className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[(dragItem || externalDragItem)!.rarity] || RARITY_COLORS.common}`}
           style={{
-            left: dragPos.clientX - dragOffset.x,
-            top: dragPos.clientY - dragOffset.y,
+            left: dragPos.clientX - (externalDragOffset?.x ?? dragOffset.x),
+            top: dragPos.clientY - (externalDragOffset?.y ?? dragOffset.y),
             width: ((dragItem || externalDragItem)!.gridW || 1) * cellSize - 2,
             height: ((dragItem || externalDragItem)!.gridH || 1) * cellSize - 2,
           }}

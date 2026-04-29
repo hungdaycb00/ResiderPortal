@@ -85,6 +85,7 @@ export default function FortressStorageModal() {
 
   const [dragItem, setDragItem] = useState<SeaItem | null>(null);
   const [dragSource, setDragSource] = useState<'inventory' | 'storage' | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hoverTarget, setHoverTarget] = useState<'inventory' | 'storage' | null>(null);
   const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isReturning, setIsReturning] = useState(false);
@@ -102,31 +103,13 @@ export default function FortressStorageModal() {
     }
   };
 
-  const handleGlobalPointerUp = useCallback(async () => {
-    if (!dragItem || !dragSource) return;
-    const item = dragItem;
-    const source = dragSource;
-    const target = hoverTarget;
-    const cell = hoverCell;
+  const handleMoveToStorage = useCallback(async (item: SeaItem, x: number, y: number) => {
+    await storeItems([item.uid], 'store', fortressStorageMode, x, y);
+  }, [storeItems, fortressStorageMode]);
 
-    setDragItem(null);
-    setDragSource(null);
-    setHoverTarget(null);
-    setHoverCell(null);
-
-    if (!target || !cell) return;
-
-    if (source === 'inventory' && target === 'storage') {
-      await storeItems([item.uid], 'store', fortressStorageMode, cell.x, cell.y);
-    } else if (source === 'storage' && target === 'inventory') {
-      await storeItems([item.uid], 'retrieve', fortressStorageMode, cell.x, cell.y);
-    }
-  }, [dragItem, dragSource, hoverTarget, hoverCell, fortressStorageMode, storeItems]);
-
-  useEffect(() => {
-    window.addEventListener('pointerup', handleGlobalPointerUp);
-    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
-  }, [handleGlobalPointerUp]);
+  const handleMoveToInventory = useCallback(async (item: SeaItem, x: number, y: number) => {
+    await storeItems([item.uid], 'retrieve', fortressStorageMode, x, y);
+  }, [storeItems, fortressStorageMode]);
 
   if (!isFortressStorageOpen) return null;
 
@@ -158,11 +141,18 @@ export default function FortressStorageModal() {
               setHoverCell(cell);
               if (cell) setHoverTarget('storage');
             }}
-            onDragStart={(item, src) => {
+            onDragStart={(item, src, offset) => {
               setDragItem(item);
               setDragSource(src);
+              setDragOffset(offset);
             }}
+            onDragEnd={() => {
+                setDragItem(null);
+                setDragSource(null);
+            }}
+            onExternalDrop={handleMoveToStorage}
             externalDragItem={dragSource === 'inventory' ? dragItem : null}
+            externalDragOffset={dragSource === 'inventory' ? dragOffset : null}
             externalHoverCell={dragSource === 'inventory' ? hoverCell : null}
             cellSize={38}
           />
@@ -197,11 +187,18 @@ export default function FortressStorageModal() {
             setHoverCell(cell);
             if (cell) setHoverTarget('inventory');
           }}
-          onDragStart={(item, src) => {
+          onDragStart={(item, src, offset) => {
             setDragItem(item);
             setDragSource(src);
+            setDragOffset(offset);
           }}
+          onDragEnd={() => {
+              setDragItem(null);
+              setDragSource(null);
+          }}
+          onExternalDrop={handleMoveToInventory}
           externalDragItem={dragSource === 'storage' ? dragItem : null}
+          externalDragOffset={dragSource === 'storage' ? dragOffset : null}
           externalHoverCell={dragSource === 'storage' ? hoverCell : null}
           cellSize={38}
         />
