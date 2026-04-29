@@ -84,53 +84,52 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const isAtFortress = isLooterAtFortress(state);
 
   return (
-    <div className="flex h-full flex-col overflow-visible text-white relative">
-      {/* Floating Stats Row: Outside/Top of the tab */}
-      <div className="absolute -top-10 left-0 right-0 flex items-center justify-around px-2 py-1 pointer-events-none">
-        <div className="flex items-center gap-1">
-          <Heart className="h-3.5 w-3.5 text-red-500 drop-shadow-md" />
-          <span className="text-[11px] font-black drop-shadow-md">{state.currentHp}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Zap className="h-3.5 w-3.5 text-blue-500 drop-shadow-md" />
-          <span className="text-[11px] font-black drop-shadow-md">{state.energyMax + totalStats.energyMax}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Wind className="h-3.5 w-3.5 text-emerald-500 drop-shadow-md" />
-          <span className="text-[11px] font-black drop-shadow-md">{state.moveSpeed}x</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Swords className="h-3.5 w-3.5 text-orange-500 drop-shadow-md" />
-          <span className="text-[11px] font-black drop-shadow-md">{totalStats.weight}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Skull className="h-3.5 w-3.5 text-purple-500 drop-shadow-md" />
-          <span className="text-[11px] font-black drop-shadow-md">{Math.round(state.cursePercent)}%</span>
-        </div>
-      </div>
+    <div className="flex h-full flex-col overflow-hidden text-white relative">
+      {/* Main Content Area */}
+      <div className="flex-1 relative overflow-hidden p-1 subtle-scrollbar">
+        {/* Left Floating Controls: Gold (Top), Bag (Bottom) */}
+        <div className="absolute top-3 left-3 flex flex-col gap-3 z-[60] pointer-events-none">
+          {/* Gold - Always visible */}
+          <div className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/30 px-2.5 py-1 shadow-lg pointer-events-auto">
+            <Coins className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-xs font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
+          </div>
 
-      {/* Header with Gold & Bag */}
-      <div className="px-4 py-2 bg-black/60 backdrop-blur-lg border-b border-white/5 shrink-0">
-        <div className="flex items-center justify-between">
-          {/* Bag Slot (Now on the Left) */}
-          <div className={`relative h-9 w-9 rounded-xl border-2 flex items-center justify-center shadow-xl transition-all hover:scale-110 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+          {/* Bag Slot - Floating */}
+          <div className={`relative h-11 w-11 rounded-2xl border-2 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all hover:scale-110 pointer-events-auto ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
              <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
-             <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-cyan-500 rounded-full border-2 border-black flex items-center justify-center">
-                <Anchor className="w-2 h-2 text-white" />
+             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full border-2 border-black flex items-center justify-center">
+                <Anchor className="w-2.5 h-2.5 text-white" />
              </div>
           </div>
+        </div>
 
-          {/* Gold (Now on the Right) */}
-          <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 shadow-lg">
-            <Coins className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
+        {/* Right Floating Stats: Vertical column */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 z-[60] pointer-events-none items-end">
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
+            <Heart className="h-3 w-3 text-red-500" />
+            <span className="text-[10px] font-black">{state.currentHp}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
+            <Zap className="h-3 w-3 text-blue-500" />
+            <span className="text-[10px] font-black">{state.energyMax + totalStats.energyMax}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
+            <Wind className="h-3 w-3 text-emerald-500" />
+            <span className="text-[10px] font-black">{state.moveSpeed}x</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
+            <Swords className="h-3 w-3 text-orange-500" />
+            <span className="text-[10px] font-black">{totalStats.weight}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md rounded-full px-2 py-1 border border-white/10 shadow-lg">
+            <Skull className="h-3 w-3 text-purple-500" />
+            <span className="text-[10px] font-black">{Math.round(state.cursePercent)}%</span>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto p-1 subtle-scrollbar">
-        <div className="flex flex-col items-center gap-2">
-          {/* Main Grid: Transparent background, minimal padding */}
+        {/* Main Grid: Fills the whole container */}
+        <div className="w-full h-full flex flex-col items-center justify-start pt-2">
           <div className="w-full">
             <InventoryGrid
               items={state.inventory}
