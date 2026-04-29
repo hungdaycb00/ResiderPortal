@@ -216,12 +216,18 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           const isOutside = pointerCurrent.clientX < gridRect.left || pointerCurrent.clientX > gridRect.right ||
                             pointerCurrent.clientY < gridRect.top || pointerCurrent.clientY > gridRect.bottom;
           if (!isOutside) {
-            const newItems = items.map(i => i.uid === dragItem.uid ? { 
-                ...i, 
-                gridX: -1, gridY: -1,
-                stagingX: dragPos.x - dragOffset.x,
-                stagingY: dragPos.y - dragOffset.y
-            } : i);
+            const newItems = items.map(i => {
+              if (i.uid === dragItem.uid) {
+                return {
+                  ...i,
+                  gridX: -1,
+                  gridY: -1,
+                  stagingX: dragPos.x - dragOffset.x,
+                  stagingY: dragPos.y - dragOffset.y
+                };
+              }
+              return i;
+            });
             onItemLayoutChange?.(newItems);
           } else {
             handleDropItem(dragItem.uid);
@@ -268,14 +274,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const stagingItems = items.filter(i => i.gridX < 0);
 
   return (
-    <div 
-      className="flex flex-col gap-4 select-none touch-none w-full h-full relative" 
-      onPointerMove={(e) => { 
-        if (isItemDragging) e.stopPropagation(); 
-        updateDragPosition(e.clientX, e.clientY); 
-      }}
-    >
-       {stagingItems.map(item => (
+    <div className="flex flex-col gap-4 select-none touch-none w-full h-full relative" onPointerMove={(e) => { if (isItemDragging) e.stopPropagation(); updateDragPosition(e.clientX, e.clientY); }}>
+       {stagingItems.map((item) => (
          <motion.div
            key={item.uid}
            className={`absolute z-20 cursor-grab active:cursor-grabbing ${activeDragItem?.uid === item.uid ? 'opacity-20' : ''}`}
@@ -290,12 +290,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
          >
            {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
              if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
-             const isMainIcon = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
+             const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
              return (
                <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                 {isMainIcon && (
-                   <span className="text-xl drop-shadow-md">{item.icon}</span>
-                 )}
+                 {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
                </div>
              );
            }))}
@@ -318,7 +316,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           {highlightCells.map(({ x, y, valid }) => (
             <div key={`hl-${x}-${y}`} className={`absolute z-10 pointer-events-none ${valid ? 'bg-emerald-400/20' : 'bg-red-400/20'}`} style={{ left: x * cellSize, top: y * cellSize, width: cellSize, height: cellSize }} />
           ))}
-          {gridItems.map(item => (
+          {gridItems.map((item) => (
             <motion.div
               key={item.uid}
               className={`absolute z-20 cursor-grab active:cursor-grabbing ${activeDragItem?.uid === item.uid ? 'opacity-20' : ''}`}
@@ -328,12 +326,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             >
               {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
                 if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
-                const isMainIcon = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
+                const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
                 return (
                   <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                    {isMainIcon && (
-                      <span className="text-xl drop-shadow-md">{item.icon}</span>
-                    )}
+                    {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
                   </div>
                 );
               }))}
@@ -346,12 +342,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         <div className="fixed pointer-events-none z-[999999] opacity-90 scale-110 shadow-2xl" style={{ left: dragPos.clientX - dragOffset.x, top: dragPos.clientY - dragOffset.y, width: (dragItem.gridW || 1) * cellSize, height: (dragItem.gridH || 1) * cellSize }}>
           {Array.from({ length: dragItem.gridH || 1 }).map((_, r) => Array.from({ length: dragItem.gridW || 1 }).map((_, c) => {
             if (dragItem.shape && (!dragItem.shape[r] || !dragItem.shape[r][c])) return null;
-            const isMainIcon = (!dragItem.shape && r === 0 && c === 0) || (dragItem.shape && r === dragItem.shape.findIndex(row => row.includes(1 || true)) && c === dragItem.shape[r].indexOf(1 || true));
+            const isMain = (!dragItem.shape && r === 0 && c === 0) || (dragItem.shape && r === dragItem.shape.findIndex(row => row.includes(1 || true)) && c === dragItem.shape[r].indexOf(1 || true));
             return (
               <div key={`${r}-${c}`} className={`absolute border-2 rounded-lg flex items-center justify-center ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                {isMainIcon && (
-                  <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>
-                )}
+                {isMain && <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>}
               </div>
             );
           }))}
@@ -363,21 +357,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         <div className="fixed z-[10000] rounded-2xl border border-white/10 bg-[#08131d]/90 backdrop-blur-xl p-4 shadow-2xl pointer-events-auto transform -translate-y-1/2" style={{ left: popupInfo.x > window.innerWidth / 2 ? 'auto' : popupInfo.x + 20, right: popupInfo.x > window.innerWidth / 2 ? window.innerWidth - popupInfo.x + 20 : 'auto', top: popupInfo.y, minWidth: '180px' }}>
           <div className="flex items-center gap-3 border-b border-white/5 pb-3 mb-3">
             <span className="text-3xl drop-shadow-md">{popupInfo.item.icon}</span>
-            <div>
-              <h3 className={`text-sm font-black uppercase ${popupInfo.item.rarity === 'legendary' ? 'text-purple-400' : 'text-cyan-400'}`}>{popupInfo.item.name}</h3>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{popupInfo.item.rarity}</p>
-            </div>
+            <div><h3 className={`text-sm font-black uppercase ${popupInfo.item.rarity === 'legendary' ? 'text-purple-400' : 'text-cyan-400'}`}>{popupInfo.item.name}</h3><p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{popupInfo.item.rarity}</p></div>
           </div>
           <div className="space-y-1.5 mb-4 text-[10px]">
              {popupInfo.item.weight > 0 && <div className="flex justify-between"><span className="text-gray-500 font-bold uppercase">Sát thương</span><span className="font-black text-orange-400">{popupInfo.item.weight}</span></div>}
              {popupInfo.item.price > 0 && <div className="flex justify-between"><span className="text-gray-500 font-bold uppercase">Giá bán</span><span className="font-black text-amber-400">{popupInfo.item.price}</span></div>}
           </div>
-          <button 
-            onClick={() => { handleDropItem(popupInfo.item.uid); setPopupInfo(null); }} 
-            className="w-full py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-500/20"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Ném ra biển
-          </button>
+          <button onClick={() => { handleDropItem(popupInfo.item.uid); setPopupInfo(null); }} className="w-full py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-red-500/20"><Trash2 className="w-3.5 h-3.5" /> Ném ra biển</button>
         </div>
       )}
     </div>
