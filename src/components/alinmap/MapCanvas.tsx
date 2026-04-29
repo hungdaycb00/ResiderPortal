@@ -380,7 +380,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
 
             {/* Looter Game Curse Indicator (Circular) */}
             {isLooterGameMode && (
-                <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-[115] flex flex-col items-center gap-3">
+                <div className="absolute top-[20px] right-4 z-[115] flex flex-col items-end gap-3">
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}

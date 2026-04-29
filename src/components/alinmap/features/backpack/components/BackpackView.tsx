@@ -88,7 +88,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
       {/* Main Content Area */}
       <div className="flex-1 relative overflow-hidden p-0.5 subtle-scrollbar">
         {/* Left Floating Controls: Gold (Top), Bag (Bottom) */}
-        <div className="absolute top-4 left-1.5 flex flex-col gap-4 z-[60] pointer-events-none">
+        <div className="absolute top-4 left-0.5 flex flex-col gap-4 z-[60] pointer-events-none">
           {/* Gold - Small Pill */}
           <div className="flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md border border-amber-500/40 px-2 py-1 shadow-2xl pointer-events-auto">
             <Coins className="h-3.5 w-3.5 text-amber-500" />
@@ -105,7 +105,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         </div>
 
         {/* Right Floating Stats: Vertical column at the edge */}
-        <div className="absolute top-4 right-1.5 flex flex-col gap-2 z-[60] pointer-events-none items-end">
+        <div className="absolute top-4 right-0.5 flex flex-col gap-2 z-[60] pointer-events-none items-end">
           <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
             <Heart className="h-3.5 w-3.5 text-red-500" />
             <span className="text-[11px] font-black">{state.currentHp}</span>
@@ -121,11 +121,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
           <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-white/10 shadow-2xl">
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[11px] font-black">{totalStats.weight}</span>
-          </div>
-          {/* Curse Info - Highlighted at the bottom of the list or corner */}
-          <div className="flex items-center gap-1.5 bg-purple-500/20 backdrop-blur-md rounded-full px-2.5 py-1.5 border border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <Skull className="h-3.5 w-3.5 text-purple-400 animate-pulse" />
-            <span className="text-[11px] font-black text-purple-300">{Math.round(state.cursePercent)}%</span>
           </div>
         </div>
 
