@@ -127,7 +127,7 @@ export default function FortressStorageModal() {
       </div>
 
       <div
-        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group"
+        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
         onPointerEnter={() => setHoverTarget('storage')}
         onPointerLeave={() => {
           if (dragSource) setHoverTarget(null);
@@ -175,7 +175,7 @@ export default function FortressStorageModal() {
       </div>
 
       <div
-        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 overflow-hidden relative group"
+        className="rounded-xl border border-cyan-950/60 bg-[#050b12] p-2 flex-1 relative group"
         onPointerEnter={() => setHoverTarget('inventory')}
         onPointerLeave={() => {
           if (dragSource) setHoverTarget(null);
