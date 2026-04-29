@@ -241,11 +241,30 @@ export function useSeaBoat({
         if (panMoveXRef.current) panMoveXRef.current.stop();
         if (panMoveYRef.current) panMoveYRef.current.stop();
         userDraggingRef.current = false;
-        const nextPanX = -(boatOffsetX?.get?.() ?? 0);
-        const nextPanY = -(boatOffsetY?.get?.() ?? 0);
-        animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
-        animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
-    }, [boatOffsetX, boatOffsetY, panX, panY]);
+
+        // Directly calculate from state to ensure accuracy even before first move or if sync lags
+        const currentLat = seaGameCtx?.state?.currentLat;
+        const currentLng = seaGameCtx?.state?.currentLng;
+
+        if (currentLat != null && currentLng != null && myObfPos) {
+            const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
+            const pxY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
+            
+            // Sync boat offset motion values
+            boatOffsetX.set(pxX);
+            boatOffsetY.set(pxY);
+            
+            // Animate pan to center on the boat
+            animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
+            animate(panY, -pxY, { duration: 0.45, ease: 'easeInOut' });
+        } else {
+            // Fallback to current motion values
+            const nextPanX = -(boatOffsetX?.get?.() ?? 0);
+            const nextPanY = -(boatOffsetY?.get?.() ?? 0);
+            animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
+            animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
+        }
+    }, [boatOffsetX, boatOffsetY, panX, panY, seaGameCtx?.state?.currentLat, seaGameCtx?.state?.currentLng, myObfPos]);
 
     const stopPanFollow = useCallback(() => {
         userDraggingRef.current = true;

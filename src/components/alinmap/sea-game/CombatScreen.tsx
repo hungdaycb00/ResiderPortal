@@ -76,8 +76,8 @@ const CombatScreen: React.FC = () => {
     setPhase('fighting');
     hpARef.current = maxHpA;
     hpBRef.current = maxHpB;
-    actionARef.current = 0;
-    actionBRef.current = 0;
+    actionProgressARef.current = 0;
+    actionProgressBRef.current = 0;
     setHpA(maxHpA);
     setHpB(maxHpB);
     setActionProgressA(0);
@@ -350,10 +350,7 @@ const CombatScreen: React.FC = () => {
 
         {/* Player B side (Hidden on mobile top, visible on desktop right) */}
         <div className="hidden md:flex flex-1 flex-col bg-[#370d0d]/20 rounded-2xl p-3 border border-red-900/20">
-          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar mb-3">
-            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={encounter.bags?.[0]} readOnly cellSize={cellSize} />
-          </div>
-          <div className="mt-auto pt-3 border-t border-red-900/20">
+          <div className="mb-3 shrink-0 border-b border-red-900/20 pb-3">
             <div className="flex justify-between items-end mb-1">
                <div className="flex flex-col">
                  <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">⚔️ DMG: {encounter.totalWeight}</span>
@@ -372,6 +369,9 @@ const CombatScreen: React.FC = () => {
                 {Math.round(actionProgressB)}/{maxActionBarB}
               </div>
             </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center overflow-auto subtle-scrollbar min-h-0">
+            <CombatInventoryGrid items={encounter.inventory} gridWidth={6} gridHeight={4} bag={encounter.bags?.[0]} readOnly cellSize={cellSize} />
           </div>
         </div>
       </div>

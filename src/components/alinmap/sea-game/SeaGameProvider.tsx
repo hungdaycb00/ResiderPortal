@@ -648,15 +648,22 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, itemUids }),
       });
-      if (!res.ok) throw new Error('Sell failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'Sell failed');
+      setState(prev => ({
+        ...prev,
+        inventory: Array.isArray(data.remaining) ? data.remaining : prev.inventory,
+        seaGold: typeof data.seaGold === 'number' ? data.seaGold : prev.seaGold,
+      }));
       // Không cần loadState() nữa vì đã update ở trên, 
       // trừ khi muốn đồng bộ chính xác tuyệt đối sau khi server xử lý.
     } catch (err) {
       console.error('[SeaGame] sellItems error:', err);
+      showNotification(err instanceof Error ? err.message : 'Ban vat pham that bai', 'error');
       // Rollback
       setState(prev => ({ ...prev, inventory: previousInventory, seaGold: previousGold }));
     }
-  }, [deviceId, API, state.inventory, state.seaGold]);
+  }, [deviceId, API, state.inventory, state.seaGold, showNotification]);
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;

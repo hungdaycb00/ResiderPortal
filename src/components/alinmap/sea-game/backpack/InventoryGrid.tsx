@@ -158,8 +158,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     onDragStart?.(item, mode === 'item' ? 'inventory' : 'storage');
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     setDragOffset({
-      x: Math.max(0, e.clientX - itemRect.left),
-      y: Math.max(0, e.clientY - itemRect.top),
+      x: itemRect.width / 2,
+      y: itemRect.height / 2,
     });
     setIsItemDragging(true);
     pointerStartRef.current = {
@@ -284,7 +284,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     setDragMode(null);
     setDragItem(null);
     setDraggingItem(null);
-    setIsItemDragging(false);
+    // Delay resetting isItemDragging to prevent "click-through" on mobile navigation
+    setTimeout(() => {
+      setIsItemDragging(false);
+    }, 150);
     updateHoverCell(null);
     setIsHoveringStorage(false);
     setIsHoveringSell(false);

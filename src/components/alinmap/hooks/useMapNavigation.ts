@@ -98,6 +98,10 @@ export function useMapNavigation({
   }, [ws, handleRefresh]);
 
   const handleTabClick = useCallback((tabId: string) => {
+    // Prevent toggling sheet if currently dragging an item (fixes click-through bug)
+    const { isItemDragging } = seaGame;
+    if (isItemDragging) return;
+
     setSelectedUser(null);
     if (tabId === 'profile') setActiveTab('info');
 
