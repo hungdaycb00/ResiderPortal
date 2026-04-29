@@ -23,15 +23,17 @@ const VIRTUAL_STORAGE_BAG: BagItem = {
   cells: STORAGE_GRID_W * STORAGE_GRID_H,
 };
 
-const buildStorageItems = (storage: LooterItem[]) => {
-  const current = storage.map((item) => ({ ...item }));
-  const occ = Array.from({ length: STORAGE_GRID_H }, () => Array(STORAGE_GRID_W).fill(false));
+const buildPlacedItems = (items: LooterItem[], gridW: number, gridH: number) => {
+  const current = items.map((item) => ({ ...item }));
+  const occ = Array.from({ length: gridH }, () => Array(gridW).fill(false));
 
   current.forEach((item) => {
     if (item.gridX >= 0) {
-      for (let r = 0; r < item.gridH; r += 1) {
-        for (let c = 0; c < item.gridW; c += 1) {
-          if (item.gridY + r < STORAGE_GRID_H && item.gridX + c < STORAGE_GRID_W) {
+      const w = item.gridW || 1;
+      const h = item.gridH || 1;
+      for (let r = 0; r < h; r += 1) {
+        for (let c = 0; c < w; c += 1) {
+          if (item.gridY + r < gridH && item.gridX + c < gridW) {
             occ[item.gridY + r][item.gridX + c] = true;
           }
         }
@@ -41,11 +43,13 @@ const buildStorageItems = (storage: LooterItem[]) => {
 
   return current.map((item) => {
     if (item.gridX < 0) {
-      for (let r = 0; r <= STORAGE_GRID_H - item.gridH; r += 1) {
-        for (let c = 0; c <= STORAGE_GRID_W - item.gridW; c += 1) {
+      const w = item.gridW || 1;
+      const h = item.gridH || 1;
+      for (let r = 0; r <= gridH - h; r += 1) {
+        for (let c = 0; c <= gridW - w; c += 1) {
           let canFit = true;
-          for (let ir = 0; ir < item.gridH; ir += 1) {
-            for (let ic = 0; ic < item.gridW; ic += 1) {
+          for (let ir = 0; ir < h; ir += 1) {
+            for (let ic = 0; ic < w; ic += 1) {
               if (occ[r + ir][c + ic]) {
                 canFit = false;
                 break;
@@ -56,8 +60,8 @@ const buildStorageItems = (storage: LooterItem[]) => {
 
           if (canFit) {
             const placed = { ...item, gridX: c, gridY: r };
-            for (let ir = 0; ir < item.gridH; ir += 1) {
-              for (let ic = 0; ic < item.gridW; ic += 1) {
+            for (let ir = 0; ir < h; ir += 1) {
+              for (let ic = 0; ic < w; ic += 1) {
                 occ[r + ir][c + ic] = true;
               }
             }
@@ -93,7 +97,8 @@ export default function FortressStorageModal() {
   const [storageHoverCell, setStorageHoverCell] = useState<{ x: number; y: number } | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
-  const storageItems = buildStorageItems(state.storage);
+  const storageItems = buildPlacedItems(state.storage, STORAGE_GRID_W, STORAGE_GRID_H);
+  const inventoryItems = buildPlacedItems(state.inventory, MAX_GRID_W, 6); // Boat backpack is usually 7x6 or dynamic
   const isPortalMode = fortressStorageMode === 'portal';
 
   const handleReturnToFortress = async () => {
@@ -183,7 +188,7 @@ export default function FortressStorageModal() {
       >
         <div className="h-full overflow-y-auto subtle-scrollbar pr-1" style={{ maxHeight: '400px' }}>
           <InventoryGrid
-            items={state.inventory}
+            items={inventoryItems}
             bags={state.bags}
             hideStorage
             onItemLayoutChange={(newItems) => saveInventory(newItems)}

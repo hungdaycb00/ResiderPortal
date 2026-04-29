@@ -229,8 +229,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         const scrollTop = scrollContainer?.scrollTop || 0;
         const scrollLeft = scrollContainer?.scrollLeft || 0;
 
-        const topLeftX = relX - currentOffset.x + scrollLeft;
-        const topLeftY = relY - currentOffset.y + scrollTop;
+        const topLeftX = relX - currentOffset.x;
+        const topLeftY = relY - currentOffset.y;
         
         updateHoverCell({
           x: Math.round(topLeftX / cellSize),
