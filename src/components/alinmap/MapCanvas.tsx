@@ -70,6 +70,8 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         setMainTab, setIsSheetExpanded, showNotification
     });
 
+    const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
+
     const curseBarBg = useMotionTemplate`linear-gradient(90deg, #7f1d1d, #dc2626 ${looterBoat.curseVisual}%, #ef4444)`;
     const curseBarWidth = useMotionTemplate`${looterBoat.curseVisual}%`;
     const curseText = useTransform(looterBoat.curseVisual, (v) => `${Math.round(v)}%`);
@@ -367,59 +369,71 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                 </div>
             )}
 
-            {/* Looter Game Curse Bar */}
+            {/* Looter Game Curse Indicator (Circular) */}
             {isLooterGameMode && (
-                <div className="absolute top-[12px] left-1/2 -translate-x-1/2 z-[115] w-[90%] max-w-[500px] pointer-events-none">
-                    <div className="bg-black/60 backdrop-blur-xl border border-red-500/30 rounded-full p-1.5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-                        <span className="text-red-400 text-xs font-black uppercase tracking-wider shrink-0">☠️ Curse</span>
-                        <div className="flex-1 h-3 bg-gray-800 rounded-full overflow-hidden relative">
-                            <motion.div
-                                className="h-full rounded-full relative"
-                                style={{
-                                    background: curseBarBg,
-                                    width: curseBarWidth,
-                                    boxShadow: (looterState?.cursePercent || 0) > 50 ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
-                                }}
-                            />
+                <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-[115] flex flex-col items-center gap-3">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCursesExpanded(!isCursesExpanded)}
+                        className="relative w-14 h-14 rounded-full bg-black/80 backdrop-blur-xl border-2 border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] pointer-events-auto overflow-hidden group"
+                    >
+                        {/* Fill background based on curse percentage */}
+                        <motion.div 
+                            className="absolute bottom-0 left-0 right-0 bg-red-600/40"
+                            style={{ height: curseBarWidth }}
+                        />
+                        
+                        <div className="relative flex flex-col items-center">
+                            <span className="text-[10px] leading-none mb-0.5 opacity-70">☠️</span>
+                            <motion.span className={`text-xs font-black tabular-nums ${(looterState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                                {curseText}
+                            </motion.span>
                         </div>
-                        <motion.span 
-                            className={`text-xs font-black tabular-nums min-w-[36px] text-right ${(looterState?.cursePercent || 0) > 70 ? 'text-red-400 animate-pulse' : 'text-red-300/70'}`}
-                            initial={false}
-                            animate={{ opacity: [0.5, 1] }}
+                        
+                        {/* Glow effect on high curse */}
+                        {(looterState?.cursePercent || 0) > 50 && (
+                            <div className="absolute inset-0 rounded-full border border-red-500 animate-pulse pointer-events-none" />
+                        )}
+                    </motion.button>
+
+                    {/* Expandable Curse List */}
+                    {isCursesExpanded && looterState?.activeCurses && Object.values(looterState.activeCurses).some(v => (v as number) > 0) && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            className="flex flex-col items-center gap-1.5 p-2 bg-black/90 backdrop-blur-2xl rounded-2xl border border-red-500/20 shadow-2xl min-w-[120px]"
                         >
-                            <motion.span>{curseText}</motion.span>
-                        </motion.span>
-                    </div>
+                            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">Active Curses</p>
+                            {Object.entries(looterState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
+                                const CURSE_META: any = {
+                                    dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
+                                    hp_debuff: { icon: '💔', name: 'HP', color: 'text-rose-400' },
+                                    regen_debuff: { icon: '💧', name: 'MANA', color: 'text-blue-400' },
+                                    boat_scale: { icon: '🚢', name: 'SIZE', color: 'text-amber-400' },
+                                    curse_gain: { icon: '☠️', name: 'CURSE', color: 'text-purple-400' },
+                                };
+                                const meta = CURSE_META[key];
+                                if (!meta) return null;
+                                return (
+                                    <div
+                                        key={key}
+                                        className="flex items-center justify-between w-full gap-3 px-2 py-1 hover:bg-white/5 rounded-lg transition-colors"
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs">{meta.icon}</span>
+                                            <span className={`text-[9px] font-bold ${meta.color} uppercase tracking-tighter`}>{meta.name}</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-white">x{value as number}</span>
+                                    </div>
+                                );
+                            })}
+                        </motion.div>
+                    )}
                 </div>
             )}
 
-            {/* Active Curses List - Top Right Corner */}
-            {isLooterGameMode && looterState?.activeCurses && Object.values(looterState.activeCurses).some(v => (v as number) > 0) && (
-                <div className="absolute top-[60px] right-4 z-[115] flex flex-col items-end gap-2 pointer-events-none">
-                    {Object.entries(looterState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
-                        const CURSE_META: any = {
-                            dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
-                            hp_debuff: { icon: '💔', name: 'HP', color: 'text-rose-400' },
-                            regen_debuff: { icon: '💧', name: 'MANA', color: 'text-blue-400' },
-                            boat_scale: { icon: '🚢', name: 'SIZE', color: 'text-amber-400' },
-                            curse_gain: { icon: '☠️', name: 'CURSE', color: 'text-purple-400' },
-                        };
-                        const meta = CURSE_META[key];
-                        if (!meta) return null;
-                        return (
-                            <motion.div
-                                key={key}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg"
-                            >
-                                <span className="text-sm">{meta.icon}</span>
-                                <span className={`text-[10px] font-black ${meta.color} uppercase tracking-tighter`}>{meta.name} x{value as number}</span>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-            )}
+            {/* Legacy Curse List removed — integrated above */}
 
             {/* Looter Game Loading Overlay */}
             {isLooterGameMode && isLooterLoading && (

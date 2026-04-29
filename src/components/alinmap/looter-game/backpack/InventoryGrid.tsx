@@ -123,9 +123,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
       const w = item.gridW || 1;
       const h = item.gridH || 1;
-      for (let r = item.gridY; r < item.gridY + h && r < gridH; r++) {
-        for (let c = item.gridX; c < item.gridX + w && c < gridW; c++) {
-          grid[r][c] = item.uid;
+      const shape = item.shape;
+
+      for (let r = 0; r < h && (item.gridY + r) < gridH; r++) {
+        for (let c = 0; c < w && (item.gridX + c) < gridW; c++) {
+          if (!shape || (shape[r] && shape[r][c])) {
+            grid[item.gridY + r][item.gridX + c] = item.uid;
+          }
         }
       }
     }
@@ -138,11 +142,18 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const itemOcc = buildItemOccupancy(excludeUid);
     const w = item.gridW || 1;
     const h = item.gridH || 1;
+    const shape = item.shape;
+
     if (x < 0 || y < 0 || x + w > gridW || y + h > gridH) return false;
-    for (let r = y; r < y + h; r++) {
-      for (let c = x; c < x + w; c++) {
-        if (!bagOcc[r] || !bagOcc[r][c]) return false; // Not on the bag
-        if (!itemOcc[r] || itemOcc[r][c] !== null) return false; // Overlap
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        // Only check cells that are part of the item's shape
+        if (!shape || (shape[r] && shape[r][c])) {
+          const gridR = y + r;
+          const gridC = x + c;
+          if (!bagOcc[gridR] || !bagOcc[gridR][gridC]) return false; // Not on the bag
+          if (!itemOcc[gridR] || itemOcc[gridR][gridC] !== null) return false; // Overlap
+        }
       }
     }
     return true;
@@ -369,10 +380,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   if (activeHoverCell && activeDragItem) {
     const w = activeDragItem.gridW || 1;
     const h = activeDragItem.gridH || 1;
+    const shape = activeDragItem.shape;
     const valid = canPlaceItem(activeDragItem, activeHoverCell.x, activeHoverCell.y, activeDragItem.uid);
-    for (let r = activeHoverCell.y; r < activeHoverCell.y + h; r++) {
-      for (let c = activeHoverCell.x; c < activeHoverCell.x + w; c++) {
-        highlightCells.push({ x: c, y: r, valid });
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (!shape || (shape[r] && shape[r][c])) {
+          highlightCells.push({ x: activeHoverCell.x + c, y: activeHoverCell.y + r, valid });
+        }
       }
     }
   }
@@ -516,14 +530,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             return (
               <motion.div
                 key={item.uid}
-                className={`absolute rounded-md border-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing z-20 ${colorClass} ${
+                className={`absolute z-20 cursor-grab active:cursor-grabbing ${
                   isDragging ? 'opacity-30' : 'opacity-100 hover:brightness-110'
                 }`}
                 style={{
-                  left: item.gridX * cellSize + 1,
-                  top: item.gridY * cellSize + 1,
-                  width: w * cellSize - 2,
-                  height: h * cellSize - 2,
+                  left: item.gridX * cellSize,
+                  top: item.gridY * cellSize,
+                  width: w * cellSize,
+                  height: h * cellSize,
                   touchAction: 'none',
                 }}
                 whileTap={{ scale: 1.05 }}
@@ -532,7 +546,29 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
                 onContextMenu={(e) => e.preventDefault()}
                 title={formatItemTooltip(item)}
               >
-                <span className="text-xl leading-none drop-shadow-md">{item.icon}</span>
+                {/* Render Shape Cells */}
+                {Array.from({ length: h }).map((_, r) => (
+                  Array.from({ length: w }).map((_, c) => {
+                    if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
+                    return (
+                      <div
+                        key={`${r}-${c}`}
+                        className={`absolute border-2 rounded-sm flex items-center justify-center ${colorClass}`}
+                        style={{
+                          left: c * cellSize + 1,
+                          top: r * cellSize + 1,
+                          width: cellSize - 2,
+                          height: cellSize - 2,
+                        }}
+                      >
+                        {/* Only show icon on the "center" or first available cell */}
+                        {((!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true))) && (
+                          <span className="text-xl leading-none drop-shadow-md pointer-events-none">{item.icon}</span>
+                        )}
+                      </div>
+                    );
+                  })
+                ))}
               </motion.div>
             );
           })}
@@ -596,17 +632,36 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       {/* Smooth Drag Ghost (Rendered via Portal to avoid clipping and coordinate issues) */}
       {dragMode && dragItem && dragPos.clientX > 0 && createPortal(
         <div
-          className={`fixed pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-110 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
+          className="fixed pointer-events-none z-[999999] opacity-90 scale-110"
           style={{
             left: dragPos.clientX - dragOffset.x,
             top: dragPos.clientY - dragOffset.y,
-            width: (dragItem.gridW || 1) * cellSize - 2,
-            height: (dragItem.gridH || 1) * cellSize - 2,
-            zIndex: 999999,
+            width: (dragItem.gridW || 1) * cellSize,
+            height: (dragItem.gridH || 1) * cellSize,
             transition: 'transform 0.1s ease-out',
           }}
         >
-          <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>
+          {Array.from({ length: dragItem.gridH || 1 }).map((_, r) => (
+            Array.from({ length: dragItem.gridW || 1 }).map((_, c) => {
+              if (dragItem.shape && (!dragItem.shape[r] || !dragItem.shape[r][c])) return null;
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  className={`absolute border-2 rounded-sm flex items-center justify-center ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common} shadow-2xl`}
+                  style={{
+                    left: c * cellSize + 1,
+                    top: r * cellSize + 1,
+                    width: cellSize - 2,
+                    height: cellSize - 2,
+                  }}
+                >
+                  {((!dragItem.shape && r === 0 && c === 0) || (dragItem.shape && r === dragItem.shape.findIndex(row => row.includes(1 || true)) && c === dragItem.shape[r].indexOf(1 || true))) && (
+                    <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>
+                  )}
+                </div>
+              );
+            })
+          ))}
         </div>,
         document.body
       )}

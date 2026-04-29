@@ -9,6 +9,7 @@ import SearchHeader from './alinmap/SearchHeader';
 import ContextMenu from './alinmap/ContextMenu';
 import LooterGameProvider, { useLooterGame } from './alinmap/looter-game/LooterGameProvider';
 import LooterGameUI from './alinmap/looter-game/LooterGameUI';
+import TierSelectionOverlay from './alinmap/looter-game/TierSelectionOverlay';
 import { SocialProvider } from './alinmap/features/social/context/SocialContext';
 import { ProfileProvider } from './alinmap/features/profile/context/ProfileContext';
 
@@ -53,6 +54,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
     const [centerBoatHandler, setCenterBoatHandler] = useState<(() => void) | null>(null);
     const [isWeatherWidgetExpanded, setIsWeatherWidgetExpanded] = useState(false);
+    const [isTierSelectorOpen, setIsTierSelectorOpen] = useState(false);
 
     // --- Looter Game ---
     const looterGame = useLooterGame();
@@ -271,6 +273,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setMapMode={nav.setMapMode}
                 isLooterGameMode={isLooterGameMode}
                 looterState={looterState}
+                isChallengeActive={looterGame.isChallengeActive}
+                onOpenTierSelector={() => setIsTierSelectorOpen(true)}
                 isWidgetExpanded={isWeatherWidgetExpanded}
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
             />
@@ -359,6 +363,18 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                     </div>
                 </div>
             )}
+
+            <TierSelectionOverlay
+                isOpen={isTierSelectorOpen}
+                onClose={() => setIsTierSelectorOpen(false)}
+                currentGold={looterState.looterGold}
+                onSelectTier={(tier) => {
+                    looterGame.setWorldTier(tier);
+                    setIsTierSelectorOpen(false);
+                    setIsLooterGameMode(true); // Đảm bảo chuyển sang mode Looter
+                    nav.handleCenterTo(looterState.fortressLat || 0, looterState.fortressLng || 0); // Về thuyền
+                }}
+            />
         </div>
         </SocialProvider>
         </ProfileProvider>

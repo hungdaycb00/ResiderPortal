@@ -100,7 +100,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-full bg-white rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[4px_0_24px_rgba(0,0,0,0.1)] md:border-r md:border-gray-200 flex flex-col pointer-events-auto"
                     variants={{
-                        full: { y: 0, x: 0 },
+                        full: { 
+                            y: (!isDesktop && mainTab === 'backpack') ? '60%' : 0, 
+                            x: 0 
+                        },
                         collapsed: {
                             y: isDesktop ? 0 : 'calc(100% - 60px)',
                             x: isDesktop ? '-100%' : 0
@@ -108,7 +111,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     }}
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? 'full' : "collapsed"}
-                    transition={{ type: "spring", stiffness: 350, damping: 35 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40 }}
                     drag={isDesktop || isItemDragging ? false : "y"}
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={0.05}

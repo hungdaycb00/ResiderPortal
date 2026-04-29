@@ -14,11 +14,13 @@ export interface LooterItem {
   hpBonus: number;
   energyMax: number;
   energyRegen: number;
+  energyCost?: number;
   gridW: number;
   gridH: number;
   rotated: boolean;
   gridX: number;
   gridY: number;
+  shape?: (number | boolean)[][];
   floatX?: number;
   floatY?: number;
 }
