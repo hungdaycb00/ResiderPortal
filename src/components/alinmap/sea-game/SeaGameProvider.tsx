@@ -612,6 +612,24 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
       combatUrls.push(`${API}/api/seaJourney/combat`);
     }
     
+    console.log('[SeaCombat-Debug] Starting combat request sequence');
+    console.log('[SeaCombat-Debug] API Base:', API);
+    console.log('[SeaCombat-Debug] Browser Origin:', window.location.origin);
+    
+    // Quick Health Check to see if ANY sea route works
+    try {
+      const healthRes = await fetch(`${API}/api/sea/combat/health`).catch(() => null);
+      if (healthRes) {
+        console.log(`[SeaCombat-Debug] Health Check status: ${healthRes.status}`);
+        const healthData = await healthRes.json().catch(() => ({}));
+        console.log(`[SeaCombat-Debug] Health Check data:`, healthData);
+      } else {
+        console.warn(`[SeaCombat-Debug] Health Check failed to fetch`);
+      }
+    } catch (e) {
+      console.error(`[SeaCombat-Debug] Health Check error:`, e);
+    }
+    
     // Thêm các URL tiềm năng khác nếu cần, nhưng bỏ qua domain frontend nếu nó là alin.city (static)
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
@@ -644,7 +662,8 @@ export const SeaGameProvider: React.FC<SeaGameProviderProps> = ({ children, devi
         }
         
         lastError = responseData?.error || `Combat failed (${res.status})`;
-        console.error(`[SeaCombat] Error at ${combatUrl}: ${lastError}`);
+        console.error(`[SeaCombat-Debug] Error at ${combatUrl}: ${lastError}`);
+        console.error(`[SeaCombat-Debug] Full Response:`, responseData);
       } catch (err: any) {
         lastError = err.message;
         if (err.name === 'AbortError') lastError = 'Request timeout';

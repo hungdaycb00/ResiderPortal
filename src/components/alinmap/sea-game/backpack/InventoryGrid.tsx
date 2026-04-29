@@ -182,7 +182,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     } catch {}
     
     // Track global position if needed, but we'll stick to relative to grid for rendering
-    setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top });
+    setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top, clientX: e.clientX, clientY: e.clientY });
   };
 
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
@@ -579,7 +579,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       )}
       
       {/* Smooth Drag Ghost (Only if this is the source grid) */}
-      {dragMode && dragItem && (
+      {dragMode && dragItem && dragPos.clientX > 0 && (
         <div
           className={`fixed z-[9999] pointer-events-none rounded-md border-2 flex flex-col items-center justify-center shadow-2xl opacity-90 scale-105 ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`}
           style={{
