@@ -420,14 +420,13 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     return null;
   }, []);
 
-  const pickupItem = useCallback(async (spawnId: string, gridX?: number, gridY?: number) => {
+  const pickupItem = useCallback(async (spawnId: string, gridX?: number, gridY?: number, force: boolean = false) => {
     if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
 
     try {
       const res = await fetch(`${API}/api/looter/pickup`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
+        body: JSON.stringify({ deviceId, spawnId, force }),
       });
       const data = await res.json();
       
@@ -441,6 +440,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       }
 
       if (data.success) {
+        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
         if (data.type === 'item') {
           const item = data.item;
           const activeBag = state.bags[0];
@@ -449,18 +449,32 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           if (slot == null) {
             slot = findEmptySlotFor(item, state.inventory, activeBag);
           }
-          
-          if (slot) {
-            const newItem = { ...item, gridX: slot.x, gridY: slot.y };
-            const newInventory = [...state.inventory, newItem];
-            await saveInventory(newInventory);
-            showNotification(`Đã nhặt ${item.name}`, 'success');
+
+          const newItem = { 
+            ...item, 
+            gridX: slot ? slot.x : -1, 
+            gridY: slot ? slot.y : -1 
+          };
+
+          setState(prev => ({
+            ...prev,
+            inventory: Array.isArray(data.inventory) ? data.inventory : [...prev.inventory, newItem],
+            cursePercent: typeof data.cursePercent === 'number' ? data.cursePercent : prev.cursePercent
+          }));
+
+          if (slot == null) {
+            showNotification(`Đã nhặt ${item.name} (Vào hàng chờ)`, 'info');
           } else {
-            showNotification('Balo đầy! Vật phẩm đã rơi ra biển.', 'error');
-            await dropItem(item.uid);
+            showNotification(`Đã nhặt ${item.name}`, 'success');
           }
         } else if (data.type === 'bag') {
-          setPendingBagSwap(data.bag);
+          const bag = data.bag;
+          setState(prev => ({
+            ...prev,
+            bags: Array.isArray(data.bags) ? data.bags : [...prev.bags, bag],
+            cursePercent: typeof data.cursePercent === 'number' ? data.cursePercent : prev.cursePercent
+          }));
+          showNotification(`Đã nhặt Túi đồ: ${bag.name}`, 'success');
         }
         
         setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
@@ -515,6 +529,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       return false;
     }
   }, [deviceId, API]);
+
+  const onWinMinigame = useCallback(async (worldItem: WorldItem) => {
+    await pickupItem(worldItem.spawnId, undefined, undefined, true);
+  }, [pickupItem]);
 
 
   const acceptBagSwap = useCallback(async (newBag: BagItem) => {

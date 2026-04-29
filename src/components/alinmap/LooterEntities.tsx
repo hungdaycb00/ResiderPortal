@@ -53,7 +53,11 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
                     }
                 } else {
                     if (currentDist <= interactionRadius) {
-                       looterGameCtx?.pickupItem?.(item.spawnId);
+                        if (item.minigameType) {
+                            looterGameCtx?.setShowMinigame?.(item);
+                        } else {
+                            looterGameCtx?.pickupItem?.(item.spawnId);
+                        }
                     } else {
                        executeMoveToExact?.(item.lat, item.lng);
                     }
