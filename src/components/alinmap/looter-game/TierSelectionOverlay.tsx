@@ -114,7 +114,7 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
                 onClick={() => onSelectTier(selected)}
                 className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-lg font-black transition-all active:scale-95 ${
                   canAfford 
-                  ? `bg-gradient-to-r ${selectedData.color} text-white shadow-lg shadow-black/40`
+                  ? `bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-900/40`
                   : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5'
                 }`}
               >
@@ -124,7 +124,7 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
               
               {!canAfford && (
                 <p className="text-center text-[10px] font-bold text-red-400/80 animate-pulse">
-                  Bạn cần thêm {(selectedData.cost - currentGold).toLocaleString()} vàng để bắt đầu Tier {selected}
+                  Bạn cần thêm {(selectedData.cost - (currentGold || 0)).toLocaleString()} vàng để bắt đầu Tier {selected}
                 </p>
               )}
             </div>

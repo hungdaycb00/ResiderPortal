@@ -3,6 +3,7 @@ import { X, Sparkles, Package } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { useLooterGame } from '../LooterGameContext';
 import type { LooterItem } from './types';
+import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'bg-sky-100 border-sky-300',
@@ -31,19 +32,21 @@ export default function CombatLootModal() {
     const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
     if (!activeBag || activeBag.gridX < 0) return;
 
-    const grid: boolean[][] = Array.from({ length: 15 }, () => Array(15).fill(false));
+    const grid: boolean[][] = Array.from({ length: MAX_GRID_H }, () => Array(MAX_GRID_W).fill(false));
     const shape = activeBag.shape || [];
 
     for (let r = 0; r < activeBag.height; r += 1) {
       for (let c = 0; c < activeBag.width; c += 1) {
         if (!shape[r] || !shape[r][c]) {
-          grid[activeBag.gridY + r][activeBag.gridX + c] = true;
+          const gr = activeBag.gridY + r;
+          const gc = activeBag.gridX + c;
+          if (gr < MAX_GRID_H && gc < MAX_GRID_W) grid[gr][gc] = true;
         }
       }
     }
 
-    for (let r = 0; r < 15; r += 1) {
-      for (let c = 0; c < 15; c += 1) {
+    for (let r = 0; r < MAX_GRID_H; r += 1) {
+      for (let c = 0; c < MAX_GRID_W; c += 1) {
         if (
           r < activeBag.gridY ||
           r >= activeBag.gridY + activeBag.height ||
@@ -59,7 +62,7 @@ export default function CombatLootModal() {
       if (invItem.gridX < 0) continue;
       for (let r = invItem.gridY; r < invItem.gridY + invItem.gridH; r += 1) {
         for (let c = invItem.gridX; c < invItem.gridX + invItem.gridW; c += 1) {
-          if (r < 15 && c < 15) grid[r][c] = true;
+          if (r < MAX_GRID_H && c < MAX_GRID_W) grid[r][c] = true;
         }
       }
     }
@@ -70,7 +73,7 @@ export default function CombatLootModal() {
         let canPlace = true;
         for (let ir = 0; ir < item.gridH; ir += 1) {
           for (let ic = 0; ic < item.gridW; ic += 1) {
-            if (r + ir >= 15 || c + ic >= 15 || grid[r + ir][c + ic]) {
+            if (r + ir >= MAX_GRID_H || c + ic >= MAX_GRID_W || grid[r + ir][c + ic]) {
               canPlace = false;
               break;
             }
@@ -93,9 +96,12 @@ export default function CombatLootModal() {
     const newItem = { ...item, gridX: foundSpot.x, gridY: foundSpot.y };
     const newInventory = [...state.inventory, newItem];
 
-    state.inventory = newInventory;
-    setLootLeft((prev) => prev.filter((currentItem) => currentItem.uid !== item.uid));
-    await saveInventory(newInventory);
+    const success = await saveInventory(newInventory);
+    if (success) {
+      setLootLeft((prev) => prev.filter((currentItem) => currentItem.uid !== item.uid));
+    } else {
+      showNotification('Lỗi khi lưu vật phẩm!', 'error');
+    }
   };
 
   return (

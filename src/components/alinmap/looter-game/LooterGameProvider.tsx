@@ -237,6 +237,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       if (data.success) {
         const nextLat = data.currentLat ?? toLat;
         const nextLng = data.currentLng ?? toLng;
+
         setState(prev => ({
           ...prev,
           currentLat: nextLat,
@@ -244,6 +245,11 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           cursePercent: data.cursePercent,
           distance: prev.distance + (data.distMeters || 0),
         }));
+
+        if (data.speedViolation) {
+            showNotification(`Di chuyển quá nhanh! Lời nguyền tăng +${data.penaltyCurse.toFixed(0)}%`, 'error');
+        }
+
         if (data.returnedToFortress || getDistanceMeters(nextLat, nextLng, state.fortressLat, state.fortressLng) <= FORTRESS_INTERACTION_METERS) {
           setIsChallengeActive(false);
         } else {
@@ -279,9 +285,11 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         body: JSON.stringify({ deviceId, inventory }),
       });
       if (!res.ok) throw new Error('Save failed');
+      return true;
     } catch (err) { 
       console.error('[LooterGame] saveInventory error:', err);
       setState(prev => ({ ...prev, inventory: previousInventory }));
+      return false;
     }
   }, [deviceId, API]);
 
