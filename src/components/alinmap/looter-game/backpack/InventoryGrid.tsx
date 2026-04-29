@@ -188,7 +188,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       (e.currentTarget as HTMLDivElement).setPointerCapture?.(e.pointerId);
     } catch {}
     
-    // Track global position if needed, but we'll stick to relative to grid for rendering
     setDragPos({ x: e.clientX - gridRect.left, y: e.clientY - gridRect.top, clientX: e.clientX, clientY: e.clientY });
   };
 
@@ -201,14 +200,14 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     const storageRect = storageRef.current?.getBoundingClientRect();
     const trashRect = trashRef.current?.getBoundingClientRect();
     
-    // Always update visual drag position regardless of gridRect
+    // 1. Luôn cập nhật vị trí Ghost Item bất kể chuột đang ở đâu (Dùng tọa độ tuyệt đối)
     const relX = gridRect ? clientX - gridRect.left : 0;
     const relY = gridRect ? clientY - gridRect.top : 0;
     pointerCurrentRef.current = { clientX, clientY };
     setDragPos({ x: relX, y: relY, clientX, clientY });
 
+    // 2. Chỉ tính toán ô xanh nếu Grid này hiện diện
     if (gridRect) {
-
       const isInsideGrid = clientX >= gridRect.left && clientX <= gridRect.right &&
                            clientY >= gridRect.top && clientY <= gridRect.bottom;
       const isInsideStorage = !hideStorage && storageRect && 
@@ -244,7 +243,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         setIsHoveringStorage(true);
         setIsHoveringSell(false);
       } else {
-        // Only clear hover cell if it was previously set by THIS grid
+        // Chuột nằm ngoài Grid này hoàn toàn
         if (hoverCell || isHoveringStorage || isHoveringSell) {
           updateHoverCell(null);
           setIsHoveringStorage(false);
@@ -252,7 +251,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         }
       }
     }
-  }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, externalDragOffset, updateHoverCell, hideStorage]);
+  }, [dragMode, dragItem, externalDragItem, cellSize, dragOffset.x, dragOffset.y, externalDragOffset, updateHoverCell, hideStorage, hoverCell, isHoveringStorage, isHoveringSell]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (isItemDragging) {
