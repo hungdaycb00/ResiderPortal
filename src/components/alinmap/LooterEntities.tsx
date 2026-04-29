@@ -59,8 +59,16 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
                     }
                 }
             }}
-            onPointerDown={(e) => {}}
-            onPointerUp={(e) => {}}
+            onPointerDown={(e) => {
+                const currentDist = distMetersTransform.get();
+                if (!isPortal && currentDist <= interactionRadius) {
+                    e.stopPropagation();
+                    looterGameCtx?.setDraggingMapItem?.(item);
+                }
+            }}
+            onPointerUp={(e) => {
+                looterGameCtx?.setDraggingMapItem?.(null);
+            }}
         >
             <div className="relative group flex flex-col items-center">
                 <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>

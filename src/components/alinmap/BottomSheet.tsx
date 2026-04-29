@@ -112,7 +112,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     initial="collapsed"
                     animate={isSheetExpanded || selectedUser ? 'full' : "collapsed"}
                     transition={{ type: "spring", stiffness: 400, damping: 40 }}
-                    drag={isDesktop || isItemDragging ? false : "y"}
+                    drag={isDesktop || isItemDragging || mainTab === 'backpack' ? false : "y"}
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={0.05}
                     onDragEnd={(e, info) => {
@@ -158,20 +158,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     {/* Header Part (Search & Handle) */}
                     <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[110] shrink-0">
                         {/* Hover Area / Handle (Mobile Only) */}
-                        <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" 
-                            onClick={() => {
-                                if (!isSheetExpanded) {
-                                    setIsSheetExpanded(true);
-                                } else {
-                                    setIsSheetExpanded(false);
-                                    setSelectedUser(null);
-                                }
-                            }}>
-                            <div className="w-10 h-1 bg-gray-300 rounded-full mb-1" />
-                            <div className="text-gray-400">
-                                {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                        {!isDesktop && mainTab !== 'backpack' && (
+                            <div className="w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_-2px_8px_rgba(0,0,0,0.02)]" 
+                                onClick={() => {
+                                    if (!isSheetExpanded) {
+                                        setIsSheetExpanded(true);
+                                    } else {
+                                        setIsSheetExpanded(false);
+                                        setSelectedUser(null);
+                                    }
+                                }}>
+                                <div className="w-10 h-1 bg-gray-300 rounded-full mb-1" />
+                                <div className="text-gray-400">
+                                    {isSheetExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* MOBILE Search Bar inside Sheet */}
                         {!isDesktop && isSheetExpanded && !shouldHideSearch && (

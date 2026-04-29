@@ -102,6 +102,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [isLootGameMode, setIsLootGameMode] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
+  const [draggingMapItem, setDraggingMapItem] = useState<WorldItem | null>(null);
   const openBackpack = useCallback(() => {
     if (openBackpackHandler) {
       openBackpackHandler();
@@ -396,7 +397,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     return null;
   }, []);
 
-  const pickupItem = useCallback(async (spawnId: string) => {
+  const pickupItem = useCallback(async (spawnId: string, gridX?: number, gridY?: number) => {
     if (!deviceId) return false;
     setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
 
@@ -420,7 +421,11 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         if (data.type === 'item') {
           const item = data.item;
           const activeBag = state.bags[0];
-          const slot = findEmptySlotFor(item, state.inventory, activeBag);
+          
+          let slot = (gridX !== undefined && gridY !== undefined) ? { x: gridX, y: gridY } : null;
+          if (slot == null) {
+            slot = findEmptySlotFor(item, state.inventory, activeBag);
+          }
           
           if (slot) {
             const newItem = { ...item, gridX: slot.x, gridY: slot.y };
@@ -850,6 +855,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
     showNotification, draggingItem, setDraggingItem,
+    draggingMapItem, setDraggingMapItem,
     openFortressStorage,
   }), [
     state, worldItems, isFortressStorageOpen, fortressStorageMode, pickupRewardItem, pendingBagSwap,
@@ -858,7 +864,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isMoving, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
     curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
-    showNotification, draggingItem, openFortressStorage
+    showNotification, draggingItem, draggingMapItem, openFortressStorage
   ]);
 
   return <LooterGameContext.Provider value={value}>{children}</LooterGameContext.Provider>;

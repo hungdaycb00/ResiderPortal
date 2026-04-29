@@ -106,7 +106,7 @@ export interface LooterGameContextType {
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
-  pickupItem: (spawnId: string) => Promise<boolean>;
+  pickupItem: (spawnId: string, gridX?: number, gridY?: number) => Promise<boolean>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
   saveInventory: (inventory: LooterItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
@@ -127,6 +127,8 @@ export interface LooterGameContextType {
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
   draggingItem: LooterItem | null;
   setDraggingItem: (item: LooterItem | null) => void;
+  draggingMapItem: WorldItem | null;
+  setDraggingMapItem: (item: WorldItem | null) => void;
 }
 
 export const LooterGameContext = createContext<LooterGameContextType | null>(null);

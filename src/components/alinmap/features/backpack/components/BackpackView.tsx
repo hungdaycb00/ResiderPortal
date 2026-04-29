@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck } from 'lucide-react';
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
@@ -30,10 +31,41 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, acceptBagSwap, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
+  const [externalHoverCell, setExternalHoverCell] = useState<{ x: number, y: number } | null>(null);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
+
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
+
+  const cellSize = Math.min(42, (window.innerWidth - 64) / MAX_GRID_W);
+
+  useEffect(() => {
+    if (!draggingMapItem) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      setDragPos({ x: 0, y: 0, clientX: e.clientX, clientY: e.clientY });
+    };
+
+    const handlePointerUp = async (e: PointerEvent) => {
+      if (externalHoverCell) {
+        const success = await pickupItem(draggingMapItem.spawnId, externalHoverCell.x, externalHoverCell.y);
+        if (success) {
+           // Animation or sound here if needed
+        }
+      }
+      setDraggingMapItem(null);
+      setExternalHoverCell(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [draggingMapItem, externalHoverCell, pickupItem, setDraggingMapItem]);
 
   const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
     saveInventory(newItems);
@@ -52,108 +84,50 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const isAtFortress = isLooterAtFortress(state);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[32px] border border-cyan-900/40 bg-[#060d17]/95 backdrop-blur-xl text-white shadow-2xl shadow-black/50">
+    <div className="flex h-full flex-col overflow-hidden text-white">
       {/* Header with Stats integrated */}
-      <div className="border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent px-5 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-              <Package className="h-4 w-4 text-cyan-400" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-white leading-tight uppercase tracking-widest">Kho Đồ</h2>
-              <p className="text-[10px] font-bold text-gray-500">Looter Inventory</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-1.5">
+      <div className="px-4 py-3 bg-black/40 backdrop-blur-md">
+        {/* Top Row: Gold & Bag Icon */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1">
             <Coins className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-xs font-black text-amber-400 leading-none">{state.looterGold.toLocaleString()}</span>
           </div>
+          
+          <div className={`relative h-8 w-8 rounded-lg border flex items-center justify-center shadow-lg transition-transform hover:scale-105 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
+             <span className="text-xl leading-none">{activeBag?.icon || '🎒'}</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-2">
-          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <Heart className="h-3 w-3 text-red-500 mb-1" />
+        {/* Stats Row: Highest Position */}
+        <div className="grid grid-cols-5 gap-1.5">
+          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+            <Heart className="h-3 w-3 text-red-500 mb-0.5" />
             <span className="text-[10px] font-black">{state.currentHp}</span>
           </div>
-          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <Zap className="h-3 w-3 text-blue-500 mb-1" />
+          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+            <Zap className="h-3 w-3 text-blue-500 mb-0.5" />
             <span className="text-[10px] font-black">{state.energyMax + totalStats.energyMax}</span>
           </div>
-          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <Wind className="h-3 w-3 text-emerald-500 mb-1" />
+          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+            <Wind className="h-3 w-3 text-emerald-500 mb-0.5" />
             <span className="text-[10px] font-black">{state.moveSpeed}x</span>
           </div>
-          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <Swords className="h-3 w-3 text-orange-500 mb-1" />
+          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+            <Swords className="h-3 w-3 text-orange-500 mb-0.5" />
             <span className="text-[10px] font-black">{totalStats.weight}</span>
           </div>
-          <div className="flex flex-col items-center p-2 rounded-xl bg-white/[0.02] border border-white/5">
-            <Skull className="h-3 w-3 text-purple-500 mb-1" />
+          <div className="flex flex-col items-center p-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+            <Skull className="h-3 w-3 text-purple-500 mb-0.5" />
             <span className="text-[10px] font-black">{Math.round(state.cursePercent)}%</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 subtle-scrollbar">
-        <div className="flex flex-col items-center gap-4">
-          {/* Bag Slot */}
-          <div 
-            className={`flex w-full items-center justify-center gap-4 rounded-2xl border-2 px-4 py-3 transition-all ${isHoveringBagSlot ? 'border-cyan-400 bg-cyan-900/40 scale-[1.02]' : 'border-white/5 bg-white/[0.02]'}`}
-            onPointerEnter={() => {
-              if (draggingItem && (BAG_DEFAULTS[draggingItem.id] || (draggingItem as any).type === 'bag')) {
-                setIsHoveringBagSlot(true);
-              }
-            }}
-            onPointerLeave={() => setIsHoveringBagSlot(false)}
-            onPointerUp={() => {
-              if (isHoveringBagSlot && draggingItem) {
-                const itemAsBag = draggingItem as any;
-                const bagData = BAG_DEFAULTS[draggingItem.id];
-                
-                if (itemAsBag.type === 'bag' || bagData) {
-                  const width = itemAsBag.width || bagData?.width || 3;
-                  const height = itemAsBag.height || bagData?.height || 3;
-                  const newBag: BagItem = {
-                    uid: draggingItem.uid,
-                    id: draggingItem.id,
-                    name: draggingItem.name,
-                    icon: draggingItem.icon,
-                    rarity: draggingItem.rarity,
-                    price: draggingItem.price,
-                    weight: draggingItem.weight,
-                    hpBonus: draggingItem.hpBonus,
-                    energyMax: draggingItem.energyMax,
-                    energyRegen: draggingItem.energyRegen,
-                    gridX: Math.floor((MAX_GRID_W - width) / 2),
-                    gridY: Math.floor((6 - height) / 2),
-                    rotated: false,
-                    shape: itemAsBag.shape || bagData?.shape || Array.from({ length: height }, () => Array(width).fill(true)),
-                    width: width,
-                    height: height,
-                    type: 'bag'
-                  };
-                  acceptBagSwap(newBag);
-                  showNotification(`Đã trang bị ${newBag.name}`, 'success');
-                }
-              }
-              setIsHoveringBagSlot(false);
-            }}
-          >
-            <div className={`relative h-14 w-14 rounded-2xl border-2 flex items-center justify-center shadow-lg transition-transform hover:scale-105 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
-               <span className="text-3xl leading-none">{activeBag?.icon || '🎒'}</span>
-               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full border-2 border-[#060d17] flex items-center justify-center">
-                  <Anchor className="w-2.5 h-2.5 text-white" />
-               </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xs font-black text-white uppercase">{activeBag?.name || 'Balo Co Ban'}</h3>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">{activeBag?.rarity || 'common'} | {activeBag?.cells || 9} O TRONG</p>
-            </div>
-          </div>
-
-          {/* Main Grid */}
-          <div className="w-full rounded-[24px] border border-white/5 bg-black/20 p-2 shadow-inner">
+      <div className="flex-1 overflow-y-auto px-2 py-3 subtle-scrollbar">
+        <div className="flex flex-col items-center gap-3">
+          {/* Main Grid: Transparent background, minimal padding */}
+          <div className="w-full">
             <InventoryGrid
               items={state.inventory}
               bags={state.bags}
@@ -164,7 +138,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
                   showNotification(`Đã đổi sang ${item.name}`, 'success');
                 }
               }}
-              cellSize={Math.min(42, (window.innerWidth - 64) / MAX_GRID_W)}
+              cellSize={cellSize}
+              externalDragItem={draggingMapItem ? { ...draggingMapItem.item, uid: draggingMapItem.spawnId } as any : null}
+              externalDragOffset={{ x: cellSize / 2, y: cellSize / 2 }}
+              externalHoverCell={externalHoverCell}
+              onHoverCellChange={setExternalHoverCell}
             />
           </div>
         </div>
@@ -176,6 +154,30 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
            <Swords className="w-3 h-3 text-amber-500" />
            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Dang trong thu thach Tier {state.worldTier}</p>
         </div>
+      )}
+      {draggingMapItem && createPortal(
+        <div 
+          className="fixed pointer-events-none z-[999999] opacity-90 scale-110 shadow-2xl" 
+          style={{ 
+            left: dragPos.clientX - cellSize / 2, 
+            top: dragPos.clientY - cellSize / 2, 
+            width: (draggingMapItem.item.gridW || 1) * cellSize, 
+            height: (draggingMapItem.item.gridH || 1) * cellSize 
+          }}
+        >
+          {Array.from({ length: draggingMapItem.item.gridH || 1 }).map((_, r) => Array.from({ length: draggingMapItem.item.gridW || 1 }).map((_, c) => (
+            <div 
+              key={`${r}-${c}`} 
+              className="absolute border-2 rounded-lg flex items-center justify-center bg-cyan-500/10 border-cyan-500/30 text-cyan-400" 
+              style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}
+            >
+              {r === 0 && c === 0 && (
+                <span className="text-3xl drop-shadow-2xl">{draggingMapItem.item.icon}</span>
+              )}
+            </div>
+          )))}
+        </div>,
+        document.body
       )}
     </div>
   );
