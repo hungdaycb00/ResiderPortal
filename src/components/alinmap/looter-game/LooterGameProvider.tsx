@@ -103,6 +103,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
   const [draggingMapItem, setDraggingMapItem] = useState<WorldItem | null>(null);
+  const [dragPointerPos, setDragPointerPos] = useState({ x: 0, y: 0 });
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
 
@@ -338,6 +339,31 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [deviceId, API, loadWorldItems, showNotification]);
 
+  // Handle Map Item Dragging
+  useEffect(() => {
+    if (!draggingMapItem) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      setDragPointerPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      // Check if dropped in backpack area (bottom 30% of screen)
+      if (e.clientY > window.innerHeight * 0.65) {
+        pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
+        showNotification(`Đang nhặt ${draggingMapItem.item.name}...`, 'info');
+      }
+      setDraggingMapItem(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [draggingMapItem, pickupItem, showNotification]);
+
   const confirmDiscard = useCallback(async () => {
     const stagingItems = state.inventory.filter(i => i.gridX < 0);
     for (const item of stagingItems) {
@@ -499,6 +525,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       console.error('[Looter Pickup]', err);
       showNotification(err.message || 'Lỗi khi nhặt vật phẩm', 'error');
       loadWorldItems(true);
+      void loadState(); // Đồng bộ lại tọa độ thực từ server
       return false;
     }
   }, [deviceId, API, state.inventory, state.bags, findEmptySlotFor, saveInventory, dropItem, loadWorldItems, showNotification]);
@@ -573,6 +600,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       } else {
         inBounds = false; // Items in staging (if any left) are dropped
       }
+
+
 
       if (inBounds) {
         itemsToKeep.push(item);
@@ -910,7 +939,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags,
     executeCombat, curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
     showNotification, draggingItem, setDraggingItem,
-    draggingMapItem, setDraggingMapItem,
+    draggingMapItem, setDraggingMapItem, dragPointerPos,
     openFortressStorage,
     showDiscardModal, setShowDiscardModal, confirmDiscard
   }), [
@@ -920,7 +949,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isMoving, initGame, loadState, moveBoat, pickupItem,
     inflictMinigamePenalty, destroyItem, saveInventory, saveStorage, saveBags, executeCombat,
     curseChoice, sellItems, storeItems, setWorldTier, dropItem, returnToFortress, loadWorldItems,
-    showNotification, draggingItem, draggingMapItem, openFortressStorage,
+    showNotification, draggingItem, draggingMapItem, dragPointerPos, openFortressStorage,
     showDiscardModal, confirmDiscard
   ]);
 

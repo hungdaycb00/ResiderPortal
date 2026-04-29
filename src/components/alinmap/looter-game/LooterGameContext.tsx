@@ -132,6 +132,7 @@ export interface LooterGameContextType {
   showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => Promise<void>;
+  dragPointerPos: { x: number; y: number };
 }
 
 export const LooterGameContext = createContext<LooterGameContextType | null>(null);

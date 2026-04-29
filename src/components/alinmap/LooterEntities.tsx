@@ -14,13 +14,16 @@ interface LooterEntitiesProps {
 
 const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, looterGameCtx }: any) => {
     const isPortal = item?.item?.type === 'portal';
-    const interactionRadius = 100 * (1 + boatScaleStack * 0.05);
+    const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
 
     const distMetersTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
-        const dLat = item.lat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const dLng = item.lng - (myObfPos.lng + ox / DEGREES_TO_PX);
-        const distDeg = Math.sqrt(dLat * dLat + dLng * dLng);
+        const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
+        const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
+        const dLat = item.lat - curLat;
+        const dLng = item.lng - curLng;
+        const cosLat = Math.cos((curLat * Math.PI) / 180);
+        const distDeg = Math.sqrt(Math.pow(dLat, 2) + Math.pow(dLng * cosLat, 2));
         return Math.round(distDeg * 111000);
     });
 
@@ -65,7 +68,8 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
             }}
             onPointerDown={(e) => {
                 const currentDist = distMetersTransform.get();
-                if (!isPortal && currentDist <= interactionRadius) {
+                // Chỉ cho phép kéo đối với vật phẩm nhặt ngay (không có minigame)
+                if (!isPortal && !item.minigameType && currentDist <= interactionRadius) {
                     e.stopPropagation();
                     looterGameCtx?.setDraggingMapItem?.(item);
                 }
@@ -75,12 +79,39 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
             }}
         >
             <div className="relative group flex flex-col items-center">
-                <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
-                    {item.item?.icon || '💎'}
-                </span>
+                {/* Glow Effect when in range */}
+                <motion.div
+                    style={{
+                        opacity: useTransform(distMetersTransform, (d) => d <= interactionRadius ? 1 : 0),
+                        scale: useTransform(distMetersTransform, (d) => d <= interactionRadius ? [1, 1.2, 1] : 1)
+                    }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                    className="absolute inset-0 -m-4 bg-cyan-400/30 blur-2xl rounded-full z-[-1]"
+                />
+                <motion.div
+                    style={{
+                        boxShadow: useTransform(distMetersTransform, (d) => 
+                            d <= interactionRadius 
+                            ? `0 0 20px 2px rgba(34, 211, 238, 0.4)` 
+                            : `0 0 0px 0px rgba(0,0,0,0)`
+                        )
+                    }}
+                    className="relative flex items-center justify-center rounded-full transition-all duration-300"
+                >
+                    <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
+                        {item.item?.icon || '💎'}
+                    </span>
+                </motion.div>
                 <div className="mt-0 flex flex-col items-center pointer-events-none">
                     <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap drop-shadow-md">{item.item?.name}</span>
-                    <motion.span className="text-[6px] font-bold tabular-nums text-white drop-shadow-md">{distText}</motion.span>
+                    <motion.span 
+                        style={{
+                            color: useTransform(distMetersTransform, (d) => d <= interactionRadius ? '#22d3ee' : '#ffffff')
+                        }}
+                        className="text-[6px] font-bold tabular-nums drop-shadow-md"
+                    >
+                        {distText}
+                    </motion.span>
                 </div>
             </div>
         </motion.div>
