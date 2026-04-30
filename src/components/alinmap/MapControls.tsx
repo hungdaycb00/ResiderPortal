@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home } from 'lucide-react';
+import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
+import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home, Cloud } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
 interface MapControlsProps {
@@ -31,9 +32,6 @@ interface MapControlsProps {
     handleCenterBoat?: () => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
-    isLooterGameMode?: boolean;
-    looterState?: any;
-    isChallengeActive?: boolean;
     onOpenTierSelector?: () => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
@@ -44,10 +42,13 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode, isLooterGameMode, looterState,
-    isChallengeActive, onOpenTierSelector,
+    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode,
+    onOpenTierSelector,
     isWidgetExpanded, setIsWidgetExpanded
 }) => {
+    const { isLooterGameMode, isChallengeActive, state: looterState, isSyncing } = useLooterState();
+    const { setWorldTier } = useLooterActions(); 
+    
     const [copyToast, setCopyToast] = useState(false);
 
     const handleCopyLocation = () => {
@@ -63,6 +64,21 @@ const MapControls: React.FC<MapControlsProps> = ({
         <>
             {/* Floating Controls - Right Side */}
             <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
+                {/* Sync Indicator */}
+                <AnimatePresence>
+                    {isSyncing && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                            className="w-8 h-8 md:w-10 md:h-10 bg-blue-600/90 backdrop-blur-md rounded-[10px] md:rounded-xl shadow-lg flex items-center justify-center text-white border border-blue-400/30"
+                            title="Đang đồng bộ dữ liệu..."
+                        >
+                            <Cloud className="w-4 h-4 md:w-5 md:h-5 animate-pulse" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {!isLooterGameMode && (
                     <>
                     <button

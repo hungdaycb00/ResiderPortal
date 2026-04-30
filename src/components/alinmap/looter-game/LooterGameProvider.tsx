@@ -5,24 +5,31 @@ import type { LooterItem, BagItem, GridExpander, PortalItem } from './backpack/t
 import { MAX_GRID_W, MAX_GRID_H } from './backpack/constants';
 import { createStarterBag, repairBagData, getDistanceMeters } from './backpack/utils';
 import { 
-  LooterGameContext, 
+  LooterStateContext, 
+  LooterActionsContext,
   type LooterGameState, 
   type WorldItem, 
   type Encounter, 
   type CombatResult, 
   type StorageAccessMode,
-  FORTRESS_INTERACTION_METERS
+  type LooterGameStateContextType,
+  type LooterGameActions
 } from './LooterGameContext';
+import { GAME_CONFIG } from './gameConfig';
 
 const defaultState: LooterGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
-  cursePercent: 0, looterGold: 0, worldTier: 1, inventory: [], storage: [], bags: [], distance: 0,
+  cursePercent: 0, looterGold: 0, worldTier: 0, inventory: [], storage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100, activeCurses: {},
 };
 
-const PORTAL_SPACING_METERS = 5000;
-const PORTAL_SEARCH_RADIUS = 2;
+const { 
+  FORTRESS_INTERACTION_METERS,
+  PORTAL_SPACING_METERS,
+  PORTAL_SEARCH_RADIUS,
+  SYNC_HEARTBEAT_MS
+} = GAME_CONFIG;
 
 const createPortalWorldItems = (
   fortressLat: number | null,
@@ -69,6 +76,7 @@ interface LooterGameProviderProps {
 
 export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children, deviceId, showNotification }) => {
   const [state, setState] = useState<LooterGameState>(defaultState);
+
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [pickupRewardItem, setPickupRewardItem] = useState<LooterItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
@@ -90,6 +98,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [fortressStorageMode, setFortressStorageMode] = useState<StorageAccessMode>('fortress');
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [isMoving, setIsMoving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
@@ -99,6 +108,34 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   const API = useMemo(() => getLooterServerUrl(), []);
+
+  // Action Queue for serial API calls
+  const actionQueueRef = useRef<Promise<any>>(Promise.resolve());
+  const activeRequestsCount = useRef(0);
+
+  const runInQueue = useCallback((fn: () => Promise<any>) => {
+    activeRequestsCount.current++;
+    setIsSyncing(true);
+
+    const nextPromise = actionQueueRef.current.then(async () => {
+      try {
+        return await fn();
+      } finally {
+        activeRequestsCount.current--;
+        if (activeRequestsCount.current <= 0) {
+          setIsSyncing(false);
+        }
+      }
+    }).catch(err => {
+      activeRequestsCount.current--;
+      if (activeRequestsCount.current <= 0) {
+        setIsSyncing(false);
+      }
+      console.error('[LooterQueue] Error:', err);
+    });
+    actionQueueRef.current = nextPromise;
+    return nextPromise;
+  }, []);
 
   // 1. Leaf Actions
   const saveInventory = useCallback(async (inventory: LooterItem[]) => {
@@ -358,7 +395,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           currentLat: s.current_lat, currentLng: s.current_lng,
           baseMaxHp: s.base_max_hp || 100, currentHp: s.current_hp || 100,
           moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
-          cursePercent: s.curse_percent || 0, looterGold: Number(s.looter_gold || 0), worldTier: s.world_tier || 1,
+          cursePercent: s.curse_percent || 0, looterGold: Number(s.looter_gold || 0), 
+          worldTier: s.world_tier ?? 0,
           inventory: (() => { try { return JSON.parse(s.inventory_json || '[]'); } catch(e) { return []; } })(),
           storage: (() => { try { return JSON.parse(s.storage_json || '[]'); } catch(e) { return []; } })(),
           bags,
@@ -367,7 +405,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         });
         if (data.settings) setGlobalSettings(data.settings);
         const distToFortress = getDistanceMeters(s.current_lat, s.current_lng, s.fortress_lat, s.fortress_lng);
-        setIsChallengeActive(distToFortress > FORTRESS_INTERACTION_METERS);
+        setIsChallengeActive(distToFortress > FORTRESS_INTERACTION_METERS || (s.world_tier ?? 0) > 0);
       }
     } catch (err) { console.error('[LooterGame] loadState error:', err); }
   }, [deviceId, API, saveBags]);
@@ -527,12 +565,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       });
       const data = await res.json();
       if (data.success) {
-        setCombatResult(data.result);
-        if (data.result.result === 'win') {
-            notify('Bạn đã chiến thắng!', 'success');
-        } else {
-            notify('Bạn đã thất bại...', 'error');
-        }
         return data.result;
       }
       throw new Error(data.error || 'Combat failed');
@@ -663,27 +695,84 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     };
   }, [draggingMapItem, pickupItem, notify]);
 
-  const contextValue: LooterGameContextType = {
+  const stateValue: LooterGameStateContextType = useMemo(() => ({
     state,
-    worldItems, pickupRewardItem, setPickupRewardItem,
-    encounter, setEncounter, combatResult, setCombatResult,
-    showCurseModal, setShowCurseModal, showMinigame, setShowMinigame,
-    isLooterGameMode, setIsLooterGameMode, isChallengeActive, setIsChallengeActive,
-    isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode, setFortressStorageMode,
-    globalSettings, loadState, initGame, moveBoat, saveInventory, saveStorage, pickupItem, dropItem,
-    inflictMinigamePenalty, destroyItem, onWinMinigame, isMoving,
-    draggingItem, setDraggingItem, isItemDragging, setIsItemDragging,
-    preGeneratedMinigame, setPreGeneratedMinigame,
-    openBackpack, setOpenBackpackHandler, draggingMapItem, setDraggingMapItem,
-    dragPointerPos, showDiscardModal, setShowDiscardModal, confirmDiscard,
-    equipBag, saveBags, openFortressStorage, executeCombat, curseChoice,
-    sellItems, storeItems, setWorldTier, returnToFortress, showNotification, loadWorldItems
-  };
+    worldItems, pickupRewardItem,
+    encounter, combatResult,
+    showCurseModal, showMinigame,
+    isLooterGameMode, isItemDragging, isChallengeActive,
+    isFortressStorageOpen, fortressStorageMode,
+    globalSettings, isMoving, isSyncing,
+    draggingItem, draggingMapItem,
+    showDiscardModal, dragPointerPos
+  }), [
+    state, worldItems, pickupRewardItem, encounter, combatResult,
+    showCurseModal, showMinigame, isLooterGameMode, isItemDragging,
+    isChallengeActive, isFortressStorageOpen, fortressStorageMode,
+    globalSettings, isMoving, isSyncing, draggingItem, draggingMapItem,
+    showDiscardModal, dragPointerPos
+  ]);
+
+  const actionsValue: LooterGameActions = useMemo(() => ({
+    setIsFortressStorageOpen, openFortressStorage,
+    setPickupRewardItem, setEncounter, setCombatResult,
+    setShowCurseModal, setShowMinigame, setIsLooterGameMode,
+    openBackpack, setOpenBackpackHandler,
+    setIsItemDragging, setIsChallengeActive, setPreGeneratedMinigame,
+    initGame: (lat, lng) => runInQueue(() => initGame(lat, lng)),
+    loadState: () => runInQueue(loadState),
+    moveBoat: (lat, lng) => runInQueue(() => moveBoat(lat, lng)),
+    pickupItem: (sid, gx, gy) => runInQueue(() => pickupItem(sid, gx, gy)),
+    inflictMinigamePenalty: (sid) => runInQueue(() => inflictMinigamePenalty(sid)),
+    saveInventory: (inv) => runInQueue(() => saveInventory(inv)),
+    saveStorage: (st) => runInQueue(() => saveStorage(st)),
+    saveBags: (bags) => runInQueue(() => saveBags(bags)),
+    equipBag: (uid) => runInQueue(() => equipBag(uid)),
+    executeCombat: (id, inv, hp, bags) => runInQueue(() => executeCombat(id, inv, hp, bags)),
+    curseChoice: (choice) => runInQueue(() => curseChoice(choice)),
+    sellItems: (uids) => runInQueue(() => sellItems(uids)),
+    storeItems: (uids, act, mode, gx, gy) => runInQueue(() => storeItems(uids, act, mode, gx, gy)),
+    destroyItem: (sid) => runInQueue(() => destroyItem(sid)),
+    setWorldTier: (tier) => runInQueue(() => setWorldTier(tier)),
+    dropItem: (uid) => runInQueue(() => dropItem(uid)),
+    returnToFortress: () => runInQueue(returnToFortress),
+    loadWorldItems: (force) => runInQueue(() => loadWorldItems(force)),
+    showNotification, setDraggingItem, setDraggingMapItem,
+    setShowDiscardModal, confirmDiscard: () => runInQueue(confirmDiscard)
+  }), [
+    setIsFortressStorageOpen, openFortressStorage, setPickupRewardItem,
+    setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
+    setIsLooterGameMode, openBackpack, setOpenBackpackHandler,
+    setIsItemDragging, setIsChallengeActive, setPreGeneratedMinigame,
+    initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty,
+    saveInventory, saveStorage, saveBags, equipBag, executeCombat,
+    curseChoice, sellItems, storeItems, destroyItem, setWorldTier,
+    dropItem, returnToFortress, loadWorldItems, showNotification,
+    setDraggingItem, setDraggingMapItem, setShowDiscardModal, confirmDiscard,
+    runInQueue
+  ]);
+
+  // Heartbeat Synchronization
+  useEffect(() => {
+    if (!deviceId || !isLooterGameMode) return;
+    
+    // Initial load
+    actionsValue.loadState();
+    
+    const interval = setInterval(() => {
+      console.log('[Looter] Heartbeat sync...');
+      actionsValue.loadState();
+    }, SYNC_HEARTBEAT_MS);
+    
+    return () => clearInterval(interval);
+  }, [deviceId, isLooterGameMode, actionsValue]);
 
   return (
-    <LooterGameContext.Provider value={contextValue}>
-      {children}
-    </LooterGameContext.Provider>
+    <LooterStateContext.Provider value={stateValue}>
+      <LooterActionsContext.Provider value={actionsValue}>
+        {children}
+      </LooterActionsContext.Provider>
+    </LooterStateContext.Provider>
   );
 };
 

@@ -7,6 +7,7 @@ import SelfNode from './SelfNode';
 import LooterEntities from './LooterEntities';
 import { DEGREES_TO_PX } from './constants';
 import { useLooterBoat } from './hooks/useLooterBoat';
+import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -44,9 +45,6 @@ interface MapCanvasProps {
     handleWheel: (e: React.WheelEvent) => void;
     mapMode: 'grid' | 'satellite';
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
-    isLooterGameMode?: boolean;
-    looterState?: any;
-    looterGameCtx?: any;
     isLooterLoading?: boolean;
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -60,12 +58,16 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
     searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
     scale, panX, panY, selfDragX, selfDragY, ws,
     requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-    mapMode, setContextMenu, isLooterGameMode, looterState, looterGameCtx, isLooterLoading, setMainTab, showNotification,
+    mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
     setBoatCenterHandler, setIsTierSelectorOpen
 }) => {
+    const looterState = useLooterState();
+    const looterActions = useLooterActions();
+    
+    const { isLooterGameMode, state: looterStateObj, isChallengeActive } = looterState;
+    
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
-        looterGameCtx,
         myObfPos,
         scale, panX, panY,
         setMainTab, setIsSheetExpanded, showNotification
@@ -172,7 +174,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         }
 
         // --- Looter Challenge Initiation Logic ---
-        if (isLooterGameMode && looterState && !looterGameCtx.isChallengeActive && !dragState.moved) {
+        if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved) {
              // User clicked on map while at fortress and NOT in a challenge
              // Instead of moving, show the Tier Selection Overlay
              setIsTierSelectorOpen?.(true);
@@ -180,7 +182,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
         }
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, looterState, looterGameCtx.isChallengeActive, setIsTierSelectorOpen]);
+    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, setIsTierSelectorOpen]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
@@ -287,7 +289,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                             boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                             ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
                                             setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                            setMainTab={setMainTab} addLog={addLog} looterState={looterState}
+                                            setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
                                         />
                                     ) : (
                                         <div
@@ -325,7 +327,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     {/* Looter Game Entities */}
                                     {isLooterGameMode && (
                                         <LooterEntities
-                                            myObfPos={myObfPos} looterState={looterState} looterGameCtx={looterGameCtx}
+                                            myObfPos={myObfPos} looterState={looterStateObj} looterGameCtx={looterState}
                                             boatTargetPin={looterBoat.boatTargetPin}
                                             boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                             executeMoveToExact={looterBoat.executeMoveToExact}
@@ -401,20 +403,20 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                         </div>
                         
                         {/* Glow effect on high curse */}
-                        {(looterState?.cursePercent || 0) > 50 && (
+                        {(looterStateObj?.cursePercent || 0) > 50 && (
                             <div className="absolute inset-0 rounded-full border border-red-500 animate-pulse pointer-events-none" />
                         )}
                     </motion.button>
 
                     {/* Expandable Curse List */}
-                    {isCursesExpanded && looterState?.activeCurses && Object.values(looterState.activeCurses).some(v => (v as number) > 0) && (
+                    {looterStateObj?.activeCurses && Object.values(looterStateObj.activeCurses).some(v => (v as number) > 0) && (
                         <motion.div 
                             initial={{ opacity: 0, y: -10, scale: 0.9 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             className="flex flex-col items-center gap-1.5 p-2 bg-black/90 backdrop-blur-2xl rounded-2xl border border-red-500/20 shadow-2xl min-w-[120px]"
                         >
                             <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">Active Curses</p>
-                            {Object.entries(looterState.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
+                            {Object.entries(looterStateObj.activeCurses).filter(([_, v]) => (v as number) > 0).map(([key, value]) => {
                                 const CURSE_META: any = {
                                     dmg_debuff: { icon: '📉', name: 'DMG', color: 'text-red-400' },
                                     hp_debuff: { icon: '💔', name: 'HP', color: 'text-rose-400' },

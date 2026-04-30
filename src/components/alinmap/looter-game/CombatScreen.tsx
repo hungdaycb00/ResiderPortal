@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLooterGame } from './LooterGameContext';
+import { useLooterState, useLooterActions } from './LooterGameContext';
 import type { LooterItem } from './backpack';
 import { CombatInventoryGrid } from './backpack';
 
 const CombatScreen: React.FC = () => {
-  const { state, encounter, setEncounter, executeCombat, combatResult, setCombatResult, loadState, curseChoice } = useLooterGame();
+  const { state, encounter, combatResult } = useLooterState();
+  const { setEncounter, executeCombat, setCombatResult, loadState, curseChoice, showNotification } = useLooterActions();
   const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
+  const [pendingResult, setPendingResult] = useState<any | null>(null);
   const [showFleeConfirm, setShowFleeConfirm] = useState(false);
   const [selectedResultItem, setSelectedResultItem] = useState<LooterItem | null>(null);
   const [actionProgressA, setActionProgressA] = useState(0);
@@ -92,10 +94,15 @@ const CombatScreen: React.FC = () => {
         encounter.isBot ? encounter.bags : undefined
       );
 
+      setPendingResult(result);
+
       if (result.combatLog?.length) {
         combatLogRef.current = result.combatLog;
         startCombatLoop();
       } else {
+        setCombatResult(result);
+        if (result.result === 'win') showNotification('Bạn đã chiến thắng!', 'success');
+        else showNotification('Bạn đã thất bại...', 'error');
         setPhase('result');
       }
     } catch {
@@ -105,6 +112,11 @@ const CombatScreen: React.FC = () => {
 
   const skipCombat = () => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    if (pendingResult) {
+        // Cập nhật HP về trạng thái cuối cùng
+        setHpA(pendingResult.finalHp);
+        setHpB(pendingResult.result === 'win' ? 0 : 10);
+    }
     setPhase('result');
   };
 
@@ -183,12 +195,18 @@ const CombatScreen: React.FC = () => {
 
   const handleClose = () => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    
+    // Chỉ set kết quả toàn cục khi đóng màn hình này
+    if (pendingResult) {
+        setCombatResult(pendingResult);
+        if (pendingResult.result === 'win') showNotification('Bạn đã chiến thắng!', 'success');
+        else showNotification('Bạn đã thất bại...', 'error');
+    }
+
     setEncounter(null);
     setPhase('ready');
     setInitialPlayerInventory([]);
-    if (!(combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0)) {
-        setCombatResult(null);
-    }
+    setPendingResult(null);
     loadState();
   };
 
@@ -421,7 +439,7 @@ const CombatScreen: React.FC = () => {
 
       {/* Result overlay */}
       <AnimatePresence>
-        {phase === 'result' && combatResult && (
+        {phase === 'result' && pendingResult && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -431,17 +449,17 @@ const CombatScreen: React.FC = () => {
               initial={{ scale: 0.8, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               className={`p-8 rounded-[40px] text-center max-w-sm mx-4 shadow-2xl ${
-                combatResult.result === 'win' ? 'bg-gradient-to-b from-amber-800 to-amber-950 border-2 border-amber-500/50' : 'bg-gradient-to-b from-red-900 to-red-950 border-2 border-red-500/50'
+                pendingResult.result === 'win' ? 'bg-gradient-to-b from-amber-800 to-amber-950 border-2 border-amber-500/50' : 'bg-gradient-to-b from-red-900 to-red-950 border-2 border-red-500/50'
               }`}
             >
-              <span className="text-6xl block mb-4">{combatResult.result === 'win' ? '🏆' : '💀'}</span>
-              <h3 className="text-3xl font-black mb-3 text-white tracking-tighter">{combatResult.result === 'win' ? 'CHIẾN THẮNG!' : 'THẤT BẠI'}</h3>
+              <span className="text-6xl block mb-4">{pendingResult.result === 'win' ? '🏆' : '💀'}</span>
+              <h3 className="text-3xl font-black mb-3 text-white tracking-tighter">{pendingResult.result === 'win' ? 'CHIẾN THẮNG!' : 'THẤT BẠI'}</h3>
               
-              {combatResult.result === 'win' && combatResult.loot?.length ? (
+              {pendingResult.result === 'win' && pendingResult.loot?.length ? (
                 <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
                   <p className="text-xs font-bold text-amber-300 uppercase tracking-widest mb-3">Vật phẩm thu được</p>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {combatResult.loot.map(item => (
+                    {pendingResult.loot.map((item: any) => (
                       <div
                         key={item.uid}
                         onClick={() => setSelectedResultItem(selectedResultItem?.uid === item.uid ? null : item)}
@@ -464,11 +482,11 @@ const CombatScreen: React.FC = () => {
                     </div>
                   )}
                 </div>
-              ) : combatResult.result === 'lose' && combatResult.droppedItems?.length ? (
+              ) : pendingResult.result === 'lose' && pendingResult.droppedItems?.length ? (
                 <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
                   <p className="text-xs font-bold text-red-300 uppercase tracking-widest mb-3">Vật phẩm bị mất (75%)</p>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {combatResult.droppedItems.map(item => (
+                    {pendingResult.droppedItems.map((item: any) => (
                       <div key={item.uid} className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xl opacity-40" title={item.name}>{item.icon}</div>
                     ))}
                   </div>
@@ -480,10 +498,10 @@ const CombatScreen: React.FC = () => {
               <button 
                 onClick={handleClose} 
                 className={`w-full py-5 rounded-2xl font-black transition-all active:scale-95 shadow-xl uppercase tracking-tighter ${
-                  combatResult.result === 'lose' ? 'bg-white text-black hover:bg-gray-200' : 'bg-amber-500 text-black hover:bg-amber-400'
+                  pendingResult.result === 'lose' ? 'bg-white text-black hover:bg-gray-200' : 'bg-amber-500 text-black hover:bg-amber-400'
                 }`}
               >
-                {combatResult.result === 'lose' ? 'Về Thành Trì' : 'Tiếp tục'}
+                {pendingResult.result === 'lose' ? 'Về Thành Trì' : 'Tiếp tục'}
               </button>
             </motion.div>
           </motion.div>

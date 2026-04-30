@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useMotionValue, animate, useAnimationFrame, MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from '../constants';
+import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 
 interface UseSeaBoatParams {
     isLooterGameMode: boolean;
-    looterGameCtx: any;
     myObfPos: { lat: number; lng: number } | null;
     scale: MotionValue<number>;
     panX: MotionValue<number>;
@@ -19,9 +19,24 @@ const PORTAL_RADIUS_DEG = 0.0024;
 const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
-    isLooterGameMode, looterGameCtx, myObfPos, scale, panX, panY,
+    isLooterGameMode, myObfPos, scale, panX, panY,
     setMainTab, setIsSheetExpanded, showNotification
 }: UseSeaBoatParams) {
+    const looterState = useLooterState();
+    const looterActions = useLooterActions();
+    
+    const { 
+        state, worldItems, isChallengeActive, showMinigame, 
+        isFortressStorageOpen, encounter, showCurseModal, combatResult,
+        pickupRewardItem, globalSettings
+    } = looterState;
+    
+    const { 
+        moveBoat, pickupItem, setShowMinigame, setEncounter, 
+        setShowCurseModal, setCombatResult, setIsChallengeActive,
+        openFortressStorage, loadState, inflictMinigamePenalty,
+        setShowDiscardModal
+    } = looterActions;
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
     const pickingItemsRef = useRef(new Set<string>());
     const activePortalRef = useRef<string | null>(null);
@@ -40,12 +55,12 @@ export function useLooterBoat({
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
 
     useEffect(() => {
-        curseVisual.set(looterGameCtx?.state?.cursePercent || 0);
-    }, [looterGameCtx?.state?.cursePercent, curseVisual]);
+        curseVisual.set(state?.cursePercent || 0);
+    }, [state?.cursePercent, curseVisual]);
 
     useEffect(() => {
-        if (!isLooterGameMode || !looterGameCtx?.state || !myObfPos || isAnimatingRef.current) return;
-        const { currentLat, currentLng } = looterGameCtx.state;
+        if (!isLooterGameMode || !state || !myObfPos || isAnimatingRef.current) return;
+        const { currentLat, currentLng } = state;
         if (currentLat == null || currentLng == null) return;
 
         const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
@@ -56,9 +71,9 @@ export function useLooterBoat({
         panY.set(-nextBoatY);
     }, [
         isLooterGameMode,
-        looterGameCtx?.state?.currentLat,
-        looterGameCtx?.state?.currentLng,
-        looterGameCtx?.isChallengeActive,
+        state?.currentLat,
+        state?.currentLng,
+        isChallengeActive,
         myObfPos,
         boatOffsetX,
         boatOffsetY,
@@ -68,8 +83,8 @@ export function useLooterBoat({
 
     // Auto-pickup loop
     useAnimationFrame(() => {
-        if (!isLooterGameMode || !looterGameCtx || !myObfPos) return;
-        if (looterGameCtx.showMinigame || looterGameCtx.isFortressStorageOpen || looterGameCtx.encounter || looterGameCtx.showCurseModal || looterGameCtx.combatResult) {
+        if (!isLooterGameMode || !state || !myObfPos) return;
+        if (showMinigame || isFortressStorageOpen || encounter || showCurseModal || combatResult) {
             // Stop movement if any event is active
             if (boatMoveXRef.current) {
                 boatMoveXRef.current.stop();
@@ -85,10 +100,10 @@ export function useLooterBoat({
             return;
         }
         if (
-            !looterGameCtx.worldItems?.length ||
-            looterGameCtx.pickupRewardItem ||
-            looterGameCtx.pendingBagSwap ||
-            looterGameCtx.showMinigame
+            !worldItems?.length ||
+            pickupRewardItem ||
+            (looterState as any).pendingBagSwap || // Cast since it might not be in interface yet
+            showMinigame
         ) return;
 
         const currentLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
@@ -108,7 +123,7 @@ export function useLooterBoat({
                     isAnimatingRef.current = false;
                     setBoatTargetPin(null);
                     activePortalRef.current = item.spawnId;
-                    looterGameCtx.openFortressStorage?.('portal');
+                    openFortressStorage?.('portal');
                 } else if (dist >= PORTAL_RADIUS_DEG && activePortalRef.current === item.spawnId) {
                     activePortalRef.current = null;
                 }
@@ -133,7 +148,7 @@ export function useLooterBoat({
                 }
 
                 pickingItemsRef.current.add(item.spawnId);
-                looterGameCtx.pickupItem(item.spawnId).then((success: boolean) => {
+                pickupItem(item.spawnId).then((success: boolean) => {
                     if (!success) {
                         setTimeout(() => pickingItemsRef.current.delete(item.spawnId), 5000);
                     }
@@ -143,17 +158,12 @@ export function useLooterBoat({
     });
 
     const executeMoveToExact = useCallback((lat: number, lng: number) => {
-        if (!isLooterGameMode || !looterGameCtx || !myObfPos) {
-            console.log('[MapMove] Pre-conditions failed:', { isLooterGameMode, hasCtx: !!looterGameCtx, hasPos: !!myObfPos });
-            return;
-        }
-
-        if (looterGameCtx.showMinigame || looterGameCtx.encounter || looterGameCtx.showCurseModal || looterGameCtx.combatResult) {
+        if (showMinigame || encounter || showCurseModal || combatResult) {
             const blockReason = {
-                minigame: !!looterGameCtx.showMinigame,
-                encounter: !!looterGameCtx.encounter,
-                curse: !!looterGameCtx.showCurseModal,
-                combatResult: !!looterGameCtx.combatResult
+                minigame: !!showMinigame,
+                encounter: !!encounter,
+                curse: !!showCurseModal,
+                combatResult: !!combatResult
             };
             console.log('[MapMove] Blocked by active event:', blockReason);
             
@@ -163,11 +173,11 @@ export function useLooterBoat({
                 consecutiveBlockCountRef.current++;
                 if (consecutiveBlockCountRef.current >= 3) {
                     console.warn('[MapMove] Force resetting blocked states due to consecutive failures');
-                    looterGameCtx.setShowMinigame(null);
-                    looterGameCtx.setEncounter(null);
-                    looterGameCtx.setShowCurseModal(false);
-                    looterGameCtx.setCombatResult(null);
-                    looterGameCtx.setIsChallengeActive(true); // Ensure challenge is active if user is trying to move
+                    setShowMinigame(null);
+                    setEncounter(null);
+                    setShowCurseModal(false);
+                    setCombatResult(null);
+                    setIsChallengeActive(true); // Ensure challenge is active if user is trying to move
                     consecutiveBlockCountRef.current = 0;
                     showNotification?.('Đã tự động sửa lỗi kẹt di chuyển.', 'info');
                 }
@@ -178,7 +188,7 @@ export function useLooterBoat({
             return;
         }
 
-        if (!looterGameCtx.isChallengeActive) {
+        if (!isChallengeActive) {
             showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
             return;
         }
@@ -212,7 +222,7 @@ export function useLooterBoat({
         console.log('[MapMove] Executing move...', { duration });
         isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
-        looterGameCtx.moveBoat(lat, lng);
+        moveBoat(lat, lng);
 
         const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
         const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
@@ -243,8 +253,8 @@ export function useLooterBoat({
         userDraggingRef.current = false;
 
         // Directly calculate from state to ensure accuracy even before first move or if sync lags
-        const currentLat = looterGameCtx?.state?.currentLat;
-        const currentLng = looterGameCtx?.state?.currentLng;
+        const currentLat = state?.currentLat;
+        const currentLng = state?.currentLng;
 
         if (currentLat != null && currentLng != null && myObfPos) {
             const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;

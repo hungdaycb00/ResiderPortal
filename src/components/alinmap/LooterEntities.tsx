@@ -1,18 +1,18 @@
 import React from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import { DEGREES_TO_PX } from './constants';
+import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
-    looterState: any;
-    looterGameCtx: any;
     boatTargetPin: { lat: number; lng: number } | null;
     boatOffsetX: MotionValue<number>;
     boatOffsetY: MotionValue<number>;
     executeMoveToExact?: (lat: number, lng: number) => void;
 }
 
-const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, looterGameCtx }: any) => {
+const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact }: any) => {
+    const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
 
@@ -50,16 +50,16 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
                 const currentDist = distMetersTransform.get();
                 if (isPortal) {
                     if (currentDist <= interactionRadius) {
-                        looterGameCtx?.openFortressStorage?.('portal');
+                        openFortressStorage?.('portal');
                     } else {
                         executeMoveToExact?.(item.lat, item.lng);
                     }
                 } else {
                     if (currentDist <= interactionRadius) {
                         if (item.minigameType) {
-                            looterGameCtx?.setShowMinigame?.(item);
+                            setShowMinigame?.(item);
                         } else {
-                            looterGameCtx?.pickupItem?.(item.spawnId);
+                            pickupItem?.(item.spawnId);
                         }
                     } else {
                        executeMoveToExact?.(item.lat, item.lng);
@@ -71,11 +71,11 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
                 // Chỉ cho phép kéo đối với vật phẩm nhặt ngay (không có minigame)
                 if (!isPortal && !item.minigameType && currentDist <= interactionRadius) {
                     e.stopPropagation();
-                    looterGameCtx?.setDraggingMapItem?.(item);
+                    setDraggingMapItem?.(item);
                 }
             }}
             onPointerUp={(e) => {
-                looterGameCtx?.setDraggingMapItem?.(null);
+                setDraggingMapItem?.(null);
             }}
         >
             <div className="relative group flex flex-col items-center">
@@ -118,14 +118,16 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
     );
 };
 
-const FortressEntity = ({ looterState, myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact, looterGameCtx }: any) => {
-    const boatScaleStack = looterState?.activeCurses?.boat_scale || 0;
+const FortressEntity = ({ myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact }: any) => {
+    const { state: looterStateObj } = useLooterState();
+    const { openFortressStorage } = useLooterActions();
+    const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
     const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
 
     const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
-        const fLat = looterState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const fLng = looterState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const fLat = looterStateObj.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const fLng = looterStateObj.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
     });
 
@@ -143,17 +145,17 @@ const FortressEntity = ({ looterState, myObfPos, boatOffsetX, boatOffsetY, execu
                 e.stopPropagation();
                 const dist = fDistTransform.get();
                 if (dist <= fInteractionRadius) {
-                    looterGameCtx?.openFortressStorage?.('fortress');
+                    openFortressStorage?.('fortress');
                 } else {
-                    executeMoveToExact?.(looterState.fortressLat, looterState.fortressLng);
+                    executeMoveToExact?.(looterStateObj.fortressLat, looterStateObj.fortressLng);
                 }
             }}
             onPointerDown={(e) => {}}
             onPointerUp={(e) => {}}
             className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
             style={{
-                top: `calc(50% + ${-(looterState.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                left: `calc(50% + ${(looterState.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                top: `calc(50% + ${-(looterStateObj.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                left: `calc(50% + ${(looterStateObj.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
         >
             <div className="relative flex flex-col items-center group">
@@ -167,14 +169,15 @@ const FortressEntity = ({ looterState, myObfPos, boatOffsetX, boatOffsetY, execu
 };
 
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
-    myObfPos, looterState, looterGameCtx, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
+    myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
+    const { state: looterStateObj, worldItems } = useLooterState();
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
 
     // Culling Logic: Kiểm tra vật phẩm nào trong tầm nhìn mỗi 500ms
     React.useEffect(() => {
-        if (!looterGameCtx?.worldItems) return;
+        if (!worldItems) return;
 
         const updateVisibility = () => {
             const ox = boatOffsetX.get();
@@ -192,7 +195,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
             const nextVisible = new Set<string>();
             const CULL_DIST = 5000; // 5km visibility range
 
-            for (const item of looterGameCtx.worldItems) {
+            for (const item of worldItems) {
                 const iLat = item.lat - curLat;
                 const iLng = item.lng - curLng;
                 const dist = Math.sqrt(iLat * iLat + iLng * iLng) * 111000;
@@ -214,7 +217,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
         const timer = setInterval(updateVisibility, 500);
         updateVisibility();
         return () => clearInterval(timer);
-    }, [looterGameCtx?.worldItems, myObfPos?.lat, myObfPos?.lng]);
+    }, [worldItems, myObfPos?.lat, myObfPos?.lng]);
 
     const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
     const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));
@@ -241,10 +244,10 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 </svg>
             )}
 
-            {looterState?.fortressLat && (
+            {looterStateObj?.fortressLat && (
                 <FortressEntity 
-                    looterState={looterState} myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
-                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} looterGameCtx={looterGameCtx} 
+                    myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
+                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} 
                 />
             )}
 
@@ -260,16 +263,15 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 </div>
             )}
 
-            {looterGameCtx?.worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
+            {worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
                 <LooterItemEntity 
                     key={item.spawnId}
                     item={item}
                     myObfPos={myObfPos}
                     boatOffsetX={boatOffsetX}
                     boatOffsetY={boatOffsetY}
-                    boatScaleStack={looterState?.activeCurses?.boat_scale || 0}
+                    boatScaleStack={looterStateObj?.activeCurses?.boat_scale || 0}
                     executeMoveToExact={executeMoveToExact}
-                    looterGameCtx={looterGameCtx}
                 />
             ))}
         </>

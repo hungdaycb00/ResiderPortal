@@ -1,8 +1,9 @@
 import { createContext, useContext } from 'react';
 import type { LooterItem, BagItem, GridExpander, PortalItem } from './backpack/types';
 import { getDistanceMeters } from './backpack/utils';
-import { FORTRESS_INTERACTION_METERS } from './backpack/constants';
+import { GAME_CONFIG } from './gameConfig';
 
+const { FORTRESS_INTERACTION_METERS } = GAME_CONFIG;
 export { FORTRESS_INTERACTION_METERS };
 
 export interface WorldItem {
@@ -63,34 +64,20 @@ export const isLooterAtFortress = (state: Pick<LooterGameState, 'currentLat' | '
 
 export type StorageAccessMode = 'fortress' | 'portal';
 
-export interface LooterGameContextType {
-  state: LooterGameState;
-  worldItems: WorldItem[];
-  isFortressStorageOpen: boolean;
+export interface LooterGameActions {
   setIsFortressStorageOpen: (v: boolean) => void;
-  fortressStorageMode: StorageAccessMode;
   openFortressStorage: (mode?: StorageAccessMode) => void;
-  pickupRewardItem: LooterItem | null;
   setPickupRewardItem: (item: LooterItem | null) => void;
-  encounter: Encounter | null;
   setEncounter: (e: Encounter | null) => void;
-  combatResult: CombatResult | null;
   setCombatResult: (r: CombatResult | null) => void;
-  showCurseModal: boolean;
   setShowCurseModal: (v: boolean) => void;
-  showMinigame: WorldItem | null;
   setShowMinigame: (item: WorldItem | null) => void;
-  isLooterGameMode: boolean;
   setIsLooterGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
-  isItemDragging: boolean;
   setIsItemDragging: (v: boolean) => void;
-  isChallengeActive: boolean;
   setIsChallengeActive: (v: boolean) => void;
-  preGeneratedMinigame: { type: string, grid: any } | null;
   setPreGeneratedMinigame: (v: { type: string, grid: any } | null) => void;
-  globalSettings: any;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
@@ -109,22 +96,54 @@ export interface LooterGameContextType {
   dropItem: (itemUid: string) => Promise<void>;
   returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
-  isMoving: boolean;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
-  draggingItem: LooterItem | null;
   setDraggingItem: (item: LooterItem | null) => void;
-  draggingMapItem: WorldItem | null;
   setDraggingMapItem: (item: WorldItem | null) => void;
-  showDiscardModal: boolean;
   setShowDiscardModal: (v: boolean) => void;
   confirmDiscard: () => Promise<void>;
+}
+
+export interface LooterGameStateContextType {
+  state: LooterGameState;
+  worldItems: WorldItem[];
+  isFortressStorageOpen: boolean;
+  fortressStorageMode: StorageAccessMode;
+  pickupRewardItem: LooterItem | null;
+  encounter: Encounter | null;
+  combatResult: CombatResult | null;
+  showCurseModal: boolean;
+  showMinigame: WorldItem | null;
+  isLooterGameMode: boolean;
+  isItemDragging: boolean;
+  isChallengeActive: boolean;
+  preGeneratedMinigame: { type: string, grid: any } | null;
+  globalSettings: any;
+  isMoving: boolean;
+  isSyncing: boolean;
+  draggingItem: LooterItem | null;
+  draggingMapItem: WorldItem | null;
+  showDiscardModal: boolean;
   dragPointerPos: { x: number; y: number };
 }
 
-export const LooterGameContext = createContext<LooterGameContextType | null>(null);
+export const LooterStateContext = createContext<LooterGameStateContextType | null>(null);
+export const LooterActionsContext = createContext<LooterGameActions | null>(null);
 
-export function useLooterGame() {
-  const ctx = useContext(LooterGameContext);
-  if (!ctx) throw new Error('useLooterGame must be inside LooterGameProvider');
+export function useLooterState() {
+  const ctx = useContext(LooterStateContext);
+  if (!ctx) throw new Error('useLooterState must be inside LooterGameProvider');
   return ctx;
+}
+
+export function useLooterActions() {
+  const ctx = useContext(LooterActionsContext);
+  if (!ctx) throw new Error('useLooterActions must be inside LooterGameProvider');
+  return ctx;
+}
+
+// Legacy support (optional, but better to migrate)
+export function useLooterGame() {
+  const state = useLooterState();
+  const actions = useLooterActions();
+  return { ...state, ...actions };
 }

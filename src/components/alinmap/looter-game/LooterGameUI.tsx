@@ -5,7 +5,8 @@ import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import CombatLootModal from './backpack/CombatLootModal';
-import { useLooterGame } from './LooterGameContext';
+import { useLooterState, useLooterActions } from './LooterGameContext';
+import ErrorBoundary from '../../ErrorBoundary';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'bg-sky-100 border-sky-300',
@@ -15,50 +16,73 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 const LooterGameUI: React.FC = () => {
-    const { showMinigame, setShowMinigame, pickupItem, inflictMinigamePenalty, destroyItem, showDiscardModal, setShowDiscardModal, confirmDiscard, state, combatResult, openBackpack, preGeneratedMinigame, setPreGeneratedMinigame, draggingMapItem, dragPointerPos } = useLooterGame();
+    const { 
+        state, showMinigame, showDiscardModal, combatResult, 
+        preGeneratedMinigame, draggingMapItem, dragPointerPos 
+    } = useLooterState();
+    
+    const { 
+        setShowMinigame, pickupItem, inflictMinigamePenalty, 
+        setShowDiscardModal, confirmDiscard, setPreGeneratedMinigame 
+    } = useLooterActions();
 
     return (
         <>
-            <CombatScreen />
-            <CurseModal />
-            {state.initialized && <FortressStorageModal />}
+            <ErrorBoundary name="Combat">
+                <CombatScreen />
+            </ErrorBoundary>
+            
+            <ErrorBoundary name="Curse">
+                <CurseModal />
+            </ErrorBoundary>
+
+            {state.initialized && (
+                <ErrorBoundary name="Storage">
+                    <FortressStorageModal />
+                </ErrorBoundary>
+            )}
+            
             {combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0 && (
-                <CombatLootModal />
+                <ErrorBoundary name="Loot">
+                    <CombatLootModal />
+                </ErrorBoundary>
             )}
             {showMinigame && (
-                <PickupMinigame
-                    type={showMinigame.minigameType || 'fishing'}
-                    tier={showMinigame.item?.type === 'bag' ? (state.worldTier || 0) + 1 : (state.worldTier || 0)}
-                    difficulty={(() => {
-                        let diff = 1;
-                        if (showMinigame.isExpander) diff = 3;
-                        else {
-                            const r = (showMinigame.item as any).rarity;
-                            if (r === 'legendary') diff = 4;
-                            else if (r === 'rare') diff = 3;
-                            else if (r === 'uncommon') diff = 2;
-                        }
-                        // Nếu là balo, tăng thêm 1 độ khó nếu chưa đạt max
-                        if (showMinigame.item?.type === 'bag') diff = Math.min(4, diff + 1);
-                        return diff;
-                    })()}
-                    onWin={() => {
-                        pickupItem(showMinigame.spawnId);
-                        setShowMinigame(null);
-                        setPreGeneratedMinigame(null);
-                    }}
-                    onLose={() => {
-                        if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
-                        setShowMinigame(null);
-                        setPreGeneratedMinigame(null);
-                    }}
-                    onClose={() => {
-                        if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
-                        setShowMinigame(null);
-                        setPreGeneratedMinigame(null);
-                    }}
-                    preGeneratedGrid={preGeneratedMinigame?.type === 'fishing' ? preGeneratedMinigame.grid : null}
-                />
+                <ErrorBoundary name="Minigame">
+                    <PickupMinigame
+                        type={showMinigame.minigameType || 'fishing'}
+                        tier={showMinigame.item?.type === 'bag' ? (state.worldTier || 0) + 1 : (state.worldTier || 0)}
+                        difficulty={(() => {
+                            let diff = 1;
+                            if (showMinigame.isExpander) diff = 3;
+                            else {
+                                const r = (showMinigame.item as any).rarity;
+                                if (r === 'legendary') diff = 4;
+                                else if (r === 'rare') diff = 3;
+                                else if (r === 'uncommon') diff = 2;
+                            }
+                            // Nếu là balo, tăng thêm 1 độ khó nếu chưa đạt max
+                            if (showMinigame.item?.type === 'bag') diff = Math.min(4, diff + 1);
+                            return diff;
+                        })()}
+                        onWin={() => {
+                            pickupItem(showMinigame.spawnId);
+                            setShowMinigame(null);
+                            setPreGeneratedMinigame(null);
+                        }}
+                        onLose={() => {
+                            if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
+                            setShowMinigame(null);
+                            setPreGeneratedMinigame(null);
+                        }}
+                        onClose={() => {
+                            if (showMinigame?.spawnId) inflictMinigamePenalty(showMinigame.spawnId);
+                            setShowMinigame(null);
+                            setPreGeneratedMinigame(null);
+                        }}
+                        preGeneratedGrid={preGeneratedMinigame?.type === 'fishing' ? preGeneratedMinigame.grid : null}
+                    />
+                </ErrorBoundary>
             )}
 
 

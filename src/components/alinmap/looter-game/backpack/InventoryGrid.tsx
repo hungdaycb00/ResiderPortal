@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import type { LooterItem, BagItem } from './types';
-import { useLooterGame } from '../LooterGameContext';
+import { useLooterState, useLooterActions } from '../LooterGameContext';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
 interface InventoryGridProps {
@@ -55,7 +55,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   externalDragOffset,
   externalHoverCell,
 }) => {
-  const { setDraggingItem, setIsItemDragging, isItemDragging, dropItem: looterDropItem } = useLooterGame();
+  const { isItemDragging } = useLooterState();
+  const { setDraggingItem, setIsItemDragging, dropItem: looterDropItem } = useLooterActions();
   const [dragItem, setDragItem] = useState<LooterItem | null>(null);
   
   const handleDropItem = useCallback((uid: string) => {

@@ -158,10 +158,23 @@ export const externalApi = {
   },
 
   /**
+   * Token management
+   */
+  getToken(): string | null {
+    return localStorage.getItem('accessToken');
+  },
+
+  setToken(token: string): void {
+    if (token) localStorage.setItem('accessToken', token);
+    else localStorage.removeItem('accessToken');
+  },
+
+  /**
    * Clear the device ID to force re-registration.
    */
   clearDeviceId(): void {
     localStorage.removeItem('deviceId');
+    localStorage.removeItem('accessToken');
   },
 
   /**
@@ -182,11 +195,12 @@ export const externalApi = {
     }
     
     const adminKey = import.meta.env.VITE_ADMIN_KEY;
+    const token = this.getToken();
     
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'X-Device-Id': deviceId,
-      ...(adminKey ? { 'Authorization': `Bearer ${adminKey}` } : {}),
+      ...(token ? { 'Authorization': `Bearer ${token}` } : (adminKey ? { 'Authorization': `Bearer ${adminKey}` } : {})),
       ...options.headers,
     };
 
@@ -357,6 +371,8 @@ export const externalApi = {
       xhr.open('POST', url);
       
       xhr.setRequestHeader('X-Device-Id', deviceId);
+      const token = this.getToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable && onProgress) {
@@ -417,6 +433,7 @@ export const externalApi = {
       body: formData,
       headers: {
         'X-Device-Id': deviceId,
+        ...(this.getToken() ? { 'Authorization': `Bearer ${this.getToken()}` } : {}),
       },
     });
 
@@ -520,6 +537,7 @@ export const externalApi = {
     
     const headers: HeadersInit = {
       'X-Device-Id': deviceId,
+      ...(this.getToken() ? { 'Authorization': `Bearer ${this.getToken()}` } : {}),
     };
 
     const response = await fetch(url, { headers });
@@ -551,7 +569,8 @@ export const externalApi = {
       const response = await fetch(`${baseUrl}/api/profile/upload-avatar`, {
         method: 'POST',
         headers: {
-          'X-Device-Id': this.getDeviceId()
+          'X-Device-Id': this.getDeviceId(),
+          ...(this.getToken() ? { 'Authorization': `Bearer ${this.getToken()}` } : {}),
         },
         body: formData,
       });

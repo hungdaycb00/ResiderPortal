@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMotionValue, animate } from 'framer-motion';
+import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 
 interface UseMapNavigationParams {
   initialMainTab: string;
   myObfPos: { lat: number; lng: number } | null;
   ws: React.MutableRefObject<WebSocket | null>;
-  looterState: any;
-  looterGame: any;
   onTabChange?: (tab: string) => void;
   handleRefresh: () => void;
   requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
@@ -16,9 +15,12 @@ interface UseMapNavigationParams {
 export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'backpack';
 
 export function useMapNavigation({
-  initialMainTab, myObfPos, ws, looterState, looterGame, onTabChange, handleRefresh, requireAuth, user,
+  initialMainTab, myObfPos, ws, onTabChange, handleRefresh, requireAuth, user,
 }: UseMapNavigationParams) {
-  const { setIsLooterGameMode, isLooterGameMode, initGame, loadWorldItems } = looterGame;
+  const looterState = useLooterState();
+  const looterActions = useLooterActions();
+  const { setIsLooterGameMode, initGame, loadWorldItems } = looterActions;
+  const { isLooterGameMode, isItemDragging, state: looterStateObj } = looterState;
 
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
@@ -46,7 +48,6 @@ export function useMapNavigation({
       const resolvedTab = initialMainTab === 'creator' ? 'discover' : initialMainTab;
       
       setMainTab(prev => {
-        // Không tự động co lại khi chuyển sang discover để tránh hiệu ứng giật
         if (prev !== resolvedTab && resolvedTab !== 'discover') {
             setIsSheetExpanded(true);
         } else if (isDesktop) {
@@ -58,10 +59,10 @@ export function useMapNavigation({
   }, [initialMainTab, isDesktop, user]);
 
   useEffect(() => {
-    if (mainTab === 'backpack' && looterState.initialized && !isLooterGameMode) {
+    if (mainTab === 'backpack' && looterStateObj.initialized && !isLooterGameMode) {
       setIsLooterGameMode(true);
     }
-  }, [mainTab, looterState.initialized, isLooterGameMode, setIsLooterGameMode]);
+  }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -94,8 +95,6 @@ export function useMapNavigation({
   }, [ws, handleRefresh]);
 
   const handleTabClick = useCallback((tabId: string) => {
-    // Prevent toggling sheet if currently dragging an item (fixes click-through bug)
-    const { isItemDragging } = looterGame;
     if (isItemDragging) return;
 
     setSelectedUser(null);
@@ -119,15 +118,15 @@ export function useMapNavigation({
       setIsSheetExpanded(true);
 
       const doLoad = async () => {
-        if (!looterState.initialized && myObfPos) {
+        if (!looterStateObj.initialized && myObfPos) {
           await initGame(myObfPos.lat, myObfPos.lng);
         }
         await loadWorldItems(true);
       };
       void doLoad();
 
-      const targetLat = looterState.currentLat ?? myObfPos?.lat;
-      const targetLng = looterState.currentLng ?? myObfPos?.lng;
+      const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
+      const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
       if (targetLat != null && targetLng != null) handleCenterTo(targetLat, targetLng);
     } else {
       setIsLooterGameMode(false);
@@ -136,7 +135,7 @@ export function useMapNavigation({
     }
 
     onTabChange?.(tabId);
-  }, [mainTab, myObfPos, looterState, requireAuth, user, onTabChange, setIsLooterGameMode, initGame, loadWorldItems, handleCenterTo]);
+  }, [mainTab, myObfPos, looterStateObj, isItemDragging, requireAuth, user, onTabChange, setIsLooterGameMode, initGame, loadWorldItems, handleCenterTo]);
 
   return {
     panX, panY, scale, selfDragX, selfDragY,

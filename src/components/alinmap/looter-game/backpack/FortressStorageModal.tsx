@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { X, Database, Package, Sparkles, Anchor } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
 import { MAX_GRID_W } from './constants';
-import { useLooterGame } from '../LooterGameContext';
+import { useLooterState, useLooterActions } from '../LooterGameContext';
 import type { LooterItem, BagItem } from './types';
 
 const STORAGE_GRID_W = MAX_GRID_W;
@@ -78,8 +78,11 @@ export default function FortressStorageModal() {
   const {
     state,
     isFortressStorageOpen,
-    setIsFortressStorageOpen,
     fortressStorageMode,
+  } = useLooterState();
+
+  const {
+    setIsFortressStorageOpen,
     openFortressStorage,
     returnToFortress,
     saveInventory,
@@ -87,7 +90,7 @@ export default function FortressStorageModal() {
     storeItems,
     setIsLootGameMode,
     setIsItemDragging,
-  } = useLooterGame();
+  } = useLooterActions();
 
   const [dragItem, setDragItem] = useState<LooterItem | null>(null);
   const [dragSource, setDragSource] = useState<'inventory' | 'storage' | null>(null);

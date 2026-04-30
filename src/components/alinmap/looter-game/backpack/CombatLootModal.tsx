@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Package } from 'lucide-react';
 import InventoryGrid from './InventoryGrid';
-import { useLooterGame } from '../LooterGameContext';
+import { useLooterState, useLooterActions } from '../LooterGameContext';
 import type { LooterItem } from './types';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 
@@ -13,7 +13,8 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 export default function CombatLootModal() {
-  const { state, combatResult, setCombatResult, saveInventory, showNotification } = useLooterGame();
+  const { state, combatResult } = useLooterState();
+  const { setCombatResult, saveInventory, showNotification } = useLooterActions();
   const [lootLeft, setLootLeft] = useState<LooterItem[]>([]);
 
   React.useEffect(() => {

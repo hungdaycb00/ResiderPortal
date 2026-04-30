@@ -56,6 +56,9 @@ export function useAuth(
             }
             const result = await externalApi.syncGoogleLogin(response.credential);
             if (result.success && result.user) {
+                if (result.accessToken) {
+                    externalApi.setToken(result.accessToken);
+                }
                 const loggedInUser: User = {
                     uid: result.user.id || result.user.uid,
                     email: result.user.email,

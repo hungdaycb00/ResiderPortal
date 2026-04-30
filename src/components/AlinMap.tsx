@@ -8,7 +8,7 @@ import BottomSheet from './alinmap/BottomSheet';
 import SearchHeader from './alinmap/SearchHeader';
 import ContextMenu from './alinmap/ContextMenu';
 import LooterGameProvider from './alinmap/looter-game/LooterGameProvider';
-import { useLooterGame } from './alinmap/looter-game/LooterGameContext';
+import { useLooterState, useLooterActions } from './alinmap/looter-game/LooterGameContext';
 import LooterGameUI from './alinmap/looter-game/LooterGameUI';
 import TierSelectionOverlay from './alinmap/looter-game/TierSelectionOverlay';
 import { SocialProvider } from './alinmap/features/social/context/SocialContext';
@@ -58,8 +58,11 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [isTierSelectorOpen, setIsTierSelectorOpen] = useState(false);
 
     // --- Looter Game ---
-    const looterGame = useLooterGame();
-    const { isLooterGameMode, state: looterState, pickupRewardItem, setPickupRewardItem, setIsLooterGameMode, setOpenBackpackHandler, saveInventory } = looterGame;
+    const looterState = useLooterState();
+    const looterActions = useLooterActions();
+    
+    const { isLooterGameMode, state: looterStateObj, pickupRewardItem, isChallengeActive } = looterState;
+    const { setPickupRewardItem, setIsLooterGameMode, setOpenBackpackHandler, saveInventory, setWorldTier } = looterActions;
 
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
@@ -96,8 +99,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         initialMainTab,
         myObfPos: geo.myObfPos,
         ws: wsCtx.ws,
-        looterState,
-        looterGame,
         onTabChange,
         handleRefresh: wsCtx.handleRefresh,
         requireAuth,
@@ -159,7 +160,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     useEffect(() => {
         const subGame = extractExploreGame(location.pathname);
         if (subGame === 'looter-game' && !isLooterGameMode) {
-            looterGame.setIsLooterGameMode(true);
+            looterActions.setIsLooterGameMode(true);
         }
     }, []); // Run once on mount
 
@@ -241,9 +242,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             />
 
             <MapCanvas
-                position={geo.position} isConsentOpen={geo.isConsentOpen} myObfPos={geo.myObfPos} nearbyUsers={wsCtx.nearbyUsers}
-                myUserId={resolvedMyUserId} user={user} myDisplayName={wsCtx.myDisplayName} myStatus={resolvedMyStatus}
-                isVisibleOnMap={true} isConnecting={wsCtx.isConnecting} isDesktop={nav.isDesktop}
+                nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
                 currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                 galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
                 filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
@@ -253,8 +253,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 mapMode={nav.mapMode}
                 setContextMenu={setContextMenu}
                 isLooterGameMode={isLooterGameMode}
-                looterState={looterState}
-                looterGameCtx={looterGame}
+                looterState={looterStateObj}
                 isLooterLoading={nav.isLooterLoading}
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
@@ -263,19 +262,34 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             />
 
             <MapControls
-                isConnecting={wsCtx.isConnecting} isSidebarOpen={false} weatherData={geo.weatherData} currentProvince={geo.currentProvince}
-                myObfPos={geo.myObfPos} friendLocInput={friendIdInput} filterDistance={50}
-                filterAgeMin={13} filterAgeMax={99} searchTag={searchTag} radius={nav.radius}
-                scale={nav.scale} ws={wsCtx.ws} mapMode={nav.mapMode}
-                setIsSidebarOpen={() => {}} setFriendLocInput={setFriendIdInput} setMyObfPos={geo.setMyObfPos}
-                setSearchMarkerPos={setSearchMarkerPos} setFilterDistance={() => {}}
-                setFilterAgeMin={() => {}} setFilterAgeMax={() => {}} setSearchTag={setSearchTag}
-                handleRefresh={handleRefresh} handleCenter={nav.handleCenter} handleCenterTo={nav.handleCenterTo} handleUpdateRadius={nav.handleUpdateRadius}
+                isConnecting={wsCtx.isConnecting}
+                isSidebarOpen={false}
+                weatherData={geo.weatherData}
+                currentProvince={geo.currentProvince}
+                myObfPos={geo.myObfPos}
+                friendLocInput={friendIdInput}
+                filterDistance={50}
+                filterAgeMin={13}
+                filterAgeMax={99}
+                searchTag={searchTag}
+                radius={nav.radius}
+                scale={nav.scale}
+                ws={wsCtx.ws}
+                mapMode={nav.mapMode}
+                setIsSidebarOpen={() => {}}
+                setFriendLocInput={setFriendIdInput}
+                setMyObfPos={geo.setMyObfPos}
+                setSearchMarkerPos={setSearchMarkerPos}
+                setFilterDistance={() => {}}
+                setFilterAgeMin={() => {}}
+                setFilterAgeMax={() => {}}
+                setSearchTag={setSearchTag}
+                handleRefresh={handleRefresh}
+                handleCenter={nav.handleCenter}
+                handleCenterTo={nav.handleCenterTo}
                 handleCenterBoat={centerBoatHandler}
+                handleUpdateRadius={nav.handleUpdateRadius}
                 setMapMode={nav.setMapMode}
-                isLooterGameMode={isLooterGameMode}
-                looterState={looterState}
-                isChallengeActive={looterGame.isChallengeActive}
                 onOpenTierSelector={() => setIsTierSelectorOpen(true)}
                 isWidgetExpanded={isWeatherWidgetExpanded}
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
@@ -369,19 +383,22 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             <TierSelectionOverlay
                 isOpen={isTierSelectorOpen}
                 onClose={() => setIsTierSelectorOpen(false)}
-                currentGold={looterState.looterGold}
+                currentGold={looterStateObj.looterGold}
                 onSelectTier={async (tier) => {
-                    console.log(`[AlinMap] onSelectTier triggered for Tier: ${tier}`);
+                    console.log(`[AlinMap] onSelectTier selected: ${tier}`);
                     try {
-                        await looterGame.setWorldTier(tier);
-                        console.log(`[AlinMap] setWorldTier finished`);
-                        setIsTierSelectorOpen(false);
-                        setIsLooterGameMode(true);
+                        if (typeof looterActions.setWorldTier === 'function') {
+                            await looterActions.setWorldTier(tier);
+                            setIsTierSelectorOpen(false);
+                            setIsLooterGameMode(true);
+                        } else {
+                            console.error('[AlinMap] setWorldTier is not a function in looterActions');
+                        }
                         
                         // Check if nav methods exist before calling
                         if (nav && typeof nav.handleCenterTo === 'function') {
                             console.log(`[AlinMap] Centering map to fortress...`);
-                            nav.handleCenterTo(looterState.fortressLat || 0, looterState.fortressLng || 0);
+                            nav.handleCenterTo(looterStateObj.fortressLat || 0, looterStateObj.fortressLng || 0);
                         } else {
                             console.warn(`[AlinMap] nav.handleCenterTo is not available`, nav);
                         }
