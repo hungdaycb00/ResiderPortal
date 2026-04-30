@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { generateSolvableFruitGrid } from './minigameUtils';
 import { getLooterServerUrl } from '../../../services/externalApi';
-import type { LooterItem, BagItem, GridExpander, PortalItem } from './backpack/types';
-import { MAX_GRID_W, MAX_GRID_H } from './backpack/constants';
-import { createStarterBag, repairBagData, getDistanceMeters } from './backpack/utils';
+import type { LooterItem, BagItem } from './backpack/types';
 import { 
   LooterStateContext, 
   LooterActionsContext,
@@ -17,6 +15,13 @@ import {
 } from './LooterGameContext';
 import { GAME_CONFIG } from './gameConfig';
 
+// Hooks
+import { useLooterQueue } from './hooks/useLooterQueue';
+import { useLooterData } from './hooks/useLooterData';
+import { useLooterMovement } from './hooks/useLooterMovement';
+import { useLooterInventory } from './hooks/useLooterInventory';
+import { useLooterStateManager } from './hooks/useLooterStateManager';
+
 const defaultState: LooterGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
@@ -24,49 +29,7 @@ const defaultState: LooterGameState = {
   energyMax: 100, energyCurrent: 100, activeCurses: {},
 };
 
-const { 
-  FORTRESS_INTERACTION_METERS,
-  PORTAL_SPACING_METERS,
-  PORTAL_SEARCH_RADIUS,
-  SYNC_HEARTBEAT_MS
-} = GAME_CONFIG;
-
-const createPortalWorldItems = (
-  fortressLat: number | null,
-  fortressLng: number | null,
-  currentLat: number | null,
-  currentLng: number | null
-): WorldItem[] => {
-  if (fortressLat == null || fortressLng == null || currentLat == null || currentLng == null) return [];
-  const cosLat = Math.max(0.25, Math.cos((fortressLat * Math.PI) / 180));
-  const xMeters = (currentLng - fortressLng) * 111000 * cosLat;
-  const yMeters = (currentLat - fortressLat) * 111000;
-  const centerGridX = Math.round(xMeters / PORTAL_SPACING_METERS);
-  const centerGridY = Math.round(yMeters / PORTAL_SPACING_METERS);
-  const items: WorldItem[] = [];
-
-  for (let gridY = centerGridY - PORTAL_SEARCH_RADIUS; gridY <= centerGridY + PORTAL_SEARCH_RADIUS; gridY += 1) {
-    for (let gridX = centerGridX - PORTAL_SEARCH_RADIUS; gridX <= centerGridX + PORTAL_SEARCH_RADIUS; gridX += 1) {
-      if (gridX === 0 && gridY === 0) continue;
-      const portalLat = fortressLat + ((gridY * PORTAL_SPACING_METERS) / 111000);
-      const portalLng = fortressLng + ((gridX * PORTAL_SPACING_METERS) / (111000 * cosLat));
-      items.push({
-        spawnId: `portal_${gridX}_${gridY}`,
-        lat: portalLat,
-        lng: portalLng,
-        isExpander: false,
-        minigameType: 'chest',
-        item: {
-          id: 'looter_portal',
-          name: 'Cong Portal',
-          icon: '🌀',
-          type: 'portal',
-        },
-      });
-    }
-  }
-  return items;
-};
+const { SYNC_HEARTBEAT_MS } = GAME_CONFIG;
 
 interface LooterGameProviderProps {
   children: React.ReactNode;
@@ -75,8 +38,8 @@ interface LooterGameProviderProps {
 }
 
 export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children, deviceId, showNotification }) => {
+  // 1. Core State
   const [state, setState] = useState<LooterGameState>(defaultState);
-
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
   const [pickupRewardItem, setPickupRewardItem] = useState<LooterItem | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
@@ -84,21 +47,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [showCurseModal, setShowCurseModal] = useState(false);
   const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
   const [isLooterGameMode, setIsLooterGameMode] = useState(false);
-
-  // Helpers
-  const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
-    if (typeof showNotification === 'function') {
-      showNotification(msg, type);
-    } else {
-      console.log(`[LooterNotify] ${type}: ${msg}`);
-    }
-  }, [showNotification]);
   const [isChallengeActive, setIsChallengeActive] = useState(false);
   const [isFortressStorageOpen, setIsFortressStorageOpen] = useState(false);
   const [fortressStorageMode, setFortressStorageMode] = useState<StorageAccessMode>('fortress');
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
-  const [isMoving, setIsMoving] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
@@ -107,557 +59,98 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [dragPointerPos, setDragPointerPos] = useState({ x: 0, y: 0 });
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
-  const API = useMemo(() => getLooterServerUrl(), []);
+  const API_URL = useMemo(() => getLooterServerUrl(), []);
 
-  // Action Queue for serial API calls
-  const actionQueueRef = useRef<Promise<any>>(Promise.resolve());
-  const activeRequestsCount = useRef(0);
-
-  const runInQueue = useCallback((fn: () => Promise<any>) => {
-    activeRequestsCount.current++;
-    setIsSyncing(true);
-
-    const nextPromise = actionQueueRef.current.then(async () => {
-      try {
-        return await fn();
-      } finally {
-        activeRequestsCount.current--;
-        if (activeRequestsCount.current <= 0) {
-          setIsSyncing(false);
-        }
-      }
-    }).catch(err => {
-      activeRequestsCount.current--;
-      if (activeRequestsCount.current <= 0) {
-        setIsSyncing(false);
-      }
-      console.error('[LooterQueue] Error:', err);
-    });
-    actionQueueRef.current = nextPromise;
-    return nextPromise;
-  }, []);
-
-  // 1. Leaf Actions
-  const saveInventory = useCallback(async (inventory: LooterItem[]) => {
-    if (!deviceId) return;
-    let previousInventory: LooterItem[] = [];
-    setState(prev => {
-      previousInventory = prev.inventory;
-      return { ...prev, inventory };
-    });
-    try {
-      const res = await fetch(`${API}/api/looter/inventory`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, inventory }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-      return true;
-    } catch (err) { 
-      console.error('[LooterGame] saveInventory error:', err);
-      setState(prev => ({ ...prev, inventory: previousInventory }));
-      return false;
+  const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
+    if (typeof showNotification === 'function') {
+      showNotification(msg, type);
+    } else {
+      console.log(`[LooterNotify] ${type}: ${msg}`);
     }
-  }, [deviceId, API]);
+  }, [showNotification]);
 
-  const saveBags = useCallback(async (bags: BagItem[]) => {
-    if (!deviceId) return;
-    let previousBags: BagItem[] = [];
-    setState(prev => {
-      previousBags = prev.bags;
-      return { ...prev, bags };
-    });
-    try {
-      const res = await fetch(`${API}/api/looter/bags`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, bags }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-    } catch (err) {
-      console.error('[LooterGame] saveBags error:', err);
-      setState(prev => ({ ...prev, bags: previousBags }));
-    }
-  }, [deviceId, API]);
+  const { runInQueue, isSyncing } = useLooterQueue();
+  const { saveInventory, saveBags, saveStorage } = useLooterData({ deviceId, apiUrl: API_URL, setState });
 
-  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/world-items?deviceId=${encodeURIComponent(deviceId)}`);
-      const data = await res.json();
-      if (data.success) {
-          const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
-          const mapItems: WorldItem[] = Array.isArray(data.items) ? data.items : [];
-          const normalItems = mapItems.filter((item) => (item as any)?.item?.type !== 'portal');
-          let items = [...portalItems, ...normalItems];
-          if (!forceActive && !isChallengeActive) {
-              items = [...portalItems, ...normalItems.slice(0, 3)];
-          }
-          setWorldItems(items);
-      }
-    } catch (err) { console.error('[LooterGame] loadWorldItems error:', err); }
-  }, [deviceId, API, isChallengeActive, state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
+  // 3. Initialize Hooks
+  const stateManager = useLooterStateManager({
+    deviceId, apiUrl: API_URL, state, setState, setWorldItems,
+    setIsChallengeActive, setGlobalSettings, notify, isChallengeActive,
+    saveBags
+  });
 
-  const dropItem = useCallback(async (itemUid: string) => {
-    if (!deviceId) return;
-    const droppedItem = state.inventory.find(i => i.uid === itemUid);
-    setState(prev => ({
-      ...prev,
-      inventory: prev.inventory.filter(i => i.uid !== itemUid)
-    }));
-    if (droppedItem) {
-      setWorldItems(prev => [
-        ...prev,
-        {
-          spawnId: `temp_${itemUid}_${Date.now()}`,
-          lat: (state.currentLat || 0) + (Math.random() - 0.5) * 0.0004,
-          lng: (state.currentLng || 0) + (Math.random() - 0.5) * 0.0004,
-          item: droppedItem,
-          minigameType: null as any
-        }
-      ]);
-    }
-    try {
-      const res = await fetch(`${API}/api/looter/drop`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, itemUid }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showNotification('Đã ném vật phẩm ra biển', 'info');
-        setTimeout(() => loadWorldItems(true), 500);
-      }
-    } catch (err) { console.error('[LooterGame] dropItem error:', err); }
-  }, [deviceId, API, state.inventory, state.currentLat, state.currentLng, loadWorldItems, showNotification]);
+  const inventory = useLooterInventory({
+    deviceId, apiUrl: API_URL, state, setState, notify,
+    setWorldItems, loadWorldItems: stateManager.loadWorldItems,
+    saveInventory, saveBags, saveStorage
+  });
 
-  const findEmptySlotFor = useCallback((item: LooterItem, inventory: LooterItem[], bag: BagItem | undefined) => {
-    if (!bag) return null;
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
-    const shape = item.shape;
-    const isOccupied = (x: number, y: number) => {
-      const bagX = x - bag.gridX;
-      const bagY = y - bag.gridY;
-      if (bagX < 0 || bagY < 0 || bagX >= bag.width || bagY >= bag.height) return true;
-      if (!bag.shape[bagY][bagX]) return true;
-      return inventory.some(i => {
-        if (i.gridX < 0) return false;
-        const iw = i.gridW || 1;
-        const ih = i.gridH || 1;
-        const ishape = i.shape;
-        if (x >= i.gridX && x < i.gridX + iw && y >= i.gridY && y < i.gridY + ih) {
-          if (!ishape) return true;
-          return ishape[y - i.gridY][x - i.gridX];
-        }
-        return false;
-      });
-    };
-    const canPlace = (startX: number, startY: number) => {
-      if (startX + w > 7 || startY + h > 6) return false;
-      for (let r = 0; r < h; r++) {
-        for (let c = 0; c < w; c++) {
-          if (!shape || shape[r][c]) {
-            if (isOccupied(startX + c, startY + r)) return false;
-          }
-        }
-      }
-      return true;
-    };
-    for (let y = 0; y <= 6 - h; y++) {
-      for (let x = 0; x <= 7 - w; x++) {
-        if (canPlace(x, y)) return { x, y };
-      }
-    }
-    return null;
-  }, []);
+  const movement = useLooterMovement({
+    deviceId, apiUrl: API_URL, state, setState, notify,
+    dropItem: inventory.dropItem, setIsChallengeActive,
+    setEncounter, setShowCurseModal
+  });
 
-  const pickupItem = useCallback(async (spawnId: string, gridX?: number, gridY?: number, force: boolean = false) => {
-    if (!deviceId) return false;
-    try {
-      const res = await fetch(`${API}/api/looter/pickup`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId, force }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 400) {
-          showNotification(data.error || 'Quá xa để nhặt', 'error');
-          loadWorldItems(true);
-          return false;
-        }
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-      if (data.success) {
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        if (data.type === 'item' || data.type === 'bag') {
-          const item = data.item || data.bag;
-          const activeBag = state.bags[0];
-          let slot = (gridX !== undefined && gridY !== undefined) ? { x: gridX, y: gridY } : null;
-          if (slot == null) {
-            slot = findEmptySlotFor(item, state.inventory, activeBag);
-          }
-          const newItem = { 
-            ...item, 
-            gridX: slot ? slot.x : -1, 
-            gridY: slot ? slot.y : -1,
-            stagingX: slot ? undefined : Math.random() * 200,
-            stagingY: slot ? undefined : Math.random() * 300
-          };
-          setState(prev => ({
-            ...prev,
-            inventory: Array.isArray(data.inventory) ? data.inventory : [...prev.inventory, newItem],
-            cursePercent: typeof data.cursePercent === 'number' ? data.cursePercent : prev.cursePercent
-          }));
-          if (slot == null) {
-            showNotification(`Đã nhặt ${item.name} (Vào hàng chờ)`, 'info');
-          } else {
-            showNotification(`Đã nhặt ${item.name}`, 'success');
-          }
-        }
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        return true;
-      }
-      return false;
-    } catch (err: any) {
-      console.error('[Looter Pickup]', err);
-      showNotification(err.message || 'Lỗi khi nhặt vật phẩm', 'error');
-      loadWorldItems(true);
-      return false;
-    }
-  }, [deviceId, API, state.inventory, state.bags, findEmptySlotFor, loadWorldItems, showNotification]);
+  // 3. Actions Orchestrator
+  const actionsValue: LooterGameActions = useMemo(() => ({
+    setIsFortressStorageOpen,
+    openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
+      setFortressStorageMode(mode);
+      setIsFortressStorageOpen(true);
+    },
+    setPickupRewardItem, setEncounter, setCombatResult,
+    setShowCurseModal, setShowMinigame, setIsLooterGameMode,
+    openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
+    setOpenBackpackHandler,
+    setIsItemDragging, setIsChallengeActive, setPreGeneratedMinigame,
+    
+    // Actions from Hooks wrapped in Queue
+    initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
+    loadState: () => runInQueue(stateManager.loadState),
+    moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
+    pickupItem: (sid, gx, gy) => runInQueue(() => inventory.pickupItem(sid, gx, gy)),
+    inflictMinigamePenalty: (sid) => runInQueue(() => stateManager.inflictMinigamePenalty(sid)),
+    saveInventory: (inv) => runInQueue(() => inventory.saveInventory(inv)),
+    saveStorage: (st) => runInQueue(() => inventory.saveStorage(st)),
+    saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
+    equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),
+    executeCombat: (id, inv, hp, bags) => runInQueue(() => stateManager.executeCombat(id, inv, hp, bags)),
+    curseChoice: (choice) => runInQueue(() => stateManager.curseChoice(choice)),
+    sellItems: (uids) => runInQueue(() => inventory.sellItems(uids)),
+    storeItems: (uids, act, mode, gx, gy) => runInQueue(() => inventory.storeItems(uids, act, mode, gx, gy)),
+    destroyItem: (sid) => runInQueue(() => inventory.destroyItem(sid)),
+    setWorldTier: (tier) => runInQueue(() => stateManager.setWorldTier(tier)),
+    dropItem: (uid) => runInQueue(() => inventory.dropItem(uid)),
+    returnToFortress: () => runInQueue(movement.returnToFortress),
+    loadWorldItems: (force) => runInQueue(() => stateManager.loadWorldItems(force)),
+    
+    showNotification, setDraggingItem, setDraggingMapItem,
+    setShowDiscardModal, confirmDiscard: () => runInQueue(inventory.confirmDiscard)
+  }), [
+    stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification
+  ]);
 
-  const moveBoat = useCallback(async (toLat: number, toLng: number) => {
-    if (!deviceId) return { curseTrigger: false, encounter: null };
-    const stagingItems = state.inventory.filter(i => (i.gridX ?? -1) < 0);
-    if (stagingItems.length > 0) {
-      for (const item of stagingItems) {
-        await dropItem(item.uid);
-      }
-      showNotification(`${stagingItems.length} vật phẩm thừa đã rơi xuống biển tại đây.`, 'info');
-    }
-    setIsMoving(true);
-    try {
-      const res = await fetch(`${API}/api/looter/move`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, toLat, toLng }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        const nextLat = data.currentLat ?? toLat;
-        const nextLng = data.currentLng ?? toLng;
-        setState(prev => ({
-          ...prev,
-          currentLat: nextLat,
-          currentLng: nextLng,
-          cursePercent: data.cursePercent,
-          distance: prev.distance + (data.distMeters || 0),
-        }));
-        if (data.speedViolation) {
-            notify(`Di chuyển quá nhanh! Lời nguyền tăng +${data.penaltyCurse.toFixed(0)}%`, 'error');
-        }
-        const distToFortress = getDistanceMeters(nextLat, nextLng, state.fortressLat, state.fortressLng);
-        setIsChallengeActive(distToFortress > FORTRESS_INTERACTION_METERS);
-        if (data.curseTrigger && data.encounter) {
-          setEncounter(data.encounter);
-          setShowCurseModal(true);
-          return { curseTrigger: true, encounter: data.encounter };
-        }
-      }
-      return { curseTrigger: false, encounter: null };
-    } catch (err) {
-      console.error('[LooterGame] moveBoat error:', err);
-      return { curseTrigger: false, encounter: null };
-    } finally { setIsMoving(false); }
-  }, [deviceId, API, state.inventory, state.fortressLat, state.fortressLng, dropItem, notify]);
+  const stateValue: LooterGameStateContextType = useMemo(() => ({
+    state,
+    worldItems, pickupRewardItem,
+    encounter, combatResult,
+    showCurseModal, showMinigame,
+    isLooterGameMode, isItemDragging, isChallengeActive,
+    isFortressStorageOpen, fortressStorageMode,
+    globalSettings, isMoving: movement.isMoving, isSyncing,
+    draggingItem, draggingMapItem,
+    showDiscardModal, dragPointerPos
+  }), [
+    state, worldItems, pickupRewardItem, encounter, combatResult,
+    showCurseModal, showMinigame, isLooterGameMode, isItemDragging,
+    isChallengeActive, isFortressStorageOpen, fortressStorageMode,
+    globalSettings, movement.isMoving, isSyncing, draggingItem, draggingMapItem,
+    showDiscardModal, dragPointerPos
+  ]);
 
-  const loadState = useCallback(async () => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/state?deviceId=${encodeURIComponent(deviceId)}`);
-      const data = await res.json();
-      if (data.success && data.state) {
-        const s = data.state;
-        let bags: BagItem[] = Array.isArray(s.bags) ? s.bags : [];
-        let didRepairBags = false;
-        if (bags.length > 0) {
-          const { bag, repaired } = repairBagData(bags[0]);
-          bags = [bag, ...bags.slice(1)];
-          if (repaired) didRepairBags = true;
-        } else {
-          const bag = createStarterBag();
-          bags = [bag];
-          didRepairBags = true;
-        }
-        if (didRepairBags) {
-          saveBags(bags);
-        }
-        setState({
-          initialized: s.fortress_lat != null,
-          fortressLat: s.fortress_lat, fortressLng: s.fortress_lng,
-          currentLat: s.current_lat, currentLng: s.current_lng,
-          baseMaxHp: s.base_max_hp || 100, currentHp: s.current_hp || 100,
-          moveSpeed: s.move_speed || 1.0, inventoryWidth: s.inventory_width || 6, inventoryHeight: s.inventory_height || 4,
-          cursePercent: s.curse_percent || 0, looterGold: Number(s.looter_gold || 0), 
-          worldTier: s.world_tier ?? 0,
-          inventory: (() => { try { return JSON.parse(s.inventory_json || '[]'); } catch(e) { return []; } })(),
-          storage: (() => { try { return JSON.parse(s.storage_json || '[]'); } catch(e) { return []; } })(),
-          bags,
-          distance: s.distance || 0, energyMax: s.energy_max || 100, energyCurrent: s.energy_current || 100,
-          activeCurses: s.activeCurses || {},
-        });
-        if (data.settings) setGlobalSettings(data.settings);
-        const distToFortress = getDistanceMeters(s.current_lat, s.current_lng, s.fortress_lat, s.fortress_lng);
-        setIsChallengeActive(distToFortress > FORTRESS_INTERACTION_METERS || (s.world_tier ?? 0) > 0);
-      }
-    } catch (err) { console.error('[LooterGame] loadState error:', err); }
-  }, [deviceId, API, saveBags]);
-
-  const initGame = useCallback(async (lat: number, lng: number) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, lat, lng }),
-      });
-      await res.json();
-      await loadState();
-    } catch (err) { console.error('[LooterGame] initGame error:', err); }
-  }, [deviceId, API, loadState]);
-
-  const equipBag = useCallback(async (itemUid: string) => {
-    const itemToEquip = state.inventory.find(i => i.uid === itemUid);
-    if (!itemToEquip || itemToEquip.type !== 'bag') {
-      notify('Vật phẩm này không phải là Balo', 'error');
-      return;
-    }
-    const currentBag = state.bags[0];
-    const newBagData = (itemToEquip as any).bagData || itemToEquip; 
-    const newBag: BagItem = {
-        uid: itemToEquip.uid,
-        name: itemToEquip.name,
-        icon: itemToEquip.icon,
-        rarity: itemToEquip.rarity,
-        width: newBagData.width || 4,
-        height: newBagData.height || 4,
-        shape: newBagData.shape || Array.from({ length: 4 }, () => Array(4).fill(true)),
-        gridX: currentBag.gridX,
-        gridY: currentBag.gridY
-    };
-    const itemsToKeep: LooterItem[] = [];
-    const oldItems = state.inventory.filter(i => i.uid !== itemUid);
-    for (const item of oldItems) {
-      if (item.gridX < 0) {
-        itemsToKeep.push(item);
-        continue;
-      }
-      const canFit = (
-          item.gridX >= newBag.gridX && 
-          item.gridX + (item.gridW || 1) <= newBag.gridX + newBag.width &&
-          item.gridY >= newBag.gridY && 
-          item.gridY + (item.gridH || 1) <= newBag.gridY + newBag.height
-      );
-      if (canFit) {
-        itemsToKeep.push(item);
-      } else {
-        itemsToKeep.push({ 
-          ...item, 
-          gridX: -1, gridY: -1,
-          stagingX: Math.random() * 200,
-          stagingY: Math.random() * 300
-        });
-      }
-    }
-    if (currentBag) {
-      const oldBagAsItem: LooterItem = {
-        uid: `bag_${Date.now()}`,
-        id: 'looter_bag',
-        name: currentBag.name,
-        icon: currentBag.icon,
-        rarity: currentBag.rarity,
-        type: 'bag',
-        gridX: -1, gridY: -1,
-        stagingX: Math.random() * 200,
-        stagingY: Math.random() * 300
-      };
-      itemsToKeep.push(oldBagAsItem);
-    }
-    await saveInventory(itemsToKeep);
-    await saveBags([newBag]);
-    notify(`Đã trang bị ${newBag.name}`, 'success');
-  }, [state.inventory, state.bags, saveInventory, saveBags, notify]);
-
-  const saveStorage = useCallback(async (storage: LooterItem[]) => {
-    if (!deviceId) return;
-    let previousStorage: LooterItem[] = [];
-    setState(prev => {
-      previousStorage = prev.storage;
-      return { ...prev, storage };
-    });
-    try {
-      const res = await fetch(`${API}/api/looter/storage_layout`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, storage }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-    } catch (err) { 
-      console.error('[LooterGame] saveStorage error:', err);
-      setState(prev => ({ ...prev, storage: previousStorage }));
-    }
-  }, [deviceId, API]);
-
-  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-    try {
-      const res = await fetch(`${API}/api/looter/minigame-lose`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        return true;
-      }
-      return false;
-    } catch (err) { console.error('[LooterGame] minigamePenalty error:', err); return false; }
-  }, [deviceId, API]);
-
-  const destroyItem = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-    try {
-      const res = await fetch(`${API}/api/looter/destroy-item`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, spawnId }),
-      });
-      const data = await res.json();
-      return !!data.success;
-    } catch (err) { console.error('[LooterGame] destroyItem error:', err); return false; }
-  }, [deviceId, API]);
-
-  const openBackpack = useCallback(() => {
-    if (openBackpackHandler) openBackpackHandler();
-  }, [openBackpackHandler]);
-
-  const onWinMinigame = useCallback(async (worldItem: WorldItem) => {
-    await pickupItem(worldItem.spawnId, undefined, undefined, true);
-  }, [pickupItem]);
-
-  const confirmDiscard = useCallback(async () => {
-    const stagingItems = state.inventory.filter(i => i.gridX < 0);
-    for (const item of stagingItems) {
-      await dropItem(item.uid);
-    }
-    setShowDiscardModal(false);
-    notify(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
-  }, [state.inventory, dropItem, notify]);
-
-  const openFortressStorage = useCallback((mode: StorageAccessMode = 'fortress') => {
-    setFortressStorageMode(mode);
-    setIsFortressStorageOpen(true);
-  }, []);
-
-  const executeCombat = useCallback(async (opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
-    if (!deviceId) throw new Error('No deviceId');
-    try {
-      const res = await fetch(`${API}/api/looter/combat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, opponentId, opponentInventory, opponentHp, opponentBags }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        return data.result;
-      }
-      throw new Error(data.error || 'Combat failed');
-    } catch (err) {
-      console.error('[LooterGame] executeCombat error:', err);
-      throw err;
-    }
-  }, [deviceId, API, notify]);
-
-  const curseChoice = useCallback(async (choice: 'flee' | 'challenge') => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/curse-choice`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, choice }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        if (choice === 'flee') notify('Bạn đã bỏ trốn thành công', 'info');
-        await loadState();
-      }
-    } catch (err) { console.error('[LooterGame] curseChoice error:', err); }
-  }, [deviceId, API, loadState, notify]);
-
-  const sellItems = useCallback(async (itemUids: string[]) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/sell`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, itemUids }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        notify(`Đã bán vật phẩm, thu về ${data.goldEarned} vàng`, 'success');
-        await loadState();
-      }
-    } catch (err) { console.error('[LooterGame] sellItems error:', err); }
-  }, [deviceId, API, loadState, notify]);
-
-  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/store`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
-        await loadState();
-      }
-    } catch (err) { console.error('[LooterGame] storeItems error:', err); }
-  }, [deviceId, API, loadState, notify]);
-
-  const setWorldTier = useCallback(async (tier: number) => {
-    console.log(`[LooterGame] Calling setWorldTier: ${tier}`);
-    if (!deviceId) return;
-    try {
-      const endpoint = `${API}/api/looter/set-tier`;
-      console.log(`[LooterGame] Fetching: ${endpoint}`);
-      const res = await fetch(endpoint, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, tier }),
-      });
-      const data = await res.json();
-      console.log(`[LooterGame] setWorldTier response:`, data);
-      if (data.success) {
-        setState(prev => ({ ...prev, worldTier: tier }));
-        setIsChallengeActive(true); // ACTIVATE CHALLENGE UI
-        notify(`Đã chuyển sang Tier ${tier}`, 'success');
-        
-        // Reload world items for the new tier
-        setTimeout(() => loadWorldItems(true), 500);
-      }
-    } catch (err) { console.error('[LooterGame] setWorldTier error:', err); }
-  }, [deviceId, API, notify]);
-
-  const returnToFortress = useCallback(async () => {
-    if (!deviceId) return;
-    try {
-      const res = await fetch(`${API}/api/looter/return-fortress`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        notify('Đã quay về Thành trì', 'success');
-        await loadState();
-      }
-    } catch (err) { console.error('[LooterGame] returnToFortress error:', err); }
-  }, [deviceId, API, loadState, notify]);
-
-  // Use Effects
+  // 4. Effects
+  
+  // Chuẩn bị Minigame
   useEffect(() => {
     if (!isLooterGameMode) return;
     const prepareMinigame = () => {
@@ -677,12 +170,13 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     return () => clearInterval(interval);
   }, [isLooterGameMode, preGeneratedMinigame, state.worldTier]);
 
+  // Xử lý kéo vật phẩm từ bản đồ
   useEffect(() => {
     if (!draggingMapItem) return;
     const handlePointerMove = (e: PointerEvent) => setDragPointerPos({ x: e.clientX, y: e.clientY });
     const handlePointerUp = (e: PointerEvent) => {
       if (e.clientY > window.innerHeight * 0.65) {
-        pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
+        actionsValue.pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
         notify(`Đang nhặt ${draggingMapItem.item.name}...`, 'info');
       }
       setDraggingMapItem(null);
@@ -693,77 +187,15 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [draggingMapItem, pickupItem, notify]);
-
-  const stateValue: LooterGameStateContextType = useMemo(() => ({
-    state,
-    worldItems, pickupRewardItem,
-    encounter, combatResult,
-    showCurseModal, showMinigame,
-    isLooterGameMode, isItemDragging, isChallengeActive,
-    isFortressStorageOpen, fortressStorageMode,
-    globalSettings, isMoving, isSyncing,
-    draggingItem, draggingMapItem,
-    showDiscardModal, dragPointerPos
-  }), [
-    state, worldItems, pickupRewardItem, encounter, combatResult,
-    showCurseModal, showMinigame, isLooterGameMode, isItemDragging,
-    isChallengeActive, isFortressStorageOpen, fortressStorageMode,
-    globalSettings, isMoving, isSyncing, draggingItem, draggingMapItem,
-    showDiscardModal, dragPointerPos
-  ]);
-
-  const actionsValue: LooterGameActions = useMemo(() => ({
-    setIsFortressStorageOpen, openFortressStorage,
-    setPickupRewardItem, setEncounter, setCombatResult,
-    setShowCurseModal, setShowMinigame, setIsLooterGameMode,
-    openBackpack, setOpenBackpackHandler,
-    setIsItemDragging, setIsChallengeActive, setPreGeneratedMinigame,
-    initGame: (lat, lng) => runInQueue(() => initGame(lat, lng)),
-    loadState: () => runInQueue(loadState),
-    moveBoat: (lat, lng) => runInQueue(() => moveBoat(lat, lng)),
-    pickupItem: (sid, gx, gy) => runInQueue(() => pickupItem(sid, gx, gy)),
-    inflictMinigamePenalty: (sid) => runInQueue(() => inflictMinigamePenalty(sid)),
-    saveInventory: (inv) => runInQueue(() => saveInventory(inv)),
-    saveStorage: (st) => runInQueue(() => saveStorage(st)),
-    saveBags: (bags) => runInQueue(() => saveBags(bags)),
-    equipBag: (uid) => runInQueue(() => equipBag(uid)),
-    executeCombat: (id, inv, hp, bags) => runInQueue(() => executeCombat(id, inv, hp, bags)),
-    curseChoice: (choice) => runInQueue(() => curseChoice(choice)),
-    sellItems: (uids) => runInQueue(() => sellItems(uids)),
-    storeItems: (uids, act, mode, gx, gy) => runInQueue(() => storeItems(uids, act, mode, gx, gy)),
-    destroyItem: (sid) => runInQueue(() => destroyItem(sid)),
-    setWorldTier: (tier) => runInQueue(() => setWorldTier(tier)),
-    dropItem: (uid) => runInQueue(() => dropItem(uid)),
-    returnToFortress: () => runInQueue(returnToFortress),
-    loadWorldItems: (force) => runInQueue(() => loadWorldItems(force)),
-    showNotification, setDraggingItem, setDraggingMapItem,
-    setShowDiscardModal, confirmDiscard: () => runInQueue(confirmDiscard)
-  }), [
-    setIsFortressStorageOpen, openFortressStorage, setPickupRewardItem,
-    setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
-    setIsLooterGameMode, openBackpack, setOpenBackpackHandler,
-    setIsItemDragging, setIsChallengeActive, setPreGeneratedMinigame,
-    initGame, loadState, moveBoat, pickupItem, inflictMinigamePenalty,
-    saveInventory, saveStorage, saveBags, equipBag, executeCombat,
-    curseChoice, sellItems, storeItems, destroyItem, setWorldTier,
-    dropItem, returnToFortress, loadWorldItems, showNotification,
-    setDraggingItem, setDraggingMapItem, setShowDiscardModal, confirmDiscard,
-    runInQueue
-  ]);
+  }, [draggingMapItem, actionsValue, notify]);
 
   // Heartbeat Synchronization
   useEffect(() => {
     if (!deviceId || !isLooterGameMode) return;
-    
-    // Initial load
     actionsValue.loadState();
-    
     const interval = setInterval(() => {
-      console.log('[Looter] Heartbeat sync...');
       actionsValue.loadState();
     }, SYNC_HEARTBEAT_MS);
-    
     return () => clearInterval(interval);
   }, [deviceId, isLooterGameMode, actionsValue]);
 
