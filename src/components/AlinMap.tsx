@@ -242,8 +242,12 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             />
 
             <MapCanvas
+                position={geo.position} isConsentOpen={geo.isConsentOpen}
                 nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                myUserId={resolvedMyUserId} user={user}
                 myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
+                myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isConnecting={wsCtx.isConnecting}
+                isDesktop={nav.isDesktop}
                 currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                 galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
                 filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
@@ -253,7 +257,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 mapMode={nav.mapMode}
                 setContextMenu={setContextMenu}
                 isLooterGameMode={isLooterGameMode}
-                looterState={looterStateObj}
                 isLooterLoading={nav.isLooterLoading}
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
