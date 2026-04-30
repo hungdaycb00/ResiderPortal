@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown } from 'lucide-react';
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
-import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
+import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 
 const TIER_LABELS = [
