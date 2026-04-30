@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Package, Swords, Coins, Heart, Zap, Wind, Skull, Anchor, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown } from 'lucide-react';
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
@@ -31,7 +31,7 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, openFortressStorage, isChallengeActive, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [externalHoverCell, setExternalHoverCell] = useState<{ x: number, y: number } | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
@@ -90,29 +90,21 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         {/* Collapse Button - Top Center */}
         <button 
           onClick={() => (window as any).collapseLooterTab?.()}
-          className={`absolute ${isChallengeActive ? 'top-10' : 'top-1'} left-1/2 -translate-x-1/2 z-[70] p-1 text-white/40 hover:text-white transition-all pointer-events-auto`}
+          className="absolute top-1 left-1/2 -translate-x-1/2 z-[70] p-1 text-white/40 hover:text-white transition-colors pointer-events-auto"
         >
           <ChevronDown className="w-5 h-5" />
         </button>
 
-        {/* Challenge Banner - Top Snap */}
-        {isChallengeActive && (
-          <div className="absolute top-0 left-0 right-0 z-[80] px-5 py-2.5 bg-amber-500/10 backdrop-blur-md border-b border-amber-500/20 flex items-center justify-center gap-2">
-             <Swords className="w-3.5 h-3.5 text-amber-500" />
-             <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Đang trong thử thách Tier {state.worldTier}</p>
-          </div>
-        )}
-
         {/* Left Floating Controls: Gold (Top), Bag (Bottom) - Transparent Style */}
         <div className="absolute inset-y-4 left-0 flex flex-col justify-between z-[60] pointer-events-none">
           {/* Gold - Icon & Text only */}
-          <div className={`flex items-center gap-1.5 px-3 py-1 pointer-events-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-all ${isChallengeActive ? 'mt-8' : 'mt-0'}`}>
+          <div className="flex items-center gap-1.5 px-3 py-1 pointer-events-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             <Coins className="h-4 w-4 text-amber-500" />
             <span className="text-[13px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
           </div>
 
           {/* Bag Slot - Floating at Bottom Left */}
-          <div className="px-1.5 pb-20 pointer-events-auto">
+          <div className="px-1.5 pb-2 pointer-events-auto">
             <div className={`relative h-12 w-12 rounded-2xl border-2 border-l-0 flex items-center justify-center shadow-[4px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all hover:scale-110 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}>
                <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
                <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-cyan-500 rounded-full border-2 border-[#121417] flex items-center justify-center">
@@ -123,7 +115,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         </div>
 
         {/* Right Floating Stats: Vertical column snapped to right edge - Transparent Style */}
-        <div className={`absolute ${isChallengeActive ? 'top-12' : 'top-4'} right-0 flex flex-col gap-3 z-[60] pointer-events-none items-end pr-2 transition-all`}>
+        <div className="absolute top-4 right-0 flex flex-col gap-3 z-[60] pointer-events-none items-end pr-2">
           <div className="flex items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             <span className="text-[12px] font-black">{state.currentHp}</span>
             <Heart className="h-4 w-4 text-red-500" />
@@ -164,8 +156,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
         </div>
       </div>
 
-      {/* Empty space to clear navigation bar */}
-      <div className="h-20 shrink-0" />
+
       {draggingMapItem && createPortal(
         <div 
           className="fixed pointer-events-none z-[999999] opacity-90 scale-110 shadow-2xl" 

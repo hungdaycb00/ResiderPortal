@@ -113,7 +113,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     className={`absolute top-0 left-0 right-0 h-full ${isWhiteBg ? 'bg-white' : 'bg-[#121417]'} rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] md:border-r ${isWhiteBg ? 'border-gray-100' : 'border-white/5'} flex flex-col pointer-events-auto`}
                     variants={{
                         full: { 
-                            y: 0, 
+                            y: (!isDesktop && mainTab === 'backpack') ? '60%' : 0, 
                             x: 0 
                         },
                         collapsed: {
