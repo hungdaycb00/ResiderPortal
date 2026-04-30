@@ -505,6 +505,110 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
   }, [state.inventory, dropItem, showNotification]);
 
+  const openFortressStorage = useCallback((mode: StorageAccessMode = 'fortress') => {
+    setFortressStorageMode(mode);
+    setIsFortressStorageOpen(true);
+  }, []);
+
+  const executeCombat = useCallback(async (opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) => {
+    if (!deviceId) throw new Error('No deviceId');
+    try {
+      const res = await fetch(`${API}/api/looter/combat`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, opponentId, opponentInventory, opponentHp, opponentBags }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCombatResult(data.result);
+        if (data.result.result === 'win') {
+            showNotification('Bạn đã chiến thắng!', 'success');
+        } else {
+            showNotification('Bạn đã thất bại...', 'error');
+        }
+        return data.result;
+      }
+      throw new Error(data.error || 'Combat failed');
+    } catch (err) {
+      console.error('[LooterGame] executeCombat error:', err);
+      throw err;
+    }
+  }, [deviceId, API, showNotification]);
+
+  const curseChoice = useCallback(async (choice: 'flee' | 'challenge') => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/curse-choice`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, choice }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (choice === 'flee') showNotification('Bạn đã bỏ trốn thành công', 'info');
+        await loadState();
+      }
+    } catch (err) { console.error('[LooterGame] curseChoice error:', err); }
+  }, [deviceId, API, loadState, showNotification]);
+
+  const sellItems = useCallback(async (itemUids: string[]) => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/sell`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, itemUids }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(`Đã bán vật phẩm, thu về ${data.goldEarned} vàng`, 'success');
+        await loadState();
+      }
+    } catch (err) { console.error('[LooterGame] sellItems error:', err); }
+  }, [deviceId, API, loadState, showNotification]);
+
+  const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: StorageAccessMode = 'fortress', gridX?: number, gridY?: number) => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/storage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
+        await loadState();
+      }
+    } catch (err) { console.error('[LooterGame] storeItems error:', err); }
+  }, [deviceId, API, loadState, showNotification]);
+
+  const setWorldTier = useCallback(async (tier: number) => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/world-tier`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, tier }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setState(prev => ({ ...prev, worldTier: tier }));
+        showNotification(`Đã chuyển sang Tier ${tier}`, 'success');
+      }
+    } catch (err) { console.error('[LooterGame] setWorldTier error:', err); }
+  }, [deviceId, API, showNotification]);
+
+  const returnToFortress = useCallback(async () => {
+    if (!deviceId) return;
+    try {
+      const res = await fetch(`${API}/api/looter/return`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Đã quay về Thành trì', 'success');
+        await loadState();
+      }
+    } catch (err) { console.error('[LooterGame] returnToFortress error:', err); }
+  }, [deviceId, API, loadState, showNotification]);
+
   // Use Effects
   useEffect(() => {
     if (!isLooterGameMode) return;
@@ -544,7 +648,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   }, [draggingMapItem, pickupItem, showNotification]);
 
   const contextValue: any = {
-    ...state,
+    state,
     worldItems, pickupRewardItem, setPickupRewardItem,
     encounter, setEncounter, combatResult, setCombatResult,
     showCurseModal, setShowCurseModal, showMinigame, setShowMinigame,
@@ -556,7 +660,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isLootGameMode, setIsLootGameMode, preGeneratedMinigame, setPreGeneratedMinigame,
     openBackpack, setOpenBackpackHandler, draggingMapItem, setDraggingMapItem,
     dragPointerPos, showDiscardModal, setShowDiscardModal, confirmDiscard,
-    equipBag, saveBags
+    equipBag, saveBags, openFortressStorage, executeCombat, curseChoice,
+    sellItems, storeItems, setWorldTier, returnToFortress, showNotification
   };
 
   return (
