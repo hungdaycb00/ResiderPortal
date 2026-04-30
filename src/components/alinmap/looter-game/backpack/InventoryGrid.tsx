@@ -276,30 +276,42 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   return (
     <div className="flex flex-col gap-4 select-none touch-none w-full h-full relative" onPointerMove={(e) => { if (isItemDragging) e.stopPropagation(); updateDragPosition(e.clientX, e.clientY); }}>
-       {stagingItems.map((item) => (
-         <motion.div
-           key={item.uid}
-           className={`absolute z-20 cursor-grab active:cursor-grabbing ${activeDragItem?.uid === item.uid ? 'opacity-20' : ''}`}
-           style={{ 
-             left: (item as any).stagingX ?? (Math.random() * 50), 
-             top: (item as any).stagingY ?? (Math.random() * 50), 
-             width: (item.gridW || 1) * cellSize, 
-             height: (item.gridH || 1) * cellSize 
-           }}
-           onPointerDown={(e) => handleItemPointerDown(e, item)}
-           onDoubleClick={() => onItemDoubleClick?.(item)}
-         >
-           {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
-             if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
-             const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
-             return (
-               <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                 {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
-               </div>
-             );
-           }))}
-         </motion.div>
-       ))}
+        {stagingItems.map((item) => {
+          // Stable random position based on UID if staging coordinates are missing
+          const getStablePos = (seed: string, max: number) => {
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+            return Math.abs(hash % max);
+          };
+
+          const sX = (item as any).stagingX ?? getStablePos(item.uid + 'x', 150);
+          const sY = (item as any).stagingY ?? getStablePos(item.uid + 'y', 200);
+
+          return (
+            <motion.div
+              key={item.uid}
+              className={`absolute z-20 cursor-grab active:cursor-grabbing ${activeDragItem?.uid === item.uid ? 'opacity-20' : ''}`}
+              style={{ 
+                left: sX, 
+                top: sY, 
+                width: (item.gridW || 1) * cellSize, 
+                height: (item.gridH || 1) * cellSize 
+              }}
+              onPointerDown={(e) => handleItemPointerDown(e, item)}
+              onDoubleClick={() => onItemDoubleClick?.(item)}
+            >
+              {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
+                if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
+                const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
+                return (
+                  <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
+                    {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
+                  </div>
+                );
+              }))}
+            </motion.div>
+          );
+        })}
 
       <div className="w-full h-full flex items-center justify-center pointer-events-none">
         <div
