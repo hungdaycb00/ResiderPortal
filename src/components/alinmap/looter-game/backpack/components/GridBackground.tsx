@@ -28,27 +28,10 @@ const GridBackground: React.FC<GridBackgroundProps> = ({
           backgroundSize: `${cellSize}px ${cellSize}px`,
         }}
       />
-      {Array.from({ length: gridH }).map((_, r) =>
-        Array.from({ length: gridW }).map(
-          (_, c) =>
-            !bagOcc[r][c] && (
-              <div
-                key={`${r}-${c}`}
-                className="absolute"
-                style={{
-                  left: c * cellSize,
-                  top: r * cellSize,
-                  width: cellSize,
-                  height: cellSize,
-                  background: 'rgba(0,0,0,0.4)',
-                }}
-              />
-            )
-        )
-      )}
+      {/* Uniform Grid Background is handled by parent container's backgroundImage */}
       {activeBag && activeBag.gridX >= 0 && (
         <div
-          className="absolute rounded-xl border-2 border-cyan-500/10"
+          className="absolute rounded-xl border-2 border-cyan-500/20"
           style={{
             left: activeBag.gridX * cellSize + 2,
             top: activeBag.gridY * cellSize + 2,

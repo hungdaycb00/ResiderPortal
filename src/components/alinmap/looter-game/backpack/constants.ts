@@ -3,8 +3,8 @@ import type { BagItem } from './types';
 // ==========================================
 // Grid Dimensions
 // ==========================================
-export const MAX_GRID_W = 7;
-export const MAX_GRID_H = 6;
+export const MAX_GRID_W = 10;
+export const MAX_GRID_H = 7;
 export const FORTRESS_INTERACTION_METERS = 200;
 
 // ==========================================
