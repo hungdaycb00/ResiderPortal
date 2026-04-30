@@ -95,3 +95,16 @@ export const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boole
 
   return { bag, repaired };
 };
+
+export const getDistanceMeters = (
+  fromLat?: number | null,
+  fromLng?: number | null,
+  toLat?: number | null,
+  toLng?: number | null
+) => {
+  if (fromLat == null || fromLng == null || toLat == null || toLng == null) return Number.POSITIVE_INFINITY;
+  const cosLat = Math.max(0.25, Math.cos((fromLat * Math.PI) / 180));
+  const dLat = (toLat - fromLat) * 111000;
+  const dLng = (toLng - fromLng) * 111000 * cosLat;
+  return Math.sqrt(dLat * dLat + dLng * dLng);
+};
