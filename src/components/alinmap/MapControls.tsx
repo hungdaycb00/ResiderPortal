@@ -125,6 +125,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                 </div>
                 {isLooterGameMode && (
                     <div className="flex flex-col gap-2 mt-2">
+                        {/* Định vị Thuyền */}
                         <button
                             onClick={() => {
                                 if (handleCenterBoat) {
@@ -140,32 +141,22 @@ const MapControls: React.FC<MapControlsProps> = ({
                         >
                             <Navigation className="w-5 h-5 md:w-6 md:h-6 fill-current rotate-45" />
                         </button>
-                        {isChallengeActive ? (
-                            <button
-                                onClick={() => {
-                                    if (looterState?.fortressLat != null && looterState?.fortressLng != null) {
-                                        handleCenterTo(looterState.fortressLat, looterState.fortressLng);
-                                    } else {
-                                        handleCenter();
-                                    }
-                                }}
-                                className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"
-                                title="Về Thành trì"
-                            >
-                                <Home className="w-5 h-5 md:w-6 md:h-6" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={onOpenTierSelector}
-                                className="w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-emerald-900/40 flex items-center justify-center active:scale-95 transition-all border border-emerald-400/30 group"
-                                title="Bắt đầu chuyến đi"
-                            >
-                                <div className="relative">
-                                    <Navigation className="w-5 h-5 md:w-6 md:h-6 fill-current -rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full animate-ping" />
-                                </div>
-                            </button>
-                        )}
+
+                        {/* Định vị Thành trì - Luôn hiển thị */}
+                        <button
+                            onClick={() => {
+                                if (looterState?.fortressLat != null && looterState?.fortressLng != null) {
+                                    handleCenterTo(looterState.fortressLat, looterState.fortressLng);
+                                } else {
+                                    handleCenter();
+                                }
+                            }}
+                            className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"
+                            title="Định vị Thành trì"
+                        >
+                            <Home className="w-5 h-5 md:w-6 md:h-6" />
+                        </button>
+
                     </div>
                 )}
             </div>
