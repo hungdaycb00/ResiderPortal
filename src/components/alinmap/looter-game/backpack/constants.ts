@@ -23,29 +23,29 @@ export const BAG_DEFAULTS: Record<string, Partial<BagItem>> = {
 // Rarity Color Maps (shared across inventory UIs)
 // ==========================================
 export const RARITY_COLORS: Record<string, string> = {
-  common: 'bg-sky-100 border-sky-300 text-sky-900',
-  uncommon: 'bg-emerald-100 border-emerald-300 text-emerald-900',
-  rare: 'bg-amber-100 border-amber-400 text-amber-900',
-  legendary: 'bg-purple-100 border-purple-400 text-purple-900',
+  common: 'border-sky-500/40 text-sky-500',
+  uncommon: 'border-emerald-500/40 text-emerald-500',
+  rare: 'border-amber-500/40 text-amber-500',
+  legendary: 'border-purple-500/40 text-purple-500',
 };
 
 export const RARITY_COLORS_SIMPLE: Record<string, string> = {
-  common: 'bg-sky-100 border-sky-300',
-  uncommon: 'bg-emerald-100 border-emerald-300',
-  rare: 'bg-amber-100 border-amber-400',
-  legendary: 'bg-purple-100 border-purple-400',
+  common: 'bg-sky-500/10 border-sky-500/30',
+  uncommon: 'bg-emerald-500/10 border-emerald-500/30',
+  rare: 'bg-amber-500/10 border-amber-500/30',
+  legendary: 'bg-purple-500/10 border-purple-500/30',
 };
 
 export const RARITY_GLOW: Record<string, string> = {
   common: '',
-  uncommon: 'shadow-emerald-200/50',
-  rare: 'shadow-amber-300/60',
-  legendary: 'shadow-purple-400/60 animate-pulse',
+  uncommon: 'shadow-emerald-500/20',
+  rare: 'shadow-amber-500/20',
+  legendary: 'shadow-purple-500/20 animate-pulse',
 };
 
 export const BAG_BG: Record<string, string> = {
-  common: 'rgba(56, 189, 248, 0.2)',
-  uncommon: 'rgba(52, 211, 153, 0.2)',
-  rare: 'rgba(251, 191, 36, 0.2)',
-  legendary: 'rgba(192, 132, 252, 0.2)',
+  common: 'rgba(56, 189, 248, 0.05)',
+  uncommon: 'rgba(52, 211, 153, 0.05)',
+  rare: 'rgba(251, 191, 36, 0.05)',
+  legendary: 'rgba(192, 132, 252, 0.05)',
 };
