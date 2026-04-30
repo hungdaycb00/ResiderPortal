@@ -589,13 +589,17 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   }, [deviceId, API, loadState, notify]);
 
   const setWorldTier = useCallback(async (tier: number) => {
+    console.log(`[LooterGame] Calling setWorldTier: ${tier}`);
     if (!deviceId) return;
     try {
-      const res = await fetch(`${API}/api/looter/set-tier`, {
+      const endpoint = `${API}/api/looter/set-tier`;
+      console.log(`[LooterGame] Fetching: ${endpoint}`);
+      const res = await fetch(endpoint, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId, tier }),
       });
       const data = await res.json();
+      console.log(`[LooterGame] setWorldTier response:`, data);
       if (data.success) {
         setState(prev => ({ ...prev, worldTier: tier }));
         notify(`Đã chuyển sang Tier ${tier}`, 'success');
