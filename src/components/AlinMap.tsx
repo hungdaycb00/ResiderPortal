@@ -370,11 +370,24 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isOpen={isTierSelectorOpen}
                 onClose={() => setIsTierSelectorOpen(false)}
                 currentGold={looterState.looterGold}
-                onSelectTier={(tier) => {
-                    looterGame.setWorldTier(tier);
-                    setIsTierSelectorOpen(false);
-                    setIsLooterGameMode(true); // Đảm bảo chuyển sang mode Looter
-                    nav.handleCenterTo(looterState.fortressLat || 0, looterState.fortressLng || 0); // Về thuyền
+                onSelectTier={async (tier) => {
+                    console.log(`[AlinMap] onSelectTier triggered for Tier: ${tier}`);
+                    try {
+                        await looterGame.setWorldTier(tier);
+                        console.log(`[AlinMap] setWorldTier finished`);
+                        setIsTierSelectorOpen(false);
+                        setIsLooterGameMode(true);
+                        
+                        // Check if nav methods exist before calling
+                        if (nav && typeof nav.handleCenterTo === 'function') {
+                            console.log(`[AlinMap] Centering map to fortress...`);
+                            nav.handleCenterTo(looterState.fortressLat || 0, looterState.fortressLng || 0);
+                        } else {
+                            console.warn(`[AlinMap] nav.handleCenterTo is not available`, nav);
+                        }
+                    } catch (err) {
+                        console.error(`[AlinMap] onSelectTier error:`, err);
+                    }
                 }}
             />
         </div>

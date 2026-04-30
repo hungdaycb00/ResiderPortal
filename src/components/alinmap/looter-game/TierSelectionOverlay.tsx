@@ -20,6 +20,17 @@ const TIER_LABELS = [
 
 const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onClose, currentGold, onSelectTier }) => {
   const [selected, setSelected] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStart = async () => {
+    if (isLoading || !canAfford) return;
+    setIsLoading(true);
+    try {
+      await onSelectTier(selected);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const selectedData = TIER_LABELS[selected] || TIER_LABELS[1];
   const canAfford = currentGold >= selectedData.cost;
@@ -110,16 +121,22 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
 
             <div className="flex flex-col gap-3">
               <button
-                disabled={!canAfford}
-                onClick={() => onSelectTier(selected)}
+                disabled={!canAfford || isLoading}
+                onClick={handleStart}
                 className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-lg font-black transition-all active:scale-95 ${
-                  canAfford 
+                  canAfford && !isLoading
                   ? `bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-900/40`
                   : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5'
                 }`}
               >
-                <Swords className="w-5 h-5" />
-                {canAfford ? 'BẮT ĐẦU CHUYẾN ĐI' : 'KHÔNG ĐỦ VÀNG'}
+                {isLoading ? (
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Swords className="w-5 h-5" />
+                    {canAfford ? 'BẮT ĐẦU CHUYẾN ĐI' : 'KHÔNG ĐỦ VÀNG'}
+                  </>
+                )}
               </button>
               
               {!canAfford && (

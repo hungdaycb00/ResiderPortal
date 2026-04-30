@@ -602,6 +602,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       console.log(`[LooterGame] setWorldTier response:`, data);
       if (data.success) {
         setState(prev => ({ ...prev, worldTier: tier }));
+        setIsChallengeActive(true); // ACTIVATE CHALLENGE UI
         notify(`Đã chuyển sang Tier ${tier}`, 'success');
       }
     } catch (err) { console.error('[LooterGame] setWorldTier error:', err); }
@@ -671,6 +672,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     inflictMinigamePenalty, destroyItem, onWinMinigame, isMoving,
     draggingItem, setDraggingItem, isItemDragging, setIsItemDragging,
     isLootGameMode, setIsLootGameMode, preGeneratedMinigame, setPreGeneratedMinigame,
+    isChallengeActive, setIsChallengeActive,
     openBackpack, setOpenBackpackHandler, draggingMapItem, setDraggingMapItem,
     dragPointerPos, showDiscardModal, setShowDiscardModal, confirmDiscard,
     equipBag, saveBags, openFortressStorage, executeCombat, curseChoice,
