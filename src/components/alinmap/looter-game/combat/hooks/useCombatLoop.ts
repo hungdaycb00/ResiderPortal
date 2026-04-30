@@ -111,11 +111,11 @@ export function useCombatLoop({
             const entry = combatLogRef.current[currentIdxRef.current];
             const side = entry.attacker;
 
-            const gainA = (15 + myStats.eRegen) * (dt / 1000) * 8;
-            const gainB = (15 + botStats.eRegen) * (dt / 1000) * 8;
+            const gainA = (15 + (myStats.eRegen || 0)) * (dt / 1000) * 8;
+            const gainB = (15 + (botStats.eRegen || 0)) * (dt / 1000) * 8;
             
-            actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA);
-            actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB);
+            actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA || 100);
+            actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB || 100);
             setActionProgressA(actionProgressARef.current);
             setActionProgressB(actionProgressBRef.current);
 
@@ -132,6 +132,8 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
+                    
+                    // Reset năng lượng về 0 sau mỗi lần tấn công theo yêu cầu mới
                     actionProgressARef.current = 0;
                 }
             } else {
@@ -147,6 +149,8 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
+                    
+                    // Reset năng lượng đối thủ về 0 sau mỗi lần tấn công
                     actionProgressBRef.current = 0;
                 }
             }
@@ -182,10 +186,18 @@ export function useCombatLoop({
                 combatLogRef.current = result.combatLog;
                 startCombatLoop();
             } else {
+                // Cập nhật máu ngay cả khi không có log hoạt cảnh
+                setHpA(result.finalHp ?? 0);
+                if (result.result === 'win') setHpB(0);
+                
                 setCombatResult(result);
                 if (result.result === 'win') showNotification('Bạn đã chiến thắng!', 'success');
                 else showNotification('Bạn đã thất bại...', 'error');
-                setPhase('result');
+                
+                // Đợi một chút để user kịp nhìn thấy máu thay đổi rồi mới hiện popup
+                setTimeout(() => {
+                    setPhase('result');
+                }, 800);
             }
         } catch {
             setPhase('result');
