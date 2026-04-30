@@ -109,7 +109,7 @@ export function useLooterBoat({
         const currentLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
         const currentLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
 
-        looterGameCtx.worldItems.forEach((item: any) => {
+        worldItems.forEach((item: any) => {
             if (pickingItemsRef.current.has(item.spawnId)) return;
             const dLat = item.lat - currentLat;
             const dLng = item.lng - currentLng;
@@ -142,7 +142,7 @@ export function useLooterBoat({
                 const isRare = rarityStr === 'rare' || rarityStr === 'legendary' || item.isExpander;
 
                 if (isRare) {
-                    looterGameCtx.setShowMinigame(item);
+                    setShowMinigame(item);
                     pickingItemsRef.current.add(item.spawnId);
                     return;
                 }
@@ -201,19 +201,19 @@ export function useLooterBoat({
         const distLat = lat - boatLat;
         const distDeg = Math.sqrt(distLng * distLng + distLat * distLat);
 
-        const multiplier = looterGameCtx?.globalSettings?.speedMultiplier || 1.0;
+        const multiplier = globalSettings?.speedMultiplier || 1.0;
         const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
         const duration = baseDuration / multiplier;
 
-        const hasFloatingItems = looterGameCtx.state.inventory.some((i: any) => i.gridX < 0);
+        const hasFloatingItems = state.inventory.some((i: any) => i.gridX < 0);
         if (hasFloatingItems) {
             console.log('[MapMove] Blocked by floating items');
-            looterGameCtx.setShowDiscardModal(true);
+            setShowDiscardModal(true);
             return;
         }
 
-        const currentCurse = looterGameCtx.state.cursePercent || 0;
-        const curseGainMultiplier = looterGameCtx.state.activeCurses?.curse_gain ? 1.5 : 1;
+        const currentCurse = state.cursePercent || 0;
+        const curseGainMultiplier = state.activeCurses?.curse_gain ? 1.5 : 1;
         const distMeters = distDeg * 111000;
         const expectedCurseGain = (distMeters / 100) * curseGainMultiplier;
         const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
@@ -245,7 +245,7 @@ export function useLooterBoat({
                 panMoveYRef.current = null;
             }
         });
-        }, [isLooterGameMode, looterGameCtx, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+        }, [isLooterGameMode, looterState, looterActions, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
 
     const centerOnBoat = useCallback(() => {
         if (panMoveXRef.current) panMoveXRef.current.stop();
@@ -274,7 +274,7 @@ export function useLooterBoat({
             animate(panX, nextPanX, { duration: 0.45, ease: 'easeInOut' });
             animate(panY, nextPanY, { duration: 0.45, ease: 'easeInOut' });
         }
-    }, [boatOffsetX, boatOffsetY, panX, panY, looterGameCtx?.state?.currentLat, looterGameCtx?.state?.currentLng, myObfPos]);
+    }, [boatOffsetX, boatOffsetY, panX, panY, state?.currentLat, state?.currentLng, myObfPos]);
 
     const stopPanFollow = useCallback(() => {
         userDraggingRef.current = true;
@@ -308,7 +308,7 @@ export function useLooterBoat({
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isLooterGameMode || !looterGameCtx || !myObfPos) {
+        if (!isLooterGameMode || !looterState || !myObfPos) {
             pointerDownRef.current = null;
             return;
         }

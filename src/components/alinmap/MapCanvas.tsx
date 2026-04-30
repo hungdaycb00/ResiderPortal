@@ -327,7 +327,7 @@ const MapCanvas: React.FC<MapCanvasProps> = ({
                                     {/* Looter Game Entities */}
                                     {isLooterGameMode && (
                                         <LooterEntities
-                                            myObfPos={myObfPos} looterState={looterStateObj} looterGameCtx={looterState}
+                                            myObfPos={myObfPos} looterState={looterStateObj}
                                             boatTargetPin={looterBoat.boatTargetPin}
                                             boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                             executeMoveToExact={looterBoat.executeMoveToExact}
