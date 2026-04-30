@@ -189,8 +189,15 @@ export function useLooterBoat({
         }
 
         if (!isChallengeActive) {
-            showNotification?.('Bạn đang ở Thành Trì. Hãy mở Balo -> Thử Thách để xuất phát!', 'info');
-            return;
+            const distToFortress = Math.sqrt(
+                Math.pow(lat - (state.fortressLat || 0), 2) + 
+                Math.pow(lng - (state.fortressLng || 0), 2)
+            ) * 111000;
+            
+            if (distToFortress < 100) {
+                showNotification?.('Bạn đang ở Thành Trì. Hãy click ra xa hoặc mở Balo -> Thử Thách để xuất phát!', 'info');
+                return;
+            }
         }
 
         console.log('[MapMove] Target Coordinates:', { lat, lng });
