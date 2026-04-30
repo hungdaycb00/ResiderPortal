@@ -298,7 +298,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
             />
 
-            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} />
+            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
 
             <BottomSheet
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}

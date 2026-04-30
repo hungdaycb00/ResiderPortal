@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package } from 'lucide-react';
+import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package, ChevronUp, ChevronDown } from 'lucide-react';
 import { useSocial } from './features/social/context/SocialContext';
 import { useLooterGame } from './looter-game/LooterGameContext';
 
@@ -9,9 +9,10 @@ interface NavigationBarProps {
     isDesktop: boolean;
     handleTabClick: (tabId: string) => void;
     user?: any;
+    isSheetExpanded?: boolean;
 }
 
-const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user }) => {
+const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user, isSheetExpanded }) => {
     const { unreadCount } = useSocial();
     const { isItemDragging } = useLooterGame();
 
@@ -46,26 +47,37 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
             </div>
 
             {/* Mobile Bottom Navigation */}
-            <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pointer-events-auto">
-                <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <Navigation className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Explore</span>
-                </button>
-                <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <UserPlus className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Social</span>
-                </button>
-                <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <User className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Profile</span>
-                </button>
-                
-                {/* Looter Button */}
-                <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
-                    <Package className="w-5 h-5" />
-                    <span className="text-[9px] font-black uppercase">Looter</span>
-                </button>
-            </div>
+            {!isDesktop && mainTab === 'backpack' && isSheetExpanded ? (
+                <div className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
+                    <button 
+                        onClick={() => (window as any).collapseLooterTab?.()}
+                        className="bg-white/10 backdrop-blur-md border border-white/10 rounded-full p-1 shadow-lg text-white/40 hover:text-white transition-all"
+                    >
+                        <ChevronUp className="w-5 h-5" />
+                    </button>
+                </div>
+            ) : (
+                <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pointer-events-auto">
+                    <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <Navigation className="w-5 h-5" />
+                        <span className="text-[9px] font-black uppercase">Explore</span>
+                    </button>
+                    <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <UserPlus className="w-5 h-5" />
+                        <span className="text-[9px] font-black uppercase">Social</span>
+                    </button>
+                    <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <User className="w-5 h-5" />
+                        <span className="text-[9px] font-black uppercase">Profile</span>
+                    </button>
+                    
+                    {/* Looter Button */}
+                    <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
+                        <Package className="w-5 h-5" />
+                        <span className="text-[9px] font-black uppercase">Looter</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
