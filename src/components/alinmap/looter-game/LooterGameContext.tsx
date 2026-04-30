@@ -80,8 +80,8 @@ export interface LooterGameContextType {
   setShowCurseModal: (v: boolean) => void;
   showMinigame: WorldItem | null;
   setShowMinigame: (item: WorldItem | null) => void;
-  isLootGameMode: boolean;
-  setIsLootGameMode: (v: boolean) => void;
+  isLooterGameMode: boolean;
+  setIsLooterGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
   isItemDragging: boolean;

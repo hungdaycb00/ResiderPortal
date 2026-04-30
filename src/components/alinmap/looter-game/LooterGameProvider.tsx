@@ -92,7 +92,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [isMoving, setIsMoving] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
-  const [isLootGameMode, setIsLootGameMode] = useState(false);
   const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
   const [draggingMapItem, setDraggingMapItem] = useState<WorldItem | null>(null);
@@ -604,6 +603,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         setState(prev => ({ ...prev, worldTier: tier }));
         setIsChallengeActive(true); // ACTIVATE CHALLENGE UI
         notify(`Đã chuyển sang Tier ${tier}`, 'success');
+        
+        // Reload world items for the new tier
+        setTimeout(() => loadWorldItems(true), 500);
       }
     } catch (err) { console.error('[LooterGame] setWorldTier error:', err); }
   }, [deviceId, API, notify]);
@@ -661,22 +663,21 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     };
   }, [draggingMapItem, pickupItem, notify]);
 
-  const contextValue: any = {
+  const contextValue: LooterGameContextType = {
     state,
     worldItems, pickupRewardItem, setPickupRewardItem,
     encounter, setEncounter, combatResult, setCombatResult,
     showCurseModal, setShowCurseModal, showMinigame, setShowMinigame,
-    isLooterGameMode, setIsLooterGameMode, isChallengeActive,
+    isLooterGameMode, setIsLooterGameMode, isChallengeActive, setIsChallengeActive,
     isFortressStorageOpen, setIsFortressStorageOpen, fortressStorageMode, setFortressStorageMode,
     globalSettings, loadState, initGame, moveBoat, saveInventory, saveStorage, pickupItem, dropItem,
     inflictMinigamePenalty, destroyItem, onWinMinigame, isMoving,
     draggingItem, setDraggingItem, isItemDragging, setIsItemDragging,
-    isLootGameMode, setIsLootGameMode, preGeneratedMinigame, setPreGeneratedMinigame,
-    isChallengeActive, setIsChallengeActive,
+    preGeneratedMinigame, setPreGeneratedMinigame,
     openBackpack, setOpenBackpackHandler, draggingMapItem, setDraggingMapItem,
     dragPointerPos, showDiscardModal, setShowDiscardModal, confirmDiscard,
     equipBag, saveBags, openFortressStorage, executeCombat, curseChoice,
-    sellItems, storeItems, setWorldTier, returnToFortress, showNotification
+    sellItems, storeItems, setWorldTier, returnToFortress, showNotification, loadWorldItems
   };
 
   return (
