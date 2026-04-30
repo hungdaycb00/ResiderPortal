@@ -91,7 +91,6 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
         </filter>
       </svg>
 
-      <div className="absolute inset-0 bg-[#001424]" />
 
       {tiles.map((tile) => (
         <div

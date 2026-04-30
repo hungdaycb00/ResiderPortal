@@ -121,8 +121,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             onPointerCancel={handleMapPointerCancel}
                             onClickCapture={handleMapClickCapture}
                         >
-                            <MapGrid mapMode={mapMode} />
                             <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
+                            <MapGrid mapMode={mapMode} />
 
                             {myObfPos && (
                                 <>
