@@ -92,7 +92,13 @@ export function useCombatLoop({
             lastTime = now;
 
             if (currentIdxRef.current >= combatLogRef.current.length) {
-                if (!isAnimating) setPhase('result');
+                if (!isAnimating) {
+                    // Chỉ hiển thị kết quả khi đã xử lý xong log và không đang trong hoạt cảnh
+                    setTimeout(() => {
+                        setPhase('result');
+                    }, 1500); // Tăng lên 1.5s để cảm nhận rõ hơn cái chết của đối thủ
+                    return;
+                }
                 frameRef.current = requestAnimationFrame(loop);
                 return;
             }
@@ -105,8 +111,8 @@ export function useCombatLoop({
             const entry = combatLogRef.current[currentIdxRef.current];
             const side = entry.attacker;
 
-            const gainA = (15 + myStats.eRegen) * (dt / 1000) * 10;
-            const gainB = (15 + botStats.eRegen) * (dt / 1000) * 10;
+            const gainA = (15 + myStats.eRegen) * (dt / 1000) * 8;
+            const gainB = (15 + botStats.eRegen) * (dt / 1000) * 8;
             
             actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA);
             actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB);
@@ -117,8 +123,13 @@ export function useCombatLoop({
                 if (actionProgressARef.current >= maxActionBarA) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
-                    hpBRef.current = Math.max(0, entry.targetHp);
-                    setHpB(hpBRef.current);
+                    
+                    // HP giảm sau 400ms (khi vật phẩm bay tới gần đối thủ)
+                    setTimeout(() => {
+                        hpBRef.current = Math.max(0, entry.targetHp);
+                        setHpB(hpBRef.current);
+                    }, 400);
+
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
                     actionProgressARef.current = 0;
@@ -127,8 +138,13 @@ export function useCombatLoop({
                 if (actionProgressBRef.current >= maxActionBarB) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
-                    hpARef.current = Math.max(0, entry.targetHp);
-                    setHpA(hpARef.current);
+                    
+                    // HP giảm sau 400ms
+                    setTimeout(() => {
+                        hpARef.current = Math.max(0, entry.targetHp);
+                        setHpA(hpARef.current);
+                    }, 400);
+
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
                     actionProgressBRef.current = 0;
