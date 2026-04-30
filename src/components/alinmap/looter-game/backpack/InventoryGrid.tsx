@@ -25,10 +25,10 @@ interface InventoryGridProps {
 }
 
 const RARITY_COLORS: Record<string, string> = {
-  common: 'bg-sky-500/10 border-sky-500/30 text-sky-400',
-  uncommon: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-  rare: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-  legendary: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
+  common: 'border-sky-500/40 text-sky-500',
+  uncommon: 'border-emerald-500/40 text-emerald-500',
+  rare: 'border-amber-500/40 text-amber-500',
+  legendary: 'border-purple-500/40 text-purple-500',
 };
 
 const BAG_BG: Record<string, string> = {
@@ -302,13 +302,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             >
               {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
                 if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
-                const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
                 return (
-                  <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                    {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
-                  </div>
+                  <div 
+                    key={`${r}-${c}`} 
+                    className={`absolute border-[1.5px] rounded-lg bg-slate-100/95 shadow-sm ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} 
+                    style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }} 
+                  />
                 );
               }))}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-xl drop-shadow-md select-none">{item.icon}</span>
+              </div>
             </motion.div>
           );
         })}
@@ -339,13 +343,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             >
               {Array.from({ length: item.gridH || 1 }).map((_, r) => Array.from({ length: item.gridW || 1 }).map((_, c) => {
                 if (item.shape && (!item.shape[r] || !item.shape[r][c])) return null;
-                const isMain = (!item.shape && r === 0 && c === 0) || (item.shape && r === item.shape.findIndex(row => row.includes(1 || true)) && c === item.shape[r].indexOf(1 || true));
                 return (
-                  <div key={`${r}-${c}`} className={`absolute border-[1.5px] rounded-lg flex items-center justify-center ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                    {isMain && <span className="text-xl drop-shadow-md">{item.icon}</span>}
-                  </div>
+                  <div 
+                    key={`${r}-${c}`} 
+                    className={`absolute border-[1.5px] rounded-lg bg-slate-100/95 shadow-sm ${RARITY_COLORS[item.rarity] || RARITY_COLORS.common}`} 
+                    style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }} 
+                  />
                 );
               }))}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-xl drop-shadow-md select-none">{item.icon}</span>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -355,13 +363,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
         <div className="fixed pointer-events-none z-[999999] opacity-90 scale-110 shadow-2xl" style={{ left: dragPos.clientX - dragOffset.x, top: dragPos.clientY - dragOffset.y, width: (dragItem.gridW || 1) * cellSize, height: (dragItem.gridH || 1) * cellSize }}>
           {Array.from({ length: dragItem.gridH || 1 }).map((_, r) => Array.from({ length: dragItem.gridW || 1 }).map((_, c) => {
             if (dragItem.shape && (!dragItem.shape[r] || !dragItem.shape[r][c])) return null;
-            const isMain = (!dragItem.shape && r === 0 && c === 0) || (dragItem.shape && r === dragItem.shape.findIndex(row => row.includes(1 || true)) && c === dragItem.shape[r].indexOf(1 || true));
             return (
-              <div key={`${r}-${c}`} className={`absolute border-2 rounded-lg flex items-center justify-center ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`} style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}>
-                {isMain && <span className="text-3xl drop-shadow-2xl">{dragItem.icon}</span>}
-              </div>
+              <div 
+                key={`${r}-${c}`} 
+                className={`absolute border-2 rounded-lg bg-slate-100/95 shadow-lg ${RARITY_COLORS[dragItem.rarity] || RARITY_COLORS.common}`} 
+                style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }} 
+              />
             );
           }))}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-3xl drop-shadow-2xl select-none">{dragItem.icon}</span>
+          </div>
         </div>,
         document.body
       )}

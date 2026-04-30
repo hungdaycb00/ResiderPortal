@@ -57,7 +57,17 @@ export function useLooterInventory({
       const data = await looterApi.dropItem(apiUrl, deviceId, itemUid);
       if (data.success) {
         notify('Đã ném vật phẩm ra biển', 'info');
-        setTimeout(() => loadWorldItems(true), 500);
+        
+        // Cập nhật lại ID thật từ server cho item vừa ném
+        if (data.spawnId && droppedItem) {
+          setWorldItems(prev => prev.map(wi => 
+            wi.spawnId.startsWith('temp_') && wi.item.uid === itemUid 
+            ? { ...wi, spawnId: data.spawnId } 
+            : wi
+          ));
+        }
+
+        setTimeout(() => loadWorldItems(true), 1000); // Đợi 1s để DB ổn định rồi mới refresh
       }
     } catch (err) {
       console.error('[LooterGame] dropItem error:', err);
