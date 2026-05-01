@@ -3,7 +3,6 @@ import { animate, useMotionValue, MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
-import { useAutoPickup } from '../looter-game/hooks/useAutoPickup';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
 
 interface UseSeaBoatParams {
@@ -30,7 +29,7 @@ export function useLooterBoat({
     const { 
         state, worldItems, isChallengeActive, showMinigame, 
         isFortressStorageOpen, encounter, showCurseModal, combatResult,
-        pickupRewardItem, globalSettings
+        globalSettings
     } = looterState;
     
     const { 
@@ -82,7 +81,7 @@ export function useLooterBoat({
             const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
 
             // Bán kính nhặt đồ (có tính đến lời nguyền phóng to thuyền nếu có)
-            const boatScaleStack = looterState.activeCurses?.boat_scale || 0;
+            const boatScaleStack = state?.activeCurses?.boat_scale || 0;
             const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
 
             for (const item of worldItems) {
@@ -108,7 +107,7 @@ export function useLooterBoat({
 
         const interval = setInterval(checkPickup, 300); // Tăng tần suất quét lên 300ms
         return () => clearInterval(interval);
-    }, [isLooterGameMode, isChallengeActive, worldItems, myObfPos, boatOffsetX, boatOffsetY, showMinigame, encounter, combatResult, showCurseModal, setShowMinigame, looterActions, looterState.activeCurses]);
+    }, [isLooterGameMode, isChallengeActive, worldItems, myObfPos, boatOffsetX, boatOffsetY, showMinigame, encounter, combatResult, showCurseModal, setShowMinigame, looterActions, state?.activeCurses]);
 
     // Xóa pending khi worldItems thay đổi (vật phẩm đã mất khỏi map)
     useEffect(() => {
