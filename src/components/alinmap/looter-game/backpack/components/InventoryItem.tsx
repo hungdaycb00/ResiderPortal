@@ -7,6 +7,8 @@ interface InventoryItemProps {
   item: LooterItem;
   cellSize: number;
   isDragging?: boolean;
+  isGhost?: boolean;
+  isInvalid?: boolean;
   onPointerDown?: (e: React.PointerEvent, item: LooterItem) => void;
   onDoubleClick?: (item: LooterItem) => void;
   style?: React.CSSProperties;
@@ -17,6 +19,8 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   item,
   cellSize,
   isDragging = false,
+  isGhost = false,
+  isInvalid = false,
   onPointerDown,
   onDoubleClick,
   style,
@@ -24,7 +28,11 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
 }) => {
   return (
     <motion.div
-      className={`absolute z-20 cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-20' : ''} rounded-xl overflow-hidden border-2 shadow-md ${RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20'} ${className}`}
+      className={`absolute cursor-grab active:cursor-grabbing rounded-xl overflow-hidden border-2 shadow-md 
+        ${isDragging ? 'opacity-20 z-10' : 'z-20'} 
+        ${isGhost ? 'opacity-40 pointer-events-none z-10' : ''}
+        ${isInvalid ? 'border-red-500 bg-red-500/20' : (RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
+        ${className}`}
       style={{
         width: (item.gridW || 1) * cellSize,
         height: (item.gridH || 1) * cellSize,
@@ -39,7 +47,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
           return (
             <div
               key={`${r}-${c}`}
-              className="absolute bg-slate-100/95"
+              className={`absolute ${isInvalid ? 'bg-red-400/50' : 'bg-slate-100/95'}`}
               style={{
                 left: c * cellSize,
                 top: r * cellSize,
@@ -61,6 +69,8 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
          prev.item.gridY === next.item.gridY &&
          prev.cellSize === next.cellSize &&
          prev.isDragging === next.isDragging &&
+         prev.isGhost === next.isGhost &&
+         prev.isInvalid === next.isInvalid &&
          prev.style?.left === next.style?.left &&
          prev.style?.top === next.style?.top &&
          prev.className === next.className;

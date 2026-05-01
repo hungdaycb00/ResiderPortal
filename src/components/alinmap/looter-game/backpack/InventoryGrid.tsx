@@ -1,15 +1,19 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import type { LooterItem, BagItem } from './types';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
-
 import InventoryItem from './components/InventoryItem';
 import GridBackground from './components/GridBackground';
+import { useInventoryDrag } from './hooks/useInventoryDrag';
 
 interface InventoryGridProps {
   items: LooterItem[];
   bags: BagItem[];
   onItemDoubleClick?: (item: LooterItem) => void;
   onItemClick?: (item: LooterItem) => void;
+  onItemLayoutChange?: (items: LooterItem[]) => void;
+  onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
+  onDragStart?: (item: LooterItem, source: any, offset: any) => void;
+  onDragEnd?: () => void;
   cellSize?: number;
   gridW?: number;
   gridH?: number;
@@ -20,13 +24,30 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   bags,
   onItemDoubleClick,
   onItemClick,
+  onItemLayoutChange,
   cellSize = 40,
   gridW = MAX_GRID_W,
   gridH = MAX_GRID_H,
 }) => {
-  const gridRef = useRef<HTMLDivElement>(null);
-
   const activeBag = Array.isArray(bags) ? bags[0] : undefined;
+
+  const {
+    draggingItem,
+    dragPos,
+    dragGridPos,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    checkOverlap
+  } = useInventoryDrag({
+    items,
+    cellSize,
+    gridW,
+    gridH,
+    activeBag,
+    onItemLayoutChange,
+  });
 
   const bagOcc = React.useMemo(() => {
     const grid: boolean[][] = Array.from({ length: gridH }, () => Array(gridW).fill(false));
@@ -55,17 +76,22 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 select-none touch-none w-full h-full relative">
+    <div 
+      className="flex flex-col gap-4 select-none touch-none w-full h-full relative"
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
       {stagingItems.map((item) => (
         <InventoryItem
           key={item.uid}
           item={item}
           cellSize={cellSize}
-          isDragging={false}
+          isDragging={draggingItem?.uid === item.uid}
           style={{
             left: (item as any).stagingX ?? getStablePos(item.uid + 'x', 150),
             top: (item as any).stagingY ?? getStablePos(item.uid + 'y', 200),
           }}
+          onPointerDown={onPointerDown}
           onDoubleClick={onItemDoubleClick}
           onClick={() => onItemClick?.(item)}
         />
@@ -73,7 +99,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
       <div className="w-full h-full flex items-center justify-center pointer-events-none">
         <div
-          ref={gridRef}
+          ref={containerRef}
           className="pointer-events-auto relative rounded-[32px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
           style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
         >
@@ -91,12 +117,44 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               key={item.uid}
               item={item}
               cellSize={cellSize}
-              isDragging={false}
+              isDragging={draggingItem?.uid === item.uid}
               style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
+              onPointerDown={onPointerDown}
               onDoubleClick={onItemDoubleClick}
               onClick={() => onItemClick?.(item)}
             />
           ))}
+
+          {/* Ghost Preview */}
+          {draggingItem && dragGridPos && (
+            <InventoryItem
+              key="ghost"
+              item={draggingItem}
+              cellSize={cellSize}
+              isGhost={true}
+              isInvalid={checkOverlap(dragGridPos.x, dragGridPos.y)}
+              style={{
+                left: dragGridPos.x * cellSize,
+                top: dragGridPos.y * cellSize,
+              }}
+            />
+          )}
+
+          {/* Active Dragging Item */}
+          {draggingItem && (
+            <InventoryItem
+              key="dragging"
+              item={draggingItem}
+              cellSize={cellSize}
+              style={{
+                left: dragPos.x,
+                top: dragPos.y,
+                pointerEvents: 'none',
+                zIndex: 100,
+                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
