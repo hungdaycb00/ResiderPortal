@@ -76,11 +76,7 @@ export const looterApi = {
   moveBoat: (apiUrl: string, deviceId: string, toLat: number, toLng: number) =>
     post(apiUrl, 'move', { deviceId, toLat, toLng }),
 
-  pickupItem: (apiUrl: string, deviceId: string, spawnId: string, force = false) =>
-    post(apiUrl, 'pickup', { deviceId, spawnId, force }),
 
-  dropItem: (apiUrl: string, deviceId: string, itemUid: string) =>
-    post(apiUrl, 'drop', { deviceId, itemUid }),
 
   fetchWorldItems: (apiUrl: string, deviceId: string) =>
     get(apiUrl, 'world-items', { deviceId }),
@@ -94,11 +90,7 @@ export const looterApi = {
   saveStorageLayout: (apiUrl: string, deviceId: string, storage: LooterItem[]) =>
     post(apiUrl, 'storage_layout', { deviceId, storage }),
 
-  minigameLose: (apiUrl: string, deviceId: string, spawnId: string) =>
-    post(apiUrl, 'minigame-lose', { deviceId, spawnId }),
 
-  destroyItem: (apiUrl: string, deviceId: string, spawnId: string) =>
-    post(apiUrl, 'destroy-item', { deviceId, spawnId }),
 
   executeCombat: (apiUrl: string, deviceId: string, opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) =>
     post(apiUrl, 'combat', { deviceId, opponentId, opponentInventory, opponentHp, opponentBags }),

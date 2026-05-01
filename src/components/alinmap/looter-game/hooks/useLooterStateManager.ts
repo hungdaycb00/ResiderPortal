@@ -120,21 +120,7 @@ export function useLooterStateManager({
     }
   }, [deviceId, apiUrl, setState, setIsChallengeActive, notify, loadWorldItems]);
 
-  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-    try {
-      const data = await looterApi.minigameLose(apiUrl, deviceId, spawnId);
-      if (data.success) {
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('[LooterGame] minigamePenalty error:', err);
-      return false;
-    }
-  }, [deviceId, apiUrl, setState, setWorldItems]);
+
 
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: any[], opponentHp?: number, opponentBags?: any[]) => {
     if (!deviceId) throw new Error('No deviceId');
@@ -165,7 +151,7 @@ export function useLooterStateManager({
 
   return { 
     loadWorldItems, loadState, initGame, 
-    setWorldTier, inflictMinigamePenalty, 
+    setWorldTier, 
     executeCombat, curseChoice 
   };
 }

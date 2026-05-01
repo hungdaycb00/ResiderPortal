@@ -70,16 +70,14 @@ export interface LooterGameActions {
   setEncounter: (e: Encounter | null) => void;
   setCombatResult: (r: CombatResult | null) => void;
   setShowCurseModal: (v: boolean) => void;
-  setShowMinigame: (item: WorldItem | null) => void;
   setIsLooterGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
   setIsChallengeActive: (v: boolean) => void;
-  setPreGeneratedMinigame: (v: { type: string, grid: any } | null) => void;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
-  inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
+
   saveInventory: (inventory: LooterItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
@@ -102,10 +100,8 @@ export interface LooterGameStateContextType {
   encounter: Encounter | null;
   combatResult: CombatResult | null;
   showCurseModal: boolean;
-  showMinigame: WorldItem | null;
   isLooterGameMode: boolean;
   isChallengeActive: boolean;
-  preGeneratedMinigame: { type: string, grid: any } | null;
   globalSettings: any;
   isMoving: boolean;
   isSyncing: boolean;

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
-import { generateSolvableFruitGrid } from './minigameUtils';
 import { getLooterServerUrl } from '../../../services/externalApi';
 import type { LooterItem, BagItem } from './backpack/types';
 import { 
@@ -38,31 +37,26 @@ interface UIState {
   encounter: Encounter | null;
   combatResult: CombatResult | null;
   showCurseModal: boolean;
-  showMinigame: WorldItem | null;
   isLooterGameMode: boolean;
   isChallengeActive: boolean;
   isFortressStorageOpen: boolean;
   fortressStorageMode: StorageAccessMode;
-  preGeneratedMinigame: { type: string; grid: any } | null;
 }
 
 type UIAction =
   | { type: 'SET_ENCOUNTER'; payload: Encounter | null }
   | { type: 'SET_COMBAT_RESULT'; payload: CombatResult | null }
   | { type: 'SET_SHOW_CURSE_MODAL'; payload: boolean }
-  | { type: 'SET_SHOW_MINIGAME'; payload: WorldItem | null }
   | { type: 'SET_LOOTER_GAME_MODE'; payload: boolean }
   | { type: 'SET_CHALLENGE_ACTIVE'; payload: boolean }
   | { type: 'SET_FORTRESS_STORAGE_OPEN'; payload: boolean }
   | { type: 'SET_FORTRESS_STORAGE_MODE'; payload: StorageAccessMode }
-  | { type: 'SET_PRE_GENERATED_MINIGAME'; payload: { type: string; grid: any } | null }
   | { type: 'OPEN_FORTRESS_STORAGE'; payload: StorageAccessMode };
 
 const initialUIState: UIState = {
   encounter: null, combatResult: null,
-  showCurseModal: false, showMinigame: null, isLooterGameMode: false,
+  showCurseModal: false, isLooterGameMode: false,
   isChallengeActive: false, isFortressStorageOpen: false, fortressStorageMode: 'fortress',
-  preGeneratedMinigame: null,
 };
 
 function uiReducer(state: UIState, action: UIAction): UIState {
@@ -70,12 +64,10 @@ function uiReducer(state: UIState, action: UIAction): UIState {
     case 'SET_ENCOUNTER': return { ...state, encounter: action.payload };
     case 'SET_COMBAT_RESULT': return { ...state, combatResult: action.payload };
     case 'SET_SHOW_CURSE_MODAL': return { ...state, showCurseModal: action.payload };
-    case 'SET_SHOW_MINIGAME': return { ...state, showMinigame: action.payload };
     case 'SET_LOOTER_GAME_MODE': return { ...state, isLooterGameMode: action.payload };
     case 'SET_CHALLENGE_ACTIVE': return { ...state, isChallengeActive: action.payload };
     case 'SET_FORTRESS_STORAGE_OPEN': return { ...state, isFortressStorageOpen: action.payload };
     case 'SET_FORTRESS_STORAGE_MODE': return { ...state, fortressStorageMode: action.payload };
-    case 'SET_PRE_GENERATED_MINIGAME': return { ...state, preGeneratedMinigame: action.payload };
     case 'OPEN_FORTRESS_STORAGE': return { ...state, fortressStorageMode: action.payload, isFortressStorageOpen: true };
     default: return state;
   }
@@ -109,11 +101,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const setEncounter = useCallback((v: Encounter | null) => dispatch({ type: 'SET_ENCOUNTER', payload: v }), []);
   const setCombatResult = useCallback((v: CombatResult | null) => dispatch({ type: 'SET_COMBAT_RESULT', payload: v }), []);
   const setShowCurseModal = useCallback((v: boolean) => dispatch({ type: 'SET_SHOW_CURSE_MODAL', payload: v }), []);
-  const setShowMinigame = useCallback((v: WorldItem | null) => dispatch({ type: 'SET_SHOW_MINIGAME', payload: v }), []);
   const setIsLooterGameMode = useCallback((v: boolean) => dispatch({ type: 'SET_LOOTER_GAME_MODE', payload: v }), []);
   const setIsChallengeActive = useCallback((v: boolean) => dispatch({ type: 'SET_CHALLENGE_ACTIVE', payload: v }), []);
   const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);
-  const setPreGeneratedMinigame = useCallback((v: { type: string; grid: any } | null) => dispatch({ type: 'SET_PRE_GENERATED_MINIGAME', payload: v }), []);
 
   const { runInQueue, isSyncing } = useLooterQueue();
   const { saveInventory, saveBags, saveStorage } = useLooterData({ deviceId, apiUrl: API_URL, setState });
@@ -144,15 +134,15 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
     },
     setEncounter, setCombatResult,
-    setShowCurseModal, setShowMinigame, setIsLooterGameMode,
+    setShowCurseModal, setIsLooterGameMode,
     openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
     setOpenBackpackHandler,
-    setIsChallengeActive, setPreGeneratedMinigame,
+    setIsChallengeActive,
     
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
     loadState: () => runInQueue(stateManager.loadState),
     moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
-    inflictMinigamePenalty: (sid) => runInQueue(() => stateManager.inflictMinigamePenalty(sid)),
+
     saveInventory: (inv) => {
       setState(prev => ({ ...prev, inventory: inv }));
       return runInQueue(async () => {
@@ -177,44 +167,25 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification
   }), [
     stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification,
-    setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
+    setEncounter, setCombatResult, setShowCurseModal,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen,
-    setPreGeneratedMinigame, notify
+    notify
   ]);
 
   const stateValue: LooterGameStateContextType = useMemo(() => ({
     state,
     worldItems,
     encounter: ui.encounter, combatResult: ui.combatResult,
-    showCurseModal: ui.showCurseModal, showMinigame: ui.showMinigame,
+    showCurseModal: ui.showCurseModal,
     isLooterGameMode: ui.isLooterGameMode,
     isChallengeActive: ui.isChallengeActive,
     isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,
     globalSettings, isMoving: movement.isMoving, isSyncing,
-    preGeneratedMinigame: ui.preGeneratedMinigame
   }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing]);
 
   // 4. Effects
   
-  // Chuẩn bị Minigame
-  useEffect(() => {
-    if (!ui.isLooterGameMode) return;
-    const prepareMinigame = () => {
-      if (ui.preGeneratedMinigame) return; 
-      const tier = state.worldTier;
-      let innerRows = 4, innerCols = 4;
-      if (tier === 1) { innerRows = 4; innerCols = 5; }
-      else if (tier === 2) { innerRows = 4; innerCols = 6; }
-      else if (tier === 3) { innerRows = 5; innerCols = 6; }
-      else if (tier === 4) { innerRows = 6; innerCols = 6; }
-      else if (tier >= 5) { innerRows = 7; innerCols = 6; }
-      if ((innerRows * innerCols) % 2 !== 0) innerCols += 1;
-      const grid = generateSolvableFruitGrid(innerRows, innerCols);
-      setPreGeneratedMinigame({ type: 'fishing', grid });
-    };
-    const interval = setInterval(prepareMinigame, 5000);
-    return () => clearInterval(interval);
-  }, [ui.isLooterGameMode, ui.preGeneratedMinigame, state.worldTier, setPreGeneratedMinigame]);
+
 
 
 
