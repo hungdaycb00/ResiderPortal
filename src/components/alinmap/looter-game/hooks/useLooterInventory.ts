@@ -233,11 +233,43 @@ export function useLooterInventory({
 
   const confirmDiscard = useCallback(async () => {
     const stagingItems = state.inventory.filter(i => i.gridX < 0);
-    for (const item of stagingItems) {
-      await dropItem(item.uid);
-    }
-    notify(`Đã vứt bỏ ${stagingItems.length} vật phẩm thừa`, 'info');
-  }, [state.inventory, dropItem, notify]);
+    if (stagingItems.length === 0) return;
+
+    // Cập nhật UI ngay lập tức
+    setState(prev => ({
+      ...prev,
+      inventory: prev.inventory.filter(i => i.gridX >= 0)
+    }));
+
+    setWorldItems(prev => [
+      ...prev,
+      ...stagingItems.map((item, idx) => ({
+        spawnId: `temp_${item.uid}_${Date.now()}_${idx}`,
+        lat: (state.currentLat || 0) + (Math.random() - 0.5) * 0.0004,
+        lng: (state.currentLng || 0) + (Math.random() - 0.5) * 0.0004,
+        item: item,
+        minigameType: null as any
+      }))
+    ]);
+
+    // Xử lý API ngầm để không block UI, tuần tự để tránh lock SQLite
+    (async () => {
+      let successCount = 0;
+      for (const item of stagingItems) {
+        try {
+          const data = await looterApi.dropItem(apiUrl, deviceId!, item.uid);
+          if (data.success) successCount++;
+        } catch (e) {
+          console.error('[LooterGame] background drop error:', e);
+        }
+      }
+      if (successCount > 0) {
+        notify(`Đã ném ${successCount} vật phẩm ra biển`, 'success');
+        setTimeout(() => loadWorldItems(true), 1000);
+      }
+    })();
+
+  }, [state.inventory, state.currentLat, state.currentLng, deviceId, apiUrl, setState, setWorldItems, notify, loadWorldItems]);
 
   return { 
     saveInventory, saveBags, saveStorage, 

@@ -13,21 +13,15 @@ export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps
   
   const saveInventory = useCallback(async (inventory: LooterItem[]) => {
     if (!deviceId) return false;
-    let previousInventory: LooterItem[] = [];
-    setState(prev => {
-      previousInventory = prev.inventory;
-      return { ...prev, inventory };
-    });
     try {
       const data = await looterApi.saveInventory(apiUrl, deviceId, inventory);
       if (!data.success) throw new Error('Save failed');
       return true;
     } catch (err) {
       console.error('[LooterGame] saveInventory error:', err);
-      setState(prev => ({ ...prev, inventory: previousInventory }));
       return false;
     }
-  }, [deviceId, apiUrl, setState]);
+  }, [deviceId, apiUrl]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;

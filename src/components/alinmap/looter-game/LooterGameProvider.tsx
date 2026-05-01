@@ -110,7 +110,16 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
     pickupItem: (sid, gx, gy) => runInQueue(() => inventory.pickupItem(sid, gx, gy)),
     inflictMinigamePenalty: (sid) => runInQueue(() => stateManager.inflictMinigamePenalty(sid)),
-    saveInventory: (inv) => runInQueue(() => inventory.saveInventory(inv)),
+    saveInventory: (inv) => {
+      setState(prev => ({ ...prev, inventory: inv }));
+      return runInQueue(async () => {
+        const success = await inventory.saveInventory(inv);
+        if (!success) {
+          notify('Lỗi khi lưu vị trí vật phẩm', 'error');
+          await stateManager.loadState();
+        }
+      });
+    },
     saveStorage: (st) => runInQueue(() => inventory.saveStorage(st)),
     saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
     equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),

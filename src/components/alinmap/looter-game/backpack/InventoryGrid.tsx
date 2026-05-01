@@ -64,7 +64,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   const activeBag = Array.isArray(bags) ? bags[0] : undefined;
 
-  const buildBagOccupancy = useCallback(() => {
+  const bagOcc = React.useMemo(() => {
     const grid: boolean[][] = Array.from({ length: gridH }, () => Array(gridW).fill(false));
     if (!activeBag || activeBag.gridX < 0) return grid;
 
@@ -81,32 +81,27 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     return grid;
   }, [activeBag, gridW, gridH]);
 
-  const buildItemOccupancy = useCallback(
-    (excludeUid?: string) => {
-      const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
-      for (const item of items) {
-        if (item.gridX < 0 || (excludeUid && item.uid === excludeUid)) continue;
-        const w = item.gridW || 1;
-        const h = item.gridH || 1;
-        const shape = item.shape;
+  const itemOcc = React.useMemo(() => {
+    const grid: (string | null)[][] = Array.from({ length: gridH }, () => Array(gridW).fill(null));
+    for (const item of items) {
+      if (item.gridX < 0) continue;
+      const w = item.gridW || 1;
+      const h = item.gridH || 1;
+      const shape = item.shape;
 
-        for (let r = 0; r < h && item.gridY + r < gridH; r++) {
-          for (let c = 0; c < w && item.gridX + c < gridW; c++) {
-            if (!shape || (shape[r] && shape[r][c])) {
-              grid[item.gridY + r][item.gridX + c] = item.uid;
-            }
+      for (let r = 0; r < h && item.gridY + r < gridH; r++) {
+        for (let c = 0; c < w && item.gridX + c < gridW; c++) {
+          if (!shape || (shape[r] && shape[r][c])) {
+            grid[item.gridY + r][item.gridX + c] = item.uid;
           }
         }
       }
-      return grid;
-    },
-    [items, gridW, gridH]
-  );
+    }
+    return grid;
+  }, [items, gridW, gridH]);
 
   const canPlaceItem = useCallback(
     (item: LooterItem, x: number, y: number, excludeUid?: string) => {
-      const bagOcc = buildBagOccupancy();
-      const itemOcc = buildItemOccupancy(excludeUid);
       const w = item.gridW || 1;
       const h = item.gridH || 1;
       const shape = item.shape;
@@ -118,13 +113,13 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             const gridR = y + r;
             const gridC = x + c;
             if (!bagOcc[gridR] || !bagOcc[gridR][gridC]) return false;
-            if (!itemOcc[gridR] || itemOcc[gridR][gridC] !== null) return false;
+            if (itemOcc[gridR][gridC] !== null && itemOcc[gridR][gridC] !== excludeUid) return false;
           }
         }
       }
       return true;
     },
-    [buildBagOccupancy, buildItemOccupancy, gridW, gridH]
+    [bagOcc, itemOcc, gridW, gridH]
   );
 
   const { dragItem, dragOffset, dragPos, hoverCell, handleItemPointerDown } = useInventoryDrag({
@@ -145,7 +140,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   const activeDragItem = externalDragItem || dragItem;
   const activeHoverCell = externalHoverCell || hoverCell;
-  const bagOcc = buildBagOccupancy();
 
   const highlightCells: { x: number; y: number; valid: boolean }[] = [];
   if (activeHoverCell && activeDragItem) {
@@ -162,8 +156,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     }
   }
 
-  const gridItems = items.filter((i) => i.gridX >= 0);
-  const stagingItems = items.filter((i) => i.gridX < 0);
+  const gridItems = React.useMemo(() => items.filter((i) => i.gridX >= 0), [items]);
+  const stagingItems = React.useMemo(() => items.filter((i) => i.gridX < 0), [items]);
 
   // Helper for stable staging position
   const getStablePos = (seed: string, max: number) => {

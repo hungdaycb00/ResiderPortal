@@ -11,7 +11,7 @@ interface GridBackgroundProps {
   highlightCells: { x: number; y: number; valid: boolean }[];
 }
 
-const GridBackground: React.FC<GridBackgroundProps> = ({
+const GridBackground: React.FC<GridBackgroundProps> = React.memo(({
   gridW,
   gridH,
   cellSize,
@@ -57,6 +57,14 @@ const GridBackground: React.FC<GridBackgroundProps> = ({
       ))}
     </>
   );
-};
+}, (prev, next) => {
+  if (prev.gridW !== next.gridW || prev.gridH !== next.gridH || prev.cellSize !== next.cellSize) return false;
+  if (prev.activeBag?.uid !== next.activeBag?.uid || prev.activeBag?.gridX !== next.activeBag?.gridX || prev.activeBag?.gridY !== next.activeBag?.gridY) return false;
+  if (prev.highlightCells.length !== next.highlightCells.length) return false;
+  for (let i = 0; i < prev.highlightCells.length; i++) {
+    if (prev.highlightCells[i].x !== next.highlightCells[i].x || prev.highlightCells[i].y !== next.highlightCells[i].y || prev.highlightCells[i].valid !== next.highlightCells[i].valid) return false;
+  }
+  return true;
+});
 
 export default GridBackground;

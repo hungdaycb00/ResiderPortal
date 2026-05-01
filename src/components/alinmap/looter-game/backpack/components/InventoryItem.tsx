@@ -13,7 +13,7 @@ interface InventoryItemProps {
   className?: string;
 }
 
-const InventoryItem: React.FC<InventoryItemProps> = ({
+const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   item,
   cellSize,
   isDragging = false,
@@ -55,6 +55,15 @@ const InventoryItem: React.FC<InventoryItemProps> = ({
       </div>
     </motion.div>
   );
-};
+}, (prev, next) => {
+  return prev.item.uid === next.item.uid &&
+         prev.item.gridX === next.item.gridX &&
+         prev.item.gridY === next.item.gridY &&
+         prev.cellSize === next.cellSize &&
+         prev.isDragging === next.isDragging &&
+         prev.style?.left === next.style?.left &&
+         prev.style?.top === next.style?.top &&
+         prev.className === next.className;
+});
 
 export default InventoryItem;
