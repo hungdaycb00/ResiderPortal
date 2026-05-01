@@ -110,10 +110,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 style={isDesktop ? { width: panelWidth } : {}}
             >
                 <motion.div
-                    className={`absolute top-0 left-0 right-0 h-full ${isWhiteBg ? 'bg-white' : 'bg-[#121417]'} rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] md:border-r ${isWhiteBg ? 'border-gray-100' : 'border-white/5'} flex flex-col pointer-events-auto`}
+                    className={`absolute top-0 left-0 right-0 h-full ${isWhiteBg ? 'bg-white' : (mainTab === 'backpack' ? 'bg-[#040911]' : 'bg-[#121417]')} rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] md:border-r ${isWhiteBg ? 'border-gray-100' : 'border-white/5'} flex flex-col pointer-events-auto`}
                     variants={{
                         full: { 
-                            y: (!isDesktop && mainTab === 'backpack') ? '65%' : 0, 
+                            y: (!isDesktop && mainTab === 'backpack') ? '60%' : 0, 
                             x: 0 
                         },
                         collapsed: {
@@ -211,11 +211,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     </div>
 
                     <div 
-                      className={`flex-1 overflow-y-auto ${mainTab === 'backpack' ? 'px-0 pb-0' : 'px-4 pb-32'} md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar`} 
+                      className={`flex-1 ${mainTab === 'backpack' ? 'flex flex-col' : 'overflow-y-auto px-4 pb-32'} md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar`} 
                       style={{ direction: 'rtl' }}
                       onPointerDown={(e) => e.stopPropagation()}
                     >
-                      <div style={{ direction: 'ltr' }}>
+                      <div style={{ direction: 'ltr' }} className={mainTab === 'backpack' ? 'flex-1 flex flex-col' : ''}>
                         {/* Instant Search Results */}
                         {!selectedUser && !shouldHideSearch && (
                             <SheetSearchResults
@@ -239,7 +239,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 requireAuth={requireAuth}
                             />
                         ) : (
-                            <div className={mainTab === 'backpack' ? 'pt-0' : 'pt-2'}>
+                            <div className={mainTab === 'backpack' ? 'flex-1 flex flex-col pt-0' : 'pt-2'}>
                                 {mainTab === 'discover' && (
                                     <div className="flex flex-col h-full">
                                         {exploreSubTab === 'games' ? (

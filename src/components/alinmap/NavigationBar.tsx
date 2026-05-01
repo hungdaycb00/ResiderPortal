@@ -13,6 +13,7 @@ interface NavigationBarProps {
 }
 
 const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user, isSheetExpanded }) => {
+    const [showFullNav, setShowFullNav] = React.useState(false);
     const { unreadCount } = useSocial();
     const { isItemDragging } = useLooterGame();
 
@@ -47,19 +48,13 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
             </div>
 
             {/* Mobile Bottom Navigation */}
-            {!isDesktop && mainTab === 'backpack' ? (
-                <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto flex flex-col items-center gap-2">
+            {!isDesktop && mainTab === 'backpack' && !showFullNav ? (
+                <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
                     <button 
-                        onClick={() => {
-                            if (isSheetExpanded) {
-                                (window as any).collapseLooterTab?.();
-                            } else {
-                                handleTabClick('backpack');
-                            }
-                        }}
-                        className="w-10 h-10 bg-[#1e293b]/80 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center shadow-2xl text-amber-400 hover:scale-110 active:scale-95 transition-all"
+                        onClick={() => setShowFullNav(true)}
+                        className="w-10 h-10 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-full flex items-center justify-center shadow-lg text-amber-400/80 hover:text-amber-400 hover:scale-110 active:scale-95 transition-all"
                     >
-                        {isSheetExpanded ? <ChevronDown className="w-6 h-6" /> : <Package className="w-5 h-5" />}
+                        <ChevronUp className="w-5 h-5" />
                     </button>
                 </div>
             ) : (
@@ -78,7 +73,13 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     </button>
                     
                     {/* Looter Button */}
-                    <button onClick={() => handleTabClick('backpack')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
+                    <button onClick={() => {
+                        if (mainTab === 'backpack') {
+                            setShowFullNav(false);
+                        } else {
+                            handleTabClick('backpack');
+                        }
+                    }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
                         <Package className="w-5 h-5" />
                         <span className="text-[9px] font-black uppercase">Looter</span>
                     </button>
