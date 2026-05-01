@@ -81,11 +81,12 @@ export function useCombatLoop({
 
     const startCombatLoop = useCallback(() => {
         let lastTime = performance.now();
+        let lastUIUpdate = 0;
         let isAnimating = false;
         
         const loop = (now: number) => {
             const dt = now - lastTime;
-            if (dt < 1000 / 30) {
+            if (dt < 1000 / 60) { // Cố gắng chạy logic ở 60fps cho độ chính xác cao
                 frameRef.current = requestAnimationFrame(loop);
                 return;
             }
@@ -93,10 +94,9 @@ export function useCombatLoop({
 
             if (currentIdxRef.current >= combatLogRef.current.length) {
                 if (!isAnimating) {
-                    // Chỉ hiển thị kết quả khi đã xử lý xong log và không đang trong hoạt cảnh
                     setTimeout(() => {
                         setPhase('result');
-                    }, 1500); // Tăng lên 1.5s để cảm nhận rõ hơn cái chết của đối thủ
+                    }, 1500);
                     return;
                 }
                 frameRef.current = requestAnimationFrame(loop);
@@ -110,21 +110,26 @@ export function useCombatLoop({
 
             const entry = combatLogRef.current[currentIdxRef.current];
             const side = entry.attacker;
+            const cost = toFiniteNumber(entry.energySpent || entry.item?.energyCost, 10);
 
             const gainA = (15 + (myStats.eRegen || 0)) * (dt / 1000) * 10;
             const gainB = (15 + (botStats.eRegen || 0)) * (dt / 1000) * 10;
             
             actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA || 100);
             actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB || 100);
-            setActionProgressA(actionProgressARef.current);
-            setActionProgressB(actionProgressBRef.current);
+
+            // Throttle UI updates to ~15fps (66ms) to reduce re-renders while keeping logic at 60fps
+            if (now - lastUIUpdate > 66) {
+                setActionProgressA(actionProgressARef.current);
+                setActionProgressB(actionProgressBRef.current);
+                lastUIUpdate = now;
+            }
 
             if (side === 'A') {
-                if (actionProgressARef.current >= maxActionBarA) {
+                if (actionProgressARef.current >= cost) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
                     
-                    // HP giảm sau 400ms (khi vật phẩm bay tới gần đối thủ)
                     setTimeout(() => {
                         hpBRef.current = Math.max(0, entry.targetHp);
                         setHpB(hpBRef.current);
@@ -132,16 +137,14 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
-                    
-                    // Reset năng lượng về 0 sau mỗi lần tấn công theo yêu cầu mới
-                    actionProgressARef.current = 0;
+                    actionProgressARef.current = Math.max(0, actionProgressARef.current - cost);
+                    setActionProgressA(actionProgressARef.current); 
                 }
             } else {
-                if (actionProgressBRef.current >= maxActionBarB) {
+                if (actionProgressBRef.current >= cost) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
                     
-                    // HP giảm sau 400ms
                     setTimeout(() => {
                         hpARef.current = Math.max(0, entry.targetHp);
                         setHpA(hpARef.current);
@@ -149,9 +152,8 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
-                    
-                    // Reset năng lượng đối thủ về 0 sau mỗi lần tấn công
-                    actionProgressBRef.current = 0;
+                    actionProgressBRef.current = Math.max(0, actionProgressBRef.current - cost);
+                    setActionProgressB(actionProgressBRef.current);
                 }
             }
             frameRef.current = requestAnimationFrame(loop);
@@ -207,8 +209,8 @@ export function useCombatLoop({
     const skipCombat = () => {
         if (frameRef.current) cancelAnimationFrame(frameRef.current);
         if (pendingResult) {
-            setHpA(pendingResult.finalHp);
-            setHpB(pendingResult.result === 'win' ? 0 : 10);
+            setHpA(pendingResult.finalHpA ?? pendingResult.finalHp ?? 0);
+            setHpB(pendingResult.finalHpB ?? (pendingResult.result === 'win' ? 0 : 10));
         }
         setPhase('result');
     };

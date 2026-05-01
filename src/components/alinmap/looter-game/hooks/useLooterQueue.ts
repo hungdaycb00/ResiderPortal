@@ -8,7 +8,12 @@ export function useLooterQueue() {
   const activeRequestsCount = useRef(0);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const runInQueue = useCallback(<T>(fn: () => Promise<T>): Promise<T> => {
+  const runInQueue = useCallback(<T>(fn: () => Promise<T>, options?: { skipIfBusy?: boolean }): Promise<T | null> => {
+    if (options?.skipIfBusy && activeRequestsCount.current > 0) {
+      // console.log('[LooterQueue] Skipping background task because queue is busy');
+      return Promise.resolve(null);
+    }
+
     activeRequestsCount.current++;
     setIsSyncing(true);
 
@@ -27,7 +32,7 @@ export function useLooterQueue() {
         setIsSyncing(false);
       }
       console.error('[LooterQueue] Error:', err);
-      throw err; // Re-throw to allow handler catch
+      throw err;
     });
 
     actionQueueRef.current = nextPromise;

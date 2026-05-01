@@ -11,7 +11,7 @@ interface LooterEntitiesProps {
     executeMoveToExact?: (lat: number, lng: number) => void;
 }
 
-const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact }: any) => {
+const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact }: any) => {
     const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
@@ -116,18 +116,15 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
             </div>
         </motion.div>
     );
-};
+});
 
-const FortressEntity = ({ myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact }: any) => {
-    const { state: looterStateObj } = useLooterState();
-    const { openFortressStorage } = useLooterActions();
-    const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
+const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, openFortressStorage }: any) => {
     const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
 
     const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
-        const fLat = looterStateObj.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const fLng = looterStateObj.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
+        const fLat = fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
+        const fLng = fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
     });
 
@@ -147,15 +144,15 @@ const FortressEntity = ({ myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact
                 if (dist <= fInteractionRadius) {
                     openFortressStorage?.('fortress');
                 } else {
-                    executeMoveToExact?.(looterStateObj.fortressLat, looterStateObj.fortressLng);
+                    executeMoveToExact?.(fortressLat, fortressLng);
                 }
             }}
             onPointerDown={(e) => {}}
             onPointerUp={(e) => {}}
             className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
             style={{
-                top: `calc(50% + ${-(looterStateObj.fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                left: `calc(50% + ${(looterStateObj.fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                top: `calc(50% + ${-(fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
+                left: `calc(50% + ${(fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
         >
             <div className="relative flex flex-col items-center group">
@@ -166,12 +163,18 @@ const FortressEntity = ({ myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact
             </div>
         </div>
     );
-};
+});
 
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
     const { state: looterStateObj, worldItems } = useLooterState();
+    const { openFortressStorage } = useLooterActions();
+    
+    // Chỉ lấy các giá trị cần thiết để giảm re-render
+    const fortressLat = looterStateObj?.fortressLat;
+    const fortressLng = looterStateObj?.fortressLng;
+    const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
 
@@ -193,18 +196,15 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
 
             lastPosRef.current = { lat: curLat, lng: curLng };
             const nextVisible = new Set<string>();
-            const CULL_DIST = 5000; // 5km visibility range
+            const CULL_DEG = 5000 / 111000; // Khoảng 0.045 độ
 
             for (const item of worldItems) {
-                const iLat = item.lat - curLat;
-                const iLng = item.lng - curLng;
-                const dist = Math.sqrt(iLat * iLat + iLng * iLng) * 111000;
-                if (dist < CULL_DIST) {
+                // Bounding box check (nhanh hơn Math.sqrt)
+                if (Math.abs(item.lat - curLat) < CULL_DEG && Math.abs(item.lng - curLng) < CULL_DEG) {
                     nextVisible.add(item.spawnId);
                 }
             }
 
-            // Optimization: Only update if the set of IDs actually changed
             setVisibleItemIds(prev => {
                 if (prev.size !== nextVisible.size) return nextVisible;
                 for (const id of nextVisible) {
@@ -244,10 +244,16 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 </svg>
             )}
 
-            {looterStateObj?.fortressLat && (
+            {fortressLat && (
                 <FortressEntity 
-                    myObfPos={myObfPos} boatOffsetX={boatOffsetX} 
-                    boatOffsetY={boatOffsetY} executeMoveToExact={executeMoveToExact} 
+                    fortressLat={fortressLat}
+                    fortressLng={fortressLng}
+                    myObfPos={myObfPos} 
+                    boatOffsetX={boatOffsetX} 
+                    boatOffsetY={boatOffsetY} 
+                    boatScaleStack={boatScaleStack}
+                    executeMoveToExact={executeMoveToExact} 
+                    openFortressStorage={openFortressStorage}
                 />
             )}
 
@@ -270,7 +276,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                     myObfPos={myObfPos}
                     boatOffsetX={boatOffsetX}
                     boatOffsetY={boatOffsetY}
-                    boatScaleStack={looterStateObj?.activeCurses?.boat_scale || 0}
+                    boatScaleStack={boatScaleStack}
                     executeMoveToExact={executeMoveToExact}
                 />
             ))}

@@ -91,6 +91,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
 
   const API_URL = useMemo(() => getLooterServerUrl(), []);
+  const saveTimerRef = useRef<any>(null);
+  const storageTimerRef = useRef<any>(null);
 
   const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
     if (typeof showNotification === 'function') {
@@ -144,23 +146,35 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsChallengeActive,
     
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
-    loadState: () => runInQueue(stateManager.loadState),
+    loadState: (opts) => runInQueue(stateManager.loadState, opts),
     moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
     // Pickup và penalty chạy song song — không block bởi heartbeat loadState
     pickupItem: (spawnId) => inventory.pickupItem(spawnId),
     inflictMinigamePenalty: (sid) => stateManager.inflictMinigamePenalty(sid),
 
     saveInventory: (inv) => {
+      // Optimistic update
       setState(prev => ({ ...prev, inventory: inv }));
-      return runInQueue(async () => {
-        const success = await inventory.saveInventory(inv);
-        if (!success) {
-          notify('Lỗi khi lưu vị trí vật phẩm', 'error');
-          await stateManager.loadState();
-        }
-      });
+      
+      // Debounce saving to server
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        runInQueue(async () => {
+          const success = await inventory.saveInventory(inv);
+          if (!success) {
+            notify('Lỗi khi lưu vị trí vật phẩm', 'error');
+            await stateManager.loadState();
+          }
+        });
+      }, 500); // 500ms debounce
     },
-    saveStorage: (st) => runInQueue(() => inventory.saveStorage(st)),
+    saveStorage: (st) => {
+      setState(prev => ({ ...prev, storage: st }));
+      if (storageTimerRef.current) clearTimeout(storageTimerRef.current);
+      storageTimerRef.current = setTimeout(() => {
+        runInQueue(() => inventory.saveStorage(st));
+      }, 500);
+    },
     saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
     equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),
     executeCombat: (id, inv, hp, bags) => runInQueue(() => stateManager.executeCombat(id, inv, hp, bags)),
@@ -199,9 +213,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   // Heartbeat Synchronization
   useEffect(() => {
     if (!deviceId || !ui.isLooterGameMode) return;
-    actionsValue.loadState();
+    actionsValue.loadState({ skipIfBusy: true });
     const interval = setInterval(() => {
-      actionsValue.loadState();
+      actionsValue.loadState({ skipIfBusy: true });
     }, SYNC_HEARTBEAT_MS);
     return () => clearInterval(interval);
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
