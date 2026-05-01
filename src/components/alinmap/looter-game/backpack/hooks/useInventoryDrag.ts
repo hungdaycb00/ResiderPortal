@@ -18,6 +18,7 @@ export function useInventoryDrag({
   gridH,
   activeBag,
   onItemLayoutChange,
+  onDropOutside,
 }: UseInventoryDragProps) {
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
