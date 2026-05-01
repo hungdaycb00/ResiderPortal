@@ -265,10 +265,10 @@ export function MinesweeperGame({
             exit={{ scale: 0.9, opacity: 0 }}
             className="w-full h-full flex flex-col items-center justify-start relative p-0.5 md:p-4 gap-1 md:gap-4 overflow-hidden"
           >
-            {/* Header Dashboard - Top on PC */}
+            {/* Header Dashboard - Absolute Top Center */}
             <div
-              className="flex flex-row justify-center items-center w-fit bg-white/20 p-1 md:px-6 md:py-3 rounded-xl md:rounded-[30px] backdrop-blur-sm border border-white/30 shrink-0 mx-auto"
-              style={{ maxWidth: `min(96vw, ${(gridConfig.cols / gridConfig.rows) * 40}vh)`, WebkitBackdropFilter: 'blur(4px)' }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-row justify-center items-center w-fit bg-white/20 p-1 md:px-6 md:py-3 rounded-xl md:rounded-[30px] backdrop-blur-sm border border-white/30 shrink-0 z-40"
+              style={{ WebkitBackdropFilter: 'blur(4px)' }}
             >
               <div className="flex flex-row gap-6 md:gap-16 items-center">
                 <div className="flex flex-col items-center">
@@ -286,7 +286,7 @@ export function MinesweeperGame({
             </div>
 
             {/* Navigation Button Container - Absolute Top Right */}
-            <div className="absolute top-1 md:top-2 right-1 md:right-2 z-40 flex items-center gap-2">
+            <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
               {autoStart && onComplete && (
                 <button
                   onClick={() => {
@@ -294,10 +294,9 @@ export function MinesweeperGame({
                     triggerHaptic('medium');
                     onComplete(false);
                   }}
-                  className="px-3 py-1.5 md:px-4 md:py-2 bg-red-500/20 hover:bg-red-500/40 text-white rounded-xl font-black text-[9px] md:text-[10px] border border-red-500/30 transition-all flex items-center gap-2"
+                  className="w-10 h-10 bg-red-500/20 hover:bg-red-500/40 text-red-100 rounded-xl flex items-center justify-center border border-red-500/30 transition-all active:scale-95 shadow-md backdrop-blur-md"
                 >
-                  <XCircle size={16} />
-                  GIVE UP
+                  <XCircle size={24} />
                 </button>
               )}
 
@@ -306,10 +305,9 @@ export function MinesweeperGame({
                   aria-label="Back to Menu"
                   title="Back to Menu"
                   onClick={() => { playSound('click'); setGameState('menu'); }}
-                  className="w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform text-white border border-white/20 shrink-0"
-                  style={{ WebkitBackdropFilter: 'blur(12px)' }}
+                  className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform text-white border border-white/20 shrink-0"
                 >
-                  <XCircle size={20} />
+                  <XCircle size={24} />
                 </button>
               )}
             </div>

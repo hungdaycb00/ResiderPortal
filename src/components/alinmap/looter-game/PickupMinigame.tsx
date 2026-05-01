@@ -36,16 +36,6 @@ export const PickupMinigame: React.FC = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="absolute inset-0 z-[200] flex flex-col bg-slate-900/90 backdrop-blur-md"
             >
-                {/* Header/Close Button can be handled inside game, or we can provide an abort */}
-                <div className="absolute top-4 right-4 z-50">
-                    <button 
-                        onClick={() => handleComplete(false)}
-                        className="bg-red-500/80 text-white px-4 py-2 rounded-full font-bold shadow-lg"
-                    >
-                        Từ bỏ
-                    </button>
-                </div>
-                
                 <div className="flex-1 w-full h-full p-4 flex items-center justify-center">
                     {showMinigame.minigameType === 'fishing' || !isMinesweeper ? (
                         <FruitGame 

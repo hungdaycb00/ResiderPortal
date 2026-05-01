@@ -66,24 +66,36 @@ export function useLooterBoat({
         syncBoatPosition();
     }, [isLooterGameMode, state?.currentLat, state?.currentLng, isChallengeActive, syncBoatPosition]);
 
-    // Auto-pickup logic
+    // Auto-pickup logic based on visual position
     useEffect(() => {
-        if (!isLooterGameMode || !isChallengeActive || !state || !state.currentLat || !state.currentLng) return;
-        
-        for (const item of worldItems) {
-            if (item.minigameType === 'chest') continue; // Portal is special
-            const dist = getDistanceMeters(state.currentLat, state.currentLng, item.lat, item.lng);
-            if (dist < 250) {
-                if (item.minigameType) {
-                    if (showMinigame?.spawnId !== item.spawnId) {
+        if (!isLooterGameMode || !isChallengeActive || !worldItems || !myObfPos) return;
+
+        const checkPickup = () => {
+            // Không quét nếu đang có popup
+            if (showMinigame || encounter || combatResult || showCurseModal) return;
+
+            const ox = boatOffsetX.get() || 0;
+            const oy = boatOffsetY.get() || 0;
+            const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
+            const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
+
+            for (const item of worldItems) {
+                if (item.minigameType === 'chest') continue; // Portal is special
+                const dist = getDistanceMeters(curLat, curLng, item.lat, item.lng);
+                if (dist < 250) {
+                    if (item.minigameType) {
                         setShowMinigame(item);
+                        break; // Stop scanning once a minigame opens
+                    } else {
+                        looterActions.pickupItem(item.spawnId);
                     }
-                } else {
-                    looterActions.pickupItem(item.spawnId);
                 }
             }
-        }
-    }, [isLooterGameMode, isChallengeActive, state?.currentLat, state?.currentLng, worldItems, showMinigame, setShowMinigame, looterActions]);
+        };
+
+        const interval = setInterval(checkPickup, 500);
+        return () => clearInterval(interval);
+    }, [isLooterGameMode, isChallengeActive, worldItems, myObfPos, boatOffsetX, boatOffsetY, showMinigame, encounter, combatResult, showCurseModal, setShowMinigame, looterActions]);
 
     // Sync curse visual
     useEffect(() => {
