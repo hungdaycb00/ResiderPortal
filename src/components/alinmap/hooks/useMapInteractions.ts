@@ -106,26 +106,11 @@ export function useMapInteractions({
             return;
         }
 
-        // --- Looter Challenge Initiation Logic ---
-        if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved) {
-             const currentScale = scale?.get?.() || 1;
-             const offsetX = e.clientX - window.innerWidth / 2;
-             const offsetY = e.clientY - window.innerHeight / 2;
-             const mapX = offsetX / currentScale - (panX?.get?.() ?? 0);
-             const mapY = offsetY / currentScale - (panY?.get?.() ?? 0);
-             const targetLng = (myObfPos?.lng || 0) + mapX / DEGREES_TO_PX;
-             const targetLat = (myObfPos?.lat || 0) - mapY / DEGREES_TO_PX;
-
-             const distToFortress = Math.sqrt(
-                 Math.pow(targetLat - (looterStateObj.fortressLat || 0), 2) + 
-                 Math.pow(targetLng - (looterStateObj.fortressLng || 0), 2)
-             ) * 111000;
-
-             if (distToFortress < 100) {
-                 setIsTierSelectorOpen?.(true);
-                 return;
+             // --- Looter Challenge Initiation Logic ---
+             if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved) {
+                  setIsTierSelectorOpen?.(true);
+                  return;
              }
-        }
 
         looterBoat.handlePointerUp(e);
     }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);

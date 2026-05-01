@@ -190,15 +190,8 @@ export function useLooterBoat({
         }
 
         if (!isChallengeActive) {
-            const distToFortress = Math.sqrt(
-                Math.pow(lat - (state.fortressLat || 0), 2) + 
-                Math.pow(lng - (state.fortressLng || 0), 2)
-            ) * 111000;
-            
-            if (distToFortress < 100) {
-                setIsTierSelectorOpen?.(true);
-                return;
-            }
+            setIsTierSelectorOpen?.(true);
+            return;
         }
 
         console.log('[MapMove] Target Coordinates:', { lat, lng });

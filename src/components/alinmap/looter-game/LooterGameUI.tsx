@@ -4,6 +4,7 @@ import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
+import ChallengeStatusHeader from './components/ChallengeStatusHeader';
 import CombatLootModal from './backpack/CombatLootModal';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
@@ -28,6 +29,10 @@ const LooterGameUI: React.FC = () => {
 
     return (
         <>
+            <ChallengeStatusHeader 
+                isChallengeActive={!!state.isChallengeActive} 
+                worldTier={state.worldTier || 0} 
+            />
             <ErrorBoundary name="Combat">
                 <CombatScreen />
             </ErrorBoundary>
