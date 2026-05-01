@@ -132,43 +132,86 @@ export function useLooterInventory({
   const pickupItem = useCallback(async (spawnId: string) => {
     if (!deviceId) return;
     const startTime = Date.now();
-    console.log(`[LooterPerf] API pickupItem started for ${spawnId} at ${startTime}`);
-    try {
-      const data = await looterApi.pickupItem(apiUrl, deviceId, spawnId, true);
-      const endTime = Date.now();
-      console.log(`[LooterPerf] API pickupItem completed for ${spawnId} in ${endTime - startTime}ms`);
-      
-      if (data.success && data.item) {
-        const item = data.item as LooterItem;
-        const currentBag = state.bags[0];
-        
-        const slot = findEmptySlotFor(item, state.inventory, currentBag);
-        let newItem: LooterItem;
-        
-        if (slot) {
-          newItem = { ...item, gridX: slot.x, gridY: slot.y };
-          notify(`Nhặt được ${item.name}`, 'success');
-        } else {
-          newItem = { 
-            ...item, 
-            gridX: -1, 
-            gridY: -1,
-            stagingX: Math.random() * 200,
-            stagingY: Math.random() * 300 
-          } as any;
-          notify(`Nhặt được ${item.name} nhưng balo đã đầy!`, 'info');
-        }
+    console.log(`[LooterPerf] Optimistic pickupItem started for ${spawnId} at ${startTime}`);
+    
+    // 1. Optimistic Update (Frontend only check)
+    let pickedWorldItem: WorldItem | undefined;
+    setWorldItems(prev => {
+      pickedWorldItem = prev.find(i => i.spawnId === spawnId);
+      return prev.filter(i => i.spawnId !== spawnId);
+    });
 
-        const newInventory = [...state.inventory, newItem];
-        setState(prev => ({ ...prev, inventory: newInventory }));
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        await saveInventory(newInventory);
-      }
-    } catch (err) {
-      const endTime = Date.now();
-      console.error(`[LooterPerf] API pickupItem FAILED for ${spawnId} after ${endTime - startTime}ms`, err);
+    if (pickedWorldItem && pickedWorldItem.item) {
+        const item = pickedWorldItem.item as LooterItem;
+        setState(prevState => {
+            const currentBag = prevState.bags[0];
+            const slot = findEmptySlotFor(item, prevState.inventory, currentBag);
+            let newItem: LooterItem;
+            
+            if (slot) {
+                newItem = { ...item, gridX: slot.x, gridY: slot.y };
+            } else {
+                newItem = { 
+                    ...item, 
+                    gridX: -1, gridY: -1,
+                    stagingX: Math.random() * 200, stagingY: Math.random() * 300 
+                } as any;
+            }
+
+            const newInventory = [...prevState.inventory, newItem];
+            
+            // Gọi saveInventory không block UI
+            saveInventory(newInventory).catch(console.error);
+
+            // Notify asynchronously to not block state update
+            setTimeout(() => {
+                notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
+            }, 0);
+
+            return { ...prevState, inventory: newInventory };
+        });
+    } else {
+        console.warn(`[LooterPerf] Item ${spawnId} not found in frontend state, will rely on API fallback.`);
     }
-  }, [deviceId, apiUrl, state.inventory, state.bags, setState, setWorldItems, saveInventory, notify]);
+
+    // 2. Fire and forget API call (Server check is removed from UI blocking)
+    looterApi.pickupItem(apiUrl, deviceId, spawnId, true).then(data => {
+        const endTime = Date.now();
+        console.log(`[LooterPerf] API pickupItem (background) completed for ${spawnId} in ${endTime - startTime}ms`);
+        
+        // Fallback: If we didn't have it optimistically, process it now from server data
+        if ((!pickedWorldItem || !pickedWorldItem.item) && data.success && data.item) {
+            const item = data.item as LooterItem;
+            setState(prevState => {
+                const currentBag = prevState.bags[0];
+                const slot = findEmptySlotFor(item, prevState.inventory, currentBag);
+                let newItem: LooterItem;
+                
+                if (slot) {
+                    newItem = { ...item, gridX: slot.x, gridY: slot.y };
+                } else {
+                    newItem = { 
+                        ...item, 
+                        gridX: -1, gridY: -1,
+                        stagingX: Math.random() * 200, stagingY: Math.random() * 300 
+                    } as any;
+                }
+
+                const newInventory = [...prevState.inventory, newItem];
+                saveInventory(newInventory).catch(console.error);
+                setTimeout(() => {
+                    notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
+                }, 0);
+
+                return { ...prevState, inventory: newInventory };
+            });
+        }
+    }).catch(err => {
+        const endTime = Date.now();
+        console.error(`[LooterPerf] API pickupItem (background) FAILED for ${spawnId} after ${endTime - startTime}ms`, err);
+    });
+
+  }, [deviceId, apiUrl, setState, setWorldItems, saveInventory, notify]);
 
   return { 
     saveInventory, saveBags, saveStorage, 
