@@ -49,16 +49,26 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
 
             {/* Mobile Bottom Navigation */}
             {!isDesktop && mainTab === 'backpack' && !showFullNav ? (
-                <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
+                <div className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
                     <button 
                         onClick={() => setShowFullNav(true)}
-                        className="w-10 h-10 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-full flex items-center justify-center shadow-lg text-amber-400/80 hover:text-amber-400 hover:scale-110 active:scale-95 transition-all"
+                        className="w-16 h-8 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/10 rounded-t-xl flex items-center justify-center shadow-2xl text-amber-400 hover:h-10 transition-all duration-300"
+                        title="Open Navigation"
                     >
-                        <ChevronUp className="w-5 h-5" />
+                        <ChevronUp className="w-5 h-5 mb-1" />
                     </button>
                 </div>
             ) : (
-                <div className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] pointer-events-auto">
+                <div className={`flex md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-8px_32px_rgba(0,0,0,0.1)] pointer-events-auto transition-transform duration-300 ${!isDesktop && mainTab === 'backpack' && showFullNav ? 'translate-y-0' : ''}`}>
+                    {/* Minimalist Collapse Button for Full Nav in Looter Mode */}
+                    {!isDesktop && mainTab === 'backpack' && showFullNav && (
+                        <button 
+                            onClick={() => setShowFullNav(false)}
+                            className="absolute -top-10 left-1/2 -translate-x-1/2 w-10 h-10 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-full flex items-center justify-center shadow-lg text-gray-400"
+                        >
+                            <ChevronDown className="w-5 h-5" />
+                        </button>
+                    )}
                     <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
                         <Navigation className="w-5 h-5" />
                         <span className="text-[9px] font-black uppercase">Explore</span>
@@ -74,11 +84,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     
                     {/* Looter Button */}
                     <button onClick={() => {
-                        if (mainTab === 'backpack') {
-                            setShowFullNav(false);
-                        } else {
-                            handleTabClick('backpack');
-                        }
+                        handleTabClick('backpack');
+                        if (!isDesktop) setShowFullNav(false);
                     }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
                         <Package className="w-5 h-5" />
                         <span className="text-[9px] font-black uppercase">Looter</span>
