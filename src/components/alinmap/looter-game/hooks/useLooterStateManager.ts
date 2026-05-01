@@ -83,12 +83,7 @@ export function useLooterStateManager({
         
         const distToFortress = getDistanceMeters(s.currentLat, s.currentLng, s.fortressLat, s.fortressLng);
         const shouldBeActive = distToFortress > FORTRESS_INTERACTION_METERS || (s.worldTier ?? 0) > 0;
-        if (shouldBeActive) {
-          setIsChallengeActive(true);
-        } else if (s.worldTier === 0 && distToFortress <= FORTRESS_INTERACTION_METERS && !isChallengeActive) {
-          // Chỉ set false nếu thực sự đang ở trạng thái nghỉ (không active và tier 0 tại fortress)
-          setIsChallengeActive(false);
-        }
+        setIsChallengeActive(shouldBeActive);
       }
     } catch (err) {
       console.error('[LooterGame] loadState error:', err);
