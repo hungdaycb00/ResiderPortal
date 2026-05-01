@@ -296,7 +296,7 @@ export function MinesweeperGame({
                   }}
                   className="px-3 py-1.5 md:px-4 md:py-2 bg-red-500/20 hover:bg-red-500/40 text-white rounded-xl font-black text-[9px] md:text-[10px] border border-red-500/30 transition-all flex items-center gap-2"
                 >
-                  <Bomb size={12} />
+                  <XCircle size={16} />
                   GIVE UP
                 </button>
               )}
@@ -373,48 +373,17 @@ export function MinesweeperGame({
               </p>
             </div>
 
-            {/* Result Overlay */}
+            {/* Result Message */}
             <AnimatePresence>
-              {(gameState === 'won' || gameState === 'lost') && (
+              {gameState === 'won' && (
                 <motion.div
-                  initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-                  animate={{ opacity: 1, backdropFilter: 'blur(8px)' }}
-                  className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center p-4 md:p-8 text-center rounded-[30px] md:rounded-[40px]"
-                  style={{ WebkitBackdropFilter: 'blur(8px)' }}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
                 >
-                  <motion.div
-                    initial={{ scale: 0.8, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    className="w-full max-w-xs md:max-w-sm bg-white rounded-[30px] md:rounded-[40px] shadow-2xl border-4 border-red-100 p-5 md:p-8 flex flex-col items-center"
-                  >
-                    <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[25px] md:rounded-[35px] flex items-center justify-center mb-3 shadow-xl border-4 border-white animate-bounce-slow ${gameState === 'won' ? 'bg-yellow-400' : 'bg-red-500'}`}>
-                      {gameState === 'won' ? <Trophy size={32} className="text-white fill-white" /> : <XCircle size={32} className="text-white" />}
-                    </div>
-
-                    <h3 className="font-bubbly text-3xl md:text-4xl text-red-600 mb-1 uppercase italic tracking-tighter">
-                      {gameState === 'won' ? 'EXCELLENT!' : 'BOOM!'}
-                    </h3>
-                    <div className="space-y-3 md:space-y-4 w-full">
-                      <p className="font-black text-slate-400 uppercase tracking-[0.2em] text-[10px]">
-                        {gameState === 'won' ? 'Clear Minefield!' : 'Better luck next time!'}
-                      </p>
-                      <div className="bg-slate-50 rounded-2xl md:rounded-3xl p-3 md:p-4 flex justify-around items-center border border-slate-100 shadow-inner">
-                        <div>
-                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Mines</p>
-                          <p className="font-black text-lg md:text-xl text-red-500 tabular-nums leading-none flex items-center gap-1 mt-1"><Bomb size={12} />{minesLeft}</p>
-                        </div>
-                        <div className="w-px h-6 bg-slate-200"></div>
-                        <div>
-                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Level</p>
-                          <p className="font-black text-lg md:text-xl text-slate-700 uppercase tracking-widest mt-1">{level === 'custom' ? 'CUSTOM' : LEVELS[level].name}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 w-full mt-4 md:mt-6">
-                      <button onClick={() => { if (level === 'custom') { initCustomGame(gridConfig.rows, gridConfig.cols); } else { initGame(level); } }} className="w-full py-3 md:py-4 bg-slate-500 text-white rounded-2xl md:rounded-3xl font-black uppercase tracking-wider shadow-lg active:translate-y-1 transition-all text-sm md:text-base">TRY AGAIN</button>
-                      {!autoStart && <button onClick={() => setGameState('menu')} className="w-full py-2 bg-transparent text-slate-400 font-bold uppercase tracking-wider active:text-slate-600 transition-all text-[10px] md:text-xs">Back to Menu</button>}
-                    </div>
-                  </motion.div>
+                  <h2 className="text-4xl md:text-6xl font-black text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)] italic uppercase tracking-tighter animate-bounce">
+                    THÀNH CÔNG!
+                  </h2>
                 </motion.div>
               )}
             </AnimatePresence>
