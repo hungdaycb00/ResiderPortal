@@ -34,8 +34,9 @@ export const CombatStatsPanel: React.FC<StatsPanelProps> = ({
                 <div className="flex justify-between items-end mb-1">
                     <div className="flex flex-col">
                         <span className={`text-[10px] font-black text-${accentColor}-400 uppercase tracking-wider`}>⚔️ DMG: {dmg}</span>
-                        <span className={`text-[9px] font-bold text-${accentColor}-300`}>⚡ REGEN: +{regen * 10}/s</span>
+                        <span className={`text-[9px] font-bold text-${accentColor}-300 uppercase`}>⚡ REGEN: +{regen}/s</span>
                     </div>
+                    <span className="text-[10px] font-black text-white drop-shadow-md">{name}</span>
                     <span className="text-[10px] font-bold text-red-300">{Math.max(0, Math.round(hp))}/{maxHp}</span>
                 </div>
                 {/* HP Bar */}

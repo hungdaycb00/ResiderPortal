@@ -111,8 +111,8 @@ export function useCombatLoop({
             const entry = combatLogRef.current[currentIdxRef.current];
             const side = entry.attacker;
 
-            const gainA = (15 + (myStats.eRegen || 0)) * (dt / 1000) * 8;
-            const gainB = (15 + (botStats.eRegen || 0)) * (dt / 1000) * 8;
+            const gainA = (15 + (myStats.eRegen || 0)) * (dt / 1000) * 10;
+            const gainB = (15 + (botStats.eRegen || 0)) * (dt / 1000) * 10;
             
             actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA || 100);
             actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB || 100);

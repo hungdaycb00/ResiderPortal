@@ -59,9 +59,9 @@ const CombatScreen: React.FC = () => {
             <CombatStatsPanel 
                 side="enemy" name={encounter.name} hp={combat.hpB} maxHp={combat.maxHpB}
                 actionProgress={combat.actionProgressB} maxActionBar={combat.maxActionBarB}
-                dmg={encounter.totalWeight} regen={combat.botStats.eRegen + 15}
+                dmg={encounter.totalWeight} regen={(combat.botStats.eRegen + 15) * 10}
                 inventory={encounter.inventory || []} bags={encounter.bags}
-                gridWidth={6} gridHeight={4} isMobileTop
+                gridWidth={encounter.bags?.[0]?.width || 6} gridHeight={encounter.bags?.[0]?.height || 4} isMobileTop
             />
 
             {/* 2. Ocean scene with boats (Middle) */}
@@ -77,7 +77,7 @@ const CombatScreen: React.FC = () => {
                 <CombatStatsPanel 
                     side="player" name="Bạn" hp={combat.hpA} maxHp={combat.maxHpA}
                     actionProgress={combat.actionProgressA} maxActionBar={combat.maxActionBarA}
-                    dmg={combat.myStats.weight} regen={combat.myStats.eRegen + 15}
+                    dmg={combat.myStats.weight} regen={(combat.myStats.eRegen + 15) * 10}
                     inventory={combat.initialPlayerInventory}
                     gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight}
                 />
@@ -87,9 +87,9 @@ const CombatScreen: React.FC = () => {
                     <CombatStatsPanel 
                         side="enemy" name={encounter.name} hp={combat.hpB} maxHp={combat.maxHpB}
                         actionProgress={combat.actionProgressB} maxActionBar={combat.maxActionBarB}
-                        dmg={encounter.totalWeight} regen={combat.botStats.eRegen + 15}
+                        dmg={encounter.totalWeight} regen={(combat.botStats.eRegen + 15) * 10}
                         inventory={encounter.inventory || []} bags={encounter.bags}
-                        gridWidth={6} gridHeight={4}
+                        gridWidth={encounter.bags?.[0]?.width || 6} gridHeight={encounter.bags?.[0]?.height || 4}
                     />
                 </div>
             </div>
