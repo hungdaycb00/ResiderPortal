@@ -92,9 +92,11 @@ export function useLooterBoat({
                 
                 if (dist <= interactionRadius) {
                     if (item.minigameType) {
+                        console.log(`[LooterPerf] Triggering minigame for item: ${item.name} (${item.spawnId}) at ${Date.now()}`);
                         setShowMinigame(item);
                         break; 
                     } else {
+                        console.log(`[LooterPerf] Direct pickup item: ${item.name} (${item.spawnId}) at ${Date.now()}`);
                         pendingPickupsRef.current.add(item.spawnId);
                         looterActions.pickupItem(item.spawnId).finally(() => {
                             // Sau khi nhặt xong (hoặc lỗi), item sẽ biến mất khỏi worldItems 

@@ -8,19 +8,38 @@ export const PickupMinigame: React.FC = () => {
     const { showMinigame, state } = useLooterState();
     const { setShowMinigame, pickupItem, inflictMinigamePenalty } = useLooterActions();
 
-    // Lưu quyết định game type vào ref để không bị random lại mỗi render
+    // 1. Hooks MUST be at the top level
     const gameTypeRef = useRef<'fruit' | 'minesweeper' | null>(null);
-    if (showMinigame && gameTypeRef.current === null) {
-        gameTypeRef.current = showMinigame.minigameType === 'diving' || Math.random() > 0.5 
-            ? 'minesweeper' : 'fruit';
-    }
-    if (!showMinigame) {
-        gameTypeRef.current = null;
-        return null;
-    }
+    const mountTimeRef = useRef<number>(0);
+
+    // Calculate grid settings
+    const worldTier = state.worldTier || 0;
+    const baseSize = 3 + worldTier;
+    const rows = baseSize;
+    const cols = (rows * rows) % 2 === 0 ? rows : rows + 1;
+    const customGrid = React.useMemo(() => ({ rows, cols }), [rows, cols]);
+
+    // Handle minigame display logic and logging
+    React.useEffect(() => {
+        if (showMinigame) {
+            if (gameTypeRef.current === null) {
+                gameTypeRef.current = showMinigame.minigameType === 'diving' || Math.random() > 0.5 
+                    ? 'minesweeper' : 'fruit';
+            }
+            mountTimeRef.current = Date.now();
+            console.log(`[LooterPerf] Minigame mounted: ${showMinigame.minigameType || 'random'} (spawnId: ${showMinigame.spawnId}) at ${mountTimeRef.current}`);
+        } else {
+            gameTypeRef.current = null;
+        }
+    }, [!!showMinigame]);
 
     const handleComplete = (success: boolean) => {
-        const spawnId = showMinigame.spawnId;
+        const spawnId = showMinigame?.spawnId;
+        if (!spawnId) return;
+
+        const duration = Date.now() - mountTimeRef.current;
+        console.log(`[LooterPerf] Minigame completed: ${success ? 'SUCCESS' : 'FAILED'} in ${duration}ms (spawnId: ${spawnId})`);
+
         // Đóng popup NGAY LẬP TỨC, không đợi API
         setShowMinigame(null);
         // API call chạy nền, không block UI
@@ -31,13 +50,8 @@ export const PickupMinigame: React.FC = () => {
         }
     };
 
-    const worldTier = state.worldTier || 0;
-    const baseSize = 3 + worldTier;
-    // Đảm bảo tổng ô luôn chẵn cho game tìm cặp
-    const rows = baseSize;
-    const cols = (rows * rows) % 2 === 0 ? rows : rows + 1; // 3→4x3=12, 4→4x4=16, 5→6x5=30
+    if (!showMinigame) return null;
 
-    const customGrid = React.useMemo(() => ({ rows, cols }), [rows, cols]);
     const isMinesweeper = gameTypeRef.current === 'minesweeper';
 
     return (

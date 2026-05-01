@@ -131,8 +131,13 @@ export function useLooterInventory({
 
   const pickupItem = useCallback(async (spawnId: string) => {
     if (!deviceId) return;
+    const startTime = Date.now();
+    console.log(`[LooterPerf] API pickupItem started for ${spawnId} at ${startTime}`);
     try {
       const data = await looterApi.pickupItem(apiUrl, deviceId, spawnId, true);
+      const endTime = Date.now();
+      console.log(`[LooterPerf] API pickupItem completed for ${spawnId} in ${endTime - startTime}ms`);
+      
       if (data.success && data.item) {
         const item = data.item as LooterItem;
         const currentBag = state.bags[0];
@@ -160,7 +165,8 @@ export function useLooterInventory({
         await saveInventory(newInventory);
       }
     } catch (err) {
-      console.error('[LooterGame] pickupItem error:', err);
+      const endTime = Date.now();
+      console.error(`[LooterPerf] API pickupItem FAILED for ${spawnId} after ${endTime - startTime}ms`, err);
     }
   }, [deviceId, apiUrl, state.inventory, state.bags, setState, setWorldItems, saveInventory, notify]);
 
