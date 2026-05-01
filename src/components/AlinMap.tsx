@@ -393,6 +393,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                         if (typeof looterActions.setWorldTier === 'function') {
                             setIsTierSelectorOpen(false);
                             setIsLooterGameMode(true);
+                            if (typeof looterActions.setIsChallengeActive === 'function') {
+                                looterActions.setIsChallengeActive(true); // Optimistic update
+                            }
                             // Run in background so UI feels instant
                             looterActions.setWorldTier(tier).catch(err => {
                                 console.error('[AlinMap] Background setWorldTier error:', err);
