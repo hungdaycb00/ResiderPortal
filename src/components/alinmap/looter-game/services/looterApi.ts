@@ -39,159 +39,82 @@ export const transformLooterState = (raw: any): Partial<LooterGameState> => {
   };
 };
 
+// ==========================================
+// Generic request helpers
+// ==========================================
+
+async function get<T = any>(apiUrl: string, path: string, params: Record<string, string>): Promise<T> {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${apiUrl}/api/looter/${path}?${qs}`);
+  return res.json();
+}
+
+async function post<T = any>(apiUrl: string, path: string, body: Record<string, any>): Promise<T> {
+  const res = await fetch(`${apiUrl}/api/looter/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 /**
  * Looter API Service
  */
 export const looterApi = {
   async fetchState(apiUrl: string, deviceId: string) {
-    const res = await fetch(`${apiUrl}/api/looter/state?deviceId=${encodeURIComponent(deviceId)}`);
-    const data = await res.json();
+    const data = await get(apiUrl, 'state', { deviceId });
     if (data.success && data.state) {
-      return {
-        ...data,
-        state: transformLooterState(data.state)
-      };
+      return { ...data, state: transformLooterState(data.state) };
     }
     return data;
   },
 
-  async initGame(apiUrl: string, deviceId: string, lat: number, lng: number) {
-    const res = await fetch(`${apiUrl}/api/looter/init`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, lat, lng }),
-    });
-    return await res.json();
-  },
+  initGame: (apiUrl: string, deviceId: string, lat: number, lng: number) =>
+    post(apiUrl, 'init', { deviceId, lat, lng }),
 
-  async moveBoat(apiUrl: string, deviceId: string, toLat: number, toLng: number) {
-    const res = await fetch(`${apiUrl}/api/looter/move`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, toLat, toLng }),
-    });
-    return await res.json();
-  },
+  moveBoat: (apiUrl: string, deviceId: string, toLat: number, toLng: number) =>
+    post(apiUrl, 'move', { deviceId, toLat, toLng }),
 
-  async pickupItem(apiUrl: string, deviceId: string, spawnId: string, force: boolean = false) {
-    const res = await fetch(`${apiUrl}/api/looter/pickup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, spawnId, force }),
-    });
-    return await res.json();
-  },
+  pickupItem: (apiUrl: string, deviceId: string, spawnId: string, force = false) =>
+    post(apiUrl, 'pickup', { deviceId, spawnId, force }),
 
-  async dropItem(apiUrl: string, deviceId: string, itemUid: string) {
-    const res = await fetch(`${apiUrl}/api/looter/drop`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUid }),
-    });
-    return await res.json();
-  },
+  dropItem: (apiUrl: string, deviceId: string, itemUid: string) =>
+    post(apiUrl, 'drop', { deviceId, itemUid }),
 
-  async fetchWorldItems(apiUrl: string, deviceId: string) {
-    const res = await fetch(`${apiUrl}/api/looter/world-items?deviceId=${encodeURIComponent(deviceId)}`);
-    return await res.json();
-  },
+  fetchWorldItems: (apiUrl: string, deviceId: string) =>
+    get(apiUrl, 'world-items', { deviceId }),
 
-  async saveInventory(apiUrl: string, deviceId: string, inventory: LooterItem[]) {
-    const res = await fetch(`${apiUrl}/api/looter/inventory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, inventory }),
-    });
-    return await res.json();
-  },
+  saveInventory: (apiUrl: string, deviceId: string, inventory: LooterItem[]) =>
+    post(apiUrl, 'inventory', { deviceId, inventory }),
 
-  async saveBags(apiUrl: string, deviceId: string, bags: BagItem[]) {
-    const res = await fetch(`${apiUrl}/api/looter/bags`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, bags }),
-    });
-    return await res.json();
-  },
+  saveBags: (apiUrl: string, deviceId: string, bags: BagItem[]) =>
+    post(apiUrl, 'bags', { deviceId, bags }),
 
-  async saveStorageLayout(apiUrl: string, deviceId: string, storage: LooterItem[]) {
-    const res = await fetch(`${apiUrl}/api/looter/storage_layout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, storage }),
-    });
-    return await res.json();
-  },
+  saveStorageLayout: (apiUrl: string, deviceId: string, storage: LooterItem[]) =>
+    post(apiUrl, 'storage_layout', { deviceId, storage }),
 
-  async minigameLose(apiUrl: string, deviceId: string, spawnId: string) {
-    const res = await fetch(`${apiUrl}/api/looter/minigame-lose`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, spawnId }),
-    });
-    return await res.json();
-  },
+  minigameLose: (apiUrl: string, deviceId: string, spawnId: string) =>
+    post(apiUrl, 'minigame-lose', { deviceId, spawnId }),
 
-  async destroyItem(apiUrl: string, deviceId: string, spawnId: string) {
-    const res = await fetch(`${apiUrl}/api/looter/destroy-item`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, spawnId }),
-    });
-    return await res.json();
-  },
+  destroyItem: (apiUrl: string, deviceId: string, spawnId: string) =>
+    post(apiUrl, 'destroy-item', { deviceId, spawnId }),
 
-  async executeCombat(apiUrl: string, deviceId: string, opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) {
-    const res = await fetch(`${apiUrl}/api/looter/combat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, opponentId, opponentInventory, opponentHp, opponentBags }),
-    });
-    return await res.json();
-  },
+  executeCombat: (apiUrl: string, deviceId: string, opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) =>
+    post(apiUrl, 'combat', { deviceId, opponentId, opponentInventory, opponentHp, opponentBags }),
 
-  async curseChoice(apiUrl: string, deviceId: string, choice: 'flee' | 'challenge') {
-    const res = await fetch(`${apiUrl}/api/looter/curse-choice`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, choice }),
-    });
-    return await res.json();
-  },
+  curseChoice: (apiUrl: string, deviceId: string, choice: 'flee' | 'challenge') =>
+    post(apiUrl, 'curse-choice', { deviceId, choice }),
 
-  async sellItems(apiUrl: string, deviceId: string, itemUids: string[]) {
-    const res = await fetch(`${apiUrl}/api/looter/sell`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids }),
-    });
-    return await res.json();
-  },
+  sellItems: (apiUrl: string, deviceId: string, itemUids: string[]) =>
+    post(apiUrl, 'sell', { deviceId, itemUids }),
 
-  async storeItems(apiUrl: string, deviceId: string, itemUids: string[], action: 'store' | 'retrieve', mode: string, gridX?: number, gridY?: number) {
-    const res = await fetch(`${apiUrl}/api/looter/store`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, itemUids, action, mode, gridX, gridY }),
-    });
-    return await res.json();
-  },
+  storeItems: (apiUrl: string, deviceId: string, itemUids: string[], action: 'store' | 'retrieve', mode: string, gridX?: number, gridY?: number) =>
+    post(apiUrl, 'store', { deviceId, itemUids, action, mode, gridX, gridY }),
 
-  async setWorldTier(apiUrl: string, deviceId: string, tier: number) {
-    const res = await fetch(`${apiUrl}/api/looter/set-tier`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, tier }),
-    });
-    return await res.json();
-  },
+  setWorldTier: (apiUrl: string, deviceId: string, tier: number) =>
+    post(apiUrl, 'set-tier', { deviceId, tier }),
 
-  async returnToFortress(apiUrl: string, deviceId: string) {
-    const res = await fetch(`${apiUrl}/api/looter/return-fortress`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId }),
-    });
-    return await res.json();
-  }
+  returnToFortress: (apiUrl: string, deviceId: string) =>
+    post(apiUrl, 'return-fortress', { deviceId }),
 };

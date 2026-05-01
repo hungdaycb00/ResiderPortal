@@ -1,0 +1,92 @@
+import { useCallback, useRef } from 'react';
+import { useMotionValue, animate, MotionValue } from 'framer-motion';
+import { DEGREES_TO_PX } from '../../constants';
+
+interface UseBoatAnimationParams {
+  myObfPos: { lat: number; lng: number } | null;
+  panX: MotionValue<number>;
+  panY: MotionValue<number>;
+  currentLat: number | null;
+  currentLng: number | null;
+}
+
+export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng }: UseBoatAnimationParams) {
+  const boatOffsetX = useMotionValue(0);
+  const boatOffsetY = useMotionValue(0);
+  const isAnimatingRef = useRef(false);
+  const boatMoveXRef = useRef<any>(null);
+  const boatMoveYRef = useRef<any>(null);
+  const panMoveXRef = useRef<any>(null);
+  const panMoveYRef = useRef<any>(null);
+  const userDraggingRef = useRef(false);
+
+  const stopAllAnimations = useCallback(() => {
+    if (boatMoveXRef.current) { boatMoveXRef.current.stop(); boatMoveXRef.current = null; }
+    if (boatMoveYRef.current) { boatMoveYRef.current.stop(); boatMoveYRef.current = null; }
+    isAnimatingRef.current = false;
+  }, []);
+
+  const animateBoatTo = useCallback((lat: number, lng: number, duration: number) => {
+    if (!myObfPos) return;
+    isAnimatingRef.current = true;
+
+    const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
+    const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
+
+    boatMoveXRef.current = animate(boatOffsetX, newBoatPxX, { duration, ease: 'easeInOut' });
+    boatMoveYRef.current = animate(boatOffsetY, newBoatPxY, { duration, ease: 'easeInOut' });
+
+    panMoveXRef.current = animate(panX, -newBoatPxX, { duration, ease: 'easeInOut' });
+    panMoveYRef.current = animate(panY, -newBoatPxY, {
+      duration, ease: 'easeInOut',
+      onComplete: () => {
+        isAnimatingRef.current = false;
+        boatMoveXRef.current = null;
+        boatMoveYRef.current = null;
+        panMoveXRef.current = null;
+        panMoveYRef.current = null;
+      }
+    });
+  }, [myObfPos, boatOffsetX, boatOffsetY, panX, panY]);
+
+  const syncBoatPosition = useCallback(() => {
+    if (!myObfPos || currentLat == null || currentLng == null || isAnimatingRef.current) return;
+    const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
+    const nextBoatY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
+    boatOffsetX.set(nextBoatX);
+    boatOffsetY.set(nextBoatY);
+    panX.set(-nextBoatX);
+    panY.set(-nextBoatY);
+  }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
+
+  const centerOnBoat = useCallback(() => {
+    if (panMoveXRef.current) panMoveXRef.current.stop();
+    if (panMoveYRef.current) panMoveYRef.current.stop();
+    userDraggingRef.current = false;
+
+    if (currentLat != null && currentLng != null && myObfPos) {
+      const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
+      const pxY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
+      boatOffsetX.set(pxX);
+      boatOffsetY.set(pxY);
+      animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
+      animate(panY, -pxY, { duration: 0.45, ease: 'easeInOut' });
+    } else {
+      animate(panX, -(boatOffsetX?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
+      animate(panY, -(boatOffsetY?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
+    }
+  }, [boatOffsetX, boatOffsetY, panX, panY, currentLat, currentLng, myObfPos]);
+
+  const stopPanFollow = useCallback(() => {
+    userDraggingRef.current = true;
+    if (panMoveXRef.current) { panMoveXRef.current.stop(); panMoveXRef.current = null; }
+    if (panMoveYRef.current) { panMoveYRef.current.stop(); panMoveYRef.current = null; }
+  }, []);
+
+  return {
+    boatOffsetX, boatOffsetY,
+    isAnimatingRef,
+    stopAllAnimations, animateBoatTo, syncBoatPosition,
+    centerOnBoat, stopPanFollow,
+  };
+}

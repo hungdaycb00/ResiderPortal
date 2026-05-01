@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { generateSolvableFruitGrid } from './minigameUtils';
 import { getLooterServerUrl } from '../../../services/externalApi';
 import type { LooterItem, BagItem } from './backpack/types';
@@ -31,6 +31,75 @@ const defaultState: LooterGameState = {
 
 const { SYNC_HEARTBEAT_MS } = GAME_CONFIG;
 
+// ==========================================
+// UI State Reducer (gom 15 useState → 1 useReducer)
+// ==========================================
+interface UIState {
+  pickupRewardItem: LooterItem | null;
+  encounter: Encounter | null;
+  combatResult: CombatResult | null;
+  showCurseModal: boolean;
+  showMinigame: WorldItem | null;
+  isLooterGameMode: boolean;
+  isChallengeActive: boolean;
+  isFortressStorageOpen: boolean;
+  fortressStorageMode: StorageAccessMode;
+  isItemDragging: boolean;
+  preGeneratedMinigame: { type: string; grid: any } | null;
+  draggingItem: LooterItem | null;
+  draggingMapItem: WorldItem | null;
+  showDiscardModal: boolean;
+  dragPointerPos: { x: number; y: number };
+}
+
+type UIAction =
+  | { type: 'SET_PICKUP_REWARD'; payload: LooterItem | null }
+  | { type: 'SET_ENCOUNTER'; payload: Encounter | null }
+  | { type: 'SET_COMBAT_RESULT'; payload: CombatResult | null }
+  | { type: 'SET_SHOW_CURSE_MODAL'; payload: boolean }
+  | { type: 'SET_SHOW_MINIGAME'; payload: WorldItem | null }
+  | { type: 'SET_LOOTER_GAME_MODE'; payload: boolean }
+  | { type: 'SET_CHALLENGE_ACTIVE'; payload: boolean }
+  | { type: 'SET_FORTRESS_STORAGE_OPEN'; payload: boolean }
+  | { type: 'SET_FORTRESS_STORAGE_MODE'; payload: StorageAccessMode }
+  | { type: 'SET_ITEM_DRAGGING'; payload: boolean }
+  | { type: 'SET_PRE_GENERATED_MINIGAME'; payload: { type: string; grid: any } | null }
+  | { type: 'SET_DRAGGING_ITEM'; payload: LooterItem | null }
+  | { type: 'SET_DRAGGING_MAP_ITEM'; payload: WorldItem | null }
+  | { type: 'SET_SHOW_DISCARD_MODAL'; payload: boolean }
+  | { type: 'SET_DRAG_POINTER_POS'; payload: { x: number; y: number } }
+  | { type: 'OPEN_FORTRESS_STORAGE'; payload: StorageAccessMode };
+
+const initialUIState: UIState = {
+  pickupRewardItem: null, encounter: null, combatResult: null,
+  showCurseModal: false, showMinigame: null, isLooterGameMode: false,
+  isChallengeActive: false, isFortressStorageOpen: false, fortressStorageMode: 'fortress',
+  isItemDragging: false, preGeneratedMinigame: null, draggingItem: null,
+  draggingMapItem: null, showDiscardModal: false, dragPointerPos: { x: 0, y: 0 },
+};
+
+function uiReducer(state: UIState, action: UIAction): UIState {
+  switch (action.type) {
+    case 'SET_PICKUP_REWARD': return { ...state, pickupRewardItem: action.payload };
+    case 'SET_ENCOUNTER': return { ...state, encounter: action.payload };
+    case 'SET_COMBAT_RESULT': return { ...state, combatResult: action.payload };
+    case 'SET_SHOW_CURSE_MODAL': return { ...state, showCurseModal: action.payload };
+    case 'SET_SHOW_MINIGAME': return { ...state, showMinigame: action.payload };
+    case 'SET_LOOTER_GAME_MODE': return { ...state, isLooterGameMode: action.payload };
+    case 'SET_CHALLENGE_ACTIVE': return { ...state, isChallengeActive: action.payload };
+    case 'SET_FORTRESS_STORAGE_OPEN': return { ...state, isFortressStorageOpen: action.payload };
+    case 'SET_FORTRESS_STORAGE_MODE': return { ...state, fortressStorageMode: action.payload };
+    case 'SET_ITEM_DRAGGING': return { ...state, isItemDragging: action.payload };
+    case 'SET_PRE_GENERATED_MINIGAME': return { ...state, preGeneratedMinigame: action.payload };
+    case 'SET_DRAGGING_ITEM': return { ...state, draggingItem: action.payload };
+    case 'SET_DRAGGING_MAP_ITEM': return { ...state, draggingMapItem: action.payload };
+    case 'SET_SHOW_DISCARD_MODAL': return { ...state, showDiscardModal: action.payload };
+    case 'SET_DRAG_POINTER_POS': return { ...state, dragPointerPos: action.payload };
+    case 'OPEN_FORTRESS_STORAGE': return { ...state, fortressStorageMode: action.payload, isFortressStorageOpen: true };
+    default: return state;
+  }
+}
+
 interface LooterGameProviderProps {
   children: React.ReactNode;
   deviceId: string | null;
@@ -41,23 +110,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   // 1. Core State
   const [state, setState] = useState<LooterGameState>(defaultState);
   const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
-  const [pickupRewardItem, setPickupRewardItem] = useState<LooterItem | null>(null);
-  const [encounter, setEncounter] = useState<Encounter | null>(null);
-  const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
-  const [showCurseModal, setShowCurseModal] = useState(false);
-  const [showMinigame, setShowMinigame] = useState<WorldItem | null>(null);
-  const [isLooterGameMode, setIsLooterGameMode] = useState(false);
-  const [isChallengeActive, setIsChallengeActive] = useState(false);
-  const [isFortressStorageOpen, setIsFortressStorageOpen] = useState(false);
-  const [fortressStorageMode, setFortressStorageMode] = useState<StorageAccessMode>('fortress');
+  const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
-  const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
-  const [isItemDragging, setIsItemDragging] = useState(false);
-  const [preGeneratedMinigame, setPreGeneratedMinigame] = useState<{ type: string, grid: any } | null>(null);
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
-  const [draggingMapItem, setDraggingMapItem] = useState<WorldItem | null>(null);
-  const [dragPointerPos, setDragPointerPos] = useState({ x: 0, y: 0 });
-  const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   const API_URL = useMemo(() => getLooterServerUrl(), []);
 
@@ -69,13 +124,29 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [showNotification]);
 
+  // Stable dispatch wrappers
+  const setPickupRewardItem = useCallback((v: LooterItem | null) => dispatch({ type: 'SET_PICKUP_REWARD', payload: v }), []);
+  const setEncounter = useCallback((v: Encounter | null) => dispatch({ type: 'SET_ENCOUNTER', payload: v }), []);
+  const setCombatResult = useCallback((v: CombatResult | null) => dispatch({ type: 'SET_COMBAT_RESULT', payload: v }), []);
+  const setShowCurseModal = useCallback((v: boolean) => dispatch({ type: 'SET_SHOW_CURSE_MODAL', payload: v }), []);
+  const setShowMinigame = useCallback((v: WorldItem | null) => dispatch({ type: 'SET_SHOW_MINIGAME', payload: v }), []);
+  const setIsLooterGameMode = useCallback((v: boolean) => dispatch({ type: 'SET_LOOTER_GAME_MODE', payload: v }), []);
+  const setIsChallengeActive = useCallback((v: boolean) => dispatch({ type: 'SET_CHALLENGE_ACTIVE', payload: v }), []);
+  const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);
+  const setIsItemDragging = useCallback((v: boolean) => dispatch({ type: 'SET_ITEM_DRAGGING', payload: v }), []);
+  const setPreGeneratedMinigame = useCallback((v: { type: string; grid: any } | null) => dispatch({ type: 'SET_PRE_GENERATED_MINIGAME', payload: v }), []);
+  const setDraggingItem = useCallback((v: LooterItem | null) => dispatch({ type: 'SET_DRAGGING_ITEM', payload: v }), []);
+  const setDraggingMapItem = useCallback((v: WorldItem | null) => dispatch({ type: 'SET_DRAGGING_MAP_ITEM', payload: v }), []);
+  const setShowDiscardModal = useCallback((v: boolean) => dispatch({ type: 'SET_SHOW_DISCARD_MODAL', payload: v }), []);
+  const setDragPointerPos = useCallback((v: { x: number; y: number }) => dispatch({ type: 'SET_DRAG_POINTER_POS', payload: v }), []);
+
   const { runInQueue, isSyncing } = useLooterQueue();
   const { saveInventory, saveBags, saveStorage } = useLooterData({ deviceId, apiUrl: API_URL, setState });
 
   // 3. Initialize Hooks
   const stateManager = useLooterStateManager({
     deviceId, apiUrl: API_URL, state, setState, setWorldItems,
-    setIsChallengeActive, setGlobalSettings, notify, isChallengeActive,
+    setIsChallengeActive, setGlobalSettings, notify, isChallengeActive: ui.isChallengeActive,
     saveBags
   });
 
@@ -95,8 +166,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const actionsValue: LooterGameActions = useMemo(() => ({
     setIsFortressStorageOpen,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
-      setFortressStorageMode(mode);
-      setIsFortressStorageOpen(true);
+      dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
     },
     setPickupRewardItem, setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
@@ -136,34 +206,32 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification, setDraggingItem, setDraggingMapItem,
     setShowDiscardModal, confirmDiscard: () => runInQueue(inventory.confirmDiscard)
   }), [
-    stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification
+    stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification,
+    setPickupRewardItem, setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
+    setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen, setIsItemDragging,
+    setPreGeneratedMinigame, setDraggingItem, setDraggingMapItem, setShowDiscardModal, notify
   ]);
 
   const stateValue: LooterGameStateContextType = useMemo(() => ({
     state,
-    worldItems, pickupRewardItem,
-    encounter, combatResult,
-    showCurseModal, showMinigame,
-    isLooterGameMode, isItemDragging, isChallengeActive,
-    isFortressStorageOpen, fortressStorageMode,
+    worldItems, pickupRewardItem: ui.pickupRewardItem,
+    encounter: ui.encounter, combatResult: ui.combatResult,
+    showCurseModal: ui.showCurseModal, showMinigame: ui.showMinigame,
+    isLooterGameMode: ui.isLooterGameMode, isItemDragging: ui.isItemDragging,
+    isChallengeActive: ui.isChallengeActive,
+    isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,
     globalSettings, isMoving: movement.isMoving, isSyncing,
-    draggingItem, draggingMapItem,
-    showDiscardModal, dragPointerPos
-  }), [
-    state, worldItems, pickupRewardItem, encounter, combatResult,
-    showCurseModal, showMinigame, isLooterGameMode, isItemDragging,
-    isChallengeActive, isFortressStorageOpen, fortressStorageMode,
-    globalSettings, movement.isMoving, isSyncing, draggingItem, draggingMapItem,
-    showDiscardModal, dragPointerPos
-  ]);
+    draggingItem: ui.draggingItem, draggingMapItem: ui.draggingMapItem,
+    showDiscardModal: ui.showDiscardModal, dragPointerPos: ui.dragPointerPos
+  }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing]);
 
   // 4. Effects
   
   // Chuẩn bị Minigame
   useEffect(() => {
-    if (!isLooterGameMode) return;
+    if (!ui.isLooterGameMode) return;
     const prepareMinigame = () => {
-      if (preGeneratedMinigame) return; 
+      if (ui.preGeneratedMinigame) return; 
       const tier = state.worldTier;
       let innerRows = 4, innerCols = 4;
       if (tier === 1) { innerRows = 4; innerCols = 5; }
@@ -177,16 +245,16 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     };
     const interval = setInterval(prepareMinigame, 5000);
     return () => clearInterval(interval);
-  }, [isLooterGameMode, preGeneratedMinigame, state.worldTier]);
+  }, [ui.isLooterGameMode, ui.preGeneratedMinigame, state.worldTier, setPreGeneratedMinigame]);
 
   // Xử lý kéo vật phẩm từ bản đồ
   useEffect(() => {
-    if (!draggingMapItem) return;
+    if (!ui.draggingMapItem) return;
     const handlePointerMove = (e: PointerEvent) => setDragPointerPos({ x: e.clientX, y: e.clientY });
     const handlePointerUp = (e: PointerEvent) => {
       if (e.clientY > window.innerHeight * 0.65) {
-        actionsValue.pickupItem(draggingMapItem.spawnId, undefined, undefined, true);
-        notify(`Đang nhặt ${draggingMapItem.item.name}...`, 'info');
+        actionsValue.pickupItem(ui.draggingMapItem!.spawnId, undefined, undefined, true);
+        notify(`Đang nhặt ${ui.draggingMapItem!.item.name}...`, 'info');
       }
       setDraggingMapItem(null);
     };
@@ -196,21 +264,21 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [draggingMapItem, actionsValue, notify]);
+  }, [ui.draggingMapItem, actionsValue, notify, setDragPointerPos, setDraggingMapItem]);
 
   // Heartbeat Synchronization
   useEffect(() => {
-    if (!deviceId || !isLooterGameMode) return;
+    if (!deviceId || !ui.isLooterGameMode) return;
     actionsValue.loadState();
     const interval = setInterval(() => {
       actionsValue.loadState();
     }, SYNC_HEARTBEAT_MS);
     return () => clearInterval(interval);
-  }, [deviceId, isLooterGameMode, actionsValue]);
+  }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
   // World Items Polling (Smart Interval based on movement)
   useEffect(() => {
-    if (!deviceId || !isLooterGameMode) return;
+    if (!deviceId || !ui.isLooterGameMode) return;
     
     const fetchItems = () => actionsValue.loadWorldItems();
     fetchItems(); // Initial load
@@ -220,7 +288,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     const interval = setInterval(fetchItems, intervalMs);
     
     return () => clearInterval(interval);
-  }, [deviceId, isLooterGameMode, movement.isMoving, actionsValue]);
+  }, [deviceId, ui.isLooterGameMode, movement.isMoving, actionsValue]);
 
   return (
     <LooterStateContext.Provider value={stateValue}>
