@@ -32,21 +32,6 @@ export function useInventoryDrag({
     // Boundary check
     if (gridX < 0 || gridY < 0 || gridX + w > gridW || gridY + h > gridH) return true;
 
-    // Bag occupancy check (if applicable)
-    if (activeBag) {
-      for (let r = 0; r < h; r++) {
-        for (let c = 0; c < w; c++) {
-          if (!shape || shape[r][c]) {
-            const bx = gridX + c - activeBag.gridX;
-            const by = gridY + r - activeBag.gridY;
-            if (bx < 0 || by < 0 || bx >= activeBag.width || by >= activeBag.height || !activeBag.shape[by][bx]) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-
     // Overlap with other items check
     return currentItems.some((other) => {
       if (other.uid === item.uid || other.gridX < 0) return false;

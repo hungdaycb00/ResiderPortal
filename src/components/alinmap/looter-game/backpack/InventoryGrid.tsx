@@ -79,29 +79,44 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     return Math.abs(hash % max);
   };
 
+  React.useEffect(() => {
+    const staging = items.filter(i => i.gridX < 0);
+    if (staging.length === 0) return;
+
+    const findEmptySpot = (item: LooterItem, currentItems: LooterItem[]) => {
+      const w = item.gridW || 1;
+      const h = item.gridH || 1;
+      for (let y = 0; y <= gridH - h; y++) {
+        for (let x = 0; x <= gridW - w; x++) {
+          if (!checkOverlap(item, x, y, currentItems)) return { x, y };
+        }
+      }
+      return null;
+    };
+
+    let updated = [...items];
+    let changed = false;
+    for (const item of staging) {
+      const spot = findEmptySpot(item, updated);
+      if (spot) {
+        updated = updated.map(i => i.uid === item.uid ? { ...i, gridX: spot.x, gridY: spot.y } : i);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      onItemLayoutChange?.(updated);
+    }
+  }, [items, gridW, gridH, checkOverlap, onItemLayoutChange]);
+
   return (
     <div 
-      className="flex flex-col gap-4 select-none touch-none w-full h-full relative p-4"
+      className="flex flex-col select-none touch-none w-full h-full relative"
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      {stagingItems.map((item) => (
-        <InventoryItem
-          key={item.uid}
-          item={item}
-          cellSize={cellSize}
-          isDragging={draggingItem?.uid === item.uid}
-          style={{
-            left: (item as any).stagingX ?? getStablePos(item.uid + 'x', Math.max(200, window.innerWidth - 100)),
-            top: (item as any).stagingY ?? getStablePos(item.uid + 'y', Math.max(300, window.innerHeight - 200)),
-          }}
-          onPointerDown={onPointerDown}
-          onDoubleClick={onItemDoubleClick}
-          onClick={() => onItemClick?.(item)}
-        />
-      ))}
 
-      <div className="w-full h-full flex items-start justify-center pt-8 pointer-events-none">
+      <div className="w-full h-full flex items-start justify-center pt-0 pointer-events-none">
         <div
           ref={containerRef}
           className="pointer-events-auto relative shrink-0 mx-auto bg-[#040911] border-2 border-white/10"

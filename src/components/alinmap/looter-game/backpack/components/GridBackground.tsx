@@ -31,7 +31,7 @@ const GridBackground: React.FC<GridBackgroundProps> = React.memo(({
       {/* Uniform Grid Background is handled by parent container's backgroundImage */}
       {activeBag && activeBag.gridX >= 0 && (
         <div
-          className="absolute rounded-xl border-2 border-cyan-500/20"
+          className="absolute rounded-none border-2 border-cyan-500/20"
           style={{
             left: activeBag.gridX * cellSize + 2,
             top: activeBag.gridY * cellSize + 2,

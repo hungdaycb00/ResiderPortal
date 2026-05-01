@@ -39,7 +39,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
-  const cellSize = Math.min(42, (window.innerWidth - 64) / MAX_GRID_W);
+  const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
 
   useEffect(() => {
     if (!draggingMapItem) return;
@@ -81,7 +81,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
   );
 
-  const isAtFortress = isLooterAtFortress(state);
+  const dynamicGridH = React.useMemo(() => {
+    const headerHeight = 48;
+    const bottomNavHeight = window.innerWidth < 768 ? 96 : 0; 
+    const availableHeight = window.innerHeight - headerHeight - bottomNavHeight;
+    return Math.max(MAX_GRID_H, Math.floor(availableHeight / cellSize));
+  }, [cellSize]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
@@ -99,27 +104,27 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
             <Heart className="h-3.5 w-3.5 text-red-500" />
             <span className="text-[12px] font-black">{state.currentHp}</span>
           </div>
-
+ 
           {/* Energy */}
           <div className="flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-[12px] font-black">{state.energyMax + totalStats.energyMax}</span>
           </div>
         </div>
-
+ 
         <div className="flex items-center gap-4">
           {/* Speed */}
           <div className="flex items-center gap-1.5">
             <Wind className="h-3.5 w-3.5 text-emerald-500" />
             <span className="text-[12px] font-black">{state.moveSpeed}x</span>
           </div>
-
+ 
           {/* Weight/DMG */}
           <div className="flex items-center gap-1.5">
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[12px] font-black">{totalStats.weight}</span>
           </div>
-
+ 
           {/* Bag Slot - Integrated in Header */}
           <div 
             className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-all hover:scale-110 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}
@@ -128,7 +133,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
              <span className="text-lg leading-none">{activeBag?.icon || '🎒'}</span>
           </div>
         </div>
-
+ 
         {/* Collapse Button - Part of header now */}
         <button 
           onClick={() => (window as any).collapseLooterTab?.()}
@@ -137,7 +142,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
           <ChevronDown className="w-5 h-5" />
         </button>
       </div>
-
+ 
       {/* Main Grid Area - Full Tab */}
       <div className="flex-1 relative overflow-hidden subtle-scrollbar">
         <div className="w-full h-full">
@@ -156,7 +161,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
             externalHoverCell={externalHoverCell}
             onHoverCellChange={setExternalHoverCell}
             gridW={MAX_GRID_W}
-            gridH={MAX_GRID_H}
+            gridH={dynamicGridH}
           />
         </div>
       </div>
