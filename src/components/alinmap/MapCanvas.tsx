@@ -79,7 +79,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
         myObfPos, scale, panX, panY,
-        setMainTab, setIsSheetExpanded, showNotification
+        setMainTab, setIsSheetExpanded, showNotification,
+        setIsTierSelectorOpen
     });
 
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);

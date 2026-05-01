@@ -12,6 +12,7 @@ interface UseSeaBoatParams {
     setMainTab?: (tab: string) => void;
     setIsSheetExpanded: (v: boolean) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
+    setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 const PICKUP_RADIUS_DEG = 0.00085; // slightly smaller than server 100m (0.0009) to avoid 400 errors
@@ -20,7 +21,7 @@ const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
     isLooterGameMode, myObfPos, scale, panX, panY,
-    setMainTab, setIsSheetExpanded, showNotification
+    setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
     const looterActions = useLooterActions();
@@ -195,7 +196,7 @@ export function useLooterBoat({
             ) * 111000;
             
             if (distToFortress < 100) {
-                showNotification?.('Bạn đang ở Thành Trì. Hãy click ra xa hoặc mở Balo -> Thử Thách để xuất phát!', 'info');
+                setIsTierSelectorOpen?.(true);
                 return;
             }
         }
@@ -252,7 +253,7 @@ export function useLooterBoat({
                 panMoveYRef.current = null;
             }
         });
-        }, [isLooterGameMode, looterState, looterActions, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification]);
+        }, [isLooterGameMode, looterState, looterActions, myObfPos, scale, panX, panY, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen]);
 
     const centerOnBoat = useCallback(() => {
         if (panMoveXRef.current) panMoveXRef.current.stop();

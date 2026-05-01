@@ -49,7 +49,27 @@ export const CurseIndicator: React.FC<{
                 onClick={onToggle}
                 className="relative w-14 h-14 rounded-full bg-black/80 backdrop-blur-xl border-2 border-red-500/50 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.4)] pointer-events-auto overflow-hidden group"
             >
-                <motion.div className="absolute bottom-0 left-0 right-0 bg-red-600/40" style={{ height: curseBarWidth }} />
+                {/* Wave Animation Background */}
+                <motion.div 
+                    className="absolute bottom-0 left-0 right-0 bg-red-600/60" 
+                    style={{ height: curseBarWidth }}
+                >
+                    <svg
+                        className="absolute bottom-full left-0 w-[200%] h-4 fill-red-600/60 animate-[wave_3s_linear_infinite]"
+                        viewBox="0 0 1200 120"
+                        preserveAspectRatio="none"
+                    >
+                        <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z" />
+                    </svg>
+                    <svg
+                        className="absolute bottom-full left-[-100%] w-[200%] h-4 fill-red-500/40 animate-[wave_5s_linear_infinite]"
+                        viewBox="0 0 1200 120"
+                        preserveAspectRatio="none"
+                        style={{ animationDirection: 'reverse', opacity: 0.5 }}
+                    >
+                        <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z" />
+                    </svg>
+                </motion.div>
                 <div className="relative flex flex-col items-center">
                     <span className="text-[10px] leading-none mb-0.5 opacity-70">☠️</span>
                     <motion.span className={`text-xs font-black tabular-nums ${cursePercent > 70 ? 'text-red-400 animate-pulse' : 'text-white'}`}>

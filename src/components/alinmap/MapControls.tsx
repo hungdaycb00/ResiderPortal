@@ -65,19 +65,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             {/* Floating Controls - Right Side */}
             <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
-                <AnimatePresence>
-                    {isSyncing && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                            className="w-8 h-8 md:w-10 md:h-10 bg-blue-600/90 backdrop-blur-md rounded-[10px] md:rounded-xl shadow-lg flex items-center justify-center text-white border border-blue-400/30"
-                            title="Đang đồng bộ dữ liệu..."
-                        >
-                            <Cloud className="w-4 h-4 md:w-5 md:h-5 animate-pulse" />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+
 
                 {!isLooterGameMode && (
                     <>

@@ -40,7 +40,7 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
             const screenX = cx + (dx + currentPanX) * currentScale;
             const screenY = cy + (dy + currentPanY) * currentScale;
 
-            const margin = 45; // Khoảng cách từ mép màn hình
+            const margin = 20; // Khoảng cách từ mép màn hình (đã giảm từ 45)
             const minX = margin;
             const maxX = window.innerWidth - margin;
             const minY = margin;
@@ -91,13 +91,13 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
             style={{ left: waypointStyle.left, top: waypointStyle.top }}
         >
             <div className="absolute inset-0 bg-amber-500/20 rounded-full animate-ping scale-150" />
-            <div className="relative w-11 h-11 bg-amber-600/90 backdrop-blur-md rounded-full shadow-lg shadow-amber-900/50 flex items-center justify-center border-2 border-amber-400">
-                <Home className="w-5 h-5 text-white" />
+            <div className="relative w-4 h-4 bg-amber-600/90 backdrop-blur-md rounded-full shadow-md shadow-amber-900/50 flex items-center justify-center border border-amber-400">
+                <Home className="w-2 h-2 text-white" />
                 <div 
-                    className="absolute inset-0 flex items-start justify-center -m-4 pointer-events-none"
+                    className="absolute inset-0 flex items-start justify-center -m-2 pointer-events-none"
                     style={{ transform: `rotate(${waypointStyle.rotate}deg)` }}
                 >
-                    <ArrowUp className="w-6 h-6 text-amber-300 drop-shadow-[0_0_6px_rgba(251,191,36,1)]" strokeWidth={3} />
+                    <ArrowUp className="w-2.5 h-2.5 text-amber-300 drop-shadow-[0_0_4px_rgba(251,191,36,1)]" strokeWidth={4} />
                 </div>
             </div>
         </div>
