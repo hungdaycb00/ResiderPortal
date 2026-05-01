@@ -199,6 +199,20 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     return () => clearInterval(interval);
   }, [deviceId, isLooterGameMode, actionsValue]);
 
+  // World Items Polling (Smart Interval based on movement)
+  useEffect(() => {
+    if (!deviceId || !isLooterGameMode) return;
+    
+    const fetchItems = () => actionsValue.loadWorldItems();
+    fetchItems(); // Initial load
+
+    // Nếu đang di chuyển: 3s, đứng yên: 10s
+    const intervalMs = movement.isMoving ? 3000 : 10000;
+    const interval = setInterval(fetchItems, intervalMs);
+    
+    return () => clearInterval(interval);
+  }, [deviceId, isLooterGameMode, movement.isMoving, actionsValue]);
+
   return (
     <LooterStateContext.Provider value={stateValue}>
       <LooterActionsContext.Provider value={actionsValue}>

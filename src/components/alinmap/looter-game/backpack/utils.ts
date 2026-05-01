@@ -71,11 +71,9 @@ export const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boole
   const currentCells = countBagCells(bag.shape);
   if (bag.cells !== currentCells) { bag.cells = currentCells; repaired = true; }
 
-  const correctX = Math.floor((MAX_GRID_W - bag.width) / 2);
-  const correctY = Math.floor((MAX_GRID_H - bag.height) / 2);
-  if (bag.gridX !== correctX || bag.gridY !== correctY) {
-    bag.gridX = correctX;
-    bag.gridY = correctY;
+  if (bag.gridX == null || bag.gridY == null) {
+    bag.gridX = Math.floor((MAX_GRID_W - bag.width) / 2);
+    bag.gridY = Math.floor((MAX_GRID_H - bag.height) / 2);
     repaired = true;
   }
   if (!bag.uid) { bag.uid = Math.random().toString(36).substring(2, 10); repaired = true; }
