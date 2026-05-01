@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
 import { getLooterServerUrl } from '../../../services/externalApi';
 import type { LooterItem, BagItem } from './backpack/types';
 import { 
