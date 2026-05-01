@@ -88,17 +88,11 @@ export const useInventoryDrag = ({
     setDraggingItem(item);
 
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const isFloating = item.gridX < 0;
     
-    // For staging items (floating), they might have a CSS transform or be inside a scaled container
-    // We calculate offset directly relative to the item's bounding box
-    const offsetX = e.clientX - itemRect.left;
-    const offsetY = e.clientY - itemRect.top;
+    // The user requested to revert back to top-left corner dragging.
+    // Setting offset to 0,0 forces the top-left corner of the item to stick to the pointer.
+    const offset = { x: 0, y: 0 };
     
-    const offset = {
-      x: Math.max(0, offsetX),
-      y: Math.max(0, offsetY),
-    };
     setDragOffset(offset);
     onDragStart?.(item, 'inventory', offset);
     setIsItemDragging(true);
