@@ -11,6 +11,7 @@ interface InventoryItemProps {
   isInvalid?: boolean;
   onPointerDown?: (e: React.PointerEvent, item: LooterItem) => void;
   onDoubleClick?: (item: LooterItem) => void;
+  onClick?: () => void;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -23,12 +24,13 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   isInvalid = false,
   onPointerDown,
   onDoubleClick,
+  onClick,
   style,
   className = '',
 }) => {
   return (
     <motion.div
-      className={`absolute cursor-grab active:cursor-grabbing rounded-xl overflow-hidden border-2 shadow-md 
+      className={`absolute cursor-grab active:cursor-grabbing border shadow-sm 
         ${isDragging ? 'opacity-20 z-10' : 'z-20'} 
         ${isGhost ? 'opacity-40 pointer-events-none z-10' : ''}
         ${isInvalid ? 'border-red-500 bg-red-500/20' : (RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
@@ -40,6 +42,10 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
       }}
       onPointerDown={(e) => onPointerDown?.(e, item)}
       onDoubleClick={() => onDoubleClick?.(item)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
     >
       {Array.from({ length: item.gridH || 1 }).map((_, r) =>
         Array.from({ length: item.gridW || 1 }).map((_, c) => {
@@ -71,6 +77,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
          prev.isDragging === next.isDragging &&
          prev.isGhost === next.isGhost &&
          prev.isInvalid === next.isInvalid &&
+         prev.onClick === next.onClick &&
          prev.style?.left === next.style?.left &&
          prev.style?.top === next.style?.top &&
          prev.className === next.className;

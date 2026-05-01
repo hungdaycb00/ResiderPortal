@@ -3,6 +3,7 @@ import type { LooterItem, BagItem } from './types';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 import InventoryItem from './components/InventoryItem';
 import GridBackground from './components/GridBackground';
+import ItemPopup from './components/ItemPopup';
 import { useInventoryDrag } from './hooks/useInventoryDrag';
 
 interface InventoryGridProps {
@@ -29,6 +30,9 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   gridW = MAX_GRID_W,
   gridH = MAX_GRID_H,
 }) => {
+  const [selectedItem, setSelectedItem] = React.useState<LooterItem | null>(null);
+  const [popupPos, setPopupPos] = React.useState({ x: 0, y: 0 });
+
   const activeBag = Array.isArray(bags) ? bags[0] : undefined;
 
   const {
@@ -77,7 +81,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
 
   return (
     <div 
-      className="flex flex-col gap-4 select-none touch-none w-full h-full relative"
+      className="flex flex-col gap-4 select-none touch-none w-full h-full relative p-4"
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
@@ -100,7 +104,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
       <div className="w-full h-full flex items-center justify-center pointer-events-none">
         <div
           ref={containerRef}
-          className="pointer-events-auto relative rounded-[32px] overflow-hidden shrink-0 mx-auto bg-[#040911] border-2 border-white/5"
+          className="pointer-events-auto relative shrink-0 mx-auto bg-[#040911] border-2 border-white/10"
           style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
         >
           <GridBackground
@@ -121,7 +125,11 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
               onPointerDown={onPointerDown}
               onDoubleClick={onItemDoubleClick}
-              onClick={() => onItemClick?.(item)}
+              onClick={() => {
+                setSelectedItem(item);
+                setPopupPos({ x: item.gridX * cellSize, y: item.gridY * cellSize });
+                onItemClick?.(item);
+              }}
             />
           ))}
 
@@ -155,6 +163,16 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               }}
             />
           )}
+
+          {/* Item Popup */}
+          <ItemPopup 
+            item={selectedItem} 
+            onClose={() => setSelectedItem(null)} 
+            style={{
+              left: Math.min(gridW * cellSize - 220, Math.max(0, popupPos.x)),
+              top: Math.min(gridH * cellSize - 200, Math.max(0, popupPos.y - 150)),
+            }}
+          />
         </div>
       </div>
     </div>
