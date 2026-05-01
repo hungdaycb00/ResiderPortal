@@ -14,7 +14,7 @@ interface LooterEntitiesProps {
 const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact }: any) => {
     const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
-    const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
+    const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
 
     const distMetersTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
@@ -55,11 +55,12 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                         executeMoveToExact?.(item.lat, item.lng);
                     }
                 } else {
-                    if (currentDist <= interactionRadius) {
+                    const clickTolerance = interactionRadius + 50;
+                    if (currentDist <= clickTolerance) {
                         if (item.minigameType) {
                             setShowMinigame?.(item);
                         } else {
-                            pickupItem?.(item.spawnId);
+                            pickupItem?.(item.spawnId, item);
                         }
                     } else {
                        executeMoveToExact?.(item.lat, item.lng);
@@ -119,20 +120,25 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
 });
 
 const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, openFortressStorage }: any) => {
-    const fInteractionRadius = 100 * (1 + boatScaleStack * 0.05);
+    // Tăng bán kính tương tác thành trì lên 250m để đồng bộ cảm giác nhặt đồ
+    const fInteractionRadius = 250 * (1 + boatScaleStack * 0.05);
 
     const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
-        const fLat = fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
-        const fLng = fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
-        return Math.round(Math.sqrt(fLat * fLat + fLng * fLng) * 111000);
+        const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
+        const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
+        const dLat = fortressLat - curLat;
+        const dLng = fortressLng - curLng;
+        const cosLat = Math.cos((curLat * Math.PI) / 180);
+        const distDeg = Math.sqrt(Math.pow(dLat, 2) + Math.pow(dLng * cosLat, 2));
+        return Math.round(distDeg * 111000);
     });
 
     const fText = useTransform(fDistTransform, (d) => {
-        if (d <= 100) return 'Thành Trì';
+        if (d <= fInteractionRadius) return 'Thành Trì';
         return d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
     });
-    const fColorClass = useTransform(fDistTransform, (d) => d <= 100 ? 'text-emerald-400' : 'text-gray-300');
+    const fColorClass = useTransform(fDistTransform, (d) => d <= fInteractionRadius ? 'text-emerald-400' : 'text-gray-300');
 
     return (
         <div

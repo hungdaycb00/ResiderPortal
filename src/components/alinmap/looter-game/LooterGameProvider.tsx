@@ -149,7 +149,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     loadState: (opts) => runInQueue(stateManager.loadState, opts),
     moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
     // Pickup và penalty chạy song song — không block bởi heartbeat loadState
-    pickupItem: (spawnId) => inventory.pickupItem(spawnId),
+    pickupItem: (spawnId, directItem) => inventory.pickupItem(spawnId, directItem),
     inflictMinigamePenalty: (sid) => stateManager.inflictMinigamePenalty(sid),
 
     saveInventory: (inv) => {

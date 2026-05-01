@@ -129,15 +129,18 @@ export function useLooterInventory({
 
 
 
-  const pickupItem = useCallback(async (spawnId: string) => {
+  const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem) => {
     if (!deviceId) return;
     const startTime = Date.now();
-    console.log(`[LooterPerf] Optimistic pickupItem started for ${spawnId} at ${startTime}`);
+    console.log(`[LooterPerf] Optimistic pickupItem started for ${spawnId} at ${startTime}`, directItem ? '(with direct item)' : '(search in state)');
     
-    // 1. Optimistic Update (Frontend only check)
-    let pickedWorldItem: WorldItem | undefined;
+    // 1. Optimistic Update
+    let pickedWorldItem: WorldItem | undefined = directItem;
+    
     setWorldItems(prev => {
-      pickedWorldItem = prev.find(i => i.spawnId === spawnId);
+      if (!pickedWorldItem) {
+        pickedWorldItem = prev.find(i => i.spawnId === spawnId);
+      }
       return prev.filter(i => i.spawnId !== spawnId);
     });
 
@@ -160,27 +163,24 @@ export function useLooterInventory({
 
             const newInventory = [...prevState.inventory, newItem];
             
-            // Gọi saveInventory không block UI
+            // Background save
             saveInventory(newInventory).catch(console.error);
 
-            // Notify asynchronously to not block state update
             setTimeout(() => {
                 notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
             }, 0);
 
             return { ...prevState, inventory: newInventory };
         });
-    } else {
-        console.warn(`[LooterPerf] Item ${spawnId} not found in frontend state, will rely on API fallback.`);
     }
 
-    // 2. Fire and forget API call (Server check is removed from UI blocking)
+    // 2. Fire and forget API call
     looterApi.pickupItem(apiUrl, deviceId, spawnId, true).then(data => {
         const endTime = Date.now();
         console.log(`[LooterPerf] API pickupItem (background) completed for ${spawnId} in ${endTime - startTime}ms`);
         
-        // Fallback: If we didn't have it optimistically, process it now from server data
-        if ((!pickedWorldItem || !pickedWorldItem.item) && data.success && data.item) {
+        // Fallback: If we didn't have it optimistically (e.g. state was really stale), add it now
+        if (!pickedWorldItem && data.success && data.item) {
             const item = data.item as LooterItem;
             setState(prevState => {
                 const currentBag = prevState.bags[0];
