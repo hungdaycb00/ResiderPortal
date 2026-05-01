@@ -184,6 +184,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setWorldTier: (tier) => runInQueue(() => stateManager.setWorldTier(tier)),
     returnToFortress: () => runInQueue(movement.returnToFortress),
     loadWorldItems: (force) => runInQueue(() => stateManager.loadWorldItems(force)),
+    dropItems: (uids, lat, lng) => runInQueue(() => inventory.dropItems(uids, lat, lng)),
     
     showNotification
   }), [

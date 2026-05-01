@@ -71,15 +71,38 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     saveInventory(newItems);
   }, [saveInventory]);
 
-  const totalStats = state.inventory.filter((item) => item.gridX >= 0).reduce(
-    (acc, item) => ({
-      hp: acc.hp + (item.hpBonus || 0),
-      weight: acc.weight + (item.weight || 0),
-      energyMax: acc.energyMax + (item.energyMax || 0),
-      regen: acc.regen + (item.energyRegen || 0),
-    }),
-    { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
-  );
+  const isItemInsideBag = useCallback((item: LooterItem, bag: BagItem) => {
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const shape = item.shape;
+    
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (!shape || shape[r][c]) {
+          const bx = item.gridX + c - bag.gridX;
+          const by = item.gridY + r - bag.gridY;
+          if (bx < 0 || by < 0 || bx >= bag.width || by >= bag.height || !bag.shape[by][bx]) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }, []);
+
+  const totalStats = useMemo(() => {
+    if (!activeBag) return { hp: 0, weight: 0, energyMax: 0, regen: 0 };
+    
+    return state.inventory.filter((item) => item.gridX >= 0 && isItemInsideBag(item, activeBag)).reduce(
+      (acc, item) => ({
+        hp: acc.hp + (item.hpBonus || 0),
+        weight: acc.weight + (item.weight || 0),
+        energyMax: acc.energyMax + (item.energyMax || 0),
+        regen: acc.regen + (item.energyRegen || 0),
+      }),
+      { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
+    );
+  }, [state.inventory, activeBag, bagStats, isItemInsideBag]);
 
   const dynamicGridH = React.useMemo(() => {
     const headerHeight = 48;
@@ -87,6 +110,28 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     const availableHeight = window.innerHeight - headerHeight - bottomNavHeight;
     return Math.max(MAX_GRID_H, Math.floor(availableHeight / cellSize));
   }, [cellSize]);
+
+  const lastPosRef = React.useRef({ lat: state.currentLat, lng: state.currentLng });
+
+  useEffect(() => {
+    if (state.currentLat === null || state.currentLng === null) return;
+    
+    const hasMoved = state.currentLat !== lastPosRef.current.lat || state.currentLng !== lastPosRef.current.lng;
+    
+    if (hasMoved && activeBag) {
+      const itemsOutside = state.inventory.filter(item => 
+        item.gridX >= 0 && !isItemInsideBag(item, activeBag)
+      );
+      
+      if (itemsOutside.length > 0) {
+        console.log(`[Looter] Boat moved, dropping ${itemsOutside.length} items outside bag`);
+        const uids = itemsOutside.map(i => i.uid);
+        dropItems(uids, state.currentLat, state.currentLng);
+      }
+    }
+    
+    lastPosRef.current = { lat: state.currentLat, lng: state.currentLng };
+  }, [state.currentLat, state.currentLng, state.inventory, activeBag, dropItems, isItemInsideBag]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
@@ -153,6 +198,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
             onItemDoubleClick={(item) => {
               if ((item as any).type === 'bag') {
                 equipBag(item.uid);
+              }
+            }}
+            onDropOutside={(item) => {
+              if (state.currentLat && state.currentLng) {
+                dropItems([item.uid], state.currentLat, state.currentLng);
               }
             }}
             cellSize={cellSize}

@@ -15,6 +15,7 @@ interface InventoryGridProps {
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
   onDragStart?: (item: LooterItem, source: any, offset: any) => void;
   onDragEnd?: () => void;
+  onDropOutside?: (item: LooterItem) => void;
   cellSize?: number;
   gridW?: number;
   gridH?: number;
@@ -26,6 +27,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   onItemDoubleClick,
   onItemClick,
   onItemLayoutChange,
+  onDropOutside,
   cellSize = 40,
   gridW = MAX_GRID_W,
   gridH = MAX_GRID_H,
@@ -51,6 +53,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     gridH,
     activeBag,
     onItemLayoutChange,
+    onDropOutside,
   });
 
   const bagOcc = React.useMemo(() => {

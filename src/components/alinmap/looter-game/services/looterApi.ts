@@ -115,4 +115,7 @@ export const looterApi = {
 
   returnToFortress: (apiUrl: string, deviceId: string) =>
     post(apiUrl, 'return-fortress', { deviceId }),
+
+  dropItems: (apiUrl: string, deviceId: string, itemUids: string[], lat: number, lng: number) =>
+    post(apiUrl, 'drop', { deviceId, itemUids, lat, lng }),
 };

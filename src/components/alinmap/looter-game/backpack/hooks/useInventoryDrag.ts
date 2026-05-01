@@ -8,6 +8,7 @@ interface UseInventoryDragProps {
   gridH: number;
   activeBag?: BagItem;
   onItemLayoutChange?: (items: LooterItem[]) => void;
+  onDropOutside?: (item: LooterItem) => void;
 }
 
 export function useInventoryDrag({
@@ -104,6 +105,20 @@ export function useInventoryDrag({
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     if (!draggingItem) return;
 
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      const isOutside = e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom;
+      
+      if (isOutside) {
+        onDropOutside?.(draggingItem);
+        setDraggingItem(null);
+        setDragGridPos(null);
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+        return;
+      }
+    }
+
     const gx = dragGridPos?.x ?? draggingItem.gridX;
     const gy = dragGridPos?.y ?? draggingItem.gridY;
 
@@ -118,7 +133,7 @@ export function useInventoryDrag({
     setDraggingItem(null);
     setDragGridPos(null);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange]);
+  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
 
   return {
     draggingItem,

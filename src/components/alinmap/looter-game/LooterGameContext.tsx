@@ -92,6 +92,7 @@ export interface LooterGameActions {
   setWorldTier: (tier: number) => Promise<void>;
   returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
+  dropItems: (itemUids: string[], lat: number, lng: number) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 

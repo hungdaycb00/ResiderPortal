@@ -213,8 +213,33 @@ export function useLooterInventory({
 
   }, [deviceId, apiUrl, setState, setWorldItems, saveInventory, notify]);
 
+  const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
+    if (!deviceId || itemUids.length === 0) return;
+    
+    let previousInventory: LooterItem[] = [];
+    setState(prev => {
+      previousInventory = prev.inventory;
+      const newInventory = prev.inventory.filter(i => !itemUids.includes(i.uid));
+      return { ...prev, inventory: newInventory };
+    });
+
+    try {
+      const data = await looterApi.dropItems(apiUrl, deviceId, itemUids, lat, lng);
+      if (data.success) {
+        notify(`Đã ném ${itemUids.length} vật phẩm ra Map`, 'success');
+        loadWorldItems(true);
+      } else {
+        throw new Error('Drop failed');
+      }
+    } catch (err) {
+      console.error('[LooterGame] dropItems error:', err);
+      notify('Không thể ném vật phẩm lúc này', 'error');
+      setState(prev => ({ ...prev, inventory: previousInventory }));
+    }
+  }, [deviceId, apiUrl, setState, notify, loadWorldItems]);
+
   return { 
     saveInventory, saveBags, saveStorage, 
-    equipBag, sellItems, storeItems, pickupItem
+    equipBag, sellItems, storeItems, pickupItem, dropItems
   };
 }
