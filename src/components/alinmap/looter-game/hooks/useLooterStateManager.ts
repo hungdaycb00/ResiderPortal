@@ -149,9 +149,25 @@ export function useLooterStateManager({
     }
   }, [deviceId, apiUrl, loadState, notify]);
 
+  const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
+    if (!deviceId) return false;
+    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+    try {
+      const data = await looterApi.minigameLose(apiUrl, deviceId, spawnId);
+      if (data.success) {
+        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[LooterGame] minigamePenalty error:', err);
+      return false;
+    }
+  }, [deviceId, apiUrl, setState, setWorldItems]);
+
   return { 
     loadWorldItems, loadState, initGame, 
-    setWorldTier, 
+    setWorldTier, inflictMinigamePenalty, 
     executeCombat, curseChoice 
   };
 }

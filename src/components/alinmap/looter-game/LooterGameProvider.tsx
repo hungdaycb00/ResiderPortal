@@ -37,6 +37,7 @@ interface UIState {
   encounter: Encounter | null;
   combatResult: CombatResult | null;
   showCurseModal: boolean;
+  showMinigame: WorldItem | null;
   isLooterGameMode: boolean;
   isChallengeActive: boolean;
   isFortressStorageOpen: boolean;
@@ -47,6 +48,7 @@ type UIAction =
   | { type: 'SET_ENCOUNTER'; payload: Encounter | null }
   | { type: 'SET_COMBAT_RESULT'; payload: CombatResult | null }
   | { type: 'SET_SHOW_CURSE_MODAL'; payload: boolean }
+  | { type: 'SET_SHOW_MINIGAME'; payload: WorldItem | null }
   | { type: 'SET_LOOTER_GAME_MODE'; payload: boolean }
   | { type: 'SET_CHALLENGE_ACTIVE'; payload: boolean }
   | { type: 'SET_FORTRESS_STORAGE_OPEN'; payload: boolean }
@@ -55,7 +57,7 @@ type UIAction =
 
 const initialUIState: UIState = {
   encounter: null, combatResult: null,
-  showCurseModal: false, isLooterGameMode: false,
+  showCurseModal: false, showMinigame: null, isLooterGameMode: false,
   isChallengeActive: false, isFortressStorageOpen: false, fortressStorageMode: 'fortress',
 };
 
@@ -64,6 +66,7 @@ function uiReducer(state: UIState, action: UIAction): UIState {
     case 'SET_ENCOUNTER': return { ...state, encounter: action.payload };
     case 'SET_COMBAT_RESULT': return { ...state, combatResult: action.payload };
     case 'SET_SHOW_CURSE_MODAL': return { ...state, showCurseModal: action.payload };
+    case 'SET_SHOW_MINIGAME': return { ...state, showMinigame: action.payload };
     case 'SET_LOOTER_GAME_MODE': return { ...state, isLooterGameMode: action.payload };
     case 'SET_CHALLENGE_ACTIVE': return { ...state, isChallengeActive: action.payload };
     case 'SET_FORTRESS_STORAGE_OPEN': return { ...state, isFortressStorageOpen: action.payload };
@@ -101,6 +104,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const setEncounter = useCallback((v: Encounter | null) => dispatch({ type: 'SET_ENCOUNTER', payload: v }), []);
   const setCombatResult = useCallback((v: CombatResult | null) => dispatch({ type: 'SET_COMBAT_RESULT', payload: v }), []);
   const setShowCurseModal = useCallback((v: boolean) => dispatch({ type: 'SET_SHOW_CURSE_MODAL', payload: v }), []);
+  const setShowMinigame = useCallback((v: WorldItem | null) => dispatch({ type: 'SET_SHOW_MINIGAME', payload: v }), []);
   const setIsLooterGameMode = useCallback((v: boolean) => dispatch({ type: 'SET_LOOTER_GAME_MODE', payload: v }), []);
   const setIsChallengeActive = useCallback((v: boolean) => dispatch({ type: 'SET_CHALLENGE_ACTIVE', payload: v }), []);
   const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);
@@ -134,7 +138,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
     },
     setEncounter, setCombatResult,
-    setShowCurseModal, setIsLooterGameMode,
+    setShowCurseModal, setShowMinigame, setIsLooterGameMode,
     openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
     setOpenBackpackHandler,
     setIsChallengeActive,
@@ -142,6 +146,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
     loadState: () => runInQueue(stateManager.loadState),
     moveBoat: (lat, lng) => runInQueue(() => movement.moveBoat(lat, lng)),
+    pickupItem: (spawnId) => runInQueue(() => inventory.pickupItem(spawnId)),
+    inflictMinigamePenalty: (sid) => runInQueue(() => stateManager.inflictMinigamePenalty(sid)),
 
     saveInventory: (inv) => {
       setState(prev => ({ ...prev, inventory: inv }));
@@ -167,7 +173,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification
   }), [
     stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification,
-    setEncounter, setCombatResult, setShowCurseModal,
+    setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen,
     notify
   ]);
@@ -176,7 +182,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     state,
     worldItems,
     encounter: ui.encounter, combatResult: ui.combatResult,
-    showCurseModal: ui.showCurseModal,
+    showCurseModal: ui.showCurseModal, showMinigame: ui.showMinigame,
     isLooterGameMode: ui.isLooterGameMode,
     isChallengeActive: ui.isChallengeActive,
     isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,

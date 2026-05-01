@@ -129,8 +129,43 @@ export function useLooterInventory({
 
 
 
+  const pickupItem = useCallback(async (spawnId: string) => {
+    if (!deviceId) return;
+    try {
+      const data = await looterApi.pickupItem(apiUrl, deviceId, spawnId, true);
+      if (data.success && data.item) {
+        const item = data.item as LooterItem;
+        const currentBag = state.bags[0];
+        
+        const slot = findEmptySlotFor(item, state.inventory, currentBag);
+        let newItem: LooterItem;
+        
+        if (slot) {
+          newItem = { ...item, gridX: slot.x, gridY: slot.y };
+          notify(`Nhặt được ${item.name}`, 'success');
+        } else {
+          newItem = { 
+            ...item, 
+            gridX: -1, 
+            gridY: -1,
+            stagingX: Math.random() * 200,
+            stagingY: Math.random() * 300 
+          } as any;
+          notify(`Nhặt được ${item.name} nhưng balo đã đầy!`, 'info');
+        }
+
+        const newInventory = [...state.inventory, newItem];
+        setState(prev => ({ ...prev, inventory: newInventory }));
+        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+        await saveInventory(newInventory);
+      }
+    } catch (err) {
+      console.error('[LooterGame] pickupItem error:', err);
+    }
+  }, [deviceId, apiUrl, state.inventory, state.bags, setState, setWorldItems, saveInventory, notify]);
+
   return { 
     saveInventory, saveBags, saveStorage, 
-    equipBag, sellItems, storeItems
+    equipBag, sellItems, storeItems, pickupItem
   };
 }

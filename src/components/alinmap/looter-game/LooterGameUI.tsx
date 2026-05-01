@@ -4,6 +4,7 @@ import CurseModal from './CurseModal';
 import { FortressStorageModal } from './backpack';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
 import CombatLootModal from './backpack/CombatLootModal';
+import { PickupMinigame } from './PickupMinigame';
 import { useLooterState } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
 
@@ -40,6 +41,10 @@ const LooterGameUI: React.FC = () => {
                     <CombatLootModal />
                 </ErrorBoundary>
             )}
+
+            <ErrorBoundary name="Minigame">
+                <PickupMinigame />
+            </ErrorBoundary>
         </>
     );
 };

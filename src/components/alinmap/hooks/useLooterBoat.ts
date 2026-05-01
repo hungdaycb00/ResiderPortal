@@ -4,6 +4,7 @@ import { DEGREES_TO_PX } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { useAutoPickup } from '../looter-game/hooks/useAutoPickup';
+import { getDistanceMeters } from '../looter-game/backpack/utils';
 
 interface UseSeaBoatParams {
     isLooterGameMode: boolean;
@@ -57,11 +58,32 @@ export function useLooterBoat({
 
 
 
+
+
     // Sync boat position when state changes
     useEffect(() => {
         if (!isLooterGameMode || !state) return;
         syncBoatPosition();
     }, [isLooterGameMode, state?.currentLat, state?.currentLng, isChallengeActive, syncBoatPosition]);
+
+    // Auto-pickup logic
+    useEffect(() => {
+        if (!isLooterGameMode || !isChallengeActive || !state || !state.currentLat || !state.currentLng) return;
+        
+        for (const item of worldItems) {
+            if (item.minigameType === 'chest') continue; // Portal is special
+            const dist = getDistanceMeters(state.currentLat, state.currentLng, item.lat, item.lng);
+            if (dist < 250) {
+                if (item.minigameType) {
+                    if (showMinigame?.spawnId !== item.spawnId) {
+                        setShowMinigame(item);
+                    }
+                } else {
+                    looterActions.pickupItem(item.spawnId);
+                }
+            }
+        }
+    }, [isLooterGameMode, isChallengeActive, state?.currentLat, state?.currentLng, worldItems, showMinigame, setShowMinigame, looterActions]);
 
     // Sync curse visual
     useEffect(() => {
