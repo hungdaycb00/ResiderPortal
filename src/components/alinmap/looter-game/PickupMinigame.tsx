@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import { FruitGame } from './minigames/FruitGame';
@@ -8,25 +8,37 @@ export const PickupMinigame: React.FC = () => {
     const { showMinigame, state } = useLooterState();
     const { setShowMinigame, pickupItem, inflictMinigamePenalty } = useLooterActions();
 
-    if (!showMinigame) return null;
+    // Lưu quyết định game type vào ref để không bị random lại mỗi render
+    const gameTypeRef = useRef<'fruit' | 'minesweeper' | null>(null);
+    if (showMinigame && gameTypeRef.current === null) {
+        gameTypeRef.current = showMinigame.minigameType === 'diving' || Math.random() > 0.5 
+            ? 'minesweeper' : 'fruit';
+    }
+    if (!showMinigame) {
+        gameTypeRef.current = null;
+        return null;
+    }
 
-    const handleComplete = async (success: boolean) => {
-        if (success) {
-            await pickupItem(showMinigame.spawnId);
-        } else {
-            await inflictMinigamePenalty(showMinigame.spawnId);
-        }
+    const handleComplete = (success: boolean) => {
+        const spawnId = showMinigame.spawnId;
+        // Đóng popup NGAY LẬP TỨC, không đợi API
         setShowMinigame(null);
+        // API call chạy nền, không block UI
+        if (success) {
+            pickupItem(spawnId);
+        } else {
+            inflictMinigamePenalty(spawnId);
+        }
     };
 
     const worldTier = state.worldTier || 0;
-    const gridSize = 3 + worldTier; // Bắt đầu với 3x3 ở level 0, tăng dần
+    const baseSize = 3 + worldTier;
+    // Đảm bảo tổng ô luôn chẵn cho game tìm cặp
+    const rows = baseSize;
+    const cols = (rows * rows) % 2 === 0 ? rows : rows + 1; // 3→4x3=12, 4→4x4=16, 5→6x5=30
 
-    // Quyết định game dựa vào minigameType
-    const isMinesweeper = showMinigame.minigameType === 'diving' || Math.random() > 0.5;
-
-    // Use memo to avoid object reference change causing infinite loop
-    const customGrid = React.useMemo(() => ({ rows: gridSize, cols: gridSize }), [gridSize]);
+    const customGrid = React.useMemo(() => ({ rows, cols }), [rows, cols]);
+    const isMinesweeper = gameTypeRef.current === 'minesweeper';
 
     return (
         <AnimatePresence>
@@ -37,12 +49,12 @@ export const PickupMinigame: React.FC = () => {
                 className="absolute inset-0 z-[200] flex flex-col bg-slate-900/90 backdrop-blur-md"
             >
                 <div className="flex-1 w-full h-full p-4 flex items-center justify-center">
-                    {showMinigame.minigameType === 'fishing' || !isMinesweeper ? (
+                    {!isMinesweeper ? (
                         <FruitGame 
                             autoStart={true}
                             customGrid={customGrid}
                             onComplete={handleComplete}
-                            onBack={() => setShowMinigame(null)}
+                            onBack={() => handleComplete(false)}
                         />
                     ) : (
                         <MinesweeperGame 
