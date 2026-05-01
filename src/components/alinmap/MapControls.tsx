@@ -98,8 +98,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                 </button>
                     </>
                 )}
-                <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
-                    {!isLooterGameMode && (
+                {!isLooterGameMode && (
+                    <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
                         <button
                             onClick={handleCenter}
                             className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
@@ -107,22 +107,22 @@ const MapControls: React.FC<MapControlsProps> = ({
                         >
                             <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
                         </button>
-                    )}
-                    <button
-                        onClick={() => scale.set(Math.min((scale?.get?.() ?? 1) + 0.3, 3))}
-                        className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
-                        title="Zoom In"
-                    >
-                        <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">＋</span>
-                    </button>
-                    <button
-                        onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
-                        className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
-                        title="Zoom Out"
-                    >
-                        <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">－</span>
-                    </button>
-                </div>
+                        <button
+                            onClick={() => scale.set(Math.min((scale?.get?.() ?? 1) + 0.3, 3))}
+                            className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
+                            title="Zoom In"
+                        >
+                            <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">＋</span>
+                        </button>
+                        <button
+                            onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
+                            className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
+                            title="Zoom Out"
+                        >
+                            <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">－</span>
+                        </button>
+                    </div>
+                )}
                 {isLooterGameMode && (
                     <div className="flex flex-col gap-2 mt-2">
                         {/* Định vị Thuyền */}
@@ -141,22 +141,6 @@ const MapControls: React.FC<MapControlsProps> = ({
                         >
                             <Navigation className="w-5 h-5 md:w-6 md:h-6 fill-current rotate-45" />
                         </button>
-
-                        {/* Định vị Thành trì - Luôn hiển thị */}
-                        <button
-                            onClick={() => {
-                                if (looterState?.fortressLat != null && looterState?.fortressLng != null) {
-                                    handleCenterTo(looterState.fortressLat, looterState.fortressLng);
-                                } else {
-                                    handleCenter();
-                                }
-                            }}
-                            className="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-amber-900/40 flex items-center justify-center active:scale-95 transition-all border border-amber-400/30"
-                            title="Định vị Thành trì"
-                        >
-                            <Home className="w-5 h-5 md:w-6 md:h-6" />
-                        </button>
-
                     </div>
                 )}
             </div>

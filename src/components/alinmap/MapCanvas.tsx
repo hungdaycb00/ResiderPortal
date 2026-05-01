@@ -16,6 +16,7 @@ import {
 } from './components/MapUIOverlays';
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
+import FortressWaypoint from './components/FortressWaypoint';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -175,13 +176,21 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
             {/* Looter Game Overlays */}
             {isLooterGameMode && (
-                <CurseIndicator 
-                    cursePercent={looterState?.cursePercent || 0}
-                    curseVisual={looterBoat.curseVisual}
-                    activeCurses={looterStateObj?.activeCurses}
-                    isExpanded={isCursesExpanded}
-                    onToggle={() => setIsCursesExpanded(!isCursesExpanded)}
-                />
+                <>
+                    <CurseIndicator 
+                        cursePercent={looterState?.cursePercent || 0}
+                        curseVisual={looterBoat.curseVisual}
+                        activeCurses={looterStateObj?.activeCurses}
+                        isExpanded={isCursesExpanded}
+                        onToggle={() => setIsCursesExpanded(!isCursesExpanded)}
+                    />
+                    <FortressWaypoint 
+                        myObfPos={myObfPos} 
+                        panX={panX} 
+                        panY={panY} 
+                        scale={scale} 
+                    />
+                </>
             )}
 
             {isLooterGameMode && isLooterLoading && <LooterLoadingOverlay />}
