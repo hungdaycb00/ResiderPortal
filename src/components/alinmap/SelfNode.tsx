@@ -59,14 +59,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
         return (
                 <motion.div
                     data-map-interactive="true"
-                    className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-auto z-[100] select-none cursor-default"
+                    className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[100] select-none"
                     style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (!user) return;
-                    setMainTab?.('backpack');
-                    setIsSheetExpanded(true);
-                    }}
                     onDoubleClick={(e) => e.stopPropagation()}
                 >
                 <motion.div
