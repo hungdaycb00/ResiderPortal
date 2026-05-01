@@ -67,7 +67,6 @@ export type StorageAccessMode = 'fortress' | 'portal';
 export interface LooterGameActions {
   setIsFortressStorageOpen: (v: boolean) => void;
   openFortressStorage: (mode?: StorageAccessMode) => void;
-  setPickupRewardItem: (item: LooterItem | null) => void;
   setEncounter: (e: Encounter | null) => void;
   setCombatResult: (r: CombatResult | null) => void;
   setShowCurseModal: (v: boolean) => void;
@@ -75,13 +74,11 @@ export interface LooterGameActions {
   setIsLooterGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
-  setIsItemDragging: (v: boolean) => void;
   setIsChallengeActive: (v: boolean) => void;
   setPreGeneratedMinigame: (v: { type: string, grid: any } | null) => void;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
-  pickupItem: (spawnId: string, gridX?: number, gridY?: number) => Promise<boolean>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
   saveInventory: (inventory: LooterItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
@@ -91,16 +88,10 @@ export interface LooterGameActions {
   curseChoice: (choice: 'flee' | 'challenge') => Promise<void>;
   sellItems: (itemUids: string[]) => Promise<void>;
   storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode, gridX?: number, gridY?: number) => Promise<void>;
-  destroyItem: (spawnId: string) => Promise<boolean>;
   setWorldTier: (tier: number) => Promise<void>;
-  dropItem: (itemUid: string) => Promise<void>;
   returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
-  setDraggingItem: (item: LooterItem | null) => void;
-  setDraggingMapItem: (item: WorldItem | null) => void;
-  setShowDiscardModal: (v: boolean) => void;
-  confirmDiscard: () => Promise<void>;
 }
 
 export interface LooterGameStateContextType {
@@ -108,22 +99,16 @@ export interface LooterGameStateContextType {
   worldItems: WorldItem[];
   isFortressStorageOpen: boolean;
   fortressStorageMode: StorageAccessMode;
-  pickupRewardItem: LooterItem | null;
   encounter: Encounter | null;
   combatResult: CombatResult | null;
   showCurseModal: boolean;
   showMinigame: WorldItem | null;
   isLooterGameMode: boolean;
-  isItemDragging: boolean;
   isChallengeActive: boolean;
   preGeneratedMinigame: { type: string, grid: any } | null;
   globalSettings: any;
   isMoving: boolean;
   isSyncing: boolean;
-  draggingItem: LooterItem | null;
-  draggingMapItem: WorldItem | null;
-  showDiscardModal: boolean;
-  dragPointerPos: { x: number; y: number };
 }
 
 export const LooterStateContext = createContext<LooterGameStateContextType | null>(null);
@@ -141,7 +126,6 @@ export function useLooterActions() {
   return ctx;
 }
 
-// Legacy support (optional, but better to migrate)
 export function useLooterGame() {
   const state = useLooterState();
   const actions = useLooterActions();

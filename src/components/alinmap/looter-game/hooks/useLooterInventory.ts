@@ -32,99 +32,7 @@ export function useLooterInventory({
 }: UseLooterInventoryProps) {
 
 
-  const dropItem = useCallback(async (itemUid: string) => {
-    if (!deviceId) return;
-    const droppedItem = state.inventory.find(i => i.uid === itemUid);
-    setState(prev => ({
-      ...prev,
-      inventory: prev.inventory.filter(i => i.uid !== itemUid)
-    }));
 
-    if (droppedItem) {
-      setWorldItems(prev => [
-        ...prev,
-        {
-          spawnId: `temp_${itemUid}_${Date.now()}`,
-          lat: (state.currentLat || 0) + (Math.random() - 0.5) * 0.0004,
-          lng: (state.currentLng || 0) + (Math.random() - 0.5) * 0.0004,
-          item: droppedItem,
-          minigameType: null as any
-        }
-      ]);
-    }
-
-    try {
-      const data = await looterApi.dropItem(apiUrl, deviceId, itemUid);
-      if (data.success) {
-        notify('Đã ném vật phẩm ra biển', 'info');
-        
-        // Cập nhật lại ID thật từ server cho item vừa ném
-        if (data.spawnId && droppedItem) {
-          setWorldItems(prev => prev.map(wi => 
-            wi.spawnId.startsWith('temp_') && wi.item.uid === itemUid 
-            ? { ...wi, spawnId: data.spawnId } 
-            : wi
-          ));
-        }
-
-        setTimeout(() => loadWorldItems(true), 1000); // Đợi 1s để DB ổn định rồi mới refresh
-      }
-    } catch (err) {
-      console.error('[LooterGame] dropItem error:', err);
-    }
-  }, [deviceId, apiUrl, state.inventory, state.currentLat, state.currentLng, setState, setWorldItems, notify, loadWorldItems]);
-
-  const pickupItem = useCallback(async (spawnId: string, gridX?: number, gridY?: number, force: boolean = false) => {
-    if (!deviceId) return false;
-    try {
-      const data = await looterApi.pickupItem(apiUrl, deviceId, spawnId, force);
-      if (data.success) {
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-        if (data.type === 'item' || data.type === 'bag') {
-          const item = data.item || data.bag;
-          const activeBag = state.bags[0];
-          let slot = (gridX !== undefined && gridY !== undefined) ? { x: gridX, y: gridY } : null;
-          
-          if (slot == null) {
-            slot = findEmptySlotFor(item, state.inventory, activeBag);
-          }
-
-          const newItem = {
-            ...item,
-            gridX: slot ? slot.x : -1,
-            gridY: slot ? slot.y : -1,
-            stagingX: slot ? undefined : Math.random() * 200,
-            stagingY: slot ? undefined : Math.random() * 300
-          };
-
-          setState(prev => ({
-            ...prev,
-            inventory: Array.isArray(data.inventory) ? data.inventory : [...prev.inventory, newItem],
-            cursePercent: typeof data.cursePercent === 'number' ? data.cursePercent : prev.cursePercent
-          }));
-
-          if (slot == null) {
-            notify(`Đã nhặt ${item.name} (Vào hàng chờ)`, 'info');
-          } else {
-            notify(`Đã nhặt ${item.name}`, 'success');
-          }
-        } else {
-          setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        }
-        return true;
-      } else {
-          // Handle error if success is false but request didn't throw
-          if (data.error) notify(data.error, 'error');
-          loadWorldItems(true);
-          return false;
-      }
-    } catch (err: any) {
-      console.error('[Looter Pickup]', err);
-      notify(err.message || 'Lỗi khi nhặt vật phẩm', 'error');
-      loadWorldItems(true);
-      return false;
-    }
-  }, [deviceId, apiUrl, state.inventory, state.bags, setState, setWorldItems, notify, loadWorldItems]);
 
   const equipBag = useCallback(async (itemUid: string) => {
     const itemToEquip = state.inventory.find(i => i.uid === itemUid);
@@ -219,61 +127,10 @@ export function useLooterInventory({
     }
   }, [deviceId, apiUrl, notify]);
 
-  const destroyItem = useCallback(async (spawnId: string) => {
-    if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
-    try {
-      const data = await looterApi.destroyItem(apiUrl, deviceId, spawnId);
-      return !!data.success;
-    } catch (err) {
-      console.error('[LooterGame] destroyItem error:', err);
-      return false;
-    }
-  }, [deviceId, apiUrl, setWorldItems]);
 
-  const confirmDiscard = useCallback(async () => {
-    const stagingItems = state.inventory.filter(i => i.gridX < 0);
-    if (stagingItems.length === 0) return;
-
-    // Cập nhật UI ngay lập tức
-    setState(prev => ({
-      ...prev,
-      inventory: prev.inventory.filter(i => i.gridX >= 0)
-    }));
-
-    setWorldItems(prev => [
-      ...prev,
-      ...stagingItems.map((item, idx) => ({
-        spawnId: `temp_${item.uid}_${Date.now()}_${idx}`,
-        lat: (state.currentLat || 0) + (Math.random() - 0.5) * 0.0004,
-        lng: (state.currentLng || 0) + (Math.random() - 0.5) * 0.0004,
-        item: item,
-        minigameType: null as any
-      }))
-    ]);
-
-    // Xử lý API ngầm để không block UI, tuần tự để tránh lock SQLite
-    (async () => {
-      let successCount = 0;
-      for (const item of stagingItems) {
-        try {
-          const data = await looterApi.dropItem(apiUrl, deviceId!, item.uid);
-          if (data.success) successCount++;
-        } catch (e) {
-          console.error('[LooterGame] background drop error:', e);
-        }
-      }
-      if (successCount > 0) {
-        notify(`Đã ném ${successCount} vật phẩm ra biển`, 'success');
-        setTimeout(() => loadWorldItems(true), 1000);
-      }
-    })();
-
-  }, [state.inventory, state.currentLat, state.currentLng, deviceId, apiUrl, setState, setWorldItems, notify, loadWorldItems]);
 
   return { 
     saveInventory, saveBags, saveStorage, 
-    dropItem, pickupItem, equipBag, 
-    sellItems, storeItems, destroyItem, confirmDiscard 
+    equipBag, sellItems, storeItems
   };
 }

@@ -11,7 +11,7 @@ interface UseLooterMovementProps {
   state: LooterGameState;
   setState: React.Dispatch<React.SetStateAction<LooterGameState>>;
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void;
-  dropItem: (itemUid: string) => Promise<void>;
+
   setIsChallengeActive: (v: boolean) => void;
   setEncounter: (e: Encounter | null) => void;
   setShowCurseModal: (v: boolean) => void;
@@ -23,7 +23,6 @@ export function useLooterMovement({
   state,
   setState,
   notify,
-  dropItem,
   setIsChallengeActive,
   setEncounter,
   setShowCurseModal
@@ -33,14 +32,7 @@ export function useLooterMovement({
   const moveBoat = useCallback(async (toLat: number, toLng: number) => {
     if (!deviceId) return { curseTrigger: false, encounter: null };
 
-    // Kiểm tra và thả các vật phẩm đang ở hàng chờ nếu di chuyển
-    const stagingItems = state.inventory.filter(i => (i.gridX ?? -1) < 0);
-    if (stagingItems.length > 0) {
-      for (const item of stagingItems) {
-        await dropItem(item.uid);
-      }
-      notify(`${stagingItems.length} vật phẩm thừa đã rơi xuống biển tại đây.`, 'info');
-    }
+
 
     setIsMoving(true);
     try {
@@ -77,7 +69,7 @@ export function useLooterMovement({
     } finally {
       setIsMoving(false);
     }
-  }, [deviceId, apiUrl, state.inventory, state.fortressLat, state.fortressLng, dropItem, notify, setState, setIsChallengeActive, setEncounter, setShowCurseModal]);
+  }, [deviceId, apiUrl, state.fortressLat, state.fortressLng, notify, setState, setIsChallengeActive, setEncounter, setShowCurseModal]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;

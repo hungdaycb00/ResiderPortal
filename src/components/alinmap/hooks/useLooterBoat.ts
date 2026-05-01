@@ -33,10 +33,9 @@ export function useLooterBoat({
     } = looterState;
     
     const { 
-        moveBoat, pickupItem, setShowMinigame, setEncounter, 
+        moveBoat, setShowMinigame, setEncounter, 
         setShowCurseModal, setCombatResult, setIsChallengeActive,
-        openFortressStorage, loadState, inflictMinigamePenalty,
-        setShowDiscardModal
+        openFortressStorage, loadState, inflictMinigamePenalty
     } = looterActions;
 
     const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
@@ -56,13 +55,7 @@ export function useLooterBoat({
         currentLng: state?.currentLng ?? null,
     });
 
-    // Sub-hook: Auto Pickup
-    useAutoPickup({
-        isLooterGameMode, myObfPos, boatOffsetX, boatOffsetY, panX, panY,
-        worldItems, isAnimatingRef,
-        showMinigame, isFortressStorageOpen, encounter, showCurseModal, combatResult, pickupRewardItem,
-        pickupItem, setShowMinigame, openFortressStorage, stopAllAnimations, setBoatTargetPin,
-    });
+
 
     // Sync boat position when state changes
     useEffect(() => {
@@ -105,11 +98,7 @@ export function useLooterBoat({
 
         if (!myObfPos) return;
 
-        const hasFloatingItems = state.inventory.some((i: any) => i.gridX < 0);
-        if (hasFloatingItems) {
-            setShowDiscardModal(true);
-            return;
-        }
+
 
         const boatLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
         const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
