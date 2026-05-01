@@ -31,7 +31,7 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem, dropItems } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [externalHoverCell, setExternalHoverCell] = useState<{ x: number, y: number } | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
