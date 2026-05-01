@@ -88,9 +88,16 @@ export const useInventoryDrag = ({
     setDraggingItem(item);
 
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const isFloating = item.gridX < 0;
+    
+    // For staging items (floating), they might have a CSS transform or be inside a scaled container
+    // We calculate offset directly relative to the item's bounding box
+    const offsetX = e.clientX - itemRect.left;
+    const offsetY = e.clientY - itemRect.top;
+    
     const offset = {
-      x: Math.max(0, e.clientX - itemRect.left),
-      y: Math.max(0, e.clientY - itemRect.top),
+      x: Math.max(0, offsetX),
+      y: Math.max(0, offsetY),
     };
     setDragOffset(offset);
     onDragStart?.(item, 'inventory', offset);
@@ -167,7 +174,7 @@ export const useInventoryDrag = ({
 
       setDragItem(null);
       setDraggingItem(null);
-      setTimeout(() => setIsItemDragging(false), 400);
+      setIsItemDragging(false); // Removed setTimeout to fix drop delay
       setHoverCell(null);
       onHoverCellChange?.(null);
       pointerStartRef.current = null;
