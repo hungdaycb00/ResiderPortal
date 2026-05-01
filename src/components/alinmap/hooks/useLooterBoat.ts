@@ -66,12 +66,14 @@ export function useLooterBoat({
         syncBoatPosition();
     }, [isLooterGameMode, state?.currentLat, state?.currentLng, isChallengeActive, syncBoatPosition]);
 
+    const pendingPickupsRef = useRef<Set<string>>(new Set());
+
     // Auto-pickup logic based on visual position
     useEffect(() => {
-        if (!isLooterGameMode || !isChallengeActive || !worldItems || !myObfPos) return;
+        if (!isLooterGameMode || !worldItems || !myObfPos) return;
 
         const checkPickup = () => {
-            // Không quét nếu đang có popup
+            // Không quét nếu đang có popup quan trọng
             if (showMinigame || encounter || combatResult || showCurseModal) return;
 
             const ox = boatOffsetX.get() || 0;
@@ -79,23 +81,44 @@ export function useLooterBoat({
             const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
             const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
 
+            // Bán kính nhặt đồ (có tính đến lời nguyền phóng to thuyền nếu có)
+            const boatScaleStack = looterState.activeCurses?.boat_scale || 0;
+            const interactionRadius = 250 * (1 + boatScaleStack * 0.05);
+
             for (const item of worldItems) {
-                if (item.minigameType === 'chest') continue; // Portal is special
+                if (item.minigameType === 'chest') continue; 
+                if (pendingPickupsRef.current.has(item.spawnId)) continue;
+
                 const dist = getDistanceMeters(curLat, curLng, item.lat, item.lng);
-                if (dist < 250) {
+                
+                if (dist <= interactionRadius) {
                     if (item.minigameType) {
                         setShowMinigame(item);
-                        break; // Stop scanning once a minigame opens
+                        break; 
                     } else {
-                        looterActions.pickupItem(item.spawnId);
+                        pendingPickupsRef.current.add(item.spawnId);
+                        looterActions.pickupItem(item.spawnId).finally(() => {
+                            // Sau khi nhặt xong (hoặc lỗi), item sẽ biến mất khỏi worldItems 
+                            // nên ta không cần xóa khỏi pending ngay lập tức để tránh gọi lại
+                        });
                     }
                 }
             }
         };
 
-        const interval = setInterval(checkPickup, 500);
+        const interval = setInterval(checkPickup, 300); // Tăng tần suất quét lên 300ms
         return () => clearInterval(interval);
-    }, [isLooterGameMode, isChallengeActive, worldItems, myObfPos, boatOffsetX, boatOffsetY, showMinigame, encounter, combatResult, showCurseModal, setShowMinigame, looterActions]);
+    }, [isLooterGameMode, isChallengeActive, worldItems, myObfPos, boatOffsetX, boatOffsetY, showMinigame, encounter, combatResult, showCurseModal, setShowMinigame, looterActions, looterState.activeCurses]);
+
+    // Xóa pending khi worldItems thay đổi (vật phẩm đã mất khỏi map)
+    useEffect(() => {
+        const itemIds = new Set(worldItems?.map(i => i.spawnId) || []);
+        for (const pid of pendingPickupsRef.current) {
+            if (!itemIds.has(pid)) {
+                pendingPickupsRef.current.delete(pid);
+            }
+        }
+    }, [worldItems]);
 
     // Sync curse visual
     useEffect(() => {
