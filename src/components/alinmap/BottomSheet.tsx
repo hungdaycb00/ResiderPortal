@@ -210,12 +210,17 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         )}
                     </div>
 
-                    <div 
-                      className={`flex-1 overflow-y-auto ${mainTab === 'backpack' ? 'px-0 pb-0' : 'px-4 pb-32'} md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar`} 
-                      style={{ direction: 'rtl' }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      <div style={{ direction: 'ltr' }}>
+                    {mainTab === 'backpack' ? (
+                      <div className="flex-1 relative z-[100] flex flex-col overflow-hidden">
+                        <BackpackView onEnterWorld={handleEnterWorld} />
+                      </div>
+                    ) : (
+                      <div 
+                        className={`flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar`} 
+                        style={{ direction: 'rtl' }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      >
+                        <div style={{ direction: 'ltr' }}>
                         {/* Instant Search Results */}
                         {!selectedUser && !shouldHideSearch && (
                             <SheetSearchResults
@@ -313,13 +318,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         onOpenListChange={onOpenListChange}
                                     />
                                 )}
-                                {mainTab === 'backpack' && (
-                                    <BackpackView onEnterWorld={handleEnterWorld} />
-                                )}
-                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
+                    )}
                 </motion.div>
             </div>
         </>

@@ -38,36 +38,50 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
 
         <div className="space-y-1 text-sm border-t border-white/10 pt-3">
           <div className="flex justify-between">
-            <span className="text-gray-400">Tier:</span>
-            <span className="text-white font-mono">T{item.tier || 0}</span>
+            <span className="text-gray-400">Kích thước:</span>
+            <span className="text-white font-mono">{item.gridW}x{item.gridH}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Giá:</span>
+            <span className="text-gray-400">Tier:</span>
+            <span className="text-white font-mono uppercase">T{item.tier || 0}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">Giá bán:</span>
             <span className="text-yellow-400 font-mono">{item.price || 0} 💰</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Khối lượng:</span>
-            <span className="text-cyan-400 font-mono">{item.weight || 0}kg</span>
-          </div>
+
+          {(item.weight || 0) !== 0 && (
+            <div className="flex justify-between">
+              <span className="text-red-400 font-bold">Sát thương:</span>
+              <span className="text-red-400 font-mono">{item.weight} ⚔️</span>
+            </div>
+          )}
+
+          {(item.energyCost || 0) !== 0 && (
+            <div className="flex justify-between">
+              <span className="text-orange-400">Tiêu tốn NL:</span>
+              <span className="text-orange-400 font-mono">-{item.energyCost} ⚡</span>
+            </div>
+          )}
           
           {(item.hpBonus || 0) !== 0 && (
             <div className="flex justify-between">
-              <span className="text-gray-400">HP Bonus:</span>
-              <span className="text-red-400 font-mono">+{item.hpBonus}</span>
+              <span className="text-emerald-400">HP Bonus:</span>
+              <span className="text-emerald-400 font-mono">+{item.hpBonus} ❤️</span>
             </div>
           )}
           
           {(item.energyMax || 0) !== 0 && (
             <div className="flex justify-between">
-              <span className="text-gray-400">Năng lượng:</span>
-              <span className="text-blue-400 font-mono">+{item.energyMax}</span>
+              <span className="text-blue-400">Năng lượng:</span>
+              <span className="text-blue-400 font-mono">+{item.energyMax} 🧪</span>
             </div>
           )}
 
           {(item.energyRegen || 0) !== 0 && (
             <div className="flex justify-between">
-              <span className="text-gray-400">Hồi năng lượng:</span>
-              <span className="text-green-400 font-mono">+{item.energyRegen}</span>
+              <span className="text-green-400">Hồi năng lượng:</span>
+              <span className="text-green-400 font-mono">+{item.energyRegen} ✨</span>
             </div>
           )}
         </div>

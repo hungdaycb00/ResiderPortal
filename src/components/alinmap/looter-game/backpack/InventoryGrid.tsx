@@ -92,8 +92,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           cellSize={cellSize}
           isDragging={draggingItem?.uid === item.uid}
           style={{
-            left: (item as any).stagingX ?? getStablePos(item.uid + 'x', 150),
-            top: (item as any).stagingY ?? getStablePos(item.uid + 'y', 200),
+            left: (item as any).stagingX ?? getStablePos(item.uid + 'x', Math.max(200, window.innerWidth - 100)),
+            top: (item as any).stagingY ?? getStablePos(item.uid + 'y', Math.max(300, window.innerHeight - 450)),
           }}
           onPointerDown={onPointerDown}
           onDoubleClick={onItemDoubleClick}

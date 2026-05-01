@@ -84,7 +84,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
   const isAtFortress = isLooterAtFortress(state);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911]">
+    <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
       {/* Header Area - Horizontal Stats */}
       <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[100] relative">
         <div className="flex items-center gap-4">
