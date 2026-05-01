@@ -107,7 +107,7 @@ export function MinesweeperGame({
     setGrid(newGrid);
     setGameState('playing');
     setMinesLeft(mines);
-    setTimeLeft(300);
+    setTimeLeft(diffLevel === 'custom' ? 45 : 300);
     setLevel(diffLevel);
   };
 
@@ -121,6 +121,7 @@ export function MinesweeperGame({
             setGameState('lost');
             playSound('wrong');
             triggerHaptic('heavy');
+            if (onComplete) setTimeout(() => onComplete(false), 2000);
             return 0;
           }
           return prev - 1;

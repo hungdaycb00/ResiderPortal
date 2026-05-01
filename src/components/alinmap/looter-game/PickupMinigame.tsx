@@ -25,6 +25,9 @@ export const PickupMinigame: React.FC = () => {
     // Quyết định game dựa vào minigameType
     const isMinesweeper = showMinigame.minigameType === 'diving' || Math.random() > 0.5;
 
+    // Use memo to avoid object reference change causing infinite loop
+    const customGrid = React.useMemo(() => ({ rows: gridSize, cols: gridSize }), [gridSize]);
+
     return (
         <AnimatePresence>
             <motion.div 
@@ -47,14 +50,14 @@ export const PickupMinigame: React.FC = () => {
                     {showMinigame.minigameType === 'fishing' || !isMinesweeper ? (
                         <FruitGame 
                             autoStart={true}
-                            customGrid={{ rows: gridSize, cols: gridSize }}
+                            customGrid={customGrid}
                             onComplete={handleComplete}
                             onBack={() => setShowMinigame(null)}
                         />
                     ) : (
                         <MinesweeperGame 
                             autoStart={true}
-                            customGrid={{ rows: gridSize, cols: gridSize }}
+                            customGrid={customGrid}
                             onComplete={handleComplete}
                             onActiveChange={() => {}}
                         />

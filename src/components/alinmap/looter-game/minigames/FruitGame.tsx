@@ -73,7 +73,7 @@ export function FruitGame({
     const totalTiles = rows * cols;
     // ensure fruit types are enough
     const maxFruits = Math.min(16, Math.max(8, Math.floor(totalTiles / 4)));
-    setupGrid(rows, cols, maxFruits, 300, 'custom');
+    setupGrid(rows, cols, maxFruits, 45, 'custom');
   }, []);
 
   const initGame = useCallback((diff: keyof typeof LEVELS) => {
