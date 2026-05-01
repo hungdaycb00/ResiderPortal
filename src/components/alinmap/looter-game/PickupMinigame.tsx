@@ -23,11 +23,11 @@ export const PickupMinigame: React.FC = () => {
     React.useEffect(() => {
         if (showMinigame) {
             if (gameTypeRef.current === null) {
-                gameTypeRef.current = showMinigame.minigameType === 'diving' || Math.random() > 0.5 
-                    ? 'minesweeper' : 'fruit';
+                // Chest minigame triggers a random game (Fruit or Minesweeper)
+                gameTypeRef.current = Math.random() > 0.5 ? 'minesweeper' : 'fruit';
             }
             mountTimeRef.current = Date.now();
-            console.log(`[LooterPerf] Minigame mounted: ${showMinigame.minigameType || 'random'} (spawnId: ${showMinigame.spawnId}) at ${mountTimeRef.current}`);
+            console.log(`[LooterPerf] Minigame mounted: ${showMinigame.minigameType || 'chest'} (spawnId: ${showMinigame.spawnId}) at ${mountTimeRef.current}`);
         } else {
             gameTypeRef.current = null;
         }

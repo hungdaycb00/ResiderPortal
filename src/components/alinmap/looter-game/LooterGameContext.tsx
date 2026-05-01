@@ -11,7 +11,7 @@ export interface WorldItem {
   lat: number;
   lng: number;
   isExpander: boolean;
-  minigameType: 'fishing' | 'diving' | 'chest' | null;
+  minigameType: 'chest' | null;
   item: LooterItem | GridExpander | BagItem | PortalItem;
 }
 

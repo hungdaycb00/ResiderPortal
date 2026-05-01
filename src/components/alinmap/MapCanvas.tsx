@@ -9,7 +9,7 @@ import { useLooterState, useLooterActions } from './looter-game/LooterGameContex
 import { useMapInteractions } from './hooks/useMapInteractions';
 
 // Sub-components
-import { SeaBackground, MapGrid } from './components/SeaBackground';
+import { LooterBackground, MapGrid } from './components/LooterBackground';
 import { 
     LocationConsentOverlay, CurseIndicator, 
     LooterLoadingOverlay, MapConnectionStatus 
@@ -103,7 +103,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     return (
         <div className="flex-1 relative overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
-            <SeaBackground />
+            <LooterBackground />
 
             {/* Location Consent Overlay */}
             {!position && isConsentOpen && (

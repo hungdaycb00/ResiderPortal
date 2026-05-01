@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const SeaBackground: React.FC = () => (
+export const LooterBackground: React.FC = () => (
     <>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-cyan-500/5 blur-[120px] pointer-events-none rounded-full" />
         <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] pointer-events-none rounded-full" />
