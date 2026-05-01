@@ -84,8 +84,8 @@ export function useLooterMovement({
     try {
       const data = await looterApi.returnToFortress(apiUrl, deviceId);
       if (data.success) {
+        setIsChallengeActive(false);
         notify('Đã quay về Thành trì', 'success');
-        // loadState() sẽ được gọi từ Provider sau khi action này hoàn thành nếu cần
       }
     } catch (err) {
       console.error('[LooterGame] returnToFortress error:', err);
