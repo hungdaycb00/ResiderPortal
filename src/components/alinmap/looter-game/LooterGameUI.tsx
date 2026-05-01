@@ -5,6 +5,7 @@ import CurseModal from './CurseModal';
 import PickupMinigame from './PickupMinigame';
 import { FortressStorageModal } from './backpack';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
+import DiscardModal from './components/DiscardModal';
 import CombatLootModal from './backpack/CombatLootModal';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
@@ -19,7 +20,8 @@ const RARITY_COLORS: Record<string, string> = {
 const LooterGameUI: React.FC = () => {
     const { 
         state, showMinigame, showDiscardModal, combatResult, 
-        preGeneratedMinigame, draggingMapItem, dragPointerPos 
+        preGeneratedMinigame, draggingMapItem, dragPointerPos,
+        isChallengeActive, isLooterGameMode
     } = useLooterState();
     
     const { 
@@ -27,12 +29,16 @@ const LooterGameUI: React.FC = () => {
         setShowDiscardModal, confirmDiscard, setPreGeneratedMinigame 
     } = useLooterActions();
 
+    if (!isLooterGameMode) return null;
+
     return (
         <>
             <ChallengeStatusHeader 
-                isChallengeActive={!!state.isChallengeActive} 
+                isChallengeActive={!!isChallengeActive} 
                 worldTier={state.worldTier || 0} 
             />
+            
+            <DiscardModal />
             <ErrorBoundary name="Combat">
                 <CombatScreen />
             </ErrorBoundary>
