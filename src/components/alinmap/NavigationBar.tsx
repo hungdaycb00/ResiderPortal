@@ -47,13 +47,19 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
             </div>
 
             {/* Mobile Bottom Navigation */}
-            {!isDesktop && mainTab === 'backpack' && isSheetExpanded ? (
-                <div className="md:hidden fixed bottom-2 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
+            {!isDesktop && mainTab === 'backpack' ? (
+                <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto flex flex-col items-center gap-2">
                     <button 
-                        onClick={() => (window as any).collapseLooterTab?.()}
-                        className="bg-white/10 backdrop-blur-md border border-white/10 rounded-full p-1 shadow-lg text-white/40 hover:text-white transition-all"
+                        onClick={() => {
+                            if (isSheetExpanded) {
+                                (window as any).collapseLooterTab?.();
+                            } else {
+                                handleTabClick('backpack');
+                            }
+                        }}
+                        className="w-10 h-10 bg-[#1e293b]/80 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center shadow-2xl text-amber-400 hover:scale-110 active:scale-95 transition-all"
                     >
-                        <ChevronUp className="w-5 h-5" />
+                        {isSheetExpanded ? <ChevronDown className="w-6 h-6" /> : <Package className="w-5 h-5" />}
                     </button>
                 </div>
             ) : (
