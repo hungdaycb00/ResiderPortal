@@ -92,7 +92,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                 <button
                     onClick={() => setMapMode(mapMode === 'grid' ? 'satellite' : 'grid')}
                     className={`w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-xl shadow-md backdrop-blur-md flex items-center justify-center active:scale-95 transition-all ${mapMode === 'satellite' ? 'bg-cyan-600/80 md:bg-cyan-600 text-white' : 'bg-white/60 md:bg-white text-gray-700'}`}
-                    title={mapMode === 'satellite' ? 'Chuyển sang Lưới 3D' : 'Chuyển sang Bản đồ Biển'}
+                    title={mapMode === 'satellite' ? 'Chuyển sang Lưới 3D' : 'Chuyển sang Bản đồ Looter'}
                 >
                     <Waves className="w-4 h-4 md:w-5 md:h-5" />
                 </button>

@@ -31,7 +31,7 @@ const LooterItemEntity = ({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleS
 
     return (
         <motion.div
-            data-sea-entity="true"
+            data-looter-entity="true"
             data-map-interactive="true"
             className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
             style={{
@@ -139,7 +139,7 @@ const FortressEntity = ({ myObfPos, boatOffsetX, boatOffsetY, executeMoveToExact
 
     return (
         <div
-            data-sea-entity="true"
+            data-looter-entity="true"
             data-map-interactive="true"
             onClick={(e) => {
                 e.stopPropagation();
