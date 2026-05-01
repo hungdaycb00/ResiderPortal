@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown } from 'lucide-react';
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
@@ -104,14 +104,14 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
     );
   }, [state.inventory, activeBag, bagStats, isItemInsideBag]);
 
-  const dynamicGridH = React.useMemo(() => {
+  const dynamicGridH = useMemo(() => {
     const headerHeight = 48;
     const bottomNavHeight = window.innerWidth < 768 ? 96 : 0; 
     const availableHeight = window.innerHeight - headerHeight - bottomNavHeight;
     return Math.max(MAX_GRID_H, Math.floor(availableHeight / cellSize));
   }, [cellSize]);
 
-  const lastPosRef = React.useRef({ lat: state.currentLat, lng: state.currentLng });
+  const lastPosRef = useRef({ lat: state.currentLat, lng: state.currentLng });
 
   useEffect(() => {
     if (state.currentLat === null || state.currentLng === null) return;
