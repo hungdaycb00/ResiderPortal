@@ -54,8 +54,11 @@ export function useLooterMovement({
         }
 
         const distToFortress = getDistanceMeters(nextLat, nextLng, state.fortressLat, state.fortressLng);
-        // Thử thách vẫn active nếu ở xa Fortress HOẶC đang có Tier > 0
-        setIsChallengeActive(distToFortress > FORTRESS_INTERACTION_METERS || (state.worldTier || 0) > 0);
+        // Thử thách active nếu ở xa Fortress HOẶC đang có Tier > 0.
+        // Nếu đang ở Fortress với Tier 0, ta giữ nguyên trạng thái cũ (có thể là true do người dùng vừa chọn).
+        if (distToFortress > FORTRESS_INTERACTION_METERS || (state.worldTier || 0) > 0) {
+            setIsChallengeActive(true);
+        }
 
         if (data.curseTrigger && data.encounter) {
           setEncounter(data.encounter);

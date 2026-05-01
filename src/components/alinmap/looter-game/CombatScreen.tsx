@@ -10,7 +10,10 @@ import { FleeConfirmOverlay, CombatResultOverlay } from './combat/components/Com
 
 const CombatScreen: React.FC = () => {
     const { state, encounter } = useLooterState();
-    const { setEncounter, executeCombat, setCombatResult, loadState, curseChoice, showNotification } = useLooterActions();
+    const { 
+        setEncounter, executeCombat, setCombatResult, loadState, 
+        curseChoice, showNotification, setIsChallengeActive 
+    } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
     const [selectedResultItem, setSelectedResultItem] = useState<any>(null);
@@ -27,8 +30,13 @@ const CombatScreen: React.FC = () => {
         // Chỉ set kết quả toàn cục khi đóng màn hình này
         if (combat.pendingResult) {
             setCombatResult(combat.pendingResult);
-            if (combat.pendingResult.result === 'win') showNotification('Bạn đã chiến thắng!', 'success');
-            else showNotification('Bạn đã thất bại...', 'error');
+            if (combat.pendingResult.result === 'win') {
+                showNotification('Bạn đã chiến thắng!', 'success');
+            } else {
+                showNotification('Bạn đã thất bại...', 'error');
+                // Khi thất bại và quay về thành, set trạng thái thử thách về false
+                setIsChallengeActive(false);
+            }
         }
 
         setEncounter(null);
