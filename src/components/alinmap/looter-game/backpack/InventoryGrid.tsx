@@ -179,7 +179,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           item={item}
           cellSize={cellSize}
           isDragging={activeDragItem?.uid === item.uid}
-          className="!z-[300]"
           style={{
             left: (item as any).stagingX ?? getStablePos(item.uid + 'x', 150),
             top: (item as any).stagingY ?? getStablePos(item.uid + 'y', 200),

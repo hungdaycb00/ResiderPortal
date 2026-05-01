@@ -88,11 +88,10 @@ export const useInventoryDrag = ({
     setDraggingItem(item);
 
     const itemRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    
-    // The user requested to revert back to top-left corner dragging.
-    // Setting offset to 0,0 forces the top-left corner of the item to stick to the pointer.
-    const offset = { x: 0, y: 0 };
-    
+    const offset = {
+      x: Math.max(0, e.clientX - itemRect.left),
+      y: Math.max(0, e.clientY - itemRect.top),
+    };
     setDragOffset(offset);
     onDragStart?.(item, 'inventory', offset);
     setIsItemDragging(true);
@@ -168,7 +167,7 @@ export const useInventoryDrag = ({
 
       setDragItem(null);
       setDraggingItem(null);
-      setIsItemDragging(false); // Removed setTimeout to fix drop delay
+      setTimeout(() => setIsItemDragging(false), 400);
       setHoverCell(null);
       onHoverCellChange?.(null);
       pointerStartRef.current = null;
