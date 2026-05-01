@@ -391,9 +391,12 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                     console.log(`[AlinMap] onSelectTier selected: ${tier}`);
                     try {
                         if (typeof looterActions.setWorldTier === 'function') {
-                            await looterActions.setWorldTier(tier);
                             setIsTierSelectorOpen(false);
                             setIsLooterGameMode(true);
+                            // Run in background so UI feels instant
+                            looterActions.setWorldTier(tier).catch(err => {
+                                console.error('[AlinMap] Background setWorldTier error:', err);
+                            });
                         } else {
                             console.error('[AlinMap] setWorldTier is not a function in looterActions');
                         }
