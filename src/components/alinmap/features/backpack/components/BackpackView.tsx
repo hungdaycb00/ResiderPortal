@@ -140,7 +140,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
       {/* Header Area - Horizontal Stats */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[100] relative">
+      <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[150] relative">
         <div className="flex items-center gap-4">
           {/* Gold */}
           <div className="flex items-center gap-1.5">
@@ -186,7 +186,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             }`}
             onPointerEnter={() => setIsHoveringBagSlot(true)}
             onPointerLeave={() => setIsHoveringBagSlot(false)}
-            onClick={(e) => {
+            onPointerDown={(e) => {
               if (activeBag) {
                 setSelectedItem(activeBag as any);
                 setPopupPos({ x: e.clientX, y: e.clientY });
@@ -257,7 +257,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </div>
       </div>
 
-      {selectedItem && (
+      {selectedItem && createPortal(
         <ItemPopup
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
@@ -265,9 +265,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             position: 'fixed',
             left: Math.max(10, Math.min(window.innerWidth - 230, popupPos.x - 100)),
             top: Math.max(70, popupPos.y + 20),
-            zIndex: 1000,
+            zIndex: 9999,
           }}
-        />
+        />,
+        document.body
       )}
     </div>
   );
