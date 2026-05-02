@@ -96,7 +96,7 @@ export function useLooterStateManager({
     } catch (err) {
       console.error('[LooterGame] loadState error:', err);
     }
-  }, [deviceId, apiUrl, setState, setGlobalSettings, setIsChallengeActive, saveBags, isChallengeActive]);
+  }, [deviceId, apiUrl, setState, setGlobalSettings, setIsChallengeActive, saveBags]);
 
   const initGame = useCallback(async (lat: number, lng: number) => {
     if (!deviceId) return;

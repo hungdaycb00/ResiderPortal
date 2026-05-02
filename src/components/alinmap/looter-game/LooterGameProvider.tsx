@@ -93,6 +93,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const API_URL = useMemo(() => getLooterServerUrl(), []);
   const saveTimerRef = useRef<any>(null);
   const storageTimerRef = useRef<any>(null);
+  const initialLoadDoneRef = useRef(false);
 
   const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
     if (typeof showNotification === 'function') {
@@ -222,11 +223,12 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
   // 4. Effects
   
-  // Initial load
+  // Initial load - Only run once when game mode is active
   useEffect(() => {
-    if (!deviceId || !ui.isLooterGameMode) return;
+    if (!deviceId || !ui.isLooterGameMode || initialLoadDoneRef.current) return;
+    
+    initialLoadDoneRef.current = true;
     actionsValue.loadState({ skipIfBusy: true });
-    // Heartbeat removed for offline-first architecture
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
   return (
