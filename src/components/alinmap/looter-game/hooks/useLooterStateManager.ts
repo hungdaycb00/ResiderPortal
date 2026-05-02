@@ -57,6 +57,9 @@ export function useLooterStateManager({
   const loadState = useCallback(async () => {
     if (!deviceId) return;
     try {
+      // Tạm thời vô hiệu hóa việc loadState ghi đè frontend theo yêu cầu
+      return;
+      
       const data = await looterApi.fetchState(apiUrl, deviceId);
       if (data.success && data.state) {
         const s = data.state; // Đây là dữ liệu đã qua Transformer

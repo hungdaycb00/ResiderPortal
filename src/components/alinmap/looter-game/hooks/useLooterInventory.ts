@@ -51,8 +51,8 @@ export function useLooterInventory({
       width: newBagData.width || 4,
       height: newBagData.height || 4,
       shape: newBagData.shape || Array.from({ length: 4 }, () => Array(4).fill(true)),
-      gridX: currentBag.gridX,
-      gridY: currentBag.gridY
+      gridX: currentBag?.gridX ?? Math.floor((10 - (newBagData.width || 4)) / 2),
+      gridY: currentBag?.gridY ?? Math.floor((10 - (newBagData.height || 4)) / 2)
     };
 
     const itemsToKeep: LooterItem[] = [];
@@ -112,10 +112,12 @@ export function useLooterInventory({
     // và ghi đè lẫn nhau (race condition).
     setState(prev => {
       const next = { ...prev, inventory: itemsToKeep, bags: [newBag] };
-      // Fire-and-forget sync to server
+      // Fire-and-forget sync to server (Tạm thời vô hiệu hóa theo yêu cầu)
+      /*
       if (deviceId) {
         looterApi.syncState(apiUrl, deviceId, next).catch(console.error);
       }
+      */
       return next;
     });
     notify(`Đã trang bị ${newBag.name}`, 'success');
