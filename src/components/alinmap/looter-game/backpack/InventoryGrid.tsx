@@ -9,6 +9,7 @@ import { useInventoryDrag } from './hooks/useInventoryDrag';
 interface InventoryGridProps {
   items: LooterItem[];
   bags: BagItem[];
+  readOnly?: boolean;
   onItemDoubleClick?: (item: LooterItem) => void;
   onItemClick?: (item: LooterItem) => void;
   onItemLayoutChange?: (items: LooterItem[]) => void;
@@ -24,6 +25,7 @@ interface InventoryGridProps {
 const InventoryGrid: React.FC<InventoryGridProps> = ({
   items,
   bags,
+  readOnly = false,
   onItemDoubleClick,
   onItemClick,
   onItemLayoutChange,
@@ -142,8 +144,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               cellSize={cellSize}
               isDragging={draggingItem?.uid === item.uid}
               style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
-              onPointerDown={onPointerDown}
-              onDoubleClick={onItemDoubleClick}
+              onPointerDown={readOnly ? undefined : onPointerDown}
+              onDoubleClick={readOnly ? undefined : onItemDoubleClick}
               onClick={() => {
                 setSelectedItem(item);
                 setPopupPos({ x: item.gridX * cellSize, y: item.gridY * cellSize });

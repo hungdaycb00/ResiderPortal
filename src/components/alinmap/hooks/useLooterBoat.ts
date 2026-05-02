@@ -48,7 +48,7 @@ export function useLooterBoat({
     const {
         boatOffsetX, boatOffsetY, isAnimatingRef,
         stopAllAnimations, animateBoatTo, syncBoatPosition,
-        centerOnBoat, stopPanFollow
+        centerOnBoat, centerOnCombat, stopPanFollow
     } = useBoatAnimation({
         myObfPos, panX, panY,
         currentLat: state?.currentLat ?? null,
@@ -143,11 +143,11 @@ export function useLooterBoat({
         moveBoat(lat, lng).then(res => {
             if (res?.curseTrigger) {
                 stopAllAnimations();
-                centerOnBoat();
+                centerOnCombat();
             }
         });
         animateBoatTo(lat, lng, duration);
-    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnBoat, stopAllAnimations]);
+    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
         if (!isLooterGameMode || !myObfPos) return;

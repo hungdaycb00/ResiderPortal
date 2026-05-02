@@ -28,9 +28,10 @@ const formatBagTooltip = (bag: any) =>
 
 interface BackpackViewProps {
   onEnterWorld?: () => void;
+  readOnly?: boolean;
 }
 
-const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
+const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
   const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
 
@@ -168,7 +169,8 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
           <InventoryGrid
             items={state.inventory}
             bags={state.bags}
-            onItemLayoutChange={memoizedSaveInventory}
+            readOnly={readOnly}
+            onItemLayoutChange={readOnly ? undefined : memoizedSaveInventory}
             onItemDoubleClick={(item) => {
               if ((item as any).type === 'bag') {
                 equipBag(item.uid);

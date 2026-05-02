@@ -82,7 +82,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     } = props;
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
-    const { isItemDragging } = useLooterGame();
+    const { isItemDragging, encounter } = useLooterGame();
 
     React.useEffect(() => {
         (window as any).collapseLooterTab = () => {
@@ -212,7 +212,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
                     {mainTab === 'backpack' ? (
                       <div className="flex-1 relative z-[100] flex flex-col overflow-hidden">
-                        <BackpackView onEnterWorld={handleEnterWorld} />
+                        <BackpackView onEnterWorld={handleEnterWorld} readOnly={!!encounter} />
                       </div>
                     ) : (
                       <div 

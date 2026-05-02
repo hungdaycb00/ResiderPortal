@@ -8,6 +8,7 @@ interface CombatInventoryGridProps {
   gridHeight: number;
   readOnly?: boolean;
   onLayoutChange?: (items: LooterItem[]) => void;
+  onItemClick?: (item: LooterItem) => void;
   cellSize?: number;
   bag?: any;
 }
@@ -32,6 +33,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
   gridHeight,
   readOnly = false,
   onLayoutChange,
+  onItemClick,
   cellSize = 48,
   bag,
 }) => {
@@ -255,6 +257,12 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
               }}
               whileTap={{ scale: 1.1 }}
               onPointerDown={(e) => {
+                if (readOnly) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onItemClick?.(item);
+                  return;
+                }
                 if (e.button === 2) {
                   e.preventDefault();
                   handleRotate(item);

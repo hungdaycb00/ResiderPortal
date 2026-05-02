@@ -207,14 +207,13 @@ const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact, stopBoat
 }) => {
-    const { state: looterStateObj, worldItems } = useLooterState();
+    const { state: looterStateObj, worldItems, encounter } = useLooterState();
     const { openFortressStorage } = useLooterActions();
     
     // Chỉ lấy các giá trị cần thiết để giảm re-render
     const fortressLat = looterStateObj?.fortressLat;
     const fortressLng = looterStateObj?.fortressLng;
     const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
-    const encounter = looterStateObj?.encounter; // Lấy encounter từ state
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
 
@@ -267,8 +266,8 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
 
     return (
         <>
-            {/* SVG Layer for lines */}
-            {boatTargetPin && (
+            {/* SVG Layer for lines - ẩn khi combat */}
+            {!encounter && boatTargetPin && (
                 <svg className="absolute top-0 left-0 w-[10000px] h-[10000px] pointer-events-none z-[84]" style={{ overflow: 'visible' }}>
                     <motion.line
                         x1={lineX1}
@@ -284,7 +283,8 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 </svg>
             )}
 
-            {fortressLat && (
+            {/* Fortress - ẩn khi combat */}
+            {!encounter && fortressLat && (
                 <FortressEntity 
                     fortressLat={fortressLat}
                     fortressLng={fortressLng}
@@ -298,7 +298,8 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 />
             )}
 
-            {boatTargetPin && (
+            {/* Target Pin - ẩn khi combat */}
+            {!encounter && boatTargetPin && (
                 <div
                     className="absolute w-12 h-12 -ml-6 -mt-12 flex items-center justify-center pointer-events-none z-[85]"
                     style={{
@@ -310,6 +311,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 </div>
             )}
 
+            {/* Enemy Boat - chỉ hiện khi combat */}
             {encounter && (
                 <CombatEnemyBoat 
                     encounter={encounter} 
@@ -318,7 +320,8 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 />
             )}
 
-            {worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
+            {/* World Items - ẩn khi combat */}
+            {!encounter && worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
                 <LooterItemEntity 
                     key={item.spawnId}
                     item={item}

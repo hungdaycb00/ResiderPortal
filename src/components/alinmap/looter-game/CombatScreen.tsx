@@ -18,6 +18,7 @@ const CombatScreen: React.FC = () => {
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
     const [selectedResultItem, setSelectedResultItem] = useState<any>(null);
+    const [selectedEnemyItem, setSelectedEnemyItem] = useState<any>(null);
 
     const combat = useCombatLoop({
         state, encounter, executeCombat, setCombatResult, showNotification
@@ -77,48 +78,102 @@ const CombatScreen: React.FC = () => {
                 </div>
             )}
 
-            {/* 2. Mobile: Enemy Stats at Top (Inventory Only) */}
+            {/* 2. Mobile: Enemy Stats at Top (Inventory + HUD nối tiếp) */}
             {!state.showCurseModal && (
                 <>
-                    <div className="md:hidden absolute top-0 left-0 right-0 bg-black/40 backdrop-blur-md border-b border-white/10 p-2 pointer-events-auto">
-                        <div className="flex items-center justify-between mb-2 px-1">
-                             <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
+                    <div className="md:hidden absolute top-0 left-0 right-0 flex flex-col pointer-events-auto">
+                        {/* Enemy Inventory Background */}
+                        <div className="bg-black/40 backdrop-blur-md border-b border-white/10 p-2">
+                            <div className="flex items-center justify-between mb-2 px-1">
+                                 <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
+                            </div>
+                            <div className="flex justify-center overflow-auto py-1">
+                                <CombatInventoryGrid 
+                                    items={encounter.inventory || []} 
+                                    gridWidth={encounter.bags?.[0]?.width || 6} 
+                                    gridHeight={encounter.bags?.[0]?.height || 4} 
+                                    bag={encounter.bags?.[0]} 
+                                    readOnly 
+                                    cellSize={28}
+                                    onItemClick={(item) => setSelectedEnemyItem(item)}
+                                />
+                            </div>
                         </div>
-                        <div className="flex justify-center overflow-auto py-1">
-                            <CombatInventoryGrid 
-                                items={encounter.inventory || []} 
-                                gridWidth={encounter.bags?.[0]?.width || 6} 
-                                gridHeight={encounter.bags?.[0]?.height || 4} 
-                                bag={encounter.bags?.[0]} 
-                                readOnly 
-                                cellSize={28}
-                            />
+                        {/* Enemy HP/EN Bar - nối tiếp ngay dưới inventory */}
+                        <div className="flex items-center gap-2 justify-end pr-2 pt-1">
+                            <div className="flex flex-col gap-1 text-[9px] font-bold text-white/80 items-end">
+                                <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚔️ {encounter.totalWeight}</span>
+                                <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚡ +{combat.botStats.eRegen + 10}/s</span>
+                            </div>
+                            <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl w-48">
+                                <div className="flex justify-between items-center mb-0.5 px-0.5">
+                                    <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
+                                    <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
+                                </div>
+                                <div className="h-1 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5">
+                                    <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500" animate={{ width: `${Math.max(0, (combat.hpB / combat.maxHpB) * 100)}%` }} />
+                                </div>
+                                <div className="flex justify-between items-center mb-0.5 px-0.5">
+                                    <span className="text-[8px] font-black text-blue-400 uppercase">EN</span>
+                                    <span className="text-[8px] font-black text-white">{Math.round(combat.actionProgressB)}</span>
+                                </div>
+                                <div className="h-1 bg-gray-900 rounded-full overflow-hidden border border-white/5">
+                                    <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500" animate={{ width: `${(combat.actionProgressB / combat.maxActionBarB) * 100}%` }} />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Enemy HP/EN Bar moved outside */}
-                    <div className="md:hidden absolute top-[160px] right-2 flex items-center gap-2 pointer-events-auto">
-                        <div className="flex flex-col gap-1 text-[9px] font-bold text-white/80 items-end">
-                            <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚔️ {encounter.totalWeight}</span>
-                            <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚡ +{combat.botStats.eRegen + 10}/s</span>
+                    {/* Enemy Item Tooltip Popup */}
+                    {selectedEnemyItem && (
+                        <div 
+                            className="md:hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/50 pointer-events-auto"
+                            onClick={() => setSelectedEnemyItem(null)}
+                        >
+                            <motion.div 
+                                initial={{ scale: 0.8, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-[#1a1f2e] border-2 border-cyan-500/40 rounded-2xl p-4 shadow-2xl min-w-[200px] max-w-[280px]"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="text-3xl">{selectedEnemyItem.icon}</span>
+                                    <div>
+                                        <p className="text-white font-black text-sm">{selectedEnemyItem.name}</p>
+                                        <p className="text-xs text-gray-400 capitalize">{selectedEnemyItem.rarity}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="bg-black/40 rounded-lg p-2 text-center">
+                                        <span className="text-red-400 font-bold">⚔️ {selectedEnemyItem.weight || 0}</span>
+                                        <p className="text-gray-500 text-[9px]">DMG</p>
+                                    </div>
+                                    <div className="bg-black/40 rounded-lg p-2 text-center">
+                                        <span className="text-green-400 font-bold">❤️ +{selectedEnemyItem.hpBonus || 0}</span>
+                                        <p className="text-gray-500 text-[9px]">HP</p>
+                                    </div>
+                                    <div className="bg-black/40 rounded-lg p-2 text-center">
+                                        <span className="text-blue-400 font-bold">⚡ +{selectedEnemyItem.energyMax || 0}</span>
+                                        <p className="text-gray-500 text-[9px]">EN Max</p>
+                                    </div>
+                                    <div className="bg-black/40 rounded-lg p-2 text-center">
+                                        <span className="text-cyan-400 font-bold">✨ +{selectedEnemyItem.energyRegen || 0}</span>
+                                        <p className="text-gray-500 text-[9px]">Regen</p>
+                                    </div>
+                                </div>
+                                <div className="mt-3 text-center">
+                                    <span className="text-[10px] text-amber-400 font-bold">💰 {selectedEnemyItem.price || 0} vàng</span>
+                                    <span className="text-[10px] text-gray-500 ml-2">{selectedEnemyItem.gridW}x{selectedEnemyItem.gridH}</span>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedEnemyItem(null)}
+                                    className="mt-3 w-full py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-bold transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                            </motion.div>
                         </div>
-                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl w-48">
-                            <div className="flex justify-between items-center mb-0.5 px-0.5">
-                                <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
-                                <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
-                            </div>
-                            <div className="h-1 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5">
-                                <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500" animate={{ width: `${Math.max(0, (combat.hpB / combat.maxHpB) * 100)}%` }} />
-                            </div>
-                            <div className="flex justify-between items-center mb-0.5 px-0.5">
-                                <span className="text-[8px] font-black text-blue-400 uppercase">EN</span>
-                                <span className="text-[8px] font-black text-white">{Math.round(combat.actionProgressB)}</span>
-                            </div>
-                            <div className="h-1 bg-gray-900 rounded-full overflow-hidden border border-white/5">
-                                <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500" animate={{ width: `${(combat.actionProgressB / combat.maxActionBarB) * 100}%` }} />
-                            </div>
-                        </div>
-                    </div>
+                    )}
                 </>
             )}
 
