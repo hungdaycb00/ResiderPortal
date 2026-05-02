@@ -64,7 +64,7 @@ const CurseModal: React.FC = () => {
           </button>
 
           <button
-            onClick={async () => { await curseChoice('challenge'); }}
+            onClick={async () => { await curseChoice('challenge'); setShowCurseModal(false); }}
             className="w-full py-3 bg-amber-900/40 hover:bg-amber-800/40 border border-amber-600/40 rounded-xl text-left px-4 transition-colors group"
           >
             <div className="flex items-center gap-3">
