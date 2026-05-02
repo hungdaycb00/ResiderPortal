@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { LooterItem, BagItem } from '../types';
 import { isItemInBag } from '../../engine/utils';
 
@@ -129,11 +129,10 @@ export function useInventoryDrag({
     const gy = Math.round((startY - itemH / 2) / cellSize);
     setDragGridPos({ x: gx, y: gy });
 
-    // Lock pointer for movement tracking
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    // Lock pointer for movement tracking removed to allow interaction with other elements
   }, [cellSize]);
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
+  const onPointerMove = useCallback((e: PointerEvent | React.PointerEvent) => {
     if (!draggingItem || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -158,7 +157,7 @@ export function useInventoryDrag({
     setDragGridPos({ x: gx, y: gy });
   }, [draggingItem, cellSize]);
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
+  const onPointerUp = useCallback((e: PointerEvent | React.PointerEvent) => {
     if (!draggingItem) return;
 
     const container = containerRef.current;
@@ -170,7 +169,6 @@ export function useInventoryDrag({
         onDropOutside?.(draggingItem);
         setDraggingItem(null);
         setDragGridPos(null);
-        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
         return;
       }
     }
@@ -183,7 +181,6 @@ export function useInventoryDrag({
       // Chồng lấp hoặc ra ngoài biên toàn cục -> Quay về vị trí cũ
       setDraggingItem(null);
       setDragGridPos(null);
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       return;
     }
 
@@ -197,7 +194,6 @@ export function useInventoryDrag({
         onEquipBag?.(draggingItem.uid);
         setDraggingItem(null);
         setDragGridPos(null);
-        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
         return;
       }
       
@@ -216,8 +212,18 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     setDragGridPos(null);
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
+
+  useEffect(() => {
+    if (draggingItem) {
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      return () => {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+      };
+    }
+  }, [draggingItem, onPointerMove, onPointerUp]);
 
   return {
     draggingItem,

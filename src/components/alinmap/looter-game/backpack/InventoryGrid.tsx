@@ -123,8 +123,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   return (
     <div 
       className="flex flex-col select-none touch-none w-full h-full relative"
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
     >
 
       <div className="w-full h-full flex items-start justify-center pt-0 pointer-events-none">
