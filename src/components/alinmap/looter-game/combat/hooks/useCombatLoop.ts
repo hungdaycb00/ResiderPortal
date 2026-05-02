@@ -2,6 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { LooterItem } from '../../backpack/types';
 import type { LooterGameState, Encounter, CombatResult } from '../../LooterGameContext';
 
+const toFiniteNumber = (val: any, fallback = 0) => {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : fallback;
+};
+
 interface UseCombatLoopProps {
     state: LooterGameState;
     encounter: Encounter | null;
@@ -103,17 +108,9 @@ export function useCombatLoop({
                 return;
             }
 
-            if (isAnimating) {
-                frameRef.current = requestAnimationFrame(loop);
-                return;
-            }
-
-            const entry = combatLogRef.current[currentIdxRef.current];
-            const side = entry.attacker;
-            const cost = toFiniteNumber(entry.energySpent || entry.item?.energyCost, 10);
-
-            const gainA = (15 + (myStats.eRegen || 0)) * (dt / 1000) * 10;
-            const gainB = (15 + (botStats.eRegen || 0)) * (dt / 1000) * 10;
+            // Hồi năng lượng luôn chạy liên tục để có cảm giác thời gian thực (10 + stats mỗi giây)
+            const gainA = (10 + (myStats.eRegen || 0)) * (dt / 1000); 
+            const gainB = (10 + (botStats.eRegen || 0)) * (dt / 1000);
             
             actionProgressARef.current = Math.min(actionProgressARef.current + gainA, maxActionBarA || 100);
             actionProgressBRef.current = Math.min(actionProgressBRef.current + gainB, maxActionBarB || 100);
@@ -124,6 +121,16 @@ export function useCombatLoop({
                 setActionProgressB(actionProgressBRef.current);
                 lastUIUpdate = now;
             }
+
+            // Nếu đang chạy animation tấn công thì không xử lý lệnh tiếp theo từ log
+            if (isAnimating) {
+                frameRef.current = requestAnimationFrame(loop);
+                return;
+            }
+
+            const entry = combatLogRef.current[currentIdxRef.current];
+            const side = entry.attacker;
+            const cost = toFiniteNumber(entry.energySpent || entry.item?.energyCost, 10);
 
             if (side === 'A') {
                 if (actionProgressARef.current >= cost) {

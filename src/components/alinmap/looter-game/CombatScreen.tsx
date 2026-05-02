@@ -67,7 +67,7 @@ const CombatScreen: React.FC = () => {
             <CombatStatsPanel 
                 side="enemy" name={encounter.name} hp={combat.hpB} maxHp={combat.maxHpB}
                 actionProgress={combat.actionProgressB} maxActionBar={combat.maxActionBarB}
-                dmg={encounter.totalWeight} regen={(combat.botStats.eRegen + 15) * 10}
+                dmg={encounter.totalWeight} regen={combat.botStats.eRegen + 10}
                 inventory={encounter.inventory || []} bags={encounter.bags}
                 gridWidth={encounter.bags?.[0]?.width || 6} gridHeight={encounter.bags?.[0]?.height || 4} isMobileTop
             />
@@ -85,7 +85,7 @@ const CombatScreen: React.FC = () => {
                 <CombatStatsPanel 
                     side="player" name="Bạn" hp={combat.hpA} maxHp={combat.maxHpA}
                     actionProgress={combat.actionProgressA} maxActionBar={combat.maxActionBarA}
-                    dmg={combat.myStats.weight} regen={(combat.myStats.eRegen + 15) * 10}
+                    dmg={combat.myStats.weight} regen={combat.myStats.eRegen + 10}
                     inventory={combat.initialPlayerInventory}
                     gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight}
                 />
@@ -95,7 +95,7 @@ const CombatScreen: React.FC = () => {
                     <CombatStatsPanel 
                         side="enemy" name={encounter.name} hp={combat.hpB} maxHp={combat.maxHpB}
                         actionProgress={combat.actionProgressB} maxActionBar={combat.maxActionBarB}
-                        dmg={encounter.totalWeight} regen={(combat.botStats.eRegen + 15) * 10}
+                        dmg={encounter.totalWeight} regen={combat.botStats.eRegen + 10}
                         inventory={encounter.inventory || []} bags={encounter.bags}
                         gridWidth={encounter.bags?.[0]?.width || 6} gridHeight={encounter.bags?.[0]?.height || 4}
                     />
