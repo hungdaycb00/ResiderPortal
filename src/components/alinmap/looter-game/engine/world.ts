@@ -2,7 +2,7 @@
  * world.js - Logic sinh vật phẩm trên bản đồ thế giới
  */
 
-const { getSettings } = require('../looter_settings');
+import { getSettings } from './constants';
 import {  generateUid  } from './utils';
 import {  rollBagDrop  } from './bags';
 import {  rollRandomItem  } from './items';

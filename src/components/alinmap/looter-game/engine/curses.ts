@@ -2,7 +2,7 @@
  * curses.js - Hệ thống lời nguyền (Curse System)
  */
 
-const { getSettings } = require('../looter_settings');
+import { getSettings } from './constants';
 
 function rollCurse(cursePercent) {
   return Math.random() * 100 < cursePercent;

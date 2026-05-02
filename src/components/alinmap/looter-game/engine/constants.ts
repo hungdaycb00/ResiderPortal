@@ -13,6 +13,17 @@ const TIER_MULTIPLIERS = {
 
 const TIER_COSTS = { 0: 0, 1: 10, 2: 100, 3: 1000, 4: 10000, 5: 100000 };
 
+const DEFAULT_SETTINGS = {
+  speedMultiplier: 1.0,
+  spawnRadiusDeg: 0.02,
+  spawnItemCount: 8,
+  distancePerCurseMeters: 250 // Tính theo mét
+};
+
+function getSettings() {
+  return DEFAULT_SETTINGS;
+}
+
 const RARITY = { COMMON: 'common', UNCOMMON: 'uncommon', RARE: 'rare', LEGENDARY: 'legendary', GRID_EXPANDER: 'grid_expander' };
 const DROP_WEIGHTS = { [RARITY.COMMON]: 40, [RARITY.UNCOMMON]: 35, [RARITY.RARE]: 20, [RARITY.LEGENDARY]: 5 };
 
@@ -70,4 +81,5 @@ export {
   BAG_POOL,
   BAG_STATS,
   GHOST_NAMES,
+  getSettings,
  };
