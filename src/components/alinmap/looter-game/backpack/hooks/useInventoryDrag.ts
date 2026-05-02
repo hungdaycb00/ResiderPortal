@@ -9,6 +9,10 @@ interface UseInventoryDragProps {
   activeBag?: BagItem;
   onItemLayoutChange?: (items: LooterItem[]) => void;
   onDropOutside?: (item: LooterItem) => void;
+  onDragStart?: (item: LooterItem, source: any, offset: any) => void;
+  onDragEnd?: () => void;
+  onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
+  dragSource?: any;
 }
 
 export function useInventoryDrag({
@@ -19,6 +23,10 @@ export function useInventoryDrag({
   activeBag,
   onItemLayoutChange,
   onDropOutside,
+  onDragStart,
+  onDragEnd,
+  onHoverCellChange,
+  dragSource = 'inventory',
 }: UseInventoryDragProps) {
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
@@ -112,7 +120,10 @@ export function useInventoryDrag({
 
     // Lock pointer for movement tracking
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [cellSize]);
+
+    // Notify external
+    onDragStart?.(item, dragSource, { x: itemW / 2, y: itemH / 2 });
+  }, [cellSize, onDragStart, dragSource]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingItem || !containerRef.current) return;
@@ -133,7 +144,8 @@ export function useInventoryDrag({
     const gy = Math.round(newY / cellSize);
     
     setDragGridPos({ x: gx, y: gy });
-  }, [draggingItem, cellSize]);
+    onHoverCellChange?.({ x: gx, y: gy });
+  }, [draggingItem, cellSize, onHoverCellChange]);
 
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     if (!draggingItem) return;
@@ -178,8 +190,10 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     setDragGridPos(null);
+    onDragEnd?.();
+    onHoverCellChange?.(null);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [draggingItem, dragGridPos, items, checkOverlap, isItemInBag, onItemLayoutChange, onDropOutside]);
+  }, [draggingItem, dragGridPos, items, checkOverlap, isItemInBag, onItemLayoutChange, onDropOutside, onDragEnd, onHoverCellChange]);
 
   return {
     draggingItem,
@@ -188,6 +202,7 @@ export function useInventoryDrag({
     containerRef,
     onPointerDown,
     onPointerMove,
+    onPointerUp,
     checkOverlap, // Trả về hàm 4 tham số gốc
     isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
   };
