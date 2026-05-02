@@ -51,8 +51,8 @@ export function useLooterInventory({
       width: newBagData.width || 4,
       height: newBagData.height || 4,
       shape: newBagData.shape || Array.from({ length: 4 }, () => Array(4).fill(true)),
-      gridX: currentBag?.gridX ?? Math.floor((10 - (newBagData.width || 4)) / 2),
-      gridY: currentBag?.gridY ?? Math.floor((10 - (newBagData.height || 4)) / 2)
+      gridX: currentBag.gridX,
+      gridY: currentBag.gridY
     };
 
     const itemsToKeep: LooterItem[] = [];
@@ -107,21 +107,10 @@ export function useLooterInventory({
       itemsToKeep.push(oldBagAsItem);
     }
 
-    // Atomic update: set cả inventory + bags trong 1 setState duy nhất rồi sync.
-    // KHÔNG gọi saveInventory + saveBags riêng lẻ vì chúng gọi setState độc lập
-    // và ghi đè lẫn nhau (race condition).
-    setState(prev => {
-      const next = { ...prev, inventory: itemsToKeep, bags: [newBag] };
-      // Fire-and-forget sync to server (Tạm thời vô hiệu hóa theo yêu cầu)
-      /*
-      if (deviceId) {
-        looterApi.syncState(apiUrl, deviceId, next).catch(console.error);
-      }
-      */
-      return next;
-    });
+    await saveInventory(itemsToKeep);
+    await saveBags([newBag]);
     notify(`Đã trang bị ${newBag.name}`, 'success');
-  }, [state.inventory, state.bags, setState, deviceId, apiUrl, notify]);
+  }, [state.inventory, state.bags, saveInventory, saveBags, notify]);
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;

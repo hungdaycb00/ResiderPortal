@@ -15,9 +15,6 @@ export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps
   const syncTimeout = useRef<any>(null);
 
   const syncState = useCallback((latestState: LooterGameState) => {
-    // Tạm thời vô hiệu hóa đồng bộ lên server để test frontend
-    return;
-    
     if (!deviceId) return;
     const now = Date.now();
     
