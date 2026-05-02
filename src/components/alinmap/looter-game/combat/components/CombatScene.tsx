@@ -51,20 +51,6 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                     )}
                 </AnimatePresence>
 
-                {/* HUD Mode: Render Enemy Boat beside User Boat */}
-                <motion.div
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: [0, -6, 0], opacity: 1 }}
-                    transition={{ 
-                        opacity: { duration: 0.5 },
-                        y: { duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }
-                    }}
-                    className="absolute top-1/2 left-[calc(50%+60px)] -translate-y-1/2 flex flex-col items-center z-40 pointer-events-none"
-                >
-                    <span className="text-4xl md:text-5xl drop-shadow-2xl" style={{ transform: 'scaleX(-1)' }}>🚢</span>
-                    <span className="text-[10px] font-black text-red-200 bg-black/60 px-2 py-0.5 rounded-full mt-1 max-w-[80px] truncate border border-red-500/30">{encounter.name}</span>
-                </motion.div>
-
                 {/* Start Button - Floating Center */}
                 {phase === 'ready' && (
                     <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-50">

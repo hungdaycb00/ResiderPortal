@@ -83,10 +83,6 @@ const CombatScreen: React.FC = () => {
                     <div className="md:hidden absolute top-0 left-0 right-0 bg-black/40 backdrop-blur-md border-b border-white/10 p-2 pointer-events-auto">
                         <div className="flex items-center justify-between mb-2 px-1">
                              <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
-                             <div className="flex gap-3 text-[9px] font-bold text-white/80">
-                                <span>⚔️ {encounter.totalWeight}</span>
-                                <span>⚡ +{combat.botStats.eRegen + 10}/s</span>
-                             </div>
                         </div>
                         <div className="flex justify-center overflow-auto py-1">
                             <CombatInventoryGrid 
@@ -101,8 +97,12 @@ const CombatScreen: React.FC = () => {
                     </div>
 
                     {/* Enemy HP/EN Bar moved outside */}
-                    <div className="md:hidden absolute top-[160px] right-2 w-48 pointer-events-auto">
-                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl">
+                    <div className="md:hidden absolute top-[160px] right-2 flex items-center gap-2 pointer-events-auto">
+                        <div className="flex flex-col gap-1 text-[9px] font-bold text-white/80 items-end">
+                            <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚔️ {encounter.totalWeight}</span>
+                            <span className="bg-black/60 px-1.5 py-0.5 rounded shadow">⚡ +{combat.botStats.eRegen + 10}/s</span>
+                        </div>
+                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl w-48">
                             <div className="flex justify-between items-center mb-0.5 px-0.5">
                                 <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
                                 <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
