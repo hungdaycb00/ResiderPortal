@@ -14,7 +14,8 @@ const CombatScreen: React.FC = () => {
     const { state, encounter } = useLooterState();
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
-        curseChoice, showNotification, setIsChallengeActive, moveBoat 
+        curseChoice, showNotification, setIsChallengeActive, moveBoat,
+        returnToFortress
     } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
@@ -39,10 +40,7 @@ const CombatScreen: React.FC = () => {
             } else {
                 showNotification('Bạn đã thất bại...', 'error');
                 // Khi thất bại: teleport về thành trì + tắt challenge
-                setIsChallengeActive(false);
-                if (state.fortressLat && state.fortressLng) {
-                    moveBoat(state.fortressLat, state.fortressLng);
-                }
+                returnToFortress();
             }
         }
 

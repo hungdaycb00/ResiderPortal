@@ -40,6 +40,16 @@ export function useLooterMovement({
     try {
         const fromLat = state.currentLat || state.fortressLat || 0;
         const fromLng = state.currentLng || state.fortressLng || 0;
+        const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
+        const currentDistToFortress = getDistanceMeters(fromLat, fromLng, state.fortressLat, state.fortressLng);
+
+        // Nếu chưa bắt đầu thử thách (Tier 0) và muốn di chuyển ra xa thành trì (>250m)
+        if ((state.worldTier || 0) === 0 && distToFortress > FORTRESS_INTERACTION_METERS) {
+            notify('Bạn cần bắt đầu thử thách mới để ra khơi!', 'info');
+            setIsMoving(false);
+            return { curseTrigger: false, encounter: null };
+        }
+
         const distMeters = getDistanceMeters(fromLat, fromLng, toLat, toLng);
 
         // Auto eject staging items (outside bag)
@@ -80,9 +90,11 @@ export function useLooterMovement({
           distance: prev.distance + Math.round(distMeters),
         }));
 
-        const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
-        if (distToFortress > FORTRESS_INTERACTION_METERS || (state.worldTier || 0) > 0) {
+        if (distToFortress > FORTRESS_INTERACTION_METERS) {
             setIsChallengeActive(true);
+        } else if ((state.worldTier || 0) === 0) {
+            // Chỉ tắt challenge nếu worldTier là 0 và đang ở gần thành trì
+            setIsChallengeActive(false);
         }
 
         if (curseTrigger && encounter) {
@@ -105,6 +117,12 @@ export function useLooterMovement({
     try {
       const data = await looterApi.returnToFortress(apiUrl, deviceId);
       if (data.success) {
+        setState(prev => ({
+          ...prev,
+          currentLat: prev.fortressLat,
+          currentLng: prev.fortressLng,
+          worldTier: 0
+        }));
         setIsChallengeActive(false);
         notify('Đã quay về Thành trì', 'success');
       }
