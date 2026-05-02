@@ -4,6 +4,7 @@ import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown } from 'lucide-rea
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
+import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
 
 const TIER_LABELS = [
   { tier: 0, cost: 0, label: '0' },
@@ -35,6 +36,8 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const { state, saveInventory, openFortressStorage, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<LooterItem | null>(null);
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
@@ -183,6 +186,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             }`}
             onPointerEnter={() => setIsHoveringBagSlot(true)}
             onPointerLeave={() => setIsHoveringBagSlot(false)}
+            onClick={(e) => {
+              if (activeBag) {
+                setSelectedItem(activeBag as any);
+                setPopupPos({ x: e.clientX, y: e.clientY });
+              }
+            }}
             title={formatBagTooltip(activeBag)}
           >
              <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
@@ -248,7 +257,18 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </div>
       </div>
 
-
+      {selectedItem && (
+        <ItemPopup
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          style={{
+            position: 'fixed',
+            left: Math.max(10, Math.min(window.innerWidth - 230, popupPos.x - 100)),
+            top: Math.max(70, popupPos.y + 20),
+            zIndex: 1000,
+          }}
+        />
+      )}
     </div>
   );
 };
