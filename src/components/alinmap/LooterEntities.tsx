@@ -13,7 +13,7 @@ interface LooterEntitiesProps {
 }
 
 const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat }: any) => {
-    const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
+    const { openFortressStorage, setShowMinigame, pickupItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
 
@@ -48,23 +48,8 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 opacity: { duration: 0.5 },
                 y: { duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }
             }}
-            onPointerDown={(e) => {
-                const currentDist = distMetersTransform.get();
-                if (!isPortal && !item.minigameType && currentDist <= interactionRadius) {
-                    setDraggingMapItem?.(item);
-                }
-                // Lưu lại tọa độ bắt đầu để phân biệt Click và Drag
-                (e.currentTarget as any)._startX = e.clientX;
-                (e.currentTarget as any)._startY = e.clientY;
-            }}
-            onPointerUp={(e) => {
+            onClick={(e) => {
                 e.stopPropagation();
-                setDraggingMapItem?.(null);
-
-                // Kiểm tra xem có phải là một cú Click đơn thuần không (di chuyển < 5px)
-                const dx = Math.abs(e.clientX - ((e.currentTarget as any)._startX || 0));
-                const dy = Math.abs(e.clientY - ((e.currentTarget as any)._startY || 0));
-                if (dx > 5 || dy > 5) return; // Đây là Drag, không phải Click
 
                 // Cooldown Check (1s)
                 const now = Date.now();
