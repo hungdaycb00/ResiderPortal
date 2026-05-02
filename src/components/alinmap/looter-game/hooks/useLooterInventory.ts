@@ -83,12 +83,23 @@ export function useLooterInventory({
 
     if (currentBag) {
       const oldBagAsItem: LooterItem = {
-        uid: `bag_${Date.now()}`,
-        id: 'looter_bag',
+        uid: currentBag.uid || `bag_${Date.now()}`,
+        id: currentBag.id || 'basic_bag',
         name: currentBag.name,
         icon: currentBag.icon,
         rarity: currentBag.rarity,
         type: 'bag',
+        gridW: 1,
+        gridH: 1,
+        rotated: false,
+        price: currentBag.price || 0,
+        weight: currentBag.weight || 0,
+        hpBonus: currentBag.hpBonus || 0,
+        energyMax: currentBag.energyMax || 0,
+        energyRegen: currentBag.energyRegen || 0,
+        width: currentBag.width || 3,
+        height: currentBag.height || 3,
+        shape: currentBag.shape,
         gridX: -1, gridY: -1,
         stagingX: Math.random() * 200,
         stagingY: Math.random() * 300

@@ -14,7 +14,7 @@ const RARITY_COLORS: Record<string, string> = {
 
 export default function CombatLootModal() {
   const { state, combatResult } = useLooterState();
-  const { setCombatResult, saveInventory, showNotification } = useLooterActions();
+  const { setCombatResult, saveInventory, showNotification, equipBag } = useLooterActions();
   const [lootLeft, setLootLeft] = useState<LooterItem[]>([]);
 
   React.useEffect(() => {
@@ -168,6 +168,7 @@ export default function CombatLootModal() {
                 items={state.inventory}
                 bags={state.bags}
                 onItemLayoutChange={(newItems) => saveInventory(newItems)}
+                onEquipBag={equipBag}
                 readOnly={false}
               />
             </div>

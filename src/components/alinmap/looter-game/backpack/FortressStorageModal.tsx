@@ -90,6 +90,7 @@ export default function FortressStorageModal() {
     storeItems,
     setIsLootGameMode,
     setIsItemDragging,
+    equipBag,
   } = useLooterActions();
 
   const [dragItem, setDragItem] = useState<LooterItem | null>(null);
@@ -209,6 +210,7 @@ export default function FortressStorageModal() {
               setDragSource(null);
             }}
             onExternalDrop={handleMoveToInventory}
+            onEquipBag={equipBag}
             externalDragItem={dragSource === 'storage' ? dragItem : null}
             externalDragOffset={dragSource === 'storage' ? dragOffset : null}
             externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}

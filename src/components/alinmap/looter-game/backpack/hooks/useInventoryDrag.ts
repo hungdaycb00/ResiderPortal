@@ -10,6 +10,7 @@ interface UseInventoryDragProps {
   activeBag?: BagItem;
   onItemLayoutChange?: (items: LooterItem[]) => void;
   onDropOutside?: (item: LooterItem) => void;
+  onEquipBag?: (itemUid: string) => void;
 }
 
 export function useInventoryDrag({
@@ -20,6 +21,7 @@ export function useInventoryDrag({
   activeBag,
   onItemLayoutChange,
   onDropOutside,
+  onEquipBag,
 }: UseInventoryDragProps) {
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
@@ -182,6 +184,15 @@ export function useInventoryDrag({
 
     // 2. Kiểm tra balo active
     if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
+      if ((draggingItem as any).type === 'bag') {
+        // Drop a bag onto the active bag -> Equip it
+        onEquipBag?.(draggingItem.uid);
+        setDraggingItem(null);
+        setDragGridPos(null);
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+        return;
+      }
+      
       if (!isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
         // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài
         finalGx = -1;

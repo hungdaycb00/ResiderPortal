@@ -39,12 +39,14 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
         <div className="space-y-1 text-sm border-t border-white/10 pt-3">
           <div className="flex justify-between">
             <span className="text-gray-400">Kích thước:</span>
-            <span className="text-white font-mono">{item.gridW}x{item.gridH}</span>
+            <span className="text-white font-mono">{item.gridW || 1}x{item.gridH || 1}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Tier:</span>
-            <span className="text-white font-mono uppercase">T{item.tier || 0}</span>
-          </div>
+          {(item as any).type === 'bag' && (
+            <div className="flex justify-between">
+              <span className="text-indigo-400">Sức chứa Balo:</span>
+              <span className="text-indigo-400 font-mono">{(item as any).width || 1}x{(item as any).height || 1}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-gray-400">Giá bán:</span>
             <span className="text-yellow-400 font-mono">{item.price || 0} 💰</span>
