@@ -180,6 +180,22 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         }
     }, [isLooterGameMode, nav.mainTab, location.pathname]);
 
+    // --- Combat HUD & Camera Sync ---
+    useEffect(() => {
+        if (looterState.encounter) {
+            // Căn giữa camera vào vị trí thuyền
+            const targetLat = looterStateObj.currentLat || geo.myObfPos?.lat;
+            const targetLng = looterStateObj.currentLng || geo.myObfPos?.lng;
+            if (targetLat != null && targetLng != null) {
+                nav.handleCenterTo(targetLat, targetLng);
+                nav.scale.set(1.5); // Zoom nhẹ để nhìn rõ trận đấu
+            }
+            // Đảm bảo balo luôn hiển thị
+            nav.setMainTab('backpack');
+            nav.setIsSheetExpanded(true);
+        }
+    }, [looterState.encounter]);
+
     const handleOpenBackpackFromPickup = useCallback(() => {
         setIsLooterGameMode(true);
         nav.setMainTab('backpack');

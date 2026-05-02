@@ -178,6 +178,36 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
     );
 });
 
+const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any) => {
+    const enemyX = useTransform(boatOffsetX, (v: number) => v + 80);
+    const enemyY = useTransform(boatOffsetY, (v: number) => v - 20);
+
+    return (
+        <motion.div
+            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[99] select-none"
+            style={{ top: '50%', left: '50%', x: enemyX, y: enemyY }}
+            initial={{ y: 50, opacity: 0, scale: 0.5 }}
+            animate={{ y: -20, opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+        >
+             <motion.div
+                className="w-full h-full"
+                animate={{ y: [-2, 2, -2], rotateZ: [2, -2, 2] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                    <span className="text-4xl drop-shadow-lg scale-x-[-1]">🚢</span>
+                    <div className="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-full border border-red-500/40 -mt-1 shadow-lg shadow-red-500/20">
+                        <span className="text-[8px] font-black text-red-200 uppercase whitespace-nowrap tracking-tighter">
+                            {encounter.name}
+                        </span>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+});
+
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
 }) => {
@@ -188,6 +218,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
     const fortressLat = looterStateObj?.fortressLat;
     const fortressLng = looterStateObj?.fortressLng;
     const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
+    const encounter = looterStateObj?.encounter; // Lấy encounter từ state
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
 
@@ -280,6 +311,14 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 >
                     <span className="text-3xl animate-bounce drop-shadow-md">📍</span>
                 </div>
+            )}
+
+            {encounter && (
+                <CombatEnemyBoat 
+                    encounter={encounter} 
+                    boatOffsetX={boatOffsetX} 
+                    boatOffsetY={boatOffsetY} 
+                />
             )}
 
             {worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (

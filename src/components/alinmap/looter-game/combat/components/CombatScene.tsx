@@ -11,11 +11,94 @@ interface CombatSceneProps {
     handleStart: () => void;
     skipCombat: () => void;
     setShowFleeConfirm: (v: boolean) => void;
+    isHUDMode?: boolean;
 }
 
 export const CombatScene: React.FC<CombatSceneProps> = ({
-    encounter, phase, flyingItem, handleStart, skipCombat, setShowFleeConfirm
+    encounter, phase, flyingItem, handleStart, skipCombat, setShowFleeConfirm, isHUDMode
 }) => {
+    if (isHUDMode) {
+        return (
+            <div className="absolute inset-0 pointer-events-none">
+                {/* Flying item animation - Adjusted for Map HUD */}
+                <AnimatePresence mode="popLayout">
+                    {flyingItem && (
+                        <motion.div
+                            key={flyingItem.item.uid + flyingItem.from}
+                            initial={{ 
+                                x: flyingItem.from === 'A' ? '50vw' : 'calc(50vw + 60px)', 
+                                y: flyingItem.from === 'A' ? '50vh' : 'calc(50vh - 40px)', 
+                                opacity: 1, scale: 1.2 
+                            }}
+                            animate={{ 
+                                x: flyingItem.from === 'A' ? 'calc(50vw + 60px)' : '50vw', 
+                                y: flyingItem.from === 'A' ? 'calc(50vh - 40px)' : '50vh', 
+                                opacity: 0.3, scale: 0.6 
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.5, ease: 'easeIn' }}
+                            className="absolute z-50 flex flex-col items-center -ml-4 -mt-4"
+                        >
+                            <span className="text-4xl drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">{flyingItem.item.icon}</span>
+                            <motion.span 
+                                initial={{ y: 0, opacity: 1 }}
+                                animate={{ y: -20, opacity: 0 }}
+                                className="text-2xl font-black text-red-500 bg-black/40 px-2 rounded-lg"
+                            >
+                                -{flyingItem.damage}
+                            </motion.span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Start Button - Floating Center-Bottom */}
+                {phase === 'ready' && (
+                    <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 pointer-events-auto">
+                        <motion.button
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleStart}
+                            className="px-10 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-xl rounded-full shadow-[0_0_30px_rgba(245,158,11,0.4)] border-2 border-amber-300/30 flex items-center gap-3"
+                        >
+                            <Swords className="w-6 h-6" />
+                            Bắt Đầu Trận Đấu
+                        </motion.button>
+                    </div>
+                )}
+
+                {/* Skip Button - Floating Right */}
+                {phase === 'fighting' && (
+                    <div className="absolute right-4 bottom-1/2 translate-y-1/2 pointer-events-auto">
+                        <button
+                            onClick={skipCombat}
+                            className="group flex flex-col items-center gap-1 p-3 bg-black/60 hover:bg-amber-600/80 border border-amber-500/30 rounded-2xl transition-all shadow-2xl"
+                        >
+                            <div className="flex gap-1 mb-1">
+                                <div className="w-1.5 h-4 bg-amber-500 rounded-full animate-pulse" />
+                                <div className="w-1.5 h-4 bg-amber-500 rounded-full animate-pulse [animation-delay:0.2s]" />
+                            </div>
+                            <span className="text-[10px] font-black text-amber-400 group-hover:text-white uppercase">Skip</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Flee Button - Top Right (below enemy stats) */}
+                {phase === 'ready' && (
+                    <div className="absolute top-44 right-4 pointer-events-auto">
+                        <button 
+                            onClick={() => setShowFleeConfirm(true)} 
+                            className="px-4 py-2 bg-red-600/60 hover:bg-red-500 border border-red-400/30 text-white text-xs font-bold rounded-xl transition-colors shadow-lg backdrop-blur-md"
+                        >
+                            Chạy Trốn
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="relative h-[22vh] md:h-[28vh] min-h-[160px] bg-gradient-to-b from-[#1a4a6e] to-[#0a2540] overflow-hidden shrink-0 border-y border-[#0a1929]/50 shadow-[0_0_20px_rgba(0,0,0,0.5)_inset]">
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a1929] to-transparent" />
