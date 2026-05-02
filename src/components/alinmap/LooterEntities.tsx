@@ -56,10 +56,10 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
             onPointerUp={(e) => {
                 e.stopPropagation();
 
-                // Kiểm tra xem có phải là một cú Click đơn thuần không (di chuyển < 5px)
+                // Kiểm tra xem có phải là một cú Click đơn thuần không (di chuyển < 30px để hỗ trợ touch screen)
                 const dx = Math.abs(e.clientX - ((e.currentTarget as any)._startX || 0));
                 const dy = Math.abs(e.clientY - ((e.currentTarget as any)._startY || 0));
-                if (dx > 5 || dy > 5) return; // Đây là Drag, không phải Click
+                if (dx > 30 || dy > 30) return; // Đây là Drag, không phải Click
 
                 // Cooldown Check (1s)
                 const now = Date.now();
@@ -68,6 +68,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
 
                 const currentDist = distMetersTransform.get();
                 const clickTolerance = interactionRadius + 50;
+
 
                 if (isPortal) {
                     if (currentDist <= interactionRadius) {
