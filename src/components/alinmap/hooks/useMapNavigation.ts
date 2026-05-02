@@ -77,13 +77,13 @@ export function useMapNavigation({
     animate(scale, 1, { duration: 0.8, ease: "easeInOut" });
   }, [panX, panY, scale]);
 
-  const handleCenterTo = useCallback((lat: number, lng: number) => {
+  const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
     if (!myObfPos) return;
     const DEGREES_TO_PX = 11100;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
     animate(panX, -pxX, { duration: 1.5, ease: "easeInOut" });
-    animate(panY, -pxY, { duration: 1.5, ease: "easeInOut" });
+    animate(panY, -pxY + yOffsetPx, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {

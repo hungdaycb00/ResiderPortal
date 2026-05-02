@@ -187,7 +187,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             const targetLat = looterStateObj.currentLat || geo.myObfPos?.lat;
             const targetLng = looterStateObj.currentLng || geo.myObfPos?.lng;
             if (targetLat != null && targetLng != null) {
-                nav.handleCenterTo(targetLat, targetLng);
+                // Tính toán yOffset cho Mobile (đẩy thuyền lên trên khoảng map còn trống)
+                const yOffset = !nav.isDesktop ? window.innerHeight * 0.25 : 0;
+                nav.handleCenterTo(targetLat, targetLng, yOffset);
                 nav.scale.set(1.5); // Zoom nhẹ để nhìn rõ trận đấu
             }
             // Đảm bảo balo luôn hiển thị
@@ -312,6 +314,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 onOpenTierSelector={() => setIsTierSelectorOpen(true)}
                 isWidgetExpanded={isWeatherWidgetExpanded}
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
+                isSheetExpanded={nav.isSheetExpanded}
+                isDesktop={nav.isDesktop}
             />
 
             <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />

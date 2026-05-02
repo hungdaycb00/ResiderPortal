@@ -28,13 +28,15 @@ interface MapControlsProps {
     setSearchTag: (v: string) => void;
     handleRefresh: () => void;
     handleCenter: () => void;
-    handleCenterTo: (lat: number, lng: number) => void;
+    handleCenterTo: (lat: number, lng: number, offset?: number) => void;
     handleCenterBoat?: () => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
     onOpenTierSelector?: () => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
+    isSheetExpanded: boolean;
+    isDesktop: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -44,7 +46,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode,
     onOpenTierSelector,
-    isWidgetExpanded, setIsWidgetExpanded
+    isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded, isDesktop
 }) => {
     const { isLooterGameMode, isChallengeActive, state: looterState, isSyncing } = useLooterState();
     const { setWorldTier } = useLooterActions(); 
@@ -63,7 +65,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
+            <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? (isSheetExpanded ? 'bottom-[62%]' : 'bottom-[42%]') : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
 
 
@@ -121,7 +123,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                                     return;
                                 }
                                 if (looterState?.currentLat != null && looterState?.currentLng != null) {
-                                    handleCenterTo(looterState.currentLat, looterState.currentLng);
+                                    const yOffset = !isDesktop && isSheetExpanded ? window.innerHeight * 0.25 : 0;
+                                    handleCenterTo(looterState.currentLat, looterState.currentLng, yOffset);
                                 }
                             }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"
