@@ -130,10 +130,10 @@ export function useCombatLoop({
 
             const entry = combatLogRef.current[currentIdxRef.current];
             const side = entry.attacker;
-            const cost = toFiniteNumber(entry.energySpent || entry.item?.energyCost, 10);
 
             if (side === 'A') {
-                if (actionProgressARef.current >= cost) {
+                // Ch\u1edd mana \u0111\u1ea7y m\u1edbi k\u00edch ho\u1ea1t animation t\u1ea5n c\u00f4ng
+                if (actionProgressARef.current >= (maxActionBarA || 100)) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'A', damage: entry.damage });
                     
@@ -144,11 +144,11 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
-                    actionProgressARef.current = Math.max(0, actionProgressARef.current - cost);
-                    setActionProgressA(actionProgressARef.current); 
+                    actionProgressARef.current = 0;
+                    setActionProgressA(0); 
                 }
             } else {
-                if (actionProgressBRef.current >= cost) {
+                if (actionProgressBRef.current >= (maxActionBarB || 100)) {
                     isAnimating = true;
                     setFlyingItem({ item: entry.item, from: 'B', damage: entry.damage });
                     
@@ -159,8 +159,8 @@ export function useCombatLoop({
 
                     currentIdxRef.current++;
                     setTimeout(() => { setFlyingItem(null); isAnimating = false; }, 800);
-                    actionProgressBRef.current = Math.max(0, actionProgressBRef.current - cost);
-                    setActionProgressB(actionProgressBRef.current);
+                    actionProgressBRef.current = 0;
+                    setActionProgressB(0);
                 }
             }
             frameRef.current = requestAnimationFrame(loop);

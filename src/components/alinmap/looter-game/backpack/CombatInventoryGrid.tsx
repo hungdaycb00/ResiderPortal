@@ -8,7 +8,7 @@ interface CombatInventoryGridProps {
   gridHeight: number;
   readOnly?: boolean;
   onLayoutChange?: (items: LooterItem[]) => void;
-  onItemClick?: (item: LooterItem) => void;
+  onItemClick?: (item: LooterItem, pos: { x: number; y: number }) => void;
   cellSize?: number;
   bag?: any;
 }
@@ -272,7 +272,12 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
                onClick={(e) => {
                  if (readOnly) {
                    e.stopPropagation();
-                   onItemClick?.(item);
+                   // Tính tọa độ pixel của item trong grid
+                   const rect = gridRef.current?.getBoundingClientRect();
+                   const pos = rect
+                     ? { x: rect.left + (isFloating ? left : item.gridX * cellSize), y: rect.top + top }
+                     : { x: e.clientX, y: e.clientY };
+                   onItemClick?.(item, pos);
                  }
                }}
               onContextMenu={(e) => {

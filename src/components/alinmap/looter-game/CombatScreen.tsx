@@ -8,17 +8,19 @@ import { CombatScene } from './combat/components/CombatScene';
 import { CombatStatsPanel } from './combat/components/CombatStatsPanel';
 import { FleeConfirmOverlay, CombatResultOverlay } from './combat/components/CombatOverlays';
 import CombatInventoryGrid from './backpack/CombatInventoryGrid';
+import ItemPopup from './backpack/components/ItemPopup';
 
 const CombatScreen: React.FC = () => {
     const { state, encounter } = useLooterState();
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
-        curseChoice, showNotification, setIsChallengeActive 
+        curseChoice, showNotification, setIsChallengeActive, moveBoat 
     } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
     const [selectedResultItem, setSelectedResultItem] = useState<any>(null);
     const [selectedEnemyItem, setSelectedEnemyItem] = useState<any>(null);
+    const [enemyPopupPos, setEnemyPopupPos] = useState({ x: 0, y: 0 });
 
     const combat = useCombatLoop({
         state, encounter, executeCombat, setCombatResult, showNotification
@@ -36,8 +38,11 @@ const CombatScreen: React.FC = () => {
                 showNotification('Bạn đã chiến thắng!', 'success');
             } else {
                 showNotification('Bạn đã thất bại...', 'error');
-                // Khi thất bại và quay về thành, set trạng thái thử thách về false
+                // Khi thất bại: teleport về thành trì + tắt challenge
                 setIsChallengeActive(false);
+                if (state.fortressLat && state.fortressLng) {
+                    moveBoat(state.fortressLat, state.fortressLng);
+                }
             }
         }
 
@@ -87,7 +92,7 @@ const CombatScreen: React.FC = () => {
                             <div className="flex items-center justify-between mb-2 px-1">
                                  <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
                             </div>
-                            <div className="flex justify-center overflow-auto py-1" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-center overflow-auto py-1 relative" onClick={(e) => e.stopPropagation()}>
                                 <CombatInventoryGrid 
                                     items={encounter.inventory || []} 
                                     gridWidth={encounter.bags?.[0]?.width || 6} 
@@ -95,7 +100,10 @@ const CombatScreen: React.FC = () => {
                                     bag={encounter.bags?.[0]} 
                                     readOnly 
                                     cellSize={28}
-                                    onItemClick={(item) => setSelectedEnemyItem(item)}
+                                    onItemClick={(item, pos) => {
+                                        setSelectedEnemyItem(item);
+                                        setEnemyPopupPos(pos);
+                                    }}
                                 />
                             </div>
                         </div>
@@ -124,58 +132,17 @@ const CombatScreen: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Enemy Item Tooltip Popup */}
-                    {selectedEnemyItem && (
-                        <div 
-                            className="md:hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/60 backdrop-blur-[2px] pointer-events-auto"
-                            onClick={(e) => {
-                                if (e.target === e.currentTarget) setSelectedEnemyItem(null);
-                            }}
-                        >
-                            <motion.div 
-                                initial={{ scale: 0.8, opacity: 0 }} 
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="bg-[#1a1f2e] border-2 border-cyan-500/40 rounded-2xl p-4 shadow-2xl min-w-[200px] max-w-[280px]"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className="text-3xl">{selectedEnemyItem.icon}</span>
-                                    <div>
-                                        <p className="text-white font-black text-sm">{selectedEnemyItem.name}</p>
-                                        <p className="text-xs text-gray-400 capitalize">{selectedEnemyItem.rarity}</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                    <div className="bg-black/40 rounded-lg p-2 text-center">
-                                        <span className="text-red-400 font-bold">⚔️ {selectedEnemyItem.weight || 0}</span>
-                                        <p className="text-gray-500 text-[9px]">DMG</p>
-                                    </div>
-                                    <div className="bg-black/40 rounded-lg p-2 text-center">
-                                        <span className="text-green-400 font-bold">❤️ +{selectedEnemyItem.hpBonus || 0}</span>
-                                        <p className="text-gray-500 text-[9px]">HP</p>
-                                    </div>
-                                    <div className="bg-black/40 rounded-lg p-2 text-center">
-                                        <span className="text-blue-400 font-bold">⚡ +{selectedEnemyItem.energyMax || 0}</span>
-                                        <p className="text-gray-500 text-[9px]">EN Max</p>
-                                    </div>
-                                    <div className="bg-black/40 rounded-lg p-2 text-center">
-                                        <span className="text-cyan-400 font-bold">✨ +{selectedEnemyItem.energyRegen || 0}</span>
-                                        <p className="text-gray-500 text-[9px]">Regen</p>
-                                    </div>
-                                </div>
-                                <div className="mt-3 text-center">
-                                    <span className="text-[10px] text-amber-400 font-bold">💰 {selectedEnemyItem.price || 0} vàng</span>
-                                    <span className="text-[10px] text-gray-500 ml-2">{selectedEnemyItem.gridW}x{selectedEnemyItem.gridH}</span>
-                                </div>
-                                <button 
-                                    onClick={() => setSelectedEnemyItem(null)}
-                                    className="mt-3 w-full py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-bold transition-colors"
-                                >
-                                    Đóng
-                                </button>
-                            </motion.div>
-                        </div>
-                    )}
+                    {/* Enemy Item Tooltip Popup - hiển thị ngay tại vị trí item */}
+                    <ItemPopup
+                        item={selectedEnemyItem}
+                        onClose={() => setSelectedEnemyItem(null)}
+                        style={{
+                            position: 'fixed',
+                            left: Math.min(window.innerWidth - 220, Math.max(8, enemyPopupPos.x)),
+                            top: Math.min(window.innerHeight - 280, Math.max(8, enemyPopupPos.y + 30)),
+                            zIndex: 502,
+                        }}
+                    />
                 </>
             )}
 

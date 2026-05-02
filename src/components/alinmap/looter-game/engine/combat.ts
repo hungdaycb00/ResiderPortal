@@ -93,38 +93,34 @@ function simulateCombat(playerA, playerB) {
     actionProgressA = Math.min(actionProgressA + regenA, maxActionBarA);
     actionProgressB = Math.min(actionProgressB + regenB, maxActionBarB);
 
-    // Player A attacks
-    const weaponsA = itemsA.filter(i => {
-      const cost = toFiniteNumber(i.energyCost, 0) || 10;
-      return toFiniteNumber(i.weight, 0) > 0 && cost <= actionProgressA;
-    });
-    
-    if (weaponsA.length > 0) {
-      const idx = Math.floor(Math.random() * weaponsA.length);
-      const thrown = weaponsA[idx];
-      const damage = Math.max(1, Math.round(toFiniteNumber(thrown.weight, 0) * dmgDebuffA));
-      hpB.current -= damage;
-      const energySpent = actionProgressA; // Lấy toàn bộ mana hiện có
-      actionProgressA = 0; // RESET VỀ 0
-      combatLog.push({ tick, attacker: 'A', item: thrown, damage, targetHp: hpB.current, energySpent, energyRemaining: 0 });
-      if (hpB.current <= 0) break;
+    // Player A attacks — Mana phải đầy mới được đánh
+    if (actionProgressA >= maxActionBarA) {
+      const weaponsA = itemsA.filter(i => toFiniteNumber(i.weight, 0) > 0);
+      if (weaponsA.length > 0) {
+        const idx = Math.floor(Math.random() * weaponsA.length);
+        const thrown = weaponsA[idx];
+        const damage = Math.max(1, Math.round(toFiniteNumber(thrown.weight, 0) * dmgDebuffA));
+        hpB.current -= damage;
+        const energySpent = actionProgressA;
+        actionProgressA = 0; // RESET VỀ 0
+        combatLog.push({ tick, attacker: 'A', item: thrown, damage, targetHp: hpB.current, energySpent, energyRemaining: 0 });
+        if (hpB.current <= 0) break;
+      }
     }
 
-    // Ghost B attacks
-    const weaponsB = itemsB.filter(i => {
-      const cost = toFiniteNumber(i.energyCost, 0) || 10; 
-      return toFiniteNumber(i.weight, 0) > 0 && cost <= actionProgressB;
-    });
-    
-    if (weaponsB.length > 0) {
-      const idx = Math.floor(Math.random() * weaponsB.length);
-      const thrown = weaponsB[idx];
-      const damage = Math.max(1, Math.round(toFiniteNumber(thrown.weight, 0) * dmgDebuffB));
-      hpA.current -= damage;
-      const energySpent = actionProgressB; // Lấy toàn bộ mana hiện có
-      actionProgressB = 0; // RESET VỀ 0
-      combatLog.push({ tick, attacker: 'B', item: thrown, damage, targetHp: hpA.current, energySpent, energyRemaining: 0 });
-      if (hpA.current <= 0) break;
+    // Ghost B attacks — Mana phải đầy mới được đánh
+    if (actionProgressB >= maxActionBarB) {
+      const weaponsB = itemsB.filter(i => toFiniteNumber(i.weight, 0) > 0);
+      if (weaponsB.length > 0) {
+        const idx = Math.floor(Math.random() * weaponsB.length);
+        const thrown = weaponsB[idx];
+        const damage = Math.max(1, Math.round(toFiniteNumber(thrown.weight, 0) * dmgDebuffB));
+        hpA.current -= damage;
+        const energySpent = actionProgressB;
+        actionProgressB = 0; // RESET VỀ 0
+        combatLog.push({ tick, attacker: 'B', item: thrown, damage, targetHp: hpA.current, energySpent, energyRemaining: 0 });
+        if (hpA.current <= 0) break;
+      }
     }
   }
 
