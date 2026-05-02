@@ -107,17 +107,19 @@ export function useLooterInventory({
       itemsToKeep.push(oldBagAsItem);
     }
 
-    // Optimistic update
-    setState(prev => ({
-      ...prev,
-      inventory: itemsToKeep,
-      bags: [newBag]
-    }));
-
-    await saveInventory(itemsToKeep);
-    await saveBags([newBag]);
+    // Atomic update: set cả inventory + bags trong 1 setState duy nhất rồi sync.
+    // KHÔNG gọi saveInventory + saveBags riêng lẻ vì chúng gọi setState độc lập
+    // và ghi đè lẫn nhau (race condition).
+    setState(prev => {
+      const next = { ...prev, inventory: itemsToKeep, bags: [newBag] };
+      // Fire-and-forget sync to server
+      if (deviceId) {
+        looterApi.syncState(apiUrl, deviceId, next).catch(console.error);
+      }
+      return next;
+    });
     notify(`Đã trang bị ${newBag.name}`, 'success');
-  }, [state.inventory, state.bags, setState, saveInventory, saveBags, notify]);
+  }, [state.inventory, state.bags, setState, deviceId, apiUrl, notify]);
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;

@@ -48,8 +48,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
             </div>
 
             {/* Mobile Bottom Navigation */}
-            {!isDesktop && mainTab === 'backpack' && !showFullNav ? (
-                <div className="md:hidden fixed bottom-0 left-0 right-0 z-[200] pointer-events-auto">
+            {/* Mobile Open Navigation Button */}
+            {!isDesktop && (
+                <div className={`md:hidden fixed bottom-0 left-0 right-0 z-[200] pointer-events-auto transition-transform duration-300 ${mainTab === 'backpack' && !showFullNav ? 'translate-y-0' : 'translate-y-full'}`}>
                     <button 
                         onClick={() => setShowFullNav(true)}
                         className="w-full h-4 bg-[#1e293b]/90 backdrop-blur-2xl border-t border-white/10 flex items-center justify-center shadow-2xl text-amber-400 hover:h-6 transition-all duration-300"
@@ -58,40 +59,41 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                         <ChevronUp className="w-4 h-4" />
                     </button>
                 </div>
-            ) : (
-                <div className={`flex md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-8px_32px_rgba(0,0,0,0.1)] pointer-events-auto transition-transform duration-300 ${!isDesktop && mainTab === 'backpack' && showFullNav ? 'translate-y-0' : ''}`}>
-                    {/* Minimalist Collapse Button for Full Nav in Looter Mode */}
-                    {!isDesktop && mainTab === 'backpack' && showFullNav && (
-                        <button 
-                            onClick={() => setShowFullNav(false)}
-                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-6 bg-white/95 backdrop-blur-xl border-t border-x border-gray-100 rounded-t-xl flex items-center justify-center shadow-lg text-amber-500"
-                        >
-                            <ChevronDown className="w-4 h-4" />
-                        </button>
-                    )}
-                    <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                        <Navigation className="w-5 h-5" />
-                        <span className="text-[9px] font-black uppercase">Explore</span>
-                    </button>
-                    <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                        <UserPlus className="w-5 h-5" />
-                        <span className="text-[9px] font-black uppercase">Social</span>
-                    </button>
-                    <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
-                        <User className="w-5 h-5" />
-                        <span className="text-[9px] font-black uppercase">Profile</span>
-                    </button>
-                    
-                    {/* Looter Button */}
-                    <button onClick={() => {
-                        handleTabClick('backpack');
-                        if (!isDesktop) setShowFullNav(false);
-                    }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
-                        <Package className="w-5 h-5" />
-                        <span className="text-[9px] font-black uppercase">Looter</span>
-                    </button>
-                </div>
             )}
+
+            {/* Full Mobile Navigation Panel */}
+            <div className={`flex md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 flex-row items-center justify-around py-2 z-[200] shadow-[0_-8px_32px_rgba(0,0,0,0.1)] pointer-events-auto transition-transform duration-300 ${(!isDesktop && (mainTab !== 'backpack' || showFullNav)) ? 'translate-y-0' : 'translate-y-full shadow-none border-none'}`}>
+                {/* Minimalist Collapse Button for Full Nav in Looter Mode */}
+                {!isDesktop && mainTab === 'backpack' && showFullNav && (
+                    <button 
+                        onClick={() => setShowFullNav(false)}
+                        className="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-6 bg-white/95 backdrop-blur-xl border-t border-x border-gray-100 rounded-t-xl flex items-center justify-center shadow-lg text-amber-500"
+                    >
+                        <ChevronDown className="w-4 h-4" />
+                    </button>
+                )}
+                <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <Navigation className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Explore</span>
+                </button>
+                <button onClick={() => handleTabClick('friends')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'friends' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <UserPlus className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Social</span>
+                </button>
+                <button onClick={() => handleTabClick('profile')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'profile' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
+                    <User className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Profile</span>
+                </button>
+                
+                {/* Looter Button */}
+                <button onClick={() => {
+                    handleTabClick('backpack');
+                    if (!isDesktop) setShowFullNav(false);
+                }} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'backpack' && !selectedUser ? 'text-amber-500' : 'text-gray-400'}`}>
+                    <Package className="w-5 h-5" />
+                    <span className="text-[9px] font-black uppercase">Looter</span>
+                </button>
+            </div>
         </div>
     );
 };
