@@ -43,8 +43,8 @@ export function useLooterMovement({
         const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
         const currentDistToFortress = getDistanceMeters(fromLat, fromLng, state.fortressLat, state.fortressLng);
 
-        // Nếu chưa bắt đầu thử thách (Tier 0) và muốn di chuyển ra xa thành trì (>250m)
-        if ((state.worldTier || 0) === 0 && distToFortress > FORTRESS_INTERACTION_METERS) {
+        // worldTier === -1 nghĩa là đang ở Thành Trì, cần bắt đầu thử thách mới
+        if ((state.worldTier ?? -1) === -1 && distToFortress > FORTRESS_INTERACTION_METERS) {
             notify('Bạn cần bắt đầu thử thách mới để ra khơi!', 'info');
             setIsMoving(false);
             return { curseTrigger: false, encounter: null };
@@ -92,8 +92,9 @@ export function useLooterMovement({
 
         if (distToFortress > FORTRESS_INTERACTION_METERS) {
             setIsChallengeActive(true);
-        } else if ((state.worldTier || 0) === 0) {
-            // Chỉ tắt challenge nếu worldTier là 0 và đang ở gần thành trì
+        } else {
+            // Về đến thành trì: reset về trạng thái "ở thành trì" (-1) và tắt challenge
+            setState(prev => ({ ...prev, worldTier: -1 }));
             setIsChallengeActive(false);
         }
 
@@ -121,7 +122,7 @@ export function useLooterMovement({
           ...prev,
           currentLat: prev.fortressLat,
           currentLng: prev.fortressLng,
-          worldTier: 0
+          worldTier: -1  // -1 = đang ở thành trì, cần thử thách mới
         }));
         setIsChallengeActive(false);
         notify('Đã quay về Thành trì', 'success');

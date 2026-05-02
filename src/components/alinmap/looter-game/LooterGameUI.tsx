@@ -5,13 +5,14 @@ import FortressStorageModal from './backpack/FortressStorageModal';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
 import CombatLootModal from './backpack/CombatLootModal';
 import { PickupMinigame } from './PickupMinigame';
-import { useLooterState } from './LooterGameContext';
+import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
 
 const LooterGameUI: React.FC = () => {
     const { 
         state, combatResult, isChallengeActive, isLooterGameMode
     } = useLooterState();
+    const { setWorldTier } = useLooterActions();
     
     if (!isLooterGameMode) return null;
 
@@ -19,7 +20,8 @@ const LooterGameUI: React.FC = () => {
         <>
             <ChallengeStatusHeader 
                 isChallengeActive={!!isChallengeActive} 
-                worldTier={state.worldTier || 0} 
+                worldTier={state.worldTier ?? -1} 
+                onStartChallenge={() => setWorldTier(1)}
             />
             
             <ErrorBoundary name="Combat">

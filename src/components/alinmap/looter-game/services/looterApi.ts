@@ -20,7 +20,7 @@ export const transformLooterState = (raw: any): Partial<LooterGameState> => {
     inventoryHeight: s.inventory_height || 4,
     cursePercent: s.curse_percent || 0,
     looterGold: Number(s.looter_gold || 0),
-    worldTier: s.world_tier ?? 0,
+    worldTier: s.world_tier ?? -1,  // -1 = ở thành trì, >= 0 = đang trong thử thách
     inventory: (() => { 
       try { 
         return typeof s.inventory_json === 'string' ? JSON.parse(s.inventory_json) : (s.inventory_json || []); 

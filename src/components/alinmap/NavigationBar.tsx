@@ -49,13 +49,13 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
 
             {/* Mobile Bottom Navigation */}
             {!isDesktop && mainTab === 'backpack' && !showFullNav ? (
-                <div className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 z-[200] pointer-events-auto">
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-[200] pointer-events-auto">
                     <button 
                         onClick={() => setShowFullNav(true)}
-                        className="w-16 h-8 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/10 rounded-t-xl flex items-center justify-center shadow-2xl text-amber-400 hover:h-10 transition-all duration-300"
+                        className="w-full h-4 bg-[#1e293b]/90 backdrop-blur-2xl border-t border-white/10 flex items-center justify-center shadow-2xl text-amber-400 hover:h-6 transition-all duration-300"
                         title="Open Navigation"
                     >
-                        <ChevronUp className="w-5 h-5 mb-1" />
+                        <ChevronUp className="w-4 h-4" />
                     </button>
                 </div>
             ) : (
