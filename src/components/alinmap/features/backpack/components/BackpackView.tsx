@@ -187,6 +187,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             onPointerEnter={() => setIsHoveringBagSlot(true)}
             onPointerLeave={() => setIsHoveringBagSlot(false)}
             onPointerDown={(e) => {
+              e.stopPropagation();
               if (activeBag) {
                 setSelectedItem(activeBag as any);
                 setPopupPos({ x: e.clientX, y: e.clientY });

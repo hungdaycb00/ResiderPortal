@@ -16,7 +16,10 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
     <AnimatePresence>
       <div 
         className="fixed inset-0 z-[100] pointer-events-auto" 
-        onClick={onClose}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 10 }}
