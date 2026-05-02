@@ -173,7 +173,18 @@ export function useLooterStateManager({
           return nextState;
       });
 
-      return result;
+      const formattedResult = {
+          result: result.winner === 'A' ? 'win' : 'lose',
+          combatLog: result.combatLog,
+          loot: result.winner === 'A' ? result.droppedItems : undefined,
+          droppedItems: result.winner === 'B' ? result.droppedItems : undefined,
+          finalHp: result.finalHpA,
+          finalHpA: result.finalHpA,
+          finalHpB: result.finalHpB,
+          totalTicks: result.totalTicks
+      };
+
+      return formattedResult as any;
     } catch (err) {
       console.error('[LooterGame] executeCombat error:', err);
       throw err;
@@ -204,7 +215,7 @@ export function useLooterStateManager({
       // Offline minigame penalty: increase curse percent by 10%
       let newCurse = 0;
       setState(prev => {
-          newCurse = Math.min((prev.cursePercent || 0) + 10, 100);
+          newCurse = Math.min((prev.cursePercent || 0) + 20, 100);
           const nextState = { ...prev, cursePercent: newCurse };
           syncState(nextState);
           return nextState;

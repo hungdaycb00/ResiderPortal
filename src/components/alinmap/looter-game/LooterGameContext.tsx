@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { LooterItem, BagItem, GridExpander, PortalItem } from './backpack/types';
+export type { LooterItem, BagItem, GridExpander, PortalItem };
 import { getDistanceMeters } from './backpack/utils';
 import { GAME_CONFIG } from './gameConfig';
 

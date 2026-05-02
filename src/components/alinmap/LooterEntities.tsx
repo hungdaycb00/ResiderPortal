@@ -176,7 +176,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
 
 const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any) => {
     const enemyX = useTransform(boatOffsetX, (v: number) => v + 120);
-    const enemyY = useTransform(boatOffsetY, (v: number) => v - 20);
+    const enemyY = boatOffsetY;
 
     return (
         <motion.div
@@ -197,11 +197,6 @@ const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any
             >
                 <div className="w-full h-full flex flex-col items-center justify-center">
                     <span className="text-4xl drop-shadow-2xl scale-x-[-1]">🚢</span>
-                    <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-red-500/60 -mt-1 shadow-xl shadow-red-500/40">
-                        <span className="text-[9px] font-black text-red-100 uppercase whitespace-nowrap tracking-tighter">
-                            {encounter.name}
-                        </span>
-                    </div>
                 </div>
             </motion.div>
         </motion.div>

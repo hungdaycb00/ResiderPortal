@@ -189,10 +189,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             const targetLat = looterStateObj.currentLat || geo.myObfPos?.lat;
             const targetLng = looterStateObj.currentLng || geo.myObfPos?.lng;
             if (targetLat != null && targetLng != null) {
-                // Enemy offset: +120px X, -20px Y → midpoint: +60px X, -10px Y
+                // Enemy offset: +120px X, 0px Y → midpoint: +60px X, 0px Y
                 const DEGREES_TO_PX = 11100;
                 const midLng = targetLng + (60 / DEGREES_TO_PX);
-                const midLat = targetLat + (10 / DEGREES_TO_PX);
+                const midLat = targetLat;
                 // yOffset cho Mobile (đẩy thuyền lên trên khoảng map còn trống)
                 const yOffset = !nav.isDesktop ? window.innerHeight * 0.25 : 0;
                 nav.handleCenterTo(midLat, midLng, yOffset);
