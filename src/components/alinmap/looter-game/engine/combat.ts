@@ -3,7 +3,7 @@
  */
 
 import {  TIER_MULTIPLIERS  } from './constants';
-import {  toFiniteNumber  } from './utils';
+import {  toFiniteNumber, isItemInBag  } from './utils';
 
 function getCombatInventory(inventory) {
   return Array.isArray(inventory)
@@ -11,10 +11,11 @@ function getCombatInventory(inventory) {
     : [];
 }
 
-function isPlacedCombatItem(item) {
+function isPlacedCombatItem(item, bag) {
   return item && typeof item === 'object' &&
     toFiniteNumber(item.gridX, -1) >= 0 &&
-    toFiniteNumber(item.gridY, -1) >= 0;
+    toFiniteNumber(item.gridY, -1) >= 0 &&
+    isItemInBag(item, item.gridX, item.gridY, bag);
 }
 
 function getActiveCurses(activeCurses) {
@@ -26,7 +27,7 @@ function getActiveCurses(activeCurses) {
 function calcTotalStats(inventory, bag, activeCurses = {}) {
   let totalHp = 0, totalWeight = 0, totalEnergyMax = 0, totalEnergyRegen = 0;
   for (const item of getCombatInventory(inventory)) {
-    if (!isPlacedCombatItem(item)) continue; // Only count placed items
+    if (!isPlacedCombatItem(item, bag)) continue; // Only count placed items IN BAG
     totalHp += toFiniteNumber(item.hpBonus, 0);
     totalWeight += toFiniteNumber(item.weight, 0);
     totalEnergyMax += toFiniteNumber(item.energyMax, 0);

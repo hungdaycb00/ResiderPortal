@@ -7,6 +7,7 @@ import type { LooterItem } from '../backpack/types';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
 import { calcTotalStats } from '../engine/combat';
 import { generateBot } from '../engine/entities';
+import { isItemInBag } from '../engine/utils';
 
 interface UseLooterMovementProps {
   deviceId: string | null;
@@ -18,6 +19,7 @@ interface UseLooterMovementProps {
   setIsChallengeActive: (v: boolean) => void;
   setEncounter: (e: Encounter | null) => void;
   setShowCurseModal: (v: boolean) => void;
+  dropItems: (uids: string[], lat: number, lng: number) => Promise<void>;
 }
 
 export function useLooterMovement({
@@ -28,7 +30,8 @@ export function useLooterMovement({
   notify,
   setIsChallengeActive,
   setEncounter,
-  setShowCurseModal
+  setShowCurseModal,
+  dropItems
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
 
@@ -38,6 +41,12 @@ export function useLooterMovement({
         const fromLat = state.currentLat || state.fortressLat || 0;
         const fromLng = state.currentLng || state.fortressLng || 0;
         const distMeters = getDistanceMeters(fromLat, fromLng, toLat, toLng);
+
+        // Auto eject staging items (outside bag)
+        const itemsToDrop = (state.inventory || []).filter(i => i.gridX >= 0 && !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
+        if (itemsToDrop.length > 0) {
+            dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
+        }
         
         let newCurse = state.cursePercent;
         let curseTrigger = false;

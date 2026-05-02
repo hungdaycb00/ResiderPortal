@@ -146,7 +146,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const movement = useLooterMovement({
     deviceId, apiUrl: API_URL, state, setState, notify,
     setIsChallengeActive,
-    setEncounter, setShowCurseModal
+    setEncounter, setShowCurseModal,
+    dropItems: inventory.dropItems
   });
 
   // 3. Actions Orchestrator

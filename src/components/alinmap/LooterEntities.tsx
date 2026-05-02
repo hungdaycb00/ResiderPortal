@@ -61,6 +61,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
 
                 if (isPortal) {
                     if (currentDist <= interactionRadius) {
+                        stopBoat?.();
                         openFortressStorage?.('portal');
                     } else {
                         executeMoveToExact?.(item.lat, item.lng);
@@ -120,7 +121,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
     );
 });
 
-const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, openFortressStorage }: any) => {
+const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, openFortressStorage, stopBoat }: any) => {
     // Tăng bán kính tương tác thành trì lên 250m để đồng bộ cảm giác nhặt đồ
     const fInteractionRadius = 250 * (1 + boatScaleStack * 0.05);
 
@@ -149,6 +150,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
                 e.stopPropagation();
                 const dist = fDistTransform.get();
                 if (dist <= fInteractionRadius) {
+                    stopBoat?.();
                     openFortressStorage?.('fortress');
                 } else {
                     executeMoveToExact?.(fortressLat, fortressLng);
@@ -292,6 +294,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                     boatScaleStack={boatScaleStack}
                     executeMoveToExact={executeMoveToExact} 
                     openFortressStorage={openFortressStorage}
+                    stopBoat={stopBoat}
                 />
             )}
 
