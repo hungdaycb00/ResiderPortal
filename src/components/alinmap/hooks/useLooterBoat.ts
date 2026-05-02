@@ -78,6 +78,16 @@ export function useLooterBoat({
         curseVisual.set(state?.cursePercent || 0);
     }, [state?.cursePercent, curseVisual]);
 
+    const stopBoat = useCallback(() => {
+        stopAllAnimations();
+        setBoatTargetPin(null);
+        if (myObfPos) {
+            const boatLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
+            const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
+            moveBoat(boatLat, boatLng);
+        }
+    }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat]);
+
     const executeMoveToExact = useCallback((lat: number, lng: number) => {
         if (showMinigame || encounter || showCurseModal || combatResult) {
             // Safety Reset Logic
@@ -179,11 +189,11 @@ export function useLooterBoat({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, centerOnBoat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, stopPanFollow
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, centerOnBoat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, stopPanFollow
     ]);
 }

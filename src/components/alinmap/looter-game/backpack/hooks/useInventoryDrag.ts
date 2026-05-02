@@ -31,10 +31,13 @@ export function useInventoryDrag({
     const h = item.gridH || 1;
     const shape = item.shape;
 
-    // Boundary check
+    // 1. Boundary check
     if (gridX < 0 || gridY < 0 || gridX + w > gridW || gridY + h > gridH) return true;
 
-    // Overlap with other items check
+    // 2. Bag shape check
+    if (!isItemInBag(item, gridX, gridY)) return true;
+
+    // 3. Overlap with other items check
     return currentItems.some((other) => {
       if (other.uid === item.uid || other.gridX < 0) return false;
       const ow = other.gridW || 1;
@@ -54,7 +57,27 @@ export function useInventoryDrag({
       }
       return false;
     });
-  }, [activeBag, gridW, gridH]);
+  }, [activeBag, gridW, gridH, isItemInBag]);
+
+  const isItemInBag = useCallback((item: LooterItem, gx: number, gy: number) => {
+    if (!activeBag) return true;
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const shape = item.shape;
+
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (!shape || shape[r][c]) {
+          const bx = gx + c - activeBag.gridX;
+          const by = gy + r - activeBag.gridY;
+          if (bx < 0 || by < 0 || bx >= activeBag.width || by >= activeBag.height || !activeBag.shape?.[by]?.[bx]) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }, [activeBag]);
 
   const onPointerDown = useCallback((e: React.PointerEvent, item: LooterItem) => {
     if (e.button !== 0) return; // Only left click
@@ -123,8 +146,21 @@ export function useInventoryDrag({
     const gx = dragGridPos?.x ?? draggingItem.gridX;
     const gy = dragGridPos?.y ?? draggingItem.gridY;
 
-    if (!checkOverlap(draggingItem, gx, gy, items)) {
-      // Valid placement
+    // 1. Kiểm tra xem có bị chồng lấp vật phẩm khác không
+    if (checkOverlap(draggingItem, gx, gy, items)) {
+      // Chồng lấp hoặc ra ngoài biên toàn cục -> Quay về vị trí cũ
+      setDraggingItem(null);
+      setDragGridPos(null);
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      return;
+    }
+
+    // 2. Kiểm tra xem có nằm trong Balo active không
+    if (!isItemInBag(draggingItem, gx, gy)) {
+      // Nằm trong grid nhưng KHÔNG nằm trong balo -> Vứt ra ngoài (Drop to map)
+      onDropOutside?.(draggingItem);
+    } else {
+      // Hợp lệ -> Lưu vị trí mới
       const newItems = items.map((i) => 
         i.uid === draggingItem.uid ? { ...i, gridX: gx, gridY: gy } : i
       );
@@ -134,7 +170,7 @@ export function useInventoryDrag({
     setDraggingItem(null);
     setDragGridPos(null);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
+  }, [draggingItem, dragGridPos, items, checkOverlap, isItemInBag, onItemLayoutChange, onDropOutside]);
 
   return {
     draggingItem,
@@ -143,7 +179,7 @@ export function useInventoryDrag({
     containerRef,
     onPointerDown,
     onPointerMove,
-    onPointerUp,
-    checkOverlap: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
+    checkOverlap, // Trả về hàm 4 tham số gốc
+    isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
   };
 }

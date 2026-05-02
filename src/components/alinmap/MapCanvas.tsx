@@ -155,6 +155,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                             boatTargetPin={looterBoat.boatTargetPin}
                                             boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                             executeMoveToExact={looterBoat.executeMoveToExact}
+                                            stopBoat={looterBoat.stopBoat}
                                         />
                                     )}
 

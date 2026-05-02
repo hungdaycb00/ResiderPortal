@@ -30,15 +30,17 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
 }) => {
   return (
     <motion.div
-      className={`absolute cursor-grab active:cursor-grabbing border shadow-sm 
+      className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm 
         ${isDragging ? 'opacity-20 z-10' : 'z-20'} 
         ${isGhost ? 'opacity-40 pointer-events-none z-10' : ''}
         ${isInvalid ? 'border-red-500 bg-red-500/20' : (RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
         ${className}`}
       style={{
-        width: (item.gridW || 1) * cellSize,
-        height: (item.gridH || 1) * cellSize,
         ...style,
+        width: (item.gridW || 1) * cellSize - 2,
+        height: (item.gridH || 1) * cellSize - 2,
+        left: (typeof style?.left === 'number' ? style.left : 0) + 1,
+        top: (typeof style?.top === 'number' ? style.top : 0) + 1,
       }}
       onPointerDown={(e) => onPointerDown?.(e, item)}
       onDoubleClick={() => onDoubleClick?.(item)}
@@ -53,12 +55,12 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
           return (
             <div
               key={`${r}-${c}`}
-              className={`absolute ${isInvalid ? 'bg-red-400/50' : 'bg-slate-100/95'}`}
+              className={`absolute rounded-sm ${isInvalid ? 'bg-red-400/50' : 'bg-slate-100/95'}`}
               style={{
                 left: c * cellSize,
                 top: r * cellSize,
-                width: cellSize,
-                height: cellSize,
+                width: cellSize - 2,
+                height: cellSize - 2,
               }}
             />
           );

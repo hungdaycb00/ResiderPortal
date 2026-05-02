@@ -45,7 +45,8 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     onPointerDown,
     onPointerMove,
     onPointerUp,
-    checkOverlap
+    checkOverlap,
+    isInvalidPosition
   } = useInventoryDrag({
     items,
     cellSize,
@@ -158,7 +159,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               item={draggingItem}
               cellSize={cellSize}
               isGhost={true}
-              isInvalid={checkOverlap(dragGridPos.x, dragGridPos.y)}
+              isInvalid={isInvalidPosition(dragGridPos.x, dragGridPos.y)}
               style={{
                 left: dragGridPos.x * cellSize,
                 top: dragGridPos.y * cellSize,

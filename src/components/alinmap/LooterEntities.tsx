@@ -9,9 +9,10 @@ interface LooterEntitiesProps {
     boatOffsetX: MotionValue<number>;
     boatOffsetY: MotionValue<number>;
     executeMoveToExact?: (lat: number, lng: number) => void;
+    stopBoat?: () => void;
 }
 
-const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact }: any) => {
+const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat }: any) => {
     const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
@@ -60,9 +61,11 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                     if (currentDist <= clickTolerance) {
                         if (item.minigameType) {
                             console.log(`[LooterClick] Opening minigame for ${item.name}`);
+                            stopBoat?.();
                             setShowMinigame?.(item);
                         } else {
                             console.log(`[LooterClick] Picking up item ${item.name}`);
+                            stopBoat?.();
                             pickupItem?.(item.spawnId, item);
                         }
                     } else {
@@ -209,7 +212,7 @@ const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any
 });
 
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
-    myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact
+    myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact, stopBoat
 }) => {
     const { state: looterStateObj, worldItems } = useLooterState();
     const { openFortressStorage } = useLooterActions();
@@ -330,6 +333,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                     boatOffsetY={boatOffsetY}
                     boatScaleStack={boatScaleStack}
                     executeMoveToExact={executeMoveToExact}
+                    stopBoat={stopBoat}
                 />
             ))}
         </>
