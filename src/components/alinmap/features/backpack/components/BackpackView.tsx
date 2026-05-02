@@ -148,8 +148,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           {/* Bag Slot - Integrated in Header */}
           <div 
             className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${
-              isHoveringBagSlot && (draggingItem as any)?.type === 'bag' 
-                ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20' 
+              (draggingItem as any)?.type === 'bag' 
+                ? isHoveringBagSlot 
+                  ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]' 
+                  : 'scale-110 border-cyan-400 bg-cyan-400/10 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.3)]'
                 : `${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`
             }`}
             onPointerEnter={() => setIsHoveringBagSlot(true)}
