@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { findEmptySlotFor } from '../utils/looterHelpers';
 import { repairBagData, createStarterBag } from '../backpack/utils';
@@ -238,8 +238,11 @@ export function useLooterInventory({
     }
   }, [deviceId, apiUrl, setState, notify, loadWorldItems]);
 
-  return { 
+  return useMemo(() => ({ 
     saveInventory, saveBags, saveStorage, 
     equipBag, sellItems, storeItems, pickupItem, dropItems
-  };
+  }), [
+    saveInventory, saveBags, saveStorage, 
+    equipBag, sellItems, storeItems, pickupItem, dropItems
+  ]);
 }

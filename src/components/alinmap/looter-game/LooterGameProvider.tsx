@@ -219,7 +219,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       actionsValue.loadState({ skipIfBusy: true });
     }, SYNC_HEARTBEAT_MS);
     return () => clearInterval(interval);
-  }, [deviceId, ui.isLooterGameMode, actionsValue]);
+  }, [deviceId, ui.isLooterGameMode, actionsValue.loadState]);
 
 
 

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import type { LooterGameState } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
@@ -62,5 +62,5 @@ export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps
     }
   }, [deviceId, apiUrl, setState]);
 
-  return { saveInventory, saveBags, saveStorage };
+  return useMemo(() => ({ saveInventory, saveBags, saveStorage }), [saveInventory, saveBags, saveStorage]);
 }

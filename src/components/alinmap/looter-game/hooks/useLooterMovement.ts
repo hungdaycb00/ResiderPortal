@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
@@ -88,5 +88,5 @@ export function useLooterMovement({
     }
   }, [deviceId, apiUrl, notify]);
 
-  return { moveBoat, returnToFortress, isMoving };
+  return useMemo(() => ({ moveBoat, returnToFortress, isMoving }), [moveBoat, returnToFortress, isMoving]);
 }

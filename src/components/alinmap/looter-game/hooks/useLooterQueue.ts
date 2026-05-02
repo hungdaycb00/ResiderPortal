@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useMemo } from 'react';
 
 /**
  * Hook quản lý hàng chờ thực thi các hành động API tuần tự (Serial Queue)
@@ -39,5 +39,5 @@ export function useLooterQueue() {
     return nextPromise as Promise<T>;
   }, []);
 
-  return { runInQueue, isSyncing };
+  return useMemo(() => ({ runInQueue, isSyncing }), [runInQueue, isSyncing]);
 }

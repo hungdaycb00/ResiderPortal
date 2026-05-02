@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { createPortalWorldItems } from '../utils/looterHelpers';
 import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/utils';
@@ -165,9 +165,13 @@ export function useLooterStateManager({
     }
   }, [deviceId, apiUrl, setState, setWorldItems]);
 
-  return { 
+  return useMemo(() => ({ 
     loadWorldItems, loadState, initGame, 
     setWorldTier, inflictMinigamePenalty, 
     executeCombat, curseChoice 
-  };
+  }), [
+    loadWorldItems, loadState, initGame, 
+    setWorldTier, inflictMinigamePenalty, 
+    executeCombat, curseChoice
+  ]);
 }
