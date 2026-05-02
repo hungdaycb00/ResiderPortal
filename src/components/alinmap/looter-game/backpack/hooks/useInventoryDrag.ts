@@ -27,6 +27,46 @@ export function useInventoryDrag({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const isItemTouchingBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const bagW = bag.width;
+    const bagH = bag.height;
+
+    if (gx + w <= bag.gridX) return false;
+    if (gy + h <= bag.gridY) return false;
+    if (gx >= bag.gridX + bagW) return false;
+    if (gy >= bag.gridY + bagH) return false;
+
+    return true;
+  }, []);
+
+  const isItemCompletelyInBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const shape = item.shape;
+    const bagShape = bag.shape;
+
+    if (gx < bag.gridX || gy < bag.gridY || gx + w > bag.gridX + bag.width || gy + h > bag.gridY + bag.height) {
+      return false;
+    }
+
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (!shape || shape[r][c]) {
+          const bagR = gy + r - bag.gridY;
+          const bagC = gx + c - bag.gridX;
+          
+          if (bagShape && (!bagShape[bagR] || !bagShape[bagR][bagC])) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }, []);
+
   const checkOverlap = useCallback((item: LooterItem, gridX: number, gridY: number, currentItems: LooterItem[]) => {
     const w = item.gridW || 1;
     const h = item.gridH || 1;
@@ -133,9 +173,21 @@ export function useInventoryDrag({
       return;
     }
 
+    let finalGx = gx;
+    let finalGy = gy;
+
+    // 2. Kiểm tra balo active
+    if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
+      if (!isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
+        // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài
+        finalGx = -1;
+        finalGy = -1;
+      }
+    }
+
     // Hợp lệ -> Lưu vị trí mới (kể cả ngoài balo)
     const newItems = items.map((i) => 
-      i.uid === draggingItem.uid ? { ...i, gridX: gx, gridY: gy } : i
+      i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i
     );
     onItemLayoutChange?.(newItems);
 
