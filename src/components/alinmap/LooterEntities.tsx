@@ -175,26 +175,30 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
 });
 
 const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any) => {
-    const enemyX = useTransform(boatOffsetX, (v: number) => v + 80);
+    const enemyX = useTransform(boatOffsetX, (v: number) => v + 120);
     const enemyY = useTransform(boatOffsetY, (v: number) => v - 20);
 
     return (
         <motion.div
-            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[99] select-none"
+            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[200] select-none"
             style={{ top: '50%', left: '50%', x: enemyX, y: enemyY }}
-            initial={{ y: 50, opacity: 0, scale: 0.5 }}
-            animate={{ y: -20, opacity: 1, scale: 1 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
         >
              <motion.div
                 className="w-full h-full"
-                animate={{ y: [-2, 2, -2], rotateZ: [2, -2, 2] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                initial={{ y: 60 }}
+                animate={{ y: [60, 0, -2, 2, -2], rotateZ: [0, 0, 2, -2, 2] }}
+                transition={{ 
+                    y: { duration: 1.2, ease: "easeOut" },
+                    rotateZ: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }
+                }}
             >
                 <div className="w-full h-full flex flex-col items-center justify-center">
-                    <span className="text-4xl drop-shadow-lg scale-x-[-1]">🚢</span>
-                    <div className="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-full border border-red-500/40 -mt-1 shadow-lg shadow-red-500/20">
-                        <span className="text-[8px] font-black text-red-200 uppercase whitespace-nowrap tracking-tighter">
+                    <span className="text-5xl drop-shadow-2xl scale-x-[-1]">🚢</span>
+                    <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-red-500/60 -mt-1 shadow-xl shadow-red-500/40">
+                        <span className="text-[9px] font-black text-red-100 uppercase whitespace-nowrap tracking-tighter">
                             {encounter.name}
                         </span>
                     </div>

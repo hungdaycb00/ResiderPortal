@@ -87,7 +87,7 @@ const CombatScreen: React.FC = () => {
                             <div className="flex items-center justify-between mb-2 px-1">
                                  <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
                             </div>
-                            <div className="flex justify-center overflow-auto py-1">
+                            <div className="flex justify-center overflow-auto py-1" onClick={(e) => e.stopPropagation()}>
                                 <CombatInventoryGrid 
                                     items={encounter.inventory || []} 
                                     gridWidth={encounter.bags?.[0]?.width || 6} 
@@ -127,8 +127,10 @@ const CombatScreen: React.FC = () => {
                     {/* Enemy Item Tooltip Popup */}
                     {selectedEnemyItem && (
                         <div 
-                            className="md:hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/50 pointer-events-auto"
-                            onClick={() => setSelectedEnemyItem(null)}
+                            className="md:hidden fixed inset-0 z-[500] flex items-center justify-center bg-black/60 backdrop-blur-[2px] pointer-events-auto"
+                            onClick={(e) => {
+                                if (e.target === e.currentTarget) setSelectedEnemyItem(null);
+                            }}
                         >
                             <motion.div 
                                 initial={{ scale: 0.8, opacity: 0 }} 

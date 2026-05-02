@@ -256,20 +256,25 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
                 height: h * cellSize - 2,
               }}
               whileTap={{ scale: 1.1 }}
-              onPointerDown={(e) => {
-                if (readOnly) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onItemClick?.(item);
-                  return;
-                }
-                if (e.button === 2) {
-                  e.preventDefault();
-                  handleRotate(item);
-                  return;
-                }
-                handleItemPointerDown(e, item);
-              }}
+               onPointerDown={(e) => {
+                 if (readOnly) {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   return;
+                 }
+                 if (e.button === 2) {
+                   e.preventDefault();
+                   handleRotate(item);
+                   return;
+                 }
+                 handleItemPointerDown(e, item);
+               }}
+               onClick={(e) => {
+                 if (readOnly) {
+                   e.stopPropagation();
+                   onItemClick?.(item);
+                 }
+               }}
               onContextMenu={(e) => {
                 e.preventDefault();
                 if (!dragItem) handleRotate(item);
