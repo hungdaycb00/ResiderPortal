@@ -84,9 +84,8 @@ export function useLooterStateManager({
         const distToFortress = getDistanceMeters(s.currentLat, s.currentLng, s.fortressLat, s.fortressLng);
         const shouldBeActive = distToFortress > FORTRESS_INTERACTION_METERS || (s.worldTier ?? 0) > 0 || (s.inventory && s.inventory.length > 0);
         
-        // Chỉ tự động set TRUE nếu thỏa mãn điều kiện active.
-        // KHÔNG tự động set FALSE ở đây để tránh đè lên trạng thái người dùng vừa chọn Tier 0.
-        if (shouldBeActive) {
+        // Chỉ tự động set TRUE nếu thỏa mãn điều kiện active và hiện tại đang FALSE.
+        if (shouldBeActive && !isChallengeActive) {
           setIsChallengeActive(true);
         }
       }

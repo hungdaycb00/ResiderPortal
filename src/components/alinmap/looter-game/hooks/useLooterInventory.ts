@@ -179,8 +179,20 @@ export function useLooterInventory({
         const endTime = Date.now();
         console.log(`[LooterPerf] API pickupItem (background) completed for ${spawnId} in ${endTime - startTime}ms`);
         
+        if (!data.success) {
+            // Nếu Server từ chối, thông báo lỗi và yêu cầu đồng bộ lại dữ liệu thực tế
+            notify(data.error || 'Không thể nhặt vật phẩm này', 'error');
+            // Trigger loadState để sửa lại inventory lạc quan
+            setTimeout(() => {
+                // Chúng ta không có loadState trực tiếp ở đây, 
+                // nhưng heartbeat tiếp theo sẽ sửa nó, hoặc ta có thể gọi loadWorldItems
+                loadWorldItems(true);
+            }, 500);
+            return;
+        }
+
         // Fallback: If we didn't have it optimistically (e.g. state was really stale), add it now
-        if (!pickedWorldItem && data.success && data.item) {
+        if (!pickedWorldItem && data.item) {
             const item = data.item as LooterItem;
             setState(prevState => {
                 const currentBag = prevState.bags[0];
@@ -209,6 +221,7 @@ export function useLooterInventory({
     }).catch(err => {
         const endTime = Date.now();
         console.error(`[LooterPerf] API pickupItem (background) FAILED for ${spawnId} after ${endTime - startTime}ms`, err);
+        notify('Lỗi kết nối khi nhặt đồ', 'error');
     });
 
   }, [deviceId, apiUrl, setState, setWorldItems, saveInventory, notify]);

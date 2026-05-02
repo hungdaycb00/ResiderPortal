@@ -212,14 +212,22 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
 
   // Heartbeat Synchronization
+  const actionsRef = useRef(actionsValue);
+  useEffect(() => {
+    actionsRef.current = actionsValue;
+  }, [actionsValue]);
+
   useEffect(() => {
     if (!deviceId || !ui.isLooterGameMode) return;
-    actionsValue.loadState({ skipIfBusy: true });
-    const interval = setInterval(() => {
-      actionsValue.loadState({ skipIfBusy: true });
-    }, SYNC_HEARTBEAT_MS);
+    
+    const tick = () => {
+      actionsRef.current.loadState({ skipIfBusy: true });
+    };
+
+    tick();
+    const interval = setInterval(tick, SYNC_HEARTBEAT_MS);
     return () => clearInterval(interval);
-  }, [deviceId, ui.isLooterGameMode, actionsValue]);
+  }, [deviceId, ui.isLooterGameMode]); // Loại bỏ actionsValue khỏi dependency
 
 
 
