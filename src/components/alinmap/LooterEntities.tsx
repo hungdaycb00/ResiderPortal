@@ -13,7 +13,7 @@ interface LooterEntitiesProps {
 }
 
 const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat }: any) => {
-    const { openFortressStorage, setShowMinigame, pickupItem, setDraggingMapItem } = useLooterActions();
+    const { openFortressStorage, setShowMinigame, pickupItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
 
@@ -49,17 +49,12 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 y: { duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }
             }}
             onPointerDown={(e) => {
-                const currentDist = distMetersTransform.get();
-                if (!isPortal && !item.minigameType && currentDist <= interactionRadius) {
-                    setDraggingMapItem?.(item);
-                }
-                // Lưu lại tọa độ bắt đầu để phân biệt Click và Drag
+                // Lưu lại tọa độ bắt đầu để phân biệt Click và Drag (Map Panning)
                 (e.currentTarget as any)._startX = e.clientX;
                 (e.currentTarget as any)._startY = e.clientY;
             }}
             onPointerUp={(e) => {
                 e.stopPropagation();
-                setDraggingMapItem?.(null);
 
                 // Kiểm tra xem có phải là một cú Click đơn thuần không (di chuyển < 5px)
                 const dx = Math.abs(e.clientX - ((e.currentTarget as any)._startX || 0));
