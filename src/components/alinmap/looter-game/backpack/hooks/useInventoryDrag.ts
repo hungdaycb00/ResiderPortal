@@ -30,8 +30,9 @@ export function useInventoryDrag({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isItemTouchingBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
-    const w = item.gridW ?? (item as any).width ?? 1;
-    const h = item.gridH ?? (item as any).height ?? 1;
+    const isBag = (item as any).type === 'bag';
+    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
+    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
     const bagW = bag.width;
     const bagH = bag.height;
 
@@ -44,8 +45,9 @@ export function useInventoryDrag({
   }, []);
 
   const isItemCompletelyInBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
-    const w = item.gridW ?? (item as any).width ?? 1;
-    const h = item.gridH ?? (item as any).height ?? 1;
+    const isBag = (item as any).type === 'bag';
+    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
+    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
     const shape = item.shape;
     const bagShape = bag.shape;
 
@@ -70,8 +72,9 @@ export function useInventoryDrag({
   }, []);
 
   const checkOverlap = useCallback((item: LooterItem, gridX: number, gridY: number, currentItems: LooterItem[]) => {
-    const w = item.gridW ?? (item as any).width ?? 1;
-    const h = item.gridH ?? (item as any).height ?? 1;
+    const isBag = (item as any).type === 'bag';
+    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
+    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
     const shape = item.shape;
 
     // 1. Boundary check
@@ -80,8 +83,9 @@ export function useInventoryDrag({
     // 3. Overlap with other items check
     return currentItems.some((other) => {
       if (other.uid === item.uid || other.gridX < 0) return false;
-      const ow = other.gridW ?? (other as any).width ?? 1;
-      const oh = other.gridH ?? (other as any).height ?? 1;
+      const isOtherBag = (other as any).type === 'bag';
+      const ow = other.gridW || (isOtherBag ? 1 : (other as any).width) || 1;
+      const oh = other.gridH || (isOtherBag ? 1 : (other as any).height) || 1;
       const oshape = other.shape;
 
       for (let r = 0; r < h; r++) {
@@ -106,12 +110,12 @@ export function useInventoryDrag({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const w = item.gridW ?? (item as any).width ?? 1;
-    const h = item.gridH ?? (item as any).height ?? 1;
+    const isBag = (item as any).type === 'bag';
+    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
+    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
     const itemW = w * cellSize;
     const itemH = h * cellSize;
 
-    // Centering requirement: Item center is at pointer position
     const startX = e.clientX - rect.left;
     const startY = e.clientY - rect.top;
 
@@ -131,8 +135,9 @@ export function useInventoryDrag({
     if (!draggingItem || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const w = draggingItem.gridW ?? (draggingItem as any).width ?? 1;
-    const h = draggingItem.gridH ?? (draggingItem as any).height ?? 1;
+    const isBag = (draggingItem as any).type === 'bag';
+    const w = draggingItem.gridW || (isBag ? 1 : (draggingItem as any).width) || 1;
+    const h = draggingItem.gridH || (isBag ? 1 : (draggingItem as any).height) || 1;
     const itemW = w * cellSize;
     const itemH = h * cellSize;
 
