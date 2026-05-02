@@ -32,8 +32,9 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
-  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
+  const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
 
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
@@ -178,6 +179,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             items={state.inventory}
             bags={state.bags}
             readOnly={readOnly}
+            onDragStateChange={setDraggingItem}
             onItemLayoutChange={readOnly ? undefined : memoizedSaveInventory}
             onItemDoubleClick={(item) => {
               if ((item as any).type === 'bag') {
