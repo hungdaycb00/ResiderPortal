@@ -26,6 +26,35 @@ export function useInventoryDrag({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const isItemInBag = useCallback((item: LooterItem, gx: number, gy: number) => {
+    if (!activeBag) return true;
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const shape = item.shape;
+
+    const bagX = activeBag.gridX;
+    const bagY = activeBag.gridY;
+    const bagW = activeBag.width;
+    const bagH = activeBag.height;
+    const bagShape = activeBag.shape || [];
+
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (!shape || shape[r][c]) {
+          const tx = gx + c;
+          const ty = gy + r;
+          
+          const relX = tx - bagX;
+          const relY = ty - bagY;
+
+          if (relX < 0 || relX >= bagW || relY < 0 || relY >= bagH) return false;
+          if (!bagShape[relY] || !bagShape[relY][relX]) return false;
+        }
+      }
+    }
+    return true;
+  }, [activeBag]);
+
   const checkOverlap = useCallback((item: LooterItem, gridX: number, gridY: number, currentItems: LooterItem[]) => {
     const w = item.gridW || 1;
     const h = item.gridH || 1;
@@ -58,26 +87,6 @@ export function useInventoryDrag({
       return false;
     });
   }, [activeBag, gridW, gridH, isItemInBag]);
-
-  const isItemInBag = useCallback((item: LooterItem, gx: number, gy: number) => {
-    if (!activeBag) return true;
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
-    const shape = item.shape;
-
-    for (let r = 0; r < h; r++) {
-      for (let c = 0; c < w; c++) {
-        if (!shape || shape[r][c]) {
-          const bx = gx + c - activeBag.gridX;
-          const by = gy + r - activeBag.gridY;
-          if (bx < 0 || by < 0 || bx >= activeBag.width || by >= activeBag.height || !activeBag.shape?.[by]?.[bx]) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }, [activeBag]);
 
   const onPointerDown = useCallback((e: React.PointerEvent, item: LooterItem) => {
     if (e.button !== 0) return; // Only left click
