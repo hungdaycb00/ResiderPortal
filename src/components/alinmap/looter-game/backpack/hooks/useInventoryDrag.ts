@@ -188,6 +188,7 @@ export function useInventoryDrag({
     containerRef,
     onPointerDown,
     onPointerMove,
+    onPointerUp,
     checkOverlap, // Trả về hàm 4 tham số gốc
     isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
   };
