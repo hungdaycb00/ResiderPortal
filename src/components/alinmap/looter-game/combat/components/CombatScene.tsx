@@ -51,9 +51,9 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                     )}
                 </AnimatePresence>
 
-                {/* Start Button - Floating Center-Bottom */}
+                {/* Start Button - Floating Center */}
                 {phase === 'ready' && (
-                    <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 pointer-events-auto">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
                         <motion.button
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -63,7 +63,7 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                             className="px-10 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-xl rounded-full shadow-[0_0_30px_rgba(245,158,11,0.4)] border-2 border-amber-300/30 flex items-center gap-3"
                         >
                             <Swords className="w-6 h-6" />
-                            Bắt Đầu Trận Đấu
+                            Bắt Đầu
                         </motion.button>
                     </div>
                 )}

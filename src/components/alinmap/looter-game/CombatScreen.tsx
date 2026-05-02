@@ -97,6 +97,25 @@ const CombatScreen: React.FC = () => {
                             cellSize={28}
                         />
                     </div>
+                    {/* Enemy HP/EN Bar moved here */}
+                    <div className="mt-2 mx-auto w-48">
+                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl">
+                            <div className="flex justify-between items-center mb-0.5 px-0.5">
+                                <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
+                                <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
+                            </div>
+                            <div className="h-1 bg-gray-900 rounded-full overflow-hidden mb-1.5 border border-white/5">
+                                <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500" animate={{ width: `${Math.max(0, (combat.hpB / combat.maxHpB) * 100)}%` }} />
+                            </div>
+                            <div className="flex justify-between items-center mb-0.5 px-0.5">
+                                <span className="text-[8px] font-black text-blue-400 uppercase">EN</span>
+                                <span className="text-[8px] font-black text-white">{Math.round(combat.actionProgressB)}</span>
+                            </div>
+                            <div className="h-1 bg-gray-900 rounded-full overflow-hidden border border-white/5">
+                                <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500" animate={{ width: `${(combat.actionProgressB / combat.maxActionBarB) * 100}%` }} />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -118,27 +137,7 @@ const CombatScreen: React.FC = () => {
                 </div>
             )}
 
-            {/* 4. Mobile Enemy HUD: Below backpack tab, on the right */}
-            {!state.showCurseModal && (
-                <div className="md:hidden absolute bottom-[45%] right-2 w-32 pointer-events-auto">
-                    <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl">
-                        <div className="flex justify-between items-center mb-0.5 px-0.5">
-                            <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
-                            <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
-                        </div>
-                        <div className="h-1 bg-gray-900 rounded-full overflow-hidden mb-1.5">
-                            <motion.div className="h-full bg-gradient-to-r from-red-600 to-orange-500" animate={{ width: `${Math.max(0, (combat.hpB / combat.maxHpB) * 100)}%` }} />
-                        </div>
-                        <div className="flex justify-between items-center mb-0.5 px-0.5">
-                            <span className="text-[8px] font-black text-blue-400 uppercase">EN</span>
-                            <span className="text-[8px] font-black text-white">{Math.round(combat.actionProgressB)}</span>
-                        </div>
-                        <div className="h-1 bg-gray-900 rounded-full overflow-hidden">
-                            <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500" animate={{ width: `${(combat.actionProgressB / combat.maxActionBarB) * 100}%` }} />
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* 4. Removed - Mobile Enemy HUD now merged above */}
 
             {/* 5. Desktop Player Info at Bottom Left */}
             {!state.showCurseModal && (

@@ -140,9 +140,14 @@ export function useLooterBoat({
 
         isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
-        moveBoat(lat, lng);
+        moveBoat(lat, lng).then(res => {
+            if (res?.curseTrigger) {
+                stopAllAnimations();
+                centerOnBoat();
+            }
+        });
         animateBoatTo(lat, lng, duration);
-    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef]);
+    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnBoat, stopAllAnimations]);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
         if (!isLooterGameMode || !myObfPos) return;
