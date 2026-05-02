@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { looterApi } from '../services/looterApi';
 import type { LooterGameState } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
@@ -11,56 +11,66 @@ interface UseLooterDataProps {
 
 export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps) {
   
+  const lastSyncTime = useRef(0);
+  const syncTimeout = useRef<any>(null);
+
+  const syncState = useCallback((latestState: LooterGameState) => {
+    if (!deviceId) return;
+    const now = Date.now();
+    
+    const executeSync = async (s: LooterGameState) => {
+        try {
+            await looterApi.syncState(apiUrl, deviceId, s);
+        } catch(e) {
+            console.error('[Looter] Sync error', e);
+        }
+    };
+
+    if (now - lastSyncTime.current >= 1000) {
+        lastSyncTime.current = now;
+        executeSync(latestState);
+        if (syncTimeout.current) {
+            clearTimeout(syncTimeout.current);
+            syncTimeout.current = null;
+        }
+    } else {
+        if (!syncTimeout.current) {
+            syncTimeout.current = setTimeout(() => {
+                lastSyncTime.current = Date.now();
+                executeSync(latestState); // this might be slightly stale if another call happens, but good enough
+                syncTimeout.current = null;
+            }, 1000 - (now - lastSyncTime.current));
+        }
+    }
+  }, [deviceId, apiUrl]);
+
   const saveInventory = useCallback(async (inventory: LooterItem[]) => {
     if (!deviceId) return false;
-    
-    let previousInventory: LooterItem[] = [];
     setState(prev => {
-      previousInventory = prev.inventory;
-      return { ...prev, inventory };
+        const next = { ...prev, inventory };
+        syncState(next);
+        return next;
     });
-
-    try {
-      const data = await looterApi.saveInventory(apiUrl, deviceId, inventory);
-      if (!data.success) throw new Error('Save failed');
-      return true;
-    } catch (err) {
-      console.error('[LooterGame] saveInventory error:', err);
-      // Rollback on failure
-      setState(prev => ({ ...prev, inventory: previousInventory }));
-      return false;
-    }
-  }, [deviceId, apiUrl, setState]);
+    return true;
+  }, [deviceId, setState, syncState]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;
-    let previousBags: BagItem[] = [];
     setState(prev => {
-      previousBags = prev.bags;
-      return { ...prev, bags };
+        const next = { ...prev, bags };
+        syncState(next);
+        return next;
     });
-    try {
-      await looterApi.saveBags(apiUrl, deviceId, bags);
-    } catch (err) {
-      console.error('[LooterGame] saveBags error:', err);
-      setState(prev => ({ ...prev, bags: previousBags }));
-    }
-  }, [deviceId, apiUrl, setState]);
+  }, [deviceId, setState, syncState]);
 
   const saveStorage = useCallback(async (storage: LooterItem[]) => {
     if (!deviceId) return;
-    let previousStorage: LooterItem[] = [];
     setState(prev => {
-      previousStorage = prev.storage;
-      return { ...prev, storage };
+        const next = { ...prev, storage };
+        syncState(next);
+        return next;
     });
-    try {
-      await looterApi.saveStorageLayout(apiUrl, deviceId, storage);
-    } catch (err) {
-      console.error('[LooterGame] saveStorage error:', err);
-      setState(prev => ({ ...prev, storage: previousStorage }));
-    }
-  }, [deviceId, apiUrl, setState]);
+  }, [deviceId, setState, syncState]);
 
-  return useMemo(() => ({ saveInventory, saveBags, saveStorage }), [saveInventory, saveBags, saveStorage]);
+  return useMemo(() => ({ saveInventory, saveBags, saveStorage, syncState }), [saveInventory, saveBags, saveStorage, syncState]);
 }

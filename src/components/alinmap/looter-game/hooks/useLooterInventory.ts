@@ -103,38 +103,63 @@ export function useLooterInventory({
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;
-    try {
-      const data = await looterApi.sellItems(apiUrl, deviceId, itemUids);
-      if (data.success) {
-        notify(`Đã bán vật phẩm, thu về ${data.goldEarned} vàng`, 'success');
-        // loadState() should be called by the orchestrator
-      }
-    } catch (err) {
-      console.error('[LooterGame] sellItems error:', err);
-    }
-  }, [deviceId, apiUrl, notify]);
+    setState(prev => {
+        const itemsToSell = prev.inventory.filter(i => itemUids.includes(i.uid));
+        const newInventory = prev.inventory.filter(i => !itemUids.includes(i.uid));
+        const goldEarned = itemsToSell.reduce((sum, item) => sum + (item.price || 0), 0);
+        
+        const nextState = {
+            ...prev,
+            inventory: newInventory,
+            looterGold: (prev.looterGold || 0) + goldEarned
+        };
+        saveInventory(newInventory); // Triggers sync
+        return nextState;
+    });
+    notify(`Đã bán vật phẩm`, 'success');
+  }, [deviceId, setState, saveInventory, notify]);
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: string = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
-    try {
-      const data = await looterApi.storeItems(apiUrl, deviceId, itemUids, action, mode, gridX, gridY);
-      if (data.success) {
-        notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
-        // loadState() should be called by the orchestrator
-      }
-    } catch (err) {
-      console.error('[LooterGame] storeItems error:', err);
-    }
-  }, [deviceId, apiUrl, notify]);
+    setState(prev => {
+        let newInventory = [...prev.inventory];
+        let newStorage = [...prev.storage];
+
+        if (action === 'store') {
+            const itemsToStore = newInventory.filter(i => itemUids.includes(i.uid));
+            newInventory = newInventory.filter(i => !itemUids.includes(i.uid));
+            
+            itemsToStore.forEach(item => {
+                newStorage.push({ ...item, gridX: gridX ?? item.gridX, gridY: gridY ?? item.gridY });
+            });
+        } else {
+            const itemsToRetrieve = newStorage.filter(i => itemUids.includes(i.uid));
+            newStorage = newStorage.filter(i => !itemUids.includes(i.uid));
+            
+            itemsToRetrieve.forEach(item => {
+                const currentBag = prev.bags[0];
+                const slot = findEmptySlotFor(item, newInventory, currentBag);
+                if (slot) {
+                    newInventory.push({ ...item, gridX: slot.x, gridY: slot.y });
+                } else {
+                    newInventory.push({ ...item, gridX: -1, gridY: -1, stagingX: Math.random() * 200, stagingY: Math.random() * 300 } as any);
+                }
+            });
+        }
+
+        const nextState = { ...prev, inventory: newInventory, storage: newStorage };
+        saveInventory(newInventory);
+        saveStorage(newStorage);
+        return nextState;
+    });
+    notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
+  }, [deviceId, setState, saveInventory, saveStorage, notify]);
 
 
 
   const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem) => {
     if (!deviceId) return;
-    const startTime = Date.now();
-    console.log(`[LooterPerf] Optimistic pickupItem started for ${spawnId} at ${startTime}`, directItem ? '(with direct item)' : '(search in state)');
     
-    // 1. Optimistic Update
     let pickedWorldItem: WorldItem | undefined = directItem;
     
     setWorldItems(prev => {
@@ -162,8 +187,6 @@ export function useLooterInventory({
             }
 
             const newInventory = [...prevState.inventory, newItem];
-            
-            // Background save
             saveInventory(newInventory).catch(console.error);
 
             setTimeout(() => {
@@ -174,69 +197,36 @@ export function useLooterInventory({
         });
     }
 
-    // 2. Fire and forget API call
-    looterApi.pickupItem(apiUrl, deviceId, spawnId, true).then(data => {
-        const endTime = Date.now();
-        console.log(`[LooterPerf] API pickupItem (background) completed for ${spawnId} in ${endTime - startTime}ms`);
-        
-        // Fallback: If we didn't have it optimistically (e.g. state was really stale), add it now
-        if (!pickedWorldItem && data.success && data.item) {
-            const item = data.item as LooterItem;
-            setState(prevState => {
-                const currentBag = prevState.bags[0];
-                const slot = findEmptySlotFor(item, prevState.inventory, currentBag);
-                let newItem: LooterItem;
-                
-                if (slot) {
-                    newItem = { ...item, gridX: slot.x, gridY: slot.y };
-                } else {
-                    newItem = { 
-                        ...item, 
-                        gridX: -1, gridY: -1,
-                        stagingX: Math.random() * 200, stagingY: Math.random() * 300 
-                    } as any;
-                }
-
-                const newInventory = [...prevState.inventory, newItem];
-                saveInventory(newInventory).catch(console.error);
-                setTimeout(() => {
-                    notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
-                }, 0);
-
-                return { ...prevState, inventory: newInventory };
-            });
-        }
-    }).catch(err => {
-        const endTime = Date.now();
-        console.error(`[LooterPerf] API pickupItem (background) FAILED for ${spawnId} after ${endTime - startTime}ms`, err);
-    });
-
-  }, [deviceId, apiUrl, setState, setWorldItems, saveInventory, notify]);
+  }, [deviceId, setWorldItems, setState, saveInventory, notify]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
     if (!deviceId || itemUids.length === 0) return;
     
-    let previousInventory: LooterItem[] = [];
     setState(prev => {
-      previousInventory = prev.inventory;
+      const droppedItems = prev.inventory.filter(i => itemUids.includes(i.uid));
       const newInventory = prev.inventory.filter(i => !itemUids.includes(i.uid));
+      
+      saveInventory(newInventory);
+      
+      // Add dropped items to world locally
+      setWorldItems(wItems => {
+        const newWorldItems = droppedItems.map((item, i) => ({
+            spawnId: `dropped_${item.uid}_${Date.now()}_${i}`,
+            lat: lat + (Math.random() - 0.5) * 0.0001,
+            lng: lng + (Math.random() - 0.5) * 0.0001,
+            item: item,
+            isExpander: false,
+            minigameType: null
+        }));
+        return [...wItems, ...newWorldItems];
+      });
+
       return { ...prev, inventory: newInventory };
     });
+    
+    notify(`Đã ném ${itemUids.length} vật phẩm ra Map`, 'success');
 
-    try {
-      const data = await looterApi.dropItems(apiUrl, deviceId, itemUids, lat, lng);
-      if (data.success) {
-        notify(`Đã ném ${itemUids.length} vật phẩm ra Map`, 'success');
-        loadWorldItems(true);
-      } else {
-        throw new Error('Drop failed');
-      }
-    } catch (err) {
-      console.error('[LooterGame] dropItems error:', err);
-      notify('Không thể ném vật phẩm lúc này', 'error');
-      setState(prev => ({ ...prev, inventory: previousInventory }));
-    }
-  }, [deviceId, apiUrl, setState, notify, loadWorldItems]);
+  }, [deviceId, setState, setWorldItems, saveInventory, notify]);
 
   return useMemo(() => ({ 
     saveInventory, saveBags, saveStorage, 

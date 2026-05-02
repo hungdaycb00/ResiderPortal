@@ -4,6 +4,9 @@ import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterGameState, Encounter } from '../LooterGameContext';
 import type { LooterItem } from '../backpack/types';
+import { calculateCurseGain, rollCurse } from '../engine/curses';
+import { calcTotalStats } from '../engine/combat';
+import { generateBot } from '../engine/entities';
 
 interface UseLooterMovementProps {
   deviceId: string | null;
@@ -30,50 +33,63 @@ export function useLooterMovement({
   const [isMoving, setIsMoving] = useState(false);
 
   const moveBoat = useCallback(async (toLat: number, toLng: number) => {
-    if (!deviceId) return { curseTrigger: false, encounter: null };
-
-
-
     setIsMoving(true);
     try {
-      const data = await looterApi.moveBoat(apiUrl, deviceId, toLat, toLng);
-      if (data.success) {
-        const nextLat = data.currentLat ?? toLat;
-        const nextLng = data.currentLng ?? toLng;
+        const fromLat = state.currentLat || state.fortressLat || 0;
+        const fromLng = state.currentLng || state.fortressLng || 0;
+        const distMeters = getDistanceMeters(fromLat, fromLng, toLat, toLng);
+        
+        let newCurse = state.cursePercent;
+        let curseTrigger = false;
+        let encounter: Encounter | null = null;
+        
+        const hasItems = state.inventory && state.inventory.length > 0;
+        
+        if (hasItems) {
+            const curseGain = calculateCurseGain('move', distMeters, state.activeCurses);
+            newCurse = Math.min((state.cursePercent || 0) + curseGain, 100);
+            curseTrigger = rollCurse(newCurse);
+            
+            if (curseTrigger) {
+                newCurse = 0; // Reset
+                const bot = generateBot(state.worldTier || 1, state.inventory.length);
+                const botStats = calcTotalStats(bot.inventory, bot.bags[0], {});
+                encounter = {
+                    type: 'bot',
+                    ...bot,
+                    totalWeight: botStats.totalWeight,
+                    totalHp: bot.baseMaxHp + botStats.totalHp,
+                };
+            }
+        }
         
         setState(prev => ({
           ...prev,
-          currentLat: nextLat,
-          currentLng: nextLng,
-          cursePercent: data.cursePercent,
-          distance: prev.distance + (data.distMeters || 0),
+          currentLat: toLat,
+          currentLng: toLng,
+          cursePercent: newCurse,
+          distance: prev.distance + Math.round(distMeters),
         }));
 
-        if (data.speedViolation) {
-          notify(`Di chuyển quá nhanh! Lời nguyền tăng +${data.penaltyCurse.toFixed(0)}%`, 'error');
-        }
-
-        const distToFortress = getDistanceMeters(nextLat, nextLng, state.fortressLat, state.fortressLng);
-        // Thử thách active nếu ở xa Fortress HOẶC đang có Tier > 0.
-        // Nếu đang ở Fortress với Tier 0, ta giữ nguyên trạng thái cũ (có thể là true do người dùng vừa chọn).
+        const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
         if (distToFortress > FORTRESS_INTERACTION_METERS || (state.worldTier || 0) > 0) {
             setIsChallengeActive(true);
         }
 
-        if (data.curseTrigger && data.encounter) {
-          setEncounter(data.encounter);
+        if (curseTrigger && encounter) {
+          setEncounter(encounter);
           setShowCurseModal(true);
-          return { curseTrigger: true, encounter: data.encounter };
+          return { curseTrigger: true, encounter };
         }
-      }
-      return { curseTrigger: false, encounter: null };
+        
+        return { curseTrigger: false, encounter: null };
     } catch (err) {
       console.error('[LooterGame] moveBoat error:', err);
       return { curseTrigger: false, encounter: null };
     } finally {
       setIsMoving(false);
     }
-  }, [deviceId, apiUrl, state.fortressLat, state.fortressLng, notify, setState, setIsChallengeActive, setEncounter, setShowCurseModal]);
+  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;

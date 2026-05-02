@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { createPortalWorldItems } from '../utils/looterHelpers';
+import { simulateCombat } from '../engine/combat';
 import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
@@ -14,7 +15,8 @@ interface UseLooterStateManagerProps {
   setIsChallengeActive: (v: boolean) => void;
   setGlobalSettings: (v: any) => void;
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void;
-  saveBags: (bags: BagItem[]) => Promise<void>;
+  saveBags?: (bags: BagItem[]) => void;
+  syncState: (state: LooterGameState) => void;
   isChallengeActive: boolean;
 }
 
@@ -27,8 +29,9 @@ export function useLooterStateManager({
   setIsChallengeActive,
   setGlobalSettings,
   notify,
+  isChallengeActive,
   saveBags,
-  isChallengeActive
+  syncState
 }: UseLooterStateManagerProps) {
 
   const loadWorldItems = useCallback(async (forceActive?: boolean) => {
@@ -125,45 +128,93 @@ export function useLooterStateManager({
   const executeCombat = useCallback(async (opponentId: string, opponentInventory?: any[], opponentHp?: number, opponentBags?: any[]) => {
     if (!deviceId) throw new Error('No deviceId');
     try {
-      const data = await looterApi.executeCombat(apiUrl, deviceId, opponentId, opponentInventory, opponentHp, opponentBags);
-      if (data.success) {
-        return data.result;
-      }
-      throw new Error(data.error || 'Combat failed');
+      // 1. Build Player A (User)
+      const playerA = {
+          inventory: state.inventory,
+          bag: state.bags?.[0],
+          activeCurses: state.activeCurses,
+          baseMaxHp: 100 // Default base
+      };
+
+      // 2. Build Player B (Opponent/Bot)
+      const playerB = {
+          inventory: opponentInventory || [],
+          bag: opponentBags?.[0],
+          activeCurses: {},
+          // Approximate base max HP since we only have total HP. 
+          // Actually, totalHp = base + stats.totalHp. So base = totalHp - stats.totalHp.
+          // For simplicity, just use opponentHp as baseMaxHp if we don't have accurate decomposition.
+          baseMaxHp: opponentHp || 100
+      };
+
+      const result = simulateCombat(playerA, playerB);
+
+      // 3. Update Local State
+      setState(prev => {
+          let newInventory = [...prev.inventory];
+          let hp = result.finalHpA;
+
+          if (result.winner === 'A') {
+              // Gained items. They go to staging or empty slots. We let CombatLootModal handle claiming them, so we DON'T add them here automatically!
+              // Wait, the API used to return `result.droppedItems`. CombatLootModal displays them. So we just return them.
+          } else if (result.winner === 'B') {
+              // Lost items. Remove them from inventory.
+              const lostUids = result.droppedItems.map((i: any) => i.uid);
+              newInventory = newInventory.filter(i => !lostUids.includes(i.uid));
+              // Player respawns at fortress with full HP if they die
+              if (hp <= 0) {
+                  hp = 100;
+                  // Should we teleport them to fortress? The `returnToFortress` is usually called on death.
+              }
+          }
+
+          const nextState = { ...prev, inventory: newInventory, currentHp: hp };
+          syncState(nextState);
+          return nextState;
+      });
+
+      return result;
     } catch (err) {
       console.error('[LooterGame] executeCombat error:', err);
       throw err;
     }
-  }, [deviceId, apiUrl]);
+  }, [deviceId, state, setState, syncState]);
 
   const curseChoice = useCallback(async (choice: 'flee' | 'challenge') => {
     if (!deviceId) return;
     try {
-      const data = await looterApi.curseChoice(apiUrl, deviceId, choice);
-      if (data.success) {
-        if (choice === 'flee') notify('Bạn đã bỏ trốn thành công', 'info');
-        await loadState();
+      if (choice === 'flee') {
+          // Flee penalty: Lose some energy or drop random item
+          setState(prev => {
+             const nextState = { ...prev };
+             syncState(nextState);
+             return nextState;
+          });
+          notify('Bạn đã bỏ trốn thành công', 'info');
       }
     } catch (err) {
       console.error('[LooterGame] curseChoice error:', err);
     }
-  }, [deviceId, apiUrl, loadState, notify]);
+  }, [deviceId, setState, notify, syncState]);
 
   const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
     setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
     try {
-      const data = await looterApi.minigameLose(apiUrl, deviceId, spawnId);
-      if (data.success) {
-        setState(prev => ({ ...prev, cursePercent: data.cursePercent }));
-        return true;
-      }
-      return false;
+      // Offline minigame penalty: increase curse percent by 10%
+      let newCurse = 0;
+      setState(prev => {
+          newCurse = Math.min((prev.cursePercent || 0) + 10, 100);
+          const nextState = { ...prev, cursePercent: newCurse };
+          syncState(nextState);
+          return nextState;
+      });
+      return true;
     } catch (err) {
       console.error('[LooterGame] minigamePenalty error:', err);
       return false;
     }
-  }, [deviceId, apiUrl, setState, setWorldItems]);
+  }, [deviceId, setState, setWorldItems, syncState]);
 
   return useMemo(() => ({ 
     loadWorldItems, loadState, initGame, 

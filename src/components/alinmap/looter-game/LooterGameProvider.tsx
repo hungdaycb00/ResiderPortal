@@ -112,13 +112,28 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);
 
   const { runInQueue, isSyncing } = useLooterQueue();
-  const { saveInventory, saveBags, saveStorage } = useLooterData({ deviceId, apiUrl: API_URL, setState });
+  const { saveInventory, saveBags, saveStorage, syncState } = useLooterData({ deviceId, apiUrl: API_URL, setState });
+
+  // Handle BeforeUnload for final sync
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!deviceId) return;
+      try {
+        const payload = JSON.stringify({ deviceId, state });
+        navigator.sendBeacon(`${API_URL}/api/looter/sync`, new Blob([payload], { type: 'application/json' }));
+      } catch (e) {
+        console.error('[Looter] beforeunload sync error', e);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [deviceId, state]);
 
   // 3. Initialize Hooks
   const stateManager = useLooterStateManager({
     deviceId, apiUrl: API_URL, state, setState, setWorldItems,
     setIsChallengeActive, setGlobalSettings, notify, isChallengeActive: ui.isChallengeActive,
-    saveBags
+    saveBags, syncState
   });
 
   const inventory = useLooterInventory({
@@ -207,21 +222,12 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
   // 4. Effects
   
-
-
-
-
-  // Heartbeat Synchronization
+  // Initial load
   useEffect(() => {
     if (!deviceId || !ui.isLooterGameMode) return;
     actionsValue.loadState({ skipIfBusy: true });
-    const interval = setInterval(() => {
-      actionsValue.loadState({ skipIfBusy: true });
-    }, SYNC_HEARTBEAT_MS);
-    return () => clearInterval(interval);
-  }, [deviceId, ui.isLooterGameMode, actionsValue.loadState]);
-
-
+    // Heartbeat removed for offline-first architecture
+  }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
   return (
     <LooterStateContext.Provider value={stateValue}>

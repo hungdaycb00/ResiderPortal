@@ -73,6 +73,9 @@ export const looterApi = {
   initGame: (apiUrl: string, deviceId: string, lat: number, lng: number) =>
     post(apiUrl, 'init', { deviceId, lat, lng }),
 
+  syncState: (apiUrl: string, deviceId: string, state: Partial<LooterGameState>) =>
+    post(apiUrl, 'sync', { deviceId, state }),
+
   moveBoat: (apiUrl: string, deviceId: string, toLat: number, toLng: number) =>
     post(apiUrl, 'move', { deviceId, toLat, toLng }),
 
