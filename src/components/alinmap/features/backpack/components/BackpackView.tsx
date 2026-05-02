@@ -147,10 +147,16 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
  
           {/* Bag Slot - Integrated in Header */}
           <div 
-            className={`h-8 w-8 rounded-lg border flex items-center justify-center transition-all hover:scale-110 ${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`}
+            className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${
+              isHoveringBagSlot && (draggingItem as any)?.type === 'bag' 
+                ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20' 
+                : `${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`
+            }`}
+            onPointerEnter={() => setIsHoveringBagSlot(true)}
+            onPointerLeave={() => setIsHoveringBagSlot(false)}
             title={formatBagTooltip(activeBag)}
           >
-             <span className="text-lg leading-none">{activeBag?.icon || '🎒'}</span>
+             <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
           </div>
         </div>
  
@@ -177,7 +183,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
               }
             }}
             onDropOutside={(item) => {
-              if (state.currentLat && state.currentLng) {
+              if (isHoveringBagSlot && (item as any).type === 'bag') {
+                equipBag(item.uid);
+                setIsHoveringBagSlot(false);
+              } else if (state.currentLat && state.currentLng) {
                 dropItems([item.uid], state.currentLat, state.currentLng);
               }
             }}
