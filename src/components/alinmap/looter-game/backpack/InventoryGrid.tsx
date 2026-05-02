@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import type { LooterItem, BagItem } from './types';
 import { MAX_GRID_W, MAX_GRID_H } from './constants';
 import InventoryItem from './components/InventoryItem';
@@ -44,6 +45,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   const {
     draggingItem,
     dragPos,
+    dragClientPos,
     dragGridPos,
     containerRef,
     onPointerDown,
@@ -173,19 +175,21 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
           )}
 
           {/* Active Dragging Item */}
-          {draggingItem && (
+          {draggingItem && createPortal(
             <InventoryItem
               key="dragging"
               item={draggingItem}
               cellSize={cellSize}
               style={{
-                left: dragPos.x,
-                top: dragPos.y,
+                position: 'fixed',
+                left: dragClientPos.x,
+                top: dragClientPos.y,
                 pointerEvents: 'none',
-                zIndex: 100,
+                zIndex: 999999,
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
               }}
-            />
+            />,
+            document.body
           )}
 
           {/* Item Popup */}

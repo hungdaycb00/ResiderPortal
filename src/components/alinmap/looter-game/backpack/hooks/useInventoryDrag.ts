@@ -25,6 +25,7 @@ export function useInventoryDrag({
 }: UseInventoryDragProps) {
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [dragClientPos, setDragClientPos] = useState({ x: 0, y: 0 });
   const [dragGridPos, setDragGridPos] = useState<{ x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,6 +122,7 @@ export function useInventoryDrag({
 
     setDraggingItem(item);
     setDragPos({ x: startX - itemW / 2, y: startY - itemH / 2 });
+    setDragClientPos({ x: e.clientX - itemW / 2, y: e.clientY - itemH / 2 });
     
     // Initial snap position
     const gx = Math.round((startX - itemW / 2) / cellSize);
@@ -148,6 +150,7 @@ export function useInventoryDrag({
     const newY = currentY - itemH / 2;
 
     setDragPos({ x: newX, y: newY });
+    setDragClientPos({ x: e.clientX - itemW / 2, y: e.clientY - itemH / 2 });
 
     const gx = Math.round(newX / cellSize);
     const gy = Math.round(newY / cellSize);
@@ -219,6 +222,7 @@ export function useInventoryDrag({
   return {
     draggingItem,
     dragPos,
+    dragClientPos,
     dragGridPos,
     containerRef,
     onPointerDown,
