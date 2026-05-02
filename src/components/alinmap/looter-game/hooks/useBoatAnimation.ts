@@ -64,18 +64,13 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
 
-    if (currentLat != null && currentLng != null && myObfPos) {
-      const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
-      const pxY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
-      boatOffsetX.set(pxX);
-      boatOffsetY.set(pxY);
-      animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
-      animate(panY, -pxY, { duration: 0.45, ease: 'easeInOut' });
-    } else {
-      animate(panX, -(boatOffsetX?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
-      animate(panY, -(boatOffsetY?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
-    }
-  }, [boatOffsetX, boatOffsetY, panX, panY, currentLat, currentLng, myObfPos]);
+    // Luôn định vị theo vị trí hình ảnh thuyền hiện tại (boatOffsetX/Y)
+    const currentBoatPxX = boatOffsetX.get();
+    const currentBoatPxY = boatOffsetY.get();
+    
+    animate(panX, -currentBoatPxX, { duration: 0.45, ease: 'easeInOut' });
+    animate(panY, -currentBoatPxY, { duration: 0.45, ease: 'easeInOut' });
+  }, [boatOffsetX, boatOffsetY, panX, panY]);
 
   const stopPanFollow = useCallback(() => {
     userDraggingRef.current = true;
