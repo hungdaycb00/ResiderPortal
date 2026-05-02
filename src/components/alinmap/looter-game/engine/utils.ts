@@ -39,15 +39,15 @@ function calcBoatSpeed(level, activeCurses = {}) {
 
 export function isItemInBag(item: any, gx: number, gy: number, bag?: any) {
   if (!bag) return true;
-  const w = toFiniteNumber(item?.gridW, 1);
-  const h = toFiniteNumber(item?.gridH, 1);
+  const w = toFiniteNumber(item?.gridW ?? item?.width, 1);
+  const h = toFiniteNumber(item?.gridH ?? item?.height, 1);
   const shape = item?.shape;
 
-  const bagX = toFiniteNumber(bag?.innerX, 0);
-  const bagY = toFiniteNumber(bag?.innerY, 0);
-  const bagW = toFiniteNumber(bag?.innerW, 5);
-  const bagH = toFiniteNumber(bag?.innerH, 5);
-  const bagShape = bag?.innerShape || [];
+  const bagX = toFiniteNumber(bag?.gridX, 0);
+  const bagY = toFiniteNumber(bag?.gridY, 0);
+  const bagW = toFiniteNumber(bag?.width, 5);
+  const bagH = toFiniteNumber(bag?.height, 5);
+  const bagShape = bag?.shape || [];
 
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
@@ -59,7 +59,7 @@ export function isItemInBag(item: any, gx: number, gy: number, bag?: any) {
         const relY = ty - bagY;
 
         if (relX < 0 || relX >= bagW || relY < 0 || relY >= bagH) return false;
-        if (bagShape.length > 0 && bagShape[relY] && bagShape[relY][relX] === 0) return false;
+        if (bagShape.length > 0 && bagShape[relY] && !bagShape[relY][relX]) return false;
       }
     }
   }

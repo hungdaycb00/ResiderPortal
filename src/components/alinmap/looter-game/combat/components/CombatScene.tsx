@@ -51,19 +51,33 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                     )}
                 </AnimatePresence>
 
+                {/* HUD Mode: Render Enemy Boat beside User Boat */}
+                <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: [0, -6, 0], opacity: 1 }}
+                    transition={{ 
+                        opacity: { duration: 0.5 },
+                        y: { duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }
+                    }}
+                    className="absolute top-1/2 left-[calc(50%+60px)] -translate-y-1/2 flex flex-col items-center z-40 pointer-events-none"
+                >
+                    <span className="text-4xl md:text-5xl drop-shadow-2xl" style={{ transform: 'scaleX(-1)' }}>🚢</span>
+                    <span className="text-[10px] font-black text-red-200 bg-black/60 px-2 py-0.5 rounded-full mt-1 max-w-[80px] truncate border border-red-500/30">{encounter.name}</span>
+                </motion.div>
+
                 {/* Start Button - Floating Center */}
                 {phase === 'ready' && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+                    <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-50">
                         <motion.button
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleStart}
-                            className="px-10 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-xl rounded-full shadow-[0_0_30px_rgba(245,158,11,0.4)] border-2 border-amber-300/30 flex items-center gap-3"
+                            className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-base rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] border-2 border-amber-300/30 flex items-center gap-2"
                         >
-                            <Swords className="w-6 h-6" />
-                            Bắt Đầu
+                            <Swords className="w-4 h-4" />
+                            Start
                         </motion.button>
                     </div>
                 )}

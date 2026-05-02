@@ -85,8 +85,8 @@ function simulateCombat(playerA, playerB) {
   let tick = 0;
   const MAX_TICKS = 100000;
 
-  const itemsA = inventoryA.filter(isPlacedCombatItem);
-  const itemsB = inventoryB.filter(isPlacedCombatItem);
+  const itemsA = inventoryA.filter(item => isPlacedCombatItem(item, playerA?.bag));
+  const itemsB = inventoryB.filter(item => isPlacedCombatItem(item, playerB?.bag));
 
   while (hpA.current > 0 && hpB.current > 0 && tick < MAX_TICKS) {
     tick++;

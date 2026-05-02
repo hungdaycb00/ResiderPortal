@@ -28,8 +28,8 @@ export function useInventoryDrag({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isItemTouchingBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
+    const w = item.gridW ?? (item as any).width ?? 1;
+    const h = item.gridH ?? (item as any).height ?? 1;
     const bagW = bag.width;
     const bagH = bag.height;
 
@@ -42,8 +42,8 @@ export function useInventoryDrag({
   }, []);
 
   const isItemCompletelyInBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
+    const w = item.gridW ?? (item as any).width ?? 1;
+    const h = item.gridH ?? (item as any).height ?? 1;
     const shape = item.shape;
     const bagShape = bag.shape;
 
@@ -68,8 +68,8 @@ export function useInventoryDrag({
   }, []);
 
   const checkOverlap = useCallback((item: LooterItem, gridX: number, gridY: number, currentItems: LooterItem[]) => {
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
+    const w = item.gridW ?? (item as any).width ?? 1;
+    const h = item.gridH ?? (item as any).height ?? 1;
     const shape = item.shape;
 
     // 1. Boundary check
@@ -78,8 +78,8 @@ export function useInventoryDrag({
     // 3. Overlap with other items check
     return currentItems.some((other) => {
       if (other.uid === item.uid || other.gridX < 0) return false;
-      const ow = other.gridW || 1;
-      const oh = other.gridH || 1;
+      const ow = other.gridW ?? (other as any).width ?? 1;
+      const oh = other.gridH ?? (other as any).height ?? 1;
       const oshape = other.shape;
 
       for (let r = 0; r < h; r++) {
@@ -104,8 +104,10 @@ export function useInventoryDrag({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const itemW = (item.gridW || 1) * cellSize;
-    const itemH = (item.gridH || 1) * cellSize;
+    const w = item.gridW ?? (item as any).width ?? 1;
+    const h = item.gridH ?? (item as any).height ?? 1;
+    const itemW = w * cellSize;
+    const itemH = h * cellSize;
 
     // Centering requirement: Item center is at pointer position
     const startX = e.clientX - rect.left;
@@ -127,8 +129,10 @@ export function useInventoryDrag({
     if (!draggingItem || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const itemW = (draggingItem.gridW || 1) * cellSize;
-    const itemH = (draggingItem.gridH || 1) * cellSize;
+    const w = draggingItem.gridW ?? (draggingItem as any).width ?? 1;
+    const h = draggingItem.gridH ?? (draggingItem as any).height ?? 1;
+    const itemW = w * cellSize;
+    const itemH = h * cellSize;
 
     const currentX = e.clientX - rect.left;
     const currentY = e.clientY - rect.top;

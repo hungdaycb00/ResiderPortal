@@ -79,26 +79,29 @@ const CombatScreen: React.FC = () => {
 
             {/* 2. Mobile: Enemy Stats at Top (Inventory Only) */}
             {!state.showCurseModal && (
-                <div className="md:hidden absolute top-0 left-0 right-0 bg-black/40 backdrop-blur-md border-b border-white/10 p-2 pointer-events-auto">
-                    <div className="flex items-center justify-between mb-2 px-1">
-                         <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
-                         <div className="flex gap-3 text-[9px] font-bold text-white/80">
-                            <span>⚔️ {encounter.totalWeight}</span>
-                            <span>⚡ +{combat.botStats.eRegen + 10}/s</span>
-                         </div>
+                <>
+                    <div className="md:hidden absolute top-0 left-0 right-0 bg-black/40 backdrop-blur-md border-b border-white/10 p-2 pointer-events-auto">
+                        <div className="flex items-center justify-between mb-2 px-1">
+                             <span className="text-xs font-black text-red-400 uppercase tracking-widest">{encounter.name}</span>
+                             <div className="flex gap-3 text-[9px] font-bold text-white/80">
+                                <span>⚔️ {encounter.totalWeight}</span>
+                                <span>⚡ +{combat.botStats.eRegen + 10}/s</span>
+                             </div>
+                        </div>
+                        <div className="flex justify-center overflow-auto py-1">
+                            <CombatInventoryGrid 
+                                items={encounter.inventory || []} 
+                                gridWidth={encounter.bags?.[0]?.width || 6} 
+                                gridHeight={encounter.bags?.[0]?.height || 4} 
+                                bag={encounter.bags?.[0]} 
+                                readOnly 
+                                cellSize={28}
+                            />
+                        </div>
                     </div>
-                    <div className="flex justify-center overflow-auto py-1">
-                        <CombatInventoryGrid 
-                            items={encounter.inventory || []} 
-                            gridWidth={encounter.bags?.[0]?.width || 6} 
-                            gridHeight={encounter.bags?.[0]?.height || 4} 
-                            bag={encounter.bags?.[0]} 
-                            readOnly 
-                            cellSize={28}
-                        />
-                    </div>
-                    {/* Enemy HP/EN Bar moved here */}
-                    <div className="mt-2 ml-auto mr-2 w-48">
+
+                    {/* Enemy HP/EN Bar moved outside */}
+                    <div className="md:hidden absolute top-[160px] right-2 w-48 pointer-events-auto">
                         <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl">
                             <div className="flex justify-between items-center mb-0.5 px-0.5">
                                 <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
@@ -116,7 +119,7 @@ const CombatScreen: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
 
             {/* 3. Mobile Player HUD: Above ChallengeStatusHeader */}
