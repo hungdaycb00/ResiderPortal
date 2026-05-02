@@ -9,7 +9,7 @@ interface UseInventoryDragProps {
   gridH: number;
   activeBag?: BagItem;
   onItemLayoutChange?: (items: LooterItem[]) => void;
-  onDropOutside?: (item: LooterItem) => void;
+  onDropOutside?: (item: LooterItem, e?: PointerEvent | React.PointerEvent) => void;
   onEquipBag?: (itemUid: string) => void;
 }
 
@@ -166,7 +166,7 @@ export function useInventoryDrag({
       const isOutside = e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom;
       
       if (isOutside) {
-        onDropOutside?.(draggingItem);
+        onDropOutside?.(draggingItem, e);
         setDraggingItem(null);
         setDragGridPos(null);
         return;

@@ -109,6 +109,31 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     lastPosRef.current = { lat: state.currentLat, lng: state.currentLng };
   }, [state.currentLat, state.currentLng, state.inventory, activeBag, dropItems, isItemInsideBag]);
 
+  // Theo dõi tọa độ toàn cục để xử lý hover trên Mobile
+  useEffect(() => {
+    if (!draggingItem || (draggingItem as any).type !== 'bag') {
+      setIsHoveringBagSlot(false);
+      return;
+    }
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const bagSlot = document.getElementById('header-bag-slot');
+      if (bagSlot) {
+        const rect = bagSlot.getBoundingClientRect();
+        const isOver = (
+          e.clientX >= rect.left - 10 &&
+          e.clientX <= rect.right + 10 &&
+          e.clientY >= rect.top - 10 &&
+          e.clientY <= rect.bottom + 10
+        );
+        setIsHoveringBagSlot(isOver);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    return () => window.removeEventListener('pointermove', handlePointerMove);
+  }, [draggingItem]);
+
   return (
     <div className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
       {/* Header Area - Horizontal Stats */}
@@ -148,6 +173,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
  
           {/* Bag Slot - Integrated in Header */}
           <div 
+            id="header-bag-slot"
             className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${
               (draggingItem as any)?.type === 'bag' 
                 ? isHoveringBagSlot 
@@ -186,7 +212,28 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                 equipBag(item.uid);
               }
             }}
-            onDropOutside={(item) => {
+            onDropOutside={(item, e) => {
+              if (e) {
+                const bagSlot = document.getElementById('header-bag-slot');
+                if (bagSlot) {
+                  const rect = bagSlot.getBoundingClientRect();
+                  // Thêm padding nhỏ (10px) để dễ thả hơn trên điện thoại
+                  if (
+                    e.clientX >= rect.left - 10 &&
+                    e.clientX <= rect.right + 10 &&
+                    e.clientY >= rect.top - 10 &&
+                    e.clientY <= rect.bottom + 10
+                  ) {
+                    if ((item as any).type === 'bag') {
+                      equipBag(item.uid);
+                      setIsHoveringBagSlot(false);
+                    }
+                    return;
+                  }
+                }
+              }
+
+              // Dự phòng bằng isHoveringBagSlot cho PC
               if (isHoveringBagSlot && (item as any).type === 'bag') {
                 equipBag(item.uid);
                 setIsHoveringBagSlot(false);

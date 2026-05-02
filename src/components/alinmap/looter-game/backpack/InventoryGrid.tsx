@@ -17,7 +17,7 @@ interface InventoryGridProps {
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
   onDragStart?: (item: LooterItem, source: any, offset: any) => void;
   onDragEnd?: () => void;
-  onDropOutside?: (item: LooterItem) => void;
+  onDropOutside?: (item: LooterItem, e?: PointerEvent | React.PointerEvent) => void;
   onEquipBag?: (itemUid: string) => void;
   onDragStateChange?: (item: LooterItem | null) => void;
   cellSize?: number;
