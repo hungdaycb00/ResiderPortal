@@ -81,7 +81,7 @@ export function useInventoryDrag({
     // 1. Boundary check
     if (gridX < 0 || gridY < 0 || gridX + w > gridW || gridY + h > gridH) return true;
 
-    // 3. Overlap with other items check
+    // 2. Overlap with other items check
     return currentItems.some((other) => {
       if (other.uid === item.uid || other.gridX < 0) return false;
       const isOtherBag = (other as any).type === 'bag';
@@ -128,8 +128,6 @@ export function useInventoryDrag({
     const gx = Math.round((startX - itemW / 2) / cellSize);
     const gy = Math.round((startY - itemH / 2) / cellSize);
     setDragGridPos({ x: gx, y: gy });
-
-    // Lock pointer for movement tracking removed to allow interaction with other elements
   }, [cellSize]);
 
   const onPointerMove = useCallback((e: PointerEvent | React.PointerEvent) => {
@@ -178,7 +176,6 @@ export function useInventoryDrag({
 
     // 1. Kiểm tra xem có bị chồng lấp vật phẩm khác không
     if (checkOverlap(draggingItem, gx, gy, items)) {
-      // Chồng lấp hoặc ra ngoài biên toàn cục -> Quay về vị trí cũ
       setDraggingItem(null);
       setDragGridPos(null);
       return;
@@ -187,24 +184,28 @@ export function useInventoryDrag({
     let finalGx = gx;
     let finalGy = gy;
 
-    // 2. Kiểm tra balo active
-    if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
-      if ((draggingItem as any).type === 'bag') {
-        // Drop a bag onto the active bag -> Equip it
-        onEquipBag?.(draggingItem.uid);
-        setDraggingItem(null);
-        setDragGridPos(null);
-        return;
-      }
-      
-      if (!isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
-        // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài
-        finalGx = -1;
-        finalGy = -1;
+    // 2. Kiểm tra tương tác với balo active
+    if (activeBag) {
+      const touching = isItemTouchingBag(draggingItem, gx, gy, activeBag);
+      if (touching) {
+        if ((draggingItem as any).type === 'bag') {
+          // Drop a bag onto the active bag -> Equip it
+          onEquipBag?.(draggingItem.uid);
+          setDraggingItem(null);
+          setDragGridPos(null);
+          return;
+        }
+        
+        // Dùng isItemInBag chuẩn từ engine/utils
+        if (!isItemInBag(draggingItem, gx, gy, activeBag)) {
+          // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài staging
+          finalGx = -1;
+          finalGy = -1;
+        }
       }
     }
 
-    // Hợp lệ -> Lưu vị trí mới (kể cả ngoài balo)
+    // Hợp lệ -> Lưu vị trí mới
     const newItems = items.map((i) => 
       i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i
     );
@@ -212,7 +213,11 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     setDragGridPos(null);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
+  }, [
+    draggingItem, dragGridPos, items, activeBag, 
+    checkOverlap, isItemTouchingBag, onEquipBag, 
+    onItemLayoutChange, onDropOutside
+  ]);
 
   useEffect(() => {
     if (draggingItem) {
@@ -235,6 +240,13 @@ export function useInventoryDrag({
     onPointerMove,
     onPointerUp,
     checkOverlap, // Trả về hàm 4 tham số gốc
-    isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
+    isInvalidPosition: (gx: number, gy: number) => {
+      if (!draggingItem) return false;
+      if (checkOverlap(draggingItem, gx, gy, items)) return true;
+      if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
+        return !isItemInBag(draggingItem, gx, gy, activeBag);
+      }
+      return false;
+    }
   };
 }

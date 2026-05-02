@@ -107,10 +107,17 @@ export function useLooterInventory({
       itemsToKeep.push(oldBagAsItem);
     }
 
+    // Optimistic update
+    setState(prev => ({
+      ...prev,
+      inventory: itemsToKeep,
+      bags: [newBag]
+    }));
+
     await saveInventory(itemsToKeep);
     await saveBags([newBag]);
     notify(`Đã trang bị ${newBag.name}`, 'success');
-  }, [state.inventory, state.bags, saveInventory, saveBags, notify]);
+  }, [state.inventory, state.bags, setState, saveInventory, saveBags, notify]);
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;

@@ -64,9 +64,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
                     {!isDesktop && mainTab === 'backpack' && showFullNav && (
                         <button 
                             onClick={() => setShowFullNav(false)}
-                            className="absolute -top-10 left-1/2 -translate-x-1/2 w-10 h-10 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-full flex items-center justify-center shadow-lg text-gray-400"
+                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-6 bg-white/95 backdrop-blur-xl border-t border-x border-gray-100 rounded-t-xl flex items-center justify-center shadow-lg text-amber-500"
                         >
-                            <ChevronDown className="w-5 h-5" />
+                            <ChevronDown className="w-4 h-4" />
                         </button>
                     )}
                     <button onClick={() => handleTabClick('discover')} className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 ${mainTab === 'discover' && !selectedUser ? 'text-blue-600' : 'text-gray-400'}`}>
