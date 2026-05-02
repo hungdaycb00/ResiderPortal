@@ -31,15 +31,41 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
-  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
+  const { state, saveInventory, openFortressStorage, draggingItem, equipBag, showNotification, draggingMapItem, setDraggingMapItem, pickupItem, dropItems } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
+  const [externalHoverCell, setExternalHoverCell] = useState<{ x: number, y: number } | null>(null);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
 
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
   const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
 
+  useEffect(() => {
+    if (!draggingMapItem) return;
 
+    const handlePointerMove = (e: PointerEvent) => {
+      setDragPos({ x: 0, y: 0, clientX: e.clientX, clientY: e.clientY });
+    };
+
+    const handlePointerUp = async (e: PointerEvent) => {
+      if (externalHoverCell) {
+        const success = await pickupItem(draggingMapItem.spawnId, externalHoverCell.x, externalHoverCell.y);
+        if (success) {
+           // Animation or sound here if needed
+        }
+      }
+      setDraggingMapItem(null);
+      setExternalHoverCell(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [draggingMapItem, externalHoverCell, pickupItem, setDraggingMapItem]);
 
   const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
     saveInventory(newItems);
@@ -180,12 +206,41 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld }) => {
               }
             }}
             cellSize={cellSize}
+            externalDragItem={draggingMapItem ? { ...draggingMapItem.item, uid: draggingMapItem.spawnId } as any : null}
+            externalDragOffset={{ x: cellSize / 2, y: cellSize / 2 }}
+            externalHoverCell={externalHoverCell}
+            onHoverCellChange={setExternalHoverCell}
             gridW={MAX_GRID_W}
             gridH={dynamicGridH}
           />
         </div>
       </div>
 
+
+      {draggingMapItem && createPortal(
+        <div 
+          className="fixed pointer-events-none z-[999999] opacity-90 scale-110 shadow-2xl" 
+          style={{ 
+            left: dragPos.clientX - cellSize / 2, 
+            top: dragPos.clientY - cellSize / 2, 
+            width: (draggingMapItem.item.gridW || 1) * cellSize, 
+            height: (draggingMapItem.item.gridH || 1) * cellSize 
+          }}
+        >
+          {Array.from({ length: draggingMapItem.item.gridH || 1 }).map((_, r) => Array.from({ length: draggingMapItem.item.gridW || 1 }).map((_, c) => (
+            <div 
+              key={`${r}-${c}`} 
+              className="absolute border-2 rounded-lg flex items-center justify-center bg-cyan-500/10 border-cyan-500/30 text-cyan-400" 
+              style={{ left: c * cellSize + 1, top: r * cellSize + 1, width: cellSize - 2, height: cellSize - 2 }}
+            >
+              {r === 0 && c === 0 && (
+                <span className="text-3xl drop-shadow-2xl">{draggingMapItem.item.icon}</span>
+              )}
+            </div>
+          )))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

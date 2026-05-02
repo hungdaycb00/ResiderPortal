@@ -16,12 +16,6 @@ interface InventoryGridProps {
   onDragStart?: (item: LooterItem, source: any, offset: any) => void;
   onDragEnd?: () => void;
   onDropOutside?: (item: LooterItem) => void;
-  onExternalDrop?: (item: LooterItem, gx: number, gy: number) => void;
-  externalDragItem?: LooterItem | null;
-  externalDragOffset?: { x: number; y: number } | null;
-  externalHoverCell?: { x: number; y: number } | null;
-  dragSource?: 'inventory' | 'storage';
-  hideStorage?: boolean;
   cellSize?: number;
   gridW?: number;
   gridH?: number;
@@ -33,16 +27,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
   onItemDoubleClick,
   onItemClick,
   onItemLayoutChange,
-  onHoverCellChange,
-  onDragStart,
-  onDragEnd,
   onDropOutside,
-  onExternalDrop,
-  externalDragItem,
-  externalDragOffset,
-  externalHoverCell,
-  dragSource,
-  hideStorage,
   cellSize = 40,
   gridW = MAX_GRID_W,
   gridH = MAX_GRID_H,
@@ -70,10 +55,6 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     activeBag,
     onItemLayoutChange,
     onDropOutside,
-    onDragStart,
-    onDragEnd,
-    onHoverCellChange,
-    dragSource,
   });
 
   const bagOcc = React.useMemo(() => {
@@ -136,12 +117,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
     <div 
       className="flex flex-col select-none touch-none w-full h-full relative"
       onPointerMove={onPointerMove}
-      onPointerUp={(e) => {
-        if (!draggingItem && externalDragItem && externalHoverCell) {
-          onExternalDrop?.(externalDragItem, externalHoverCell.x, externalHoverCell.y);
-        }
-        onPointerUp(e);
-      }}
+      onPointerUp={onPointerUp}
     >
 
       <div className="w-full h-full flex items-start justify-center pt-0 pointer-events-none">
@@ -176,17 +152,17 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
             />
           ))}
 
-          {/* Ghost Preview (Internal & External) */}
-          {(draggingItem || externalDragItem) && (dragGridPos || externalHoverCell) && (
+          {/* Ghost Preview */}
+          {draggingItem && dragGridPos && (
             <InventoryItem
               key="ghost"
-              item={(draggingItem || externalDragItem)!}
+              item={draggingItem}
               cellSize={cellSize}
               isGhost={true}
-              isInvalid={isInvalidPosition((dragGridPos || externalHoverCell)!.x, (dragGridPos || externalHoverCell)!.y)}
+              isInvalid={isInvalidPosition(dragGridPos.x, dragGridPos.y)}
               style={{
-                left: (dragGridPos || externalHoverCell)!.x * cellSize,
-                top: (dragGridPos || externalHoverCell)!.y * cellSize,
+                left: dragGridPos.x * cellSize,
+                top: dragGridPos.y * cellSize,
               }}
             />
           )}

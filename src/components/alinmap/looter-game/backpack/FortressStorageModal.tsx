@@ -166,7 +166,6 @@ export default function FortressStorageModal() {
             externalDragOffset={dragSource === 'inventory' ? dragOffset : null}
             externalHoverCell={dragSource === 'inventory' ? storageHoverCell : null}
             cellSize={38}
-            dragSource="storage"
           />
         </div>
       </div>
@@ -214,7 +213,6 @@ export default function FortressStorageModal() {
             externalDragOffset={dragSource === 'storage' ? dragOffset : null}
             externalHoverCell={dragSource === 'storage' ? inventoryHoverCell : null}
             cellSize={38}
-            dragSource="inventory"
           />
         </div>
       </div>

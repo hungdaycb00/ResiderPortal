@@ -79,10 +79,6 @@ export function useLooterBoat({
     }, [state?.cursePercent, curseVisual]);
 
     const stopBoat = useCallback(() => {
-        if (!isAnimatingRef.current) {
-            setBoatTargetPin(null);
-            return;
-        }
         stopAllAnimations();
         setBoatTargetPin(null);
         if (myObfPos) {
@@ -90,7 +86,7 @@ export function useLooterBoat({
             const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
             moveBoat(boatLat, boatLng);
         }
-    }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat, isAnimatingRef]);
+    }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat]);
 
     const executeMoveToExact = useCallback((lat: number, lng: number) => {
         if (showMinigame || encounter || showCurseModal || combatResult) {
