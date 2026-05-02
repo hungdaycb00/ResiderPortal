@@ -7,7 +7,7 @@ import { useCombatLoop } from './combat/hooks/useCombatLoop';
 import { CombatScene } from './combat/components/CombatScene';
 import { CombatStatsPanel } from './combat/components/CombatStatsPanel';
 import { FleeConfirmOverlay, CombatResultOverlay } from './combat/components/CombatOverlays';
-import { CombatInventoryGrid } from './backpack';
+import CombatInventoryGrid from './backpack/CombatInventoryGrid';
 
 const CombatScreen: React.FC = () => {
     const { state, encounter } = useLooterState();

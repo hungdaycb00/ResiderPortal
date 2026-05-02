@@ -1,7 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { LooterItem } from '../types';
-import { RARITY_COLORS } from '../constants';
+// import { RARITY_COLORS } from '../constants'; // Moved locally to avoid circular dependency issues
+
+const ITEM_RARITY_COLORS: Record<string, string> = {
+  common: 'border-sky-500/40 text-sky-500',
+  uncommon: 'border-emerald-500/40 text-emerald-500',
+  rare: 'border-amber-500/40 text-amber-500',
+  legendary: 'border-purple-500/40 text-purple-500',
+};
 
 interface InventoryItemProps {
   item: LooterItem;
@@ -33,7 +40,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
       className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm 
         ${isDragging ? 'opacity-20 z-10' : 'z-20'} 
         ${isGhost ? 'opacity-40 pointer-events-none z-10' : ''}
-        ${isInvalid ? 'border-red-500 bg-red-500/20' : (RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
+        ${isInvalid ? 'border-red-500 bg-red-500/20' : (ITEM_RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
         ${className}`}
       style={{
         ...style,
@@ -71,18 +78,6 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
       </div>
     </motion.div>
   );
-}, (prev, next) => {
-  return prev.item.uid === next.item.uid &&
-         prev.item.gridX === next.item.gridX &&
-         prev.item.gridY === next.item.gridY &&
-         prev.cellSize === next.cellSize &&
-         prev.isDragging === next.isDragging &&
-         prev.isGhost === next.isGhost &&
-         prev.isInvalid === next.isInvalid &&
-         prev.onClick === next.onClick &&
-         prev.style?.left === next.style?.left &&
-         prev.style?.top === next.style?.top &&
-         prev.className === next.className;
 });
 
 export default InventoryItem;
