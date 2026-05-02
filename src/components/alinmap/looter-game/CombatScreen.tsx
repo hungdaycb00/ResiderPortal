@@ -98,8 +98,8 @@ const CombatScreen: React.FC = () => {
                         />
                     </div>
                     {/* Enemy HP/EN Bar moved here */}
-                    <div className="mt-2 flex justify-center items-center gap-3 w-full">
-                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl w-48">
+                    <div className="mt-2 ml-auto mr-2 w-48">
+                        <div className="bg-black/60 backdrop-blur-xl rounded-xl border border-red-500/30 p-1.5 shadow-2xl">
                             <div className="flex justify-between items-center mb-0.5 px-0.5">
                                 <span className="text-[8px] font-black text-red-400 uppercase">HP</span>
                                 <span className="text-[8px] font-black text-white">{Math.max(0, Math.round(combat.hpB))}</span>
@@ -115,21 +115,13 @@ const CombatScreen: React.FC = () => {
                                 <motion.div className="h-full bg-gradient-to-r from-blue-600 to-purple-500" animate={{ width: `${(combat.actionProgressB / combat.maxActionBarB) * 100}%` }} />
                             </div>
                         </div>
-                        {combat.phase === 'ready' && (
-                            <button 
-                                onClick={() => setShowFleeConfirm(true)} 
-                                className="px-3 py-3 bg-red-600/80 hover:bg-red-500 border border-red-400/30 text-white text-xs font-bold rounded-xl transition-colors shadow-lg backdrop-blur-md shrink-0"
-                            >
-                                Chạy Trốn
-                            </button>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* 3. Mobile Player HUD: Positioned right above Start Button */}
+            {/* 3. Mobile Player HUD: Above ChallengeStatusHeader */}
             {!state.showCurseModal && (
-                <div className="md:hidden absolute top-[calc(50%-80px)] left-1/2 -translate-x-1/2 w-64 pointer-events-auto">
+                <div className="md:hidden absolute bottom-[46%] left-2 w-48 pointer-events-auto">
                      <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-cyan-500/30 p-2 shadow-2xl">
                         <div className="flex justify-between items-center mb-1 px-1">
                             <span className="text-[9px] font-black text-cyan-400">ME: {Math.round(combat.hpA)}/{combat.maxHpA}</span>

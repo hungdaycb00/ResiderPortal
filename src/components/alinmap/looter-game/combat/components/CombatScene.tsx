@@ -84,6 +84,17 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                     </div>
                 )}
 
+                {/* Flee Button - Same row as Player HUD */}
+                {phase === 'ready' && (
+                    <div className="absolute bottom-[46%] right-2 pointer-events-auto">
+                        <button 
+                            onClick={() => setShowFleeConfirm(true)} 
+                            className="px-4 py-2 bg-red-600/60 hover:bg-red-500 border border-red-400/30 text-white text-xs font-bold rounded-xl transition-colors shadow-lg backdrop-blur-md"
+                        >
+                            Chạy Trốn
+                        </button>
+                    </div>
+                )}
             </div>
         );
     }
