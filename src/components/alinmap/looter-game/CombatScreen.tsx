@@ -40,7 +40,12 @@ const CombatScreen: React.FC = () => {
             } else {
                 showNotification('Bạn đã thất bại...', 'error');
                 // Khi thất bại: teleport về thành trì + tắt challenge
-                returnToFortress();
+                if (typeof returnToFortress === 'function') {
+                    returnToFortress();
+                } else {
+                    console.error('[CombatScreen] returnToFortress is not a function');
+                    loadState();
+                }
             }
         }
 

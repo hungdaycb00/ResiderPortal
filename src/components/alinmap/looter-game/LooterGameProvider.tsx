@@ -206,7 +206,24 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     sellItems: (uids) => runInQueue(() => inventory.sellItems(uids)),
     storeItems: (uids, act, mode, gx, gy) => runInQueue(() => inventory.storeItems(uids, act, mode, gx, gy)),
     setWorldTier: (tier) => runInQueue(() => stateManager.setWorldTier(tier)),
-    returnToFortress: () => runInQueue(() => movement.returnToFortress()),
+    returnToFortress: () => runInQueue(async () => {
+      if (!deviceId) return;
+      try {
+        const data = await looterApi.returnToFortress(API_URL, deviceId);
+        if (data.success) {
+          setState(prev => ({
+            ...prev,
+            currentLat: prev.fortressLat,
+            currentLng: prev.fortressLng,
+            worldTier: -1
+          }));
+          setIsChallengeActive(false);
+          notify('Đã quay về Thành trì', 'success');
+        }
+      } catch (err) {
+        console.error('[LooterGame] returnToFortress error:', err);
+      }
+    }),
     loadWorldItems: (force) => runInQueue(() => stateManager.loadWorldItems(force)),
     dropItems: (uids, lat, lng) => runInQueue(() => inventory.dropItems(uids, lat, lng)),
     
