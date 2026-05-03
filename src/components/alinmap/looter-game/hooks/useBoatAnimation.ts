@@ -91,11 +91,11 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
 
     const boatX = boatOffsetX?.get?.() ?? 0;
     const boatY = boatOffsetY?.get?.() ?? 0;
-    // Enemy boat offset: +80px X, -20px Y -> midpoint: +40px X, -10px Y
-    const midX = boatX + 40;
-    const midY = boatY - 10;
-    animate(panX, -midX, { duration: 0.6, ease: 'easeInOut' });
-    animate(panY, -midY, { duration: 0.6, ease: 'easeInOut' });
+    // Enemy boat offset: +120px X, 0px Y -> midpoint: +60px X, 0px Y
+    const midX = boatX + 60;
+    const midY = boatY;
+    animate(panX, -midX, { duration: 0.8, ease: 'easeInOut' });
+    animate(panY, -midY, { duration: 0.8, ease: 'easeInOut' });
   }, [boatOffsetX, boatOffsetY, panX, panY]);
 
   return {

@@ -17,6 +17,7 @@ import {
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
+import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -100,6 +101,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         looterStateObj, isChallengeActive: !!isChallengeActive,
         myObfPos, looterBoat, setIsTierSelectorOpen
     });
+    
+    // Auto-focus camera on combat center
+    useCombatCamera(looterState.encounter, looterBoat.centerOnCombat, looterBoat.centerOnBoat);
 
     return (
         <div className="flex-1 relative overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>

@@ -194,11 +194,11 @@ export function useLooterBoat({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     ]);
 }
