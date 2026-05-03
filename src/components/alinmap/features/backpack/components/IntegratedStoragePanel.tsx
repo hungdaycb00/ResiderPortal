@@ -114,6 +114,7 @@ export default function IntegratedStoragePanel() {
 
       <AnimatePresence>
         <motion.div
+          id="integrated-storage-panel"
           initial={{ y: -400, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -400, opacity: 0 }}

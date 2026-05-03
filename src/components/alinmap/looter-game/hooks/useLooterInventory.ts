@@ -149,6 +149,8 @@ export function useLooterInventory({
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: string = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
+    
+    let success = false;
     setState(prev => {
         let newInventory = [...prev.inventory];
         let newStorage = [...prev.storage];
@@ -158,7 +160,8 @@ export function useLooterInventory({
             newInventory = newInventory.filter(i => !itemUids.includes(i.uid));
             
             itemsToStore.forEach(item => {
-                newStorage.push({ ...item, gridX: gridX ?? item.gridX, gridY: gridY ?? item.gridY });
+                // Reset coords to -1 so buildPlacedStorage can find a new spot
+                newStorage.push({ ...item, gridX: gridX ?? -1, gridY: gridY ?? -1 });
             });
         } else {
             const itemsToRetrieve = newStorage.filter(i => itemUids.includes(i.uid));
@@ -176,12 +179,16 @@ export function useLooterInventory({
         }
 
         const nextState = { ...prev, inventory: newInventory, storage: newStorage };
-        saveInventory(newInventory);
-        saveStorage(newStorage);
+        // Sync once with full state
+        looterApi.syncState(apiUrl, deviceId, nextState).catch(console.error);
+        success = true;
         return nextState;
     });
-    notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
-  }, [deviceId, setState, saveInventory, saveStorage, notify]);
+
+    if (success) {
+      notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
+    }
+  }, [deviceId, apiUrl, setState, notify]);
 
 
 

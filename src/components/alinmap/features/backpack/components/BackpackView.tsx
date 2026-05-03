@@ -229,7 +229,29 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
               if (isHoveringBagSlot && (item as any).type === 'bag') {
                 equipBag(item.uid);
                 setIsHoveringBagSlot(false);
-              } else if (state.currentLat && state.currentLng) {
+                return;
+              }
+
+              if (state.currentLat && state.currentLng) {
+                // Check if dropped into Integrated Storage Panel
+                if (isIntegratedStorageOpen) {
+                  const storagePanel = document.getElementById('integrated-storage-panel');
+                  if (storagePanel && e) {
+                    const rect = storagePanel.getBoundingClientRect();
+                    if (
+                      e.clientX >= rect.left &&
+                      e.clientX <= rect.right &&
+                      e.clientY >= rect.top &&
+                      e.clientY <= rect.bottom
+                    ) {
+                      // Dropped into storage!
+                      storeItems([item.uid], 'store', 'fortress');
+                      return;
+                    }
+                  }
+                }
+
+                // Otherwise drop to map
                 dropItems([item.uid], state.currentLat, state.currentLng);
               }
             }}

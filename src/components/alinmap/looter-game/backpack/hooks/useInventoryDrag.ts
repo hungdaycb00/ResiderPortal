@@ -27,6 +27,7 @@ export function useInventoryDrag({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [dragClientPos, setDragClientPos] = useState({ x: 0, y: 0 });
   const [dragGridPos, setDragGridPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragStartInfo, setDragStartInfo] = useState<{ item: LooterItem; x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -110,32 +111,43 @@ export function useInventoryDrag({
     const container = containerRef.current;
     if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const isBag = (item as any).type === 'bag';
-    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
-    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
-    const itemW = w * cellSize;
-    const itemH = h * cellSize;
-
-    const startX = e.clientX - rect.left;
-    const startY = e.clientY - rect.top;
-
-    setDraggingItem(item);
-    setDragPos({ x: startX - itemW / 2, y: startY - itemH / 2 });
-    setDragClientPos({ x: e.clientX - itemW / 2, y: e.clientY - itemH / 2 });
-    
-    // Initial snap position
-    const gx = Math.round((startX - itemW / 2) / cellSize);
-    const gy = Math.round((startY - itemH / 2) / cellSize);
-    setDragGridPos({ x: gx, y: gy });
-
-    // Lock pointer for movement tracking removed to allow interaction with other elements
-  }, [cellSize]);
+    // Store start info but don't set draggingItem yet to allow double-click
+    setDragStartInfo({ item, x: e.clientX, y: e.clientY });
+  }, []);
 
   const onPointerMove = useCallback((e: PointerEvent | React.PointerEvent) => {
-    if (!draggingItem || !containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
+    // If we have start info but not dragging yet, check for threshold
+    if (dragStartInfo && !draggingItem) {
+        const dx = e.clientX - dragStartInfo.x;
+        const dy = e.clientY - dragStartInfo.y;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            const item = dragStartInfo.item;
+            const rect = container.getBoundingClientRect();
+            const isBag = (item as any).type === 'bag';
+            const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
+            const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
+            const itemW = w * cellSize;
+            const itemH = h * cellSize;
+
+            setDraggingItem(item);
+            const startX = dragStartInfo.x - rect.left;
+            const startY = dragStartInfo.y - rect.top;
+            setDragPos({ x: startX - itemW / 2, y: startY - itemH / 2 });
+            setDragClientPos({ x: dragStartInfo.x - itemW / 2, y: dragStartInfo.y - itemH / 2 });
+            
+            const gx = Math.round((startX - itemW / 2) / cellSize);
+            const gy = Math.round((startY - itemH / 2) / cellSize);
+            setDragGridPos({ x: gx, y: gy });
+        }
+        return;
+    }
+
+    if (!draggingItem) return;
+
+    const rect = container.getBoundingClientRect();
     const isBag = (draggingItem as any).type === 'bag';
     const w = draggingItem.gridW || (isBag ? 1 : (draggingItem as any).width) || 1;
     const h = draggingItem.gridH || (isBag ? 1 : (draggingItem as any).height) || 1;
@@ -155,9 +167,10 @@ export function useInventoryDrag({
     const gy = Math.round(newY / cellSize);
     
     setDragGridPos({ x: gx, y: gy });
-  }, [draggingItem, cellSize]);
+  }, [dragStartInfo, draggingItem, cellSize]);
 
   const onPointerUp = useCallback((e: PointerEvent | React.PointerEvent) => {
+    setDragStartInfo(null);
     if (!draggingItem) return;
 
     const container = containerRef.current;
@@ -207,7 +220,7 @@ export function useInventoryDrag({
   }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
 
   useEffect(() => {
-    if (draggingItem) {
+    if (dragStartInfo || draggingItem) {
       window.addEventListener('pointermove', onPointerMove);
       window.addEventListener('pointerup', onPointerUp);
       return () => {
@@ -215,7 +228,7 @@ export function useInventoryDrag({
         window.removeEventListener('pointerup', onPointerUp);
       };
     }
-  }, [draggingItem, onPointerMove, onPointerUp]);
+  }, [dragStartInfo, draggingItem, onPointerMove, onPointerUp]);
 
   return {
     draggingItem,
