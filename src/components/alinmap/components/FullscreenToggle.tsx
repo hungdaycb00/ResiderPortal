@@ -13,6 +13,22 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
     // Only show on mobile
     if (isDesktop) return null;
 
+    useEffect(() => {
+        if (isDesktop) return;
+
+        // Force body height to allow scrolling for Safari bar hiding
+        const originalHeight = document.body.style.height;
+        const originalMinHeight = document.documentElement.style.minHeight;
+        
+        document.body.style.height = '200vh';
+        document.documentElement.style.minHeight = '200vh';
+
+        return () => {
+            document.body.style.height = originalHeight;
+            document.documentElement.style.minHeight = originalMinHeight;
+        };
+    }, [isDesktop]);
+
     const handleTouchStart = (e: React.TouchEvent) => {
         dragStartY.current = e.touches[0].clientY;
         setIsDragging(true);
@@ -38,17 +54,11 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
         if (!isDragging) return;
         
         if (dragType === 'up') {
-            // Scroll down to hide browser bars
-            window.scrollTo({
-                top: 500,
-                behavior: 'smooth'
-            });
+            // Scroll down to hide browser bars - Using native scrollTo without smooth to trigger bar hide more reliably
+            window.scrollTo(0, 500);
         } else if (dragType === 'down') {
             // Scroll to top to show browser bars
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            window.scrollTo(0, 0);
         }
 
         // Reset state
