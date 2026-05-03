@@ -232,46 +232,34 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     actionsValue.loadState({ skipIfBusy: true });
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
-  // Debug: Press 'P' to spawn all bags (OFFLINE MODE)
+  // Debug: Press 'P' to spawn all bags
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'p' && state.currentLat != null) {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'p' && deviceId && state.currentLat != null) {
         const target = e.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
-        const { BAG_DEFAULTS } = require('./backpack/constants');
-        
-        const newDebugItems: WorldItem[] = Object.entries(BAG_DEFAULTS).map(([id, def], i) => {
-          const lat = state.currentLat! + (Math.random() - 0.5) * 0.0015;
-          const lng = state.currentLng! + (Math.random() - 0.5) * 0.0015;
-          const uid = 'debug_' + Math.random().toString(36).substring(2, 9);
-          
-          return {
-            spawnId: 'offline_' + uid,
-            lat,
-            lng,
-            item: {
-              ...def,
-              uid,
-              id,
-              gridX: -1,
-              gridY: -1,
-            } as any,
-            isExpander: false,
-            minigameType: 'none',
-            worldTier: 0,
-            isOfflineDebug: true // Flag to skip server pickup
-          } as WorldItem;
-        });
-
-        setWorldItems(prev => [...prev, ...newDebugItems]);
-        notify(`Đã spawn ${newDebugItems.length} loại balo offline xung quanh bạn!`, 'success');
+        try {
+          const response = await fetch(`${API_URL}/api/looter/debug/spawn-all-bags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, lat: state.currentLat, lng: state.currentLng })
+          });
+          const data = await response.json();
+          if (data.success) {
+            notify(`Đã spawn ${data.count} loại balo xung quanh bạn!`, 'success');
+            // Refresh world items to see them immediately
+            stateManager.loadWorldItems(state.currentLat, state.currentLng);
+          }
+        } catch (err) {
+          console.error('[Debug Spawn Bags]', err);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.currentLat, state.currentLng, notify, setWorldItems]);
+  }, [deviceId, API_URL, state.currentLat, state.currentLng, notify, stateManager]);
 
   return (
     <LooterStateContext.Provider value={stateValue}>
