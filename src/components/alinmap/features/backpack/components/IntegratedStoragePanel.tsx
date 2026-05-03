@@ -166,7 +166,6 @@ export default function IntegratedStoragePanel() {
                 hideStorage
                 onItemLayoutChange={(newItems) => saveStorage(newItems)}
                 onItemDoubleClick={(item) => {
-                  console.log(`[IntegratedStorage] DoubleClick callback for ${item.name}`);
                   setSelectedItem(null); // Force close popup
                   // Move back to backpack
                   storeItems([item.uid], 'retrieve', 'fortress');

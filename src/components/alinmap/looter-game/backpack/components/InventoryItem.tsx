@@ -41,11 +41,10 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   // If we start dragging, cancel any pending click
   React.useEffect(() => {
     if (isDragging && clickTimerRef.current) {
-      console.log(`[LooterItem] Dragging started for ${item.name}, canceling click timer`);
       clearTimeout(clickTimerRef.current);
       clickTimerRef.current = null;
     }
-  }, [isDragging, item.name]);
+  }, [isDragging]);
 
   return (
     <motion.div
@@ -62,18 +61,15 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         top: (typeof style?.top === 'number' ? style.top : 0) + 1,
       }}
       onPointerDown={(e) => {
-        console.log(`[LooterItem] PointerDown: ${item.name}`);
         onPointerDown?.(e, item);
       }}
       onClick={(e) => {
         e.stopPropagation();
         const now = Date.now();
         const timeDiff = now - lastClickTimeRef.current;
-        console.log(`[LooterItem] Click: ${item.name}, diff: ${timeDiff}ms`);
 
-        if (timeDiff < 300) {
+        if (timeDiff < 200) {
           // CUSTOM DOUBLE CLICK DETECTED
-          console.log(`[LooterItem] Custom DoubleClick detected for ${item.name}!`);
           if (clickTimerRef.current) {
             clearTimeout(clickTimerRef.current);
             clickTimerRef.current = null;
@@ -86,10 +82,9 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
           if (onDoubleClick) {
             if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
             clickTimerRef.current = setTimeout(() => {
-              console.log(`[LooterItem] Executing single click for ${item.name}`);
               onClick?.();
               clickTimerRef.current = null;
-            }, 300);
+            }, 200);
           } else {
             onClick?.();
           }
