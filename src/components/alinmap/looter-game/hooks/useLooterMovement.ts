@@ -130,7 +130,7 @@ export function useLooterMovement({
     } catch (err) {
       console.error('[LooterGame] returnToFortress error:', err);
     }
-  }, [deviceId, apiUrl, notify]);
+  }, [deviceId, apiUrl, notify, setState, setIsChallengeActive]);
 
   return useMemo(() => ({ moveBoat, returnToFortress, isMoving }), [moveBoat, returnToFortress, isMoving]);
 }
