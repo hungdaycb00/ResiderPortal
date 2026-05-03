@@ -219,7 +219,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             onOpenChat={onOpenChat}
             selectedUser={nav.selectedUser}
         >
-        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
+        <div className="absolute inset-0 z-[100] bg-[#13151a] flex flex-col select-none min-h-screen">
             {/* Fullscreen Toggle for Mobile */}
             <FullscreenToggle isDesktop={nav.isDesktop} />
 
