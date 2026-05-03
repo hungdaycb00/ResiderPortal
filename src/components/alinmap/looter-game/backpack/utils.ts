@@ -55,7 +55,12 @@ export const repairBagData = (rawBag?: BagItem): { bag: BagItem; repaired: boole
   const height = Number(bag.height) || Number(bagDefaults.height) || 3;
 
   if (!Array.isArray(bag.shape) || bag.shape.length === 0) {
-    bag.shape = Array.from({ length: height }, () => Array(width).fill(true));
+    const defShape = bagDefaults.shape;
+    if (defShape && Array.isArray(defShape) && defShape.length > 0) {
+      bag.shape = defShape.map((row: any[]) => row.map((v: any) => !!v));
+    } else {
+      bag.shape = Array.from({ length: height }, () => Array(width).fill(true));
+    }
     bag.width = width;
     bag.height = height;
     repaired = true;

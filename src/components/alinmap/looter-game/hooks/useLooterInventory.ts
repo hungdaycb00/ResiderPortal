@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { findEmptySlotFor } from '../utils/looterHelpers';
 import { repairBagData, createStarterBag } from '../backpack/utils';
+import { BAG_DEFAULTS } from '../backpack/constants';
 import type { LooterGameState, WorldItem } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
 
@@ -43,18 +44,30 @@ export function useLooterInventory({
 
     const currentBag = state.bags[0];
     const newBagData = (itemToEquip as any).bagData || itemToEquip;
-    const bagW = newBagData.width || 4;
-    const bagH = newBagData.height || 4;
+    const bagId = itemToEquip.id || 'basic_bag';
+    const bagDef = BAG_DEFAULTS[bagId];
+    const bagW = newBagData.width || bagDef?.width || 4;
+    const bagH = newBagData.height || bagDef?.height || 4;
+    
+    // Shape priority: item data > BAG_DEFAULTS > full rectangle fallback
+    let bagShape = newBagData.shape;
+    if (!bagShape && bagDef?.shape) {
+      bagShape = (bagDef.shape as any[]).map((row: any[]) => row.map((v: any) => !!v));
+    }
+    if (!bagShape) {
+      bagShape = Array.from({ length: bagH }, () => Array(bagW).fill(true));
+    }
+
     const newBag: BagItem = {
       uid: itemToEquip.uid,
-      id: itemToEquip.id,
+      id: bagId,
       type: 'bag',
       name: itemToEquip.name,
       icon: itemToEquip.icon,
       rarity: itemToEquip.rarity,
       width: bagW,
       height: bagH,
-      shape: newBagData.shape || Array.from({ length: bagH }, () => Array(bagW).fill(true)),
+      shape: bagShape,
       gridX: currentBag.gridX,
       gridY: currentBag.gridY
     };

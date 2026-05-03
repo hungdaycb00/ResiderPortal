@@ -29,15 +29,34 @@ const GridBackground: React.FC<GridBackgroundProps> = React.memo(({
         }}
       />
       {/* Uniform Grid Background is handled by parent container's backgroundImage */}
+      {/* Bag shape cells - render each active cell individually */}
+      {bagOcc.map((row, gy) =>
+        row.map((active, gx) =>
+          active ? (
+            <div
+              key={`bag-${gx}-${gy}`}
+              className="absolute"
+              style={{
+                left: gx * cellSize + 1,
+                top: gy * cellSize + 1,
+                width: cellSize - 2,
+                height: cellSize - 2,
+                background: activeBag ? (BAG_BG[activeBag.rarity] || BAG_BG.common) : BAG_BG.common,
+                borderRadius: 0,
+              }}
+            />
+          ) : null
+        )
+      )}
+      {/* Bag border outline */}
       {activeBag && activeBag.gridX >= 0 && (
         <div
-          className="absolute rounded-none border-2 border-cyan-500/20"
+          className="absolute pointer-events-none border-2 border-cyan-500/20"
           style={{
-            left: activeBag.gridX * cellSize + 2,
-            top: activeBag.gridY * cellSize + 2,
-            width: activeBag.width * cellSize - 4,
-            height: activeBag.height * cellSize - 4,
-            background: BAG_BG[activeBag.rarity] || BAG_BG.common,
+            left: activeBag.gridX * cellSize,
+            top: activeBag.gridY * cellSize,
+            width: activeBag.width * cellSize,
+            height: activeBag.height * cellSize,
           }}
         />
       )}
