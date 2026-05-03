@@ -112,8 +112,8 @@ export function FruitGame({
     }
 
     setGridConfig({ rows, cols, time: timeLimit });
-    if (autoStart && props.pregeneratedGrid) {
-      setGrid(props.pregeneratedGrid);
+    if (autoStart && pregeneratedGrid) {
+      setGrid(pregeneratedGrid);
     } else {
       setGrid(newGrid);
     }
