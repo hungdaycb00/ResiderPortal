@@ -47,6 +47,8 @@ export function useLooterInventory({
     const bagH = newBagData.height || 4;
     const newBag: BagItem = {
       uid: itemToEquip.uid,
+      id: itemToEquip.id,
+      type: 'bag',
       name: itemToEquip.name,
       icon: itemToEquip.icon,
       rarity: itemToEquip.rarity,
@@ -96,9 +98,9 @@ export function useLooterInventory({
         rotated: false,
         price: currentBag.price || 0,
         weight: currentBag.weight || 0,
-        hpBonus: currentBag.hpBonus || 0,
-        energyMax: currentBag.energyMax || 0,
-        energyRegen: currentBag.energyRegen || 0,
+        hpBonus: currentBag.hpBonus,
+        energyMax: currentBag.energyMax,
+        energyRegen: currentBag.energyRegen,
         width: currentBag.width || 3,
         height: currentBag.height || 3,
         shape: currentBag.shape,
