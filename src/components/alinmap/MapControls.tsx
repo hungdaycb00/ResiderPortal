@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
+import { useLooterState, useLooterActions, useLooterGame } from './looter-game/LooterGameContext';
 import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home, Cloud } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
