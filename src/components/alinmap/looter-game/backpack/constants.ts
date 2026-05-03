@@ -10,12 +10,12 @@ export const MAX_GRID_H = 12;
 // Bag Preset Defaults
 // ==========================================
 export const BAG_DEFAULTS: Record<string, Partial<BagItem>> = {
-  basic_bag: { name: 'Balo Cơ Bản', icon: '🎒', rarity: 'common', width: 3, height: 3, cells: 9, price: 0, weight: 0, hpBonus: 10, energyMax: 5, energyRegen: 1, isStarter: true, dropProtected: true },
-  leather_bag: { name: 'Balo Da', icon: '👜', rarity: 'common', width: 4, height: 4, cells: 16, price: 80, weight: 3, hpBonus: 18, energyMax: 8, energyRegen: 1 },
-  duffel_bag: { name: 'Túi Trống', icon: '🧳', rarity: 'uncommon', width: 5, height: 4, cells: 20, price: 180, weight: 5, hpBonus: 26, energyMax: 12, energyRegen: 2 },
-  cross_bag: { name: 'Balo Chữ Thập', icon: '✚', rarity: 'uncommon', width: 5, height: 5, cells: 13, price: 240, weight: 7, hpBonus: 34, energyMax: 18, energyRegen: 3 },
-  war_bag: { name: 'Balo Chiến Binh', icon: '⚔️', rarity: 'rare', width: 5, height: 5, cells: 21, price: 420, weight: 10, hpBonus: 48, energyMax: 24, energyRegen: 4 },
-  voyager_pack: { name: 'Balo Thám Hiểm', icon: '💎', rarity: 'legendary', width: 7, height: 6, cells: 42, price: 900, weight: 14, hpBonus: 72, energyMax: 40, energyRegen: 6 },
+  basic_bag: { type: 'bag', name: 'Balo Cơ Bản', icon: '🎒', rarity: 'common', width: 3, height: 3, cells: 9, price: 0, weight: 0, hpBonus: 10, energyMax: 5, energyRegen: 1, isStarter: true, dropProtected: true, shape: [[1,1,1],[1,1,1],[1,1,1]] },
+  leather_bag: { type: 'bag', name: 'Balo Da', icon: '👜', rarity: 'common', width: 4, height: 4, cells: 16, price: 80, weight: 3, hpBonus: 18, energyMax: 8, energyRegen: 1, shape: [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]] },
+  duffel_bag: { type: 'bag', name: 'Túi Trống', icon: '🧳', rarity: 'uncommon', width: 5, height: 4, cells: 20, price: 180, weight: 5, hpBonus: 26, energyMax: 12, energyRegen: 2, shape: [[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]] },
+  cross_bag: { type: 'bag', name: 'Balo Chữ Thập', icon: '✚', rarity: 'uncommon', width: 5, height: 5, cells: 13, price: 240, weight: 7, hpBonus: 34, energyMax: 18, energyRegen: 3, shape: [[0,0,1,0,0],[0,1,1,1,0],[1,1,1,1,1],[0,1,1,1,0],[0,0,1,0,0]] },
+  war_bag: { type: 'bag', name: 'Balo Chiến Binh', icon: '⚔️', rarity: 'rare', width: 5, height: 5, cells: 21, price: 420, weight: 10, hpBonus: 48, energyMax: 24, energyRegen: 4, shape: [[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0]] },
+  voyager_pack: { type: 'bag', name: 'Balo Thám Hiểm', icon: '💎', rarity: 'legendary', width: 7, height: 6, cells: 42, price: 900, weight: 14, hpBonus: 72, energyMax: 40, energyRegen: 6, shape: [[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]] },
 };
 
 // ==========================================

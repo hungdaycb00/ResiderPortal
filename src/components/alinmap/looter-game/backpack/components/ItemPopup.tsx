@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LooterItem } from '../types';
-import { RARITY_COLORS } from '../constants';
+import { RARITY_COLORS, BAG_DEFAULTS } from '../constants';
 
 interface ItemPopupProps {
   item: LooterItem | null;
@@ -11,6 +11,17 @@ interface ItemPopupProps {
 
 const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
   if (!item) return null;
+
+  const bagDef = BAG_DEFAULTS[item.id] || null;
+  const isBag = item.type === 'bag' || !!bagDef;
+  const displayItem = { ...item };
+  
+  // Nếu là balo, merge thông tin từ defaults nếu bị thiếu
+  if (isBag && bagDef) {
+    if (!displayItem.hpBonus) displayItem.hpBonus = bagDef.hpBonus;
+    if (!displayItem.energyMax) displayItem.energyMax = bagDef.energyMax;
+    if (!displayItem.energyRegen) displayItem.energyRegen = bagDef.energyRegen;
+  }
 
   return (
     <AnimatePresence>
@@ -30,11 +41,11 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-3">
-          <div className="text-4xl">{item.icon}</div>
+          <div className="text-4xl">{displayItem.icon}</div>
           <div>
-            <h3 className="font-bold text-white text-lg">{item.name}</h3>
-            <span className={`text-xs uppercase font-black ${RARITY_COLORS[item.rarity]?.split(' ')[1] || 'text-white'}`}>
-              {item.rarity}
+            <h3 className="font-bold text-white text-lg">{displayItem.name}</h3>
+            <span className={`text-xs uppercase font-black ${RARITY_COLORS[displayItem.rarity]?.split(' ')[1] || 'text-white'}`}>
+              {displayItem.rarity}
             </span>
           </div>
         </div>
@@ -42,51 +53,51 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
         <div className="space-y-1 text-sm border-t border-white/10 pt-3">
           <div className="flex justify-between">
             <span className="text-gray-400">Kích thước:</span>
-            <span className="text-white font-mono">{item.gridW || 1}x{item.gridH || 1}</span>
+            <span className="text-white font-mono">{displayItem.gridW || 1}x{displayItem.gridH || 1}</span>
           </div>
-          {(item as any).type === 'bag' && (
+          {isBag && (
             <div className="flex justify-between">
-              <span className="text-indigo-400">Sức chứa Balo:</span>
-              <span className="text-indigo-400 font-mono">{(item as any).width || 1}x{(item as any).height || 1}</span>
+              <span className="text-indigo-400 font-bold">Sức chứa Balo:</span>
+              <span className="text-indigo-400 font-mono">{(displayItem as any).width || bagDef?.width || 1}x{(displayItem as any).height || bagDef?.height || 1}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span className="text-gray-400">Giá bán:</span>
-            <span className="text-yellow-400 font-mono">{item.price || 0} 💰</span>
+            <span className="text-yellow-400 font-mono">{displayItem.price || 0} 💰</span>
           </div>
 
-          {(item.weight || 0) !== 0 && (
+          {(displayItem.weight || 0) !== 0 && (
             <div className="flex justify-between">
               <span className="text-red-400 font-bold">Sát thương:</span>
-              <span className="text-red-400 font-mono">{item.weight} ⚔️</span>
+              <span className="text-red-400 font-mono">{displayItem.weight} ⚔️</span>
             </div>
           )}
 
-          {(item.energyCost || 0) !== 0 && (
+          {(displayItem.energyCost || 0) !== 0 && (
             <div className="flex justify-between">
               <span className="text-orange-400">Tiêu tốn NL:</span>
-              <span className="text-orange-400 font-mono">-{item.energyCost} ⚡</span>
+              <span className="text-orange-400 font-mono">-{displayItem.energyCost} ⚡</span>
             </div>
           )}
           
-          {(item.hpBonus || 0) !== 0 && (
+          {(displayItem.hpBonus || 0) !== 0 && (
             <div className="flex justify-between">
               <span className="text-emerald-400">HP Bonus:</span>
-              <span className="text-emerald-400 font-mono">+{item.hpBonus} ❤️</span>
+              <span className="text-emerald-400 font-mono">+{displayItem.hpBonus} ❤️</span>
             </div>
           )}
           
-          {(item.energyMax || 0) !== 0 && (
+          {(displayItem.energyMax || 0) !== 0 && (
             <div className="flex justify-between">
               <span className="text-blue-400">Năng lượng:</span>
-              <span className="text-blue-400 font-mono">+{item.energyMax} 🧪</span>
+              <span className="text-blue-400 font-mono">+{displayItem.energyMax} 🧪</span>
             </div>
           )}
 
-          {(item.energyRegen || 0) !== 0 && (
+          {(displayItem.energyRegen || 0) !== 0 && (
             <div className="flex justify-between">
               <span className="text-green-400">Hồi năng lượng:</span>
-              <span className="text-green-400 font-mono">+{item.energyRegen} ✨</span>
+              <span className="text-green-400 font-mono">+{displayItem.energyRegen} ✨</span>
             </div>
           )}
         </div>

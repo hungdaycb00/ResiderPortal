@@ -187,16 +187,8 @@ export function useInventoryDrag({
     let finalGx = gx;
     let finalGy = gy;
 
-    // 2. Kiểm tra balo active
+    // 2. Kiểm tra balo active (Chỉ cho phép đặt vào nếu lọt thỏm trong vùng active)
     if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
-      if ((draggingItem as any).type === 'bag') {
-        // Drop a bag onto the active bag -> Equip it
-        onEquipBag?.(draggingItem.uid);
-        setDraggingItem(null);
-        setDragGridPos(null);
-        return;
-      }
-      
       if (!isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
         // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài
         finalGx = -1;
