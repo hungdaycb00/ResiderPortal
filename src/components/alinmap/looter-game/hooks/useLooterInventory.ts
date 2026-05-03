@@ -274,14 +274,38 @@ export function useLooterInventory({
     });
     
     notify(`Đã ném ${itemUids.length} vật phẩm ra Map`, 'success');
-
   }, [deviceId, setState, setWorldItems, saveInventory, notify]);
+
+  const dropCombatLoot = useCallback(async (items: LooterItem[]) => {
+    if (!deviceId || items.length === 0) return;
+    
+    // 1. Tạm thời thêm items vào inventory (ở vị trí -1, -1)
+    const itemsWithStaging = items.map(item => ({
+      ...item,
+      gridX: -1, gridY: -1,
+      stagingX: Math.random() * 200,
+      stagingY: Math.random() * 300
+    }));
+
+    const newInventory = [...state.inventory, ...itemsWithStaging];
+    const itemUids = items.map(i => i.uid);
+
+    // 2. Lưu inventory mới lên server
+    const success = await saveInventory(newInventory);
+    if (!success) {
+      notify('Lỗi khi chuẩn bị rơi đồ!', 'error');
+      return;
+    }
+
+    // 3. Thực hiện rơi đồ ra Map tại vị trí hiện tại của thuyền
+    await dropItems(itemUids, state.currentLat || 0, state.currentLng || 0);
+  }, [deviceId, state.inventory, state.currentLat, state.currentLng, saveInventory, dropItems, notify]);
 
   return useMemo(() => ({ 
     saveInventory, saveBags, saveStorage, 
-    equipBag, sellItems, storeItems, pickupItem, dropItems
+    equipBag, sellItems, storeItems, pickupItem, dropItems, dropCombatLoot
   }), [
     saveInventory, saveBags, saveStorage, 
-    equipBag, sellItems, storeItems, pickupItem, dropItems
+    equipBag, sellItems, storeItems, pickupItem, dropItems, dropCombatLoot
   ]);
 }

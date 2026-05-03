@@ -96,6 +96,7 @@ export interface LooterGameActions {
   returnToFortress: () => Promise<void>;
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   dropItems: (itemUids: string[], lat: number, lng: number) => Promise<void>;
+  dropCombatLoot: (items: LooterItem[]) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
   clearPregeneratedFruit: () => void;
 }

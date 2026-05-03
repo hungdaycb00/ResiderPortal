@@ -216,6 +216,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     returnToFortress: () => runInQueue(() => movement.returnToFortress()),
     loadWorldItems: (force) => runInQueue(() => stateManager.loadWorldItems(force)),
     dropItems: (uids, lat, lng) => runInQueue(() => inventory.dropItems(uids, lat, lng)),
+    dropCombatLoot: (items) => runInQueue(() => inventory.dropCombatLoot(items)),
     
     showNotification: notify,
     clearPregeneratedFruit
