@@ -173,46 +173,60 @@ export function useLooterInventory({
 
 
   const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem) => {
-    if (!deviceId) return;
+    if (!deviceId) return false;
     
     let pickedWorldItem: WorldItem | undefined = directItem;
     
     setWorldItems(prev => {
-      if (!pickedWorldItem) {
-        pickedWorldItem = prev.find(i => i.spawnId === spawnId);
-      }
+      const found = prev.find(i => i.spawnId === spawnId);
+      if (found) pickedWorldItem = found;
       return prev.filter(i => i.spawnId !== spawnId);
     });
 
-    if (pickedWorldItem && pickedWorldItem.item) {
-        const item = pickedWorldItem.item as LooterItem;
-        setState(prevState => {
-            const currentBag = prevState.bags[0];
-            const slot = findEmptySlotFor(item, prevState.inventory, currentBag);
-            let newItem: LooterItem;
-            
-            if (slot) {
-                newItem = { ...item, gridX: slot.x, gridY: slot.y };
-            } else {
-                newItem = { 
-                    ...item, 
-                    gridX: -1, gridY: -1,
-                    stagingX: Math.random() * 200, stagingY: Math.random() * 300 
-                } as any;
-            }
+    // Chờ 1 chút để state setWorldItems được cập nhật biến local
+    await new Promise(r => setTimeout(r, 0));
 
-            const newInventory = [...prevState.inventory, newItem];
-            saveInventory(newInventory).catch(console.error);
+    if (pickedWorldItem?.isOfflineDebug) {
+      const item = { ...pickedWorldItem.item } as LooterItem;
+      setState(prev => {
+        const currentBag = prev.bags[0];
+        const slot = findEmptySlotFor(item, prev.inventory, currentBag);
+        let newItem: LooterItem;
+        
+        if (slot) {
+          newItem = { ...item, gridX: slot.x, gridY: slot.y };
+        } else {
+          newItem = { ...item, gridX: -1, gridY: -1, stagingX: Math.random() * 200, stagingY: Math.random() * 300 } as any;
+        }
 
-            setTimeout(() => {
-                notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
-            }, 0);
-
-            return { ...prevState, inventory: newInventory };
-        });
+        const newInventory = [...prev.inventory, newItem];
+        saveInventory(newInventory);
+        notify(slot ? `Đã nhặt ${item.name} (Offline)` : `Đã nhặt ${item.name} vào hàng chờ`, slot ? 'success' : 'info');
+        return { ...prev, inventory: newInventory };
+      });
+      return true;
     }
 
-  }, [deviceId, setWorldItems, setState, saveInventory, notify]);
+    try {
+      const response = await fetch(`${apiUrl}/api/looter/pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, spawnId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setState(prev => ({ ...prev, inventory: data.inventory }));
+        notify('Đã nhặt vật phẩm', 'success');
+        return true;
+      } else {
+        notify(data.error || 'Không thể nhặt vật phẩm', 'error');
+        return false;
+      }
+    } catch (err) {
+      console.error('[Looter pickup]', err);
+      return false;
+    }
+  }, [deviceId, apiUrl, setState, saveInventory, notify, setWorldItems]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
     if (!deviceId || itemUids.length === 0) return;
