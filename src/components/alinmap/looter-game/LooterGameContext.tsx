@@ -95,6 +95,7 @@ export interface LooterGameActions {
   loadWorldItems: (forceActive?: boolean) => Promise<void>;
   dropItems: (itemUids: string[], lat: number, lng: number) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
+  clearPregeneratedFruit: () => void;
 }
 
 export interface LooterGameStateContextType {
@@ -111,6 +112,9 @@ export interface LooterGameStateContextType {
   globalSettings: any;
   isMoving: boolean;
   isSyncing: boolean;
+  pregeneratedMinigames: {
+    fruit?: any;
+  };
 }
 
 export const LooterStateContext = createContext<LooterGameStateContextType | null>(null);

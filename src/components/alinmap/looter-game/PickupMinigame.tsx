@@ -5,8 +5,8 @@ import { FruitGame } from './minigames/FruitGame';
 import { MinesweeperGame } from './minigames/MinesweeperGame';
 
 export const PickupMinigame: React.FC = () => {
-    const { showMinigame, state } = useLooterState();
-    const { setShowMinigame, pickupItem, inflictMinigamePenalty } = useLooterActions();
+    const { showMinigame, state, pregeneratedMinigames } = useLooterState();
+    const { setShowMinigame, pickupItem, inflictMinigamePenalty, clearPregeneratedFruit, showNotification } = useLooterActions();
 
     // 1. Hooks MUST be at the top level
     const gameTypeRef = useRef<'fruit' | 'minesweeper' | null>(null);
@@ -42,6 +42,9 @@ export const PickupMinigame: React.FC = () => {
 
         // Đóng popup NGAY LẬP TỨC, không đợi API
         setShowMinigame(null);
+        if (gameTypeRef.current === 'fruit') {
+            clearPregeneratedFruit();
+        }
         // API call chạy nền, không block UI
         if (success) {
             pickupItem(spawnId);
@@ -67,8 +70,10 @@ export const PickupMinigame: React.FC = () => {
                         <FruitGame 
                             autoStart={true}
                             customGrid={customGrid}
+                            pregeneratedGrid={pregeneratedMinigames.fruit}
                             onComplete={handleComplete}
                             onBack={() => handleComplete(false)}
+                            notify={showNotification}
                         />
                     ) : (
                         <MinesweeperGame 

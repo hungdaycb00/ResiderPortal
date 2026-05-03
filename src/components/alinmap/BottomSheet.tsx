@@ -10,6 +10,7 @@ import CreatorTabView from './features/creator/components/CreatorTabView';
 import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
 import { useSocial } from './features/social/context/SocialContext';
+import { useProfile } from './features/profile/context/ProfileContext';
 import { useLooterGame } from './looter-game/LooterGameContext';
 
 interface BottomSheetProps {
@@ -83,6 +84,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
     const { isItemDragging, encounter } = useLooterGame();
+    const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
 
     React.useEffect(() => {
         (window as any).collapseLooterTab = () => {
@@ -287,6 +289,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         setSelectedUser={setSelectedUser} setActiveTab={setActiveTab as any}
                                         radius={radius}
                                         handleUpdateRadius={handleUpdateRadius}
+                                        isVisibleOnMap={isVisibleOnMap}
+                                        setIsVisibleOnMap={setIsVisibleOnMap}
+                                        requestLocation={requestLocation}
+                                        ws={ws}
                                     />
                                 )}
                                 {mainTab === 'notifications' && (
@@ -303,7 +309,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         setMainTab={setMainTab} handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi} setMyAvatarUrl={setMyAvatarUrl}
                                         triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
-                                        requestLocation={requestLocation}
+                                        requestLocation={requestLocation} friends={friends} setSelectedUser={setSelectedUser}
                                     />
                                 )}
                                 {mainTab === 'creator' && (
