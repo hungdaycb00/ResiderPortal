@@ -37,6 +37,14 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
 }) => {
   const clickTimerRef = React.useRef<any>(null);
 
+  // If we start dragging, cancel any pending click
+  React.useEffect(() => {
+    if (isDragging && clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+  }, [isDragging]);
+
   return (
     <motion.div
       className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm 

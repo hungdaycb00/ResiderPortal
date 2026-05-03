@@ -166,12 +166,35 @@ export default function IntegratedStoragePanel() {
                 hideStorage
                 onItemLayoutChange={(newItems) => saveStorage(newItems)}
                 onItemDoubleClick={(item) => {
+                  setSelectedItem(null); // Force close popup
                   // Move back to backpack
                   storeItems([item.uid], 'retrieve', 'fortress');
                 }}
                 onItemClick={(item, pos) => {
                   setSelectedItem(item);
                   setPopupPos(pos);
+                }}
+                onDropOutside={(item, e) => {
+                  if (e) {
+                    const backpack = document.getElementById('looter-backpack-container');
+                    if (backpack) {
+                      const rect = backpack.getBoundingClientRect();
+                      if (
+                        e.clientX >= rect.left &&
+                        e.clientX <= rect.right &&
+                        e.clientY >= rect.top &&
+                        e.clientY <= rect.bottom
+                      ) {
+                        // Dropped into backpack!
+                        storeItems([item.uid], 'retrieve', 'fortress');
+                        return;
+                      }
+                    }
+                  }
+                  
+                  // If dropped elsewhere, do nothing (InventoryGrid will keep it in storage)
+                  // or we can refresh storage to ensure it's not lost
+                  saveStorage([...state.storage]); 
                 }}
                 cellSize={cellSize}
               />
