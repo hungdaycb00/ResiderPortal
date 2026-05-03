@@ -29,36 +29,39 @@ const GridBackground: React.FC<GridBackgroundProps> = React.memo(({
         }}
       />
       {/* Uniform Grid Background is handled by parent container's backgroundImage */}
-      {/* Bag shape cells - render each active cell individually */}
+      {/* Bag shape cells - render each active cell with smart borders to create shape outline */}
       {bagOcc.map((row, gy) =>
-        row.map((active, gx) =>
-          active ? (
+        row.map((active, gx) => {
+          if (!active) return null;
+
+          // Logic to draw border only on outer edges of the shape
+          const hasTop = gy > 0 && bagOcc[gy - 1][gx];
+          const hasBottom = gy < gridH - 1 && bagOcc[gy + 1][gx];
+          const hasLeft = gx > 0 && bagOcc[gy][gx - 1];
+          const hasRight = gx < gridW - 1 && bagOcc[gy][gx + 1];
+
+          const borderColor = 'rgba(34, 211, 238, 0.4)'; // cyan-400 with opacity
+          const borderStyle = `2px solid ${borderColor}`;
+
+          return (
             <div
               key={`bag-${gx}-${gy}`}
               className="absolute"
               style={{
-                left: gx * cellSize + 1,
-                top: gy * cellSize + 1,
-                width: cellSize - 2,
-                height: cellSize - 2,
+                left: gx * cellSize,
+                top: gy * cellSize,
+                width: cellSize,
+                height: cellSize,
                 background: activeBag ? (BAG_BG[activeBag.rarity] || BAG_BG.common) : BAG_BG.common,
-                borderRadius: 0,
+                borderTop: hasTop ? 'none' : borderStyle,
+                borderBottom: hasBottom ? 'none' : borderStyle,
+                borderLeft: hasLeft ? 'none' : borderStyle,
+                borderRight: hasRight ? 'none' : borderStyle,
+                zIndex: 5,
               }}
             />
-          ) : null
-        )
-      )}
-      {/* Bag border outline */}
-      {activeBag && activeBag.gridX >= 0 && (
-        <div
-          className="absolute pointer-events-none border-2 border-cyan-500/20"
-          style={{
-            left: activeBag.gridX * cellSize,
-            top: activeBag.gridY * cellSize,
-            width: activeBag.width * cellSize,
-            height: activeBag.height * cellSize,
-          }}
-        />
+          );
+        })
       )}
       {highlightCells.map(({ x, y, valid }) => (
         <div
