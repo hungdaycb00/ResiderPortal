@@ -88,19 +88,21 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
 
   // Camera focus vào midpoint giữa thuyền User và Enemy (+60px X)
   const centerOnCombat = useCallback((yOffsetPx: number = 0) => {
+    // CRITICAL: Dừng tất cả animation thuyền trước khi tính midpoint
+    // để đảm bảo boatOffsetX/Y đã ổn định, tránh camera target sai
+    stopAllAnimations();
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
     
     const boatX = boatOffsetX?.get?.() ?? 0;
     const boatY = boatOffsetY?.get?.() ?? 0;
-    // Enemy boat offset: +120px X, 0px Y -> midpoint: +60px X, 0px Y
+    // Enemy boat render at boatX + 120px -> midpoint = boatX + 60px
     const midX = boatX + 60;
     const midY = boatY;
     animate(panX, -midX, { duration: 0.8, ease: 'easeInOut' });
-    // Subtract yOffsetPx to push the boat UP on screen
     animate(panY, -midY - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });
-  }, [boatOffsetX, boatOffsetY, panX, panY]);
+  }, [stopAllAnimations, boatOffsetX, boatOffsetY, panX, panY]);
 
   return {
     boatOffsetX, boatOffsetY,

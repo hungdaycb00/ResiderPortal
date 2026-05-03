@@ -11,13 +11,14 @@ interface UseMapInteractionsProps {
     isChallengeActive: boolean;
     myObfPos: { lat: number; lng: number } | null;
     looterBoat: any;
+    encounter: any;
     setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 export function useMapInteractions({
     panX, panY, scale,
     isLooterGameMode, looterStateObj, isChallengeActive,
-    myObfPos, looterBoat, setIsTierSelectorOpen
+    myObfPos, looterBoat, encounter, setIsTierSelectorOpen
 }: UseMapInteractionsProps) {
 
     const mapDragRef = useRef<{
@@ -42,6 +43,8 @@ export function useMapInteractions({
 
     const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
+        // Khóa tương tác map khi đang chiến đấu
+        if (encounter) return;
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
         if (interactiveTarget && !isLooterGameMode) {
             looterBoat.handlePointerDown(e);
@@ -66,9 +69,11 @@ export function useMapInteractions({
             e.currentTarget.setPointerCapture(e.pointerId);
         } catch {}
         e.preventDefault();
-    }, [isLooterGameMode, panX, panY, looterBoat]);
+    }, [isLooterGameMode, panX, panY, looterBoat, encounter]);
 
     const handleMapPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        // Khóa kéo map khi đang chiến đấu
+        if (encounter) return;
         const dragState = mapDragRef.current;
         if (!dragState.active || dragState.pointerId !== e.pointerId) return;
 
@@ -82,9 +87,11 @@ export function useMapInteractions({
         panX.set(dragState.startPanX + deltaX);
         panY.set(dragState.startPanY + deltaY);
         e.preventDefault();
-    }, [panX, panY, scale]);
+    }, [panX, panY, scale, encounter]);
 
     const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        // Khóa click map khi đang chiến đấu
+        if (encounter) return;
         const dragState = mapDragRef.current;
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
 
@@ -113,7 +120,7 @@ export function useMapInteractions({
              }
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
+    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;

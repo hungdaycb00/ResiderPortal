@@ -106,7 +106,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     } = useMapInteractions({
         panX, panY, scale, isLooterGameMode: !!isLooterGameMode,
         looterStateObj, isChallengeActive: !!isChallengeActive,
-        myObfPos, looterBoat, setIsTierSelectorOpen
+        myObfPos, looterBoat, encounter: looterState.encounter,
+        setIsTierSelectorOpen
     });
     
     // Auto-focus camera on combat center

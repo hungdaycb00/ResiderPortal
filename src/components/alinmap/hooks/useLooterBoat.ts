@@ -143,6 +143,8 @@ export function useLooterBoat({
         setBoatTargetPin({ lat, lng });
         moveBoat(lat, lng).then(res => {
             if (res?.curseTrigger) {
+                // CRITICAL: Dừng animation thuyền TRƯỚC khi center camera
+                // để boatOffsetX/Y ổn định, tránh camera target sai
                 stopAllAnimations();
                 centerOnCombat();
             }
