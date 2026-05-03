@@ -88,9 +88,16 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     // Sync Boat Center Handler
     useEffect(() => {
-        setBoatCenterHandler?.(looterBoat.centerOnBoat);
+        const handler = (yOffset?: number) => {
+            if (looterState.encounter) {
+                looterBoat.centerOnCombat(yOffset);
+            } else {
+                looterBoat.centerOnBoat(yOffset);
+            }
+        };
+        setBoatCenterHandler?.(handler);
         return () => setBoatCenterHandler?.(null);
-    }, [looterBoat.centerOnBoat, setBoatCenterHandler]);
+    }, [looterBoat.centerOnBoat, looterBoat.centerOnCombat, looterState.encounter, setBoatCenterHandler]);
 
     // Pointer Interactions Hook
     const {
