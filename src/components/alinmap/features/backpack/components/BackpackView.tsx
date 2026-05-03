@@ -203,6 +203,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             onDragStateChange={setDraggingItem}
             onItemLayoutChange={readOnly ? undefined : memoizedSaveInventory}
             onItemDoubleClick={(item) => {
+              console.log(`[BackpackView] DoubleClick callback for ${item.name}`);
               setSelectedItem(null); // Force close popup
               if ((item as any).type === 'bag') {
                 equipBag(item.uid);

@@ -36,14 +36,16 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   className = '',
 }) => {
   const clickTimerRef = React.useRef<any>(null);
+  const lastClickTimeRef = React.useRef<number>(0);
 
   // If we start dragging, cancel any pending click
   React.useEffect(() => {
     if (isDragging && clickTimerRef.current) {
+      console.log(`[LooterItem] Dragging started for ${item.name}, canceling click timer`);
       clearTimeout(clickTimerRef.current);
       clickTimerRef.current = null;
     }
-  }, [isDragging]);
+  }, [isDragging, item.name]);
 
   return (
     <motion.div
@@ -59,25 +61,38 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         left: (typeof style?.left === 'number' ? style.left : 0) + 1,
         top: (typeof style?.top === 'number' ? style.top : 0) + 1,
       }}
-      onPointerDown={(e) => onPointerDown?.(e, item)}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        if (clickTimerRef.current) {
-          clearTimeout(clickTimerRef.current);
-          clickTimerRef.current = null;
-        }
-        onDoubleClick?.(item);
+      onPointerDown={(e) => {
+        console.log(`[LooterItem] PointerDown: ${item.name}`);
+        onPointerDown?.(e, item);
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (onDoubleClick) {
-          if (clickTimerRef.current) return;
-          clickTimerRef.current = setTimeout(() => {
-            onClick?.();
+        const now = Date.now();
+        const timeDiff = now - lastClickTimeRef.current;
+        console.log(`[LooterItem] Click: ${item.name}, diff: ${timeDiff}ms`);
+
+        if (timeDiff < 300) {
+          // CUSTOM DOUBLE CLICK DETECTED
+          console.log(`[LooterItem] Custom DoubleClick detected for ${item.name}!`);
+          if (clickTimerRef.current) {
+            clearTimeout(clickTimerRef.current);
             clickTimerRef.current = null;
-          }, 300);
+          }
+          lastClickTimeRef.current = 0; // Reset
+          onDoubleClick?.(item);
         } else {
-          onClick?.();
+          // Potential single click
+          lastClickTimeRef.current = now;
+          if (onDoubleClick) {
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            clickTimerRef.current = setTimeout(() => {
+              console.log(`[LooterItem] Executing single click for ${item.name}`);
+              onClick?.();
+              clickTimerRef.current = null;
+            }, 300);
+          } else {
+            onClick?.();
+          }
         }
       }}
     >
