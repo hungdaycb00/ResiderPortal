@@ -103,7 +103,14 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     });
     
     // Auto-focus camera on combat center
-    useCombatCamera(looterState.encounter, looterBoat.centerOnCombat, looterBoat.centerOnBoat);
+    useCombatCamera(
+        looterState.encounter, 
+        looterBoat.centerOnCombat, 
+        looterBoat.centerOnBoat,
+        scale,
+        setMainTab,
+        setIsSheetExpanded
+    );
 
     return (
         <div className="flex-1 relative overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>

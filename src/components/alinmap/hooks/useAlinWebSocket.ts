@@ -250,7 +250,8 @@ export function useAlinWebSocket({
         joinCompletedRef.current = true;
         addLog(`My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
 
-        if (!myObfPosRef.current && p.lat != null && p.lng != null) {
+        // Always sync myObfPos on join success to keep the coordinate system origin near the player
+        if (p.lat != null && p.lng != null) {
           setMyObfPos({ lat: p.lat, lng: p.lng });
         }
 

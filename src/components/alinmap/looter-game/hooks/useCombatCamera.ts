@@ -9,8 +9,11 @@ import type { Encounter } from '../LooterGameContext';
  */
 export function useCombatCamera(
   encounter: Encounter | null,
-  centerOnCombat: () => void,
-  centerOnBoat: () => void
+  centerOnCombat: (yOffset?: number) => void,
+  centerOnBoat: () => void,
+  scale?: any,
+  setMainTab?: (tab: any) => void,
+  setIsSheetExpanded?: (v: boolean) => void
 ) {
   const lastEncounterUid = useRef<string | null>(null);
 
@@ -21,7 +24,19 @@ export function useCombatCamera(
       
       // Delay nhẹ 300ms để đợi UI Combat mở ra rồi mới trượt camera cho mượt
       const timer = setTimeout(() => {
-        centerOnCombat();
+        // Tự động chuyển sang tab Balo và mở rộng sheet để sẵn sàng chiến đấu
+        if (setMainTab) setMainTab('backpack');
+        if (setIsSheetExpanded) setIsSheetExpanded(true);
+        
+        // Tính toán yOffset cho Mobile (đẩy thuyền lên trên vùng trống)
+        const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+        const yOffset = !isDesktop ? window.innerHeight * 0.25 : 0;
+        
+        // Zoom nhẹ để nhìn rõ trận đấu hơn
+        if (scale) scale.set(1.5);
+        
+        // Focus vào trung điểm giữa 2 thuyền
+        centerOnCombat(yOffset);
       }, 300);
       
       return () => clearTimeout(timer);
@@ -30,7 +45,10 @@ export function useCombatCamera(
     // Nếu trận đấu kết thúc (encounter chuyển về null)
     if (!encounter && lastEncounterUid.current) {
       lastEncounterUid.current = null;
+      
+      // Trả lại zoom bình thường và focus về thuyền người chơi
+      if (scale) scale.set(1);
       centerOnBoat();
     }
-  }, [encounter, centerOnCombat, centerOnBoat]);
+  }, [encounter, centerOnCombat, centerOnBoat, scale, setMainTab, setIsSheetExpanded]);
 }

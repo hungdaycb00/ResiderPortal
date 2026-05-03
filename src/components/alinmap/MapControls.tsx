@@ -118,12 +118,12 @@ const MapControls: React.FC<MapControlsProps> = ({
                         {/* Định vị Thuyền */}
                         <button
                             onClick={() => {
+                                const yOffset = !isDesktop && isSheetExpanded ? window.innerHeight * 0.25 : 0;
                                 if (handleCenterBoat) {
-                                    handleCenterBoat();
+                                    handleCenterBoat(yOffset);
                                     return;
                                 }
                                 if (looterState?.currentLat != null && looterState?.currentLng != null) {
-                                    const yOffset = !isDesktop && isSheetExpanded ? window.innerHeight * 0.25 : 0;
                                     handleCenterTo(looterState.currentLat, looterState.currentLng, yOffset);
                                 }
                             }}

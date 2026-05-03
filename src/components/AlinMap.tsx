@@ -180,35 +180,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         }
     }, [isLooterGameMode, nav.mainTab, location.pathname]);
 
-    // --- Combat HUD & Camera Sync ---
-    const prevEncounterRef = React.useRef<any>(null);
-    useEffect(() => {
-        if (looterState.encounter) {
-            // Encounter bắt đầu: di chuyển camera về giữa 2 thuyền
-            prevEncounterRef.current = looterState.encounter;
-            const targetLat = looterStateObj.currentLat || geo.myObfPos?.lat;
-            const targetLng = looterStateObj.currentLng || geo.myObfPos?.lng;
-            if (targetLat != null && targetLng != null) {
-                // Enemy offset: +120px X, 0px Y → midpoint: +60px X, 0px Y
-                const DEGREES_TO_PX = 11100;
-                const midLng = targetLng + (60 / DEGREES_TO_PX);
-                const midLat = targetLat;
-                // yOffset cho Mobile (đẩy thuyền lên trên khoảng map còn trống)
-                const yOffset = !nav.isDesktop ? window.innerHeight * 0.25 : 0;
-                nav.handleCenterTo(midLat, midLng, yOffset);
-                nav.scale.set(1.5); // Zoom nhẹ để nhìn rõ trận đấu
-            }
-            // Đảm bảo balo luôn hiển thị
-            nav.setMainTab('backpack');
-            nav.setIsSheetExpanded(true);
-        } else if (prevEncounterRef.current) {
-            // Encounter kết thúc: camera trả về thuyền user
-            prevEncounterRef.current = null;
-            setTimeout(() => {
-                centerBoatHandler?.();
-            }, 300);
-        }
-    }, [looterState.encounter]);
+    // Combat HUD & Camera Sync logic has been moved to useCombatCamera hook inside MapCanvas
+    // to prevent redundant animations and circular dependency issues.
 
     const handleOpenBackpackFromPickup = useCallback(() => {
         setIsLooterGameMode(true);

@@ -83,7 +83,8 @@ export function useMapNavigation({
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
     animate(panX, -pxX, { duration: 1.5, ease: "easeInOut" });
-    animate(panY, -pxY + yOffsetPx, { duration: 1.5, ease: "easeInOut" });
+    // Reverse yOffsetPx sign: subtract to push the boat UP on screen when sheet is open
+    animate(panY, -pxY - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {

@@ -59,7 +59,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
     panY.set(-nextBoatY);
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
-  const centerOnBoat = useCallback(() => {
+  const centerOnBoat = useCallback((yOffsetPx: number = 0) => {
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
@@ -70,10 +70,11 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
       boatOffsetX.set(pxX);
       boatOffsetY.set(pxY);
       animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
-      animate(panY, -pxY, { duration: 0.45, ease: 'easeInOut' });
+      // Subtract yOffsetPx to push the boat UP on screen
+      animate(panY, -pxY - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
     } else {
       animate(panX, -(boatOffsetX?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
-      animate(panY, -(boatOffsetY?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
+      animate(panY, -(boatOffsetY?.get?.() ?? 0) - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
     }
   }, [boatOffsetX, boatOffsetY, panX, panY, currentLat, currentLng, myObfPos]);
 
@@ -83,19 +84,20 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
     if (panMoveYRef.current) { panMoveYRef.current.stop(); panMoveYRef.current = null; }
   }, []);
 
-  // Camera focus vào midpoint giữa thuyền User và Enemy (+80px X, -20px Y)
-  const centerOnCombat = useCallback(() => {
+  // Camera focus vào midpoint giữa thuyền User và Enemy (+60px X)
+  const centerOnCombat = useCallback((yOffsetPx: number = 0) => {
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
-
+    
     const boatX = boatOffsetX?.get?.() ?? 0;
     const boatY = boatOffsetY?.get?.() ?? 0;
     // Enemy boat offset: +120px X, 0px Y -> midpoint: +60px X, 0px Y
     const midX = boatX + 60;
     const midY = boatY;
     animate(panX, -midX, { duration: 0.8, ease: 'easeInOut' });
-    animate(panY, -midY, { duration: 0.8, ease: 'easeInOut' });
+    // Subtract yOffsetPx to push the boat UP on screen
+    animate(panY, -midY - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });
   }, [boatOffsetX, boatOffsetY, panX, panY]);
 
   return {
