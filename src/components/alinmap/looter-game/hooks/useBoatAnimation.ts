@@ -66,19 +66,15 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
 
-    if (currentLat != null && currentLng != null && myObfPos) {
-      const pxX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
-      const pxY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
-      boatOffsetX.set(pxX);
-      boatOffsetY.set(pxY);
-      animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
-      // Subtract yOffsetPx to push the boat UP on screen
-      animate(panY, -pxY - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
-    } else {
-      animate(panX, -(boatOffsetX?.get?.() ?? 0), { duration: 0.45, ease: 'easeInOut' });
-      animate(panY, -(boatOffsetY?.get?.() ?? 0) - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
-    }
-  }, [boatOffsetX, boatOffsetY, panX, panY, currentLat, currentLng, myObfPos]);
+    // Lấy vị trí visual thực tế của thuyền tại thời điểm bấm nút
+    const pxX = boatOffsetX.get();
+    const pxY = boatOffsetY.get();
+
+    // Di chuyển camera (pan) đến vị trí đó
+    animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
+    // Trừ yOffsetPx để đẩy thuyền lên trên một chút (thường dùng khi mở BottomSheet)
+    animate(panY, -pxY - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
+  }, [boatOffsetX, boatOffsetY, panX, panY]);
 
   const stopPanFollow = useCallback(() => {
     userDraggingRef.current = true;
