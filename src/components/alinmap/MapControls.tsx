@@ -29,7 +29,6 @@ interface MapControlsProps {
     handleRefresh: () => void;
     handleCenter: () => void;
     handleCenterTo: (lat: number, lng: number, offset?: number) => void;
-    handleCenterBoat?: () => void;
     handleUpdateRadius: (v: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
     onOpenTierSelector?: () => void;
@@ -44,11 +43,11 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
-    handleRefresh, handleCenter, handleCenterTo, handleCenterBoat, handleUpdateRadius, setMapMode,
+    handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode,
     onOpenTierSelector,
     isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded, isDesktop
 }) => {
-    const { isLooterGameMode, isChallengeActive, state: looterState, isSyncing } = useLooterState();
+    const { isLooterGameMode, isChallengeActive, state: looterState, isSyncing, centerOnBoat, centerOnCombat } = useLooterGame();
     const { setWorldTier } = useLooterActions(); 
     
     const [copyToast, setCopyToast] = useState(false);
@@ -126,14 +125,10 @@ const MapControls: React.FC<MapControlsProps> = ({
                                     // Tâm vùng trống = backpackTop / 2
                                     yOffset = (window.innerHeight / 2) - (backpackTop / 2);
                                 }
-                                if (handleCenterBoat) {
-                                    console.log('[MapControls] Using handleCenterBoat (Visual)');
-                                    handleCenterBoat(yOffset);
-                                    return;
-                                }
-                                console.log('[MapControls] Fallback to handleCenterTo (State/Destination)');
-                                if (looterState?.currentLat != null && looterState?.currentLng != null) {
-                                    handleCenterTo(looterState.currentLat, looterState.currentLng, yOffset);
+                                if (looterState.encounter) {
+                                    centerOnCombat(yOffset);
+                                } else {
+                                    centerOnBoat(yOffset);
                                 }
                             }}
                             className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"

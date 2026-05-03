@@ -53,7 +53,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const [friendIdInput, setFriendIdInput] = useState('');
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
-    const [centerBoatHandler, setCenterBoatHandler] = useState<(() => void) | null>(null);
     const [isWeatherWidgetExpanded, setIsWeatherWidgetExpanded] = useState(false);
     const [isTierSelectorOpen, setIsTierSelectorOpen] = useState(false);
 
@@ -114,7 +113,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             // Wait a bit for map layers to settle
             setTimeout(() => {
                 if (isLooterGameMode) {
-                    centerBoatHandler?.();
+                    looterActions.centerOnBoat();
                 } else {
                     nav.handleCenter();
                 }
@@ -263,7 +262,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isLooterLoading={nav.isLooterLoading}
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
-                setBoatCenterHandler={setCenterBoatHandler}
                 setIsTierSelectorOpen={setIsTierSelectorOpen}
             />
 
@@ -293,7 +291,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 handleRefresh={handleRefresh}
                 handleCenter={nav.handleCenter}
                 handleCenterTo={nav.handleCenterTo}
-                handleCenterBoat={centerBoatHandler}
                 handleUpdateRadius={nav.handleUpdateRadius}
                 setMapMode={nav.setMapMode}
                 onOpenTierSelector={() => setIsTierSelectorOpen(true)}

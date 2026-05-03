@@ -92,6 +92,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
+  const [centerBoatHandler, setCenterBoatHandler] = useState<((yOffset?: number) => void) | null>(null);
+  const [centerCombatHandler, setCenterCombatHandler] = useState<((yOffset?: number) => void) | null>(null);
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
 
   const API_URL = useMemo(() => getLooterServerUrl(), []);
@@ -168,6 +170,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
     openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
     setOpenBackpackHandler,
+    centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },
+    setCenterBoatHandler,
+    centerOnCombat: (yOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset); },
+    setCenterCombatHandler,
     setIsChallengeActive,
     
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
@@ -215,6 +221,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     clearPregeneratedFruit
   }), [
     stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification,
+    centerBoatHandler, centerCombatHandler, setCenterBoatHandler, setCenterCombatHandler,
     setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen,
     notify, clearPregeneratedFruit, deviceId, API_URL

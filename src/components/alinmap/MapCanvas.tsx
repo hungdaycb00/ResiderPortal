@@ -86,18 +86,23 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
 
-    // Sync Boat Center Handler
+    // Sync Boat Center Handler to Context
     useEffect(() => {
-        const handler = (yOffset?: number) => {
-            if (looterState.encounter) {
-                looterBoat.centerOnCombat(yOffset);
-            } else {
-                looterBoat.centerOnBoat(yOffset);
-            }
+        const boatHandler = (yOffset?: number) => {
+            looterBoat.centerOnBoat(yOffset);
         };
-        setBoatCenterHandler?.(handler);
-        return () => setBoatCenterHandler?.(null);
-    }, [looterBoat.centerOnBoat, looterBoat.centerOnCombat, looterState.encounter, setBoatCenterHandler]);
+        const combatHandler = (yOffset?: number) => {
+            looterBoat.centerOnCombat(yOffset);
+        };
+        
+        looterActions.setCenterBoatHandler(boatHandler);
+        looterActions.setCenterCombatHandler(combatHandler);
+        
+        return () => {
+            looterActions.setCenterBoatHandler(null);
+            looterActions.setCenterCombatHandler(null);
+        };
+    }, [looterBoat.centerOnBoat, looterBoat.centerOnCombat, looterActions.setCenterBoatHandler, looterActions.setCenterCombatHandler]);
 
     // Pointer Interactions Hook
     const {

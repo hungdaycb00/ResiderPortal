@@ -75,14 +75,16 @@ export interface LooterGameActions {
   setIsLooterGameMode: (v: boolean) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
+  centerOnBoat: (yOffset?: number) => void;
+  setCenterBoatHandler: (h: ((yOffset?: number) => void) | null) => void;
+  centerOnCombat: (yOffset?: number) => void;
+  setCenterCombatHandler: (h: ((yOffset?: number) => void) | null) => void;
   setIsChallengeActive: (v: boolean) => void;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
   pickupItem: (spawnId: string, directItem?: WorldItem) => Promise<void>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
-
-  saveInventory: (inventory: LooterItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
   saveBags: (bags: BagItem[]) => Promise<void>;
   equipBag: (itemUid: string) => Promise<void>;
