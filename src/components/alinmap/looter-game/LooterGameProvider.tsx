@@ -153,6 +153,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     dropItems: inventory.dropItems
   });
 
+  const clearPregeneratedFruit = useCallback(() => {
+    setPregeneratedMinigames(prev => ({ ...prev, fruit: null }));
+  }, []);
+
   // 3. Actions Orchestrator
   const actionsValue: LooterGameActions = useMemo(() => ({
     setIsFortressStorageOpen,
@@ -263,10 +267,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       }, 100);
     }
   }, [ui.isLooterGameMode, state.worldTier, !!pregeneratedMinigames.fruit]);
-
-  const clearPregeneratedFruit = useCallback(() => {
-    setPregeneratedMinigames(prev => ({ ...prev, fruit: null }));
-  }, []);
 
   // Debug: Press 'P' to spawn all bags
   useEffect(() => {

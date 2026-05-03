@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Bookmark, LogIn, LogOut } from 'lucide-react';
+import { Edit, Bookmark, LogIn, LogOut, Plus, X } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
 import CreatePostForm from '../../creator/components/CreatePostForm';
