@@ -12,7 +12,7 @@ interface InventoryGridProps {
   bags: BagItem[];
   readOnly?: boolean;
   onItemDoubleClick?: (item: LooterItem) => void;
-  onItemClick?: (item: LooterItem) => void;
+  onItemClick?: (item: LooterItem, pos: { x: number; y: number }) => void;
   onItemLayoutChange?: (items: LooterItem[]) => void;
   onHoverCellChange?: (cell: { x: number; y: number } | null) => void;
   onDragStart?: (item: LooterItem, source: any, offset: any) => void;
@@ -156,9 +156,10 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               onPointerDown={readOnly ? undefined : onPointerDown}
               onDoubleClick={readOnly ? undefined : onItemDoubleClick}
               onClick={() => {
+                const pos = { x: item.gridX * cellSize, y: item.gridY * cellSize };
                 setSelectedItem(item);
-                setPopupPos({ x: item.gridX * cellSize, y: item.gridY * cellSize });
-                onItemClick?.(item);
+                setPopupPos(pos);
+                onItemClick?.(item, pos);
               }}
             />
           ))}

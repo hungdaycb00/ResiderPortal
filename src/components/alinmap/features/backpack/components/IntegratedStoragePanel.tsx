@@ -80,6 +80,8 @@ export default function IntegratedStoragePanel() {
   const [startY, setStartY] = useState(0);
   const [startScrollTop, setStartScrollTop] = useState(0);
 
+  const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
+
   const storageItems = useMemo(() => buildPlacedStorage(state.storage), [state.storage]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -148,7 +150,6 @@ export default function IntegratedStoragePanel() {
             </div>
           </div>
 
-          {/* Storage Grid Area */}
           <div 
             ref={scrollRef}
             className={`h-[calc(40vh-56px)] overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''}`}
@@ -157,7 +158,7 @@ export default function IntegratedStoragePanel() {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            <div className="mx-auto max-w-4xl p-6">
+            <div className="flex justify-center p-4">
               <InventoryGrid
                 items={storageItems}
                 bags={[VIRTUAL_STORAGE_BAG]}
@@ -172,7 +173,7 @@ export default function IntegratedStoragePanel() {
                   setSelectedItem(item);
                   setPopupPos(pos);
                 }}
-                cellSize={42}
+                cellSize={cellSize}
               />
             </div>
           </div>
