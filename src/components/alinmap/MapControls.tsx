@@ -118,7 +118,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                         {/* Định vị Thuyền */}
                         <button
                             onClick={() => {
-                                const yOffset = !isDesktop && isSheetExpanded ? window.innerHeight * 0.25 : 0;
+                                let yOffset = 0;
+                                if (!isDesktop && isSheetExpanded) {
+                                    const backpack = document.getElementById('looter-backpack-view');
+                                    const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
+                                    // yOffset = (Tâm màn hình) - (Tâm vùng trống)
+                                    // Tâm vùng trống = backpackTop / 2
+                                    yOffset = (window.innerHeight / 2) - (backpackTop / 2);
+                                }
                                 if (handleCenterBoat) {
                                     handleCenterBoat(yOffset);
                                     return;
