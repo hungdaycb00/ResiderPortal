@@ -58,7 +58,9 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
           {isBag && (
             <div className="flex justify-between">
               <span className="text-indigo-400 font-bold">Sức chứa Balo:</span>
-              <span className="text-indigo-400 font-mono">{(displayItem as any).width || bagDef?.width || 1}x{(displayItem as any).height || bagDef?.height || 1}</span>
+              <span className="text-indigo-400 font-mono">
+                {(displayItem as any).cells || bagDef?.cells || ((displayItem as any).width || bagDef?.width || 1) * ((displayItem as any).height || bagDef?.height || 1)} ô
+              </span>
             </div>
           )}
           <div className="flex justify-between">
