@@ -232,6 +232,35 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     actionsValue.loadState({ skipIfBusy: true });
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
+  // Debug: Press 'P' to spawn all bags
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'p' && deviceId && state.currentLat != null) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+        try {
+          const response = await fetch(`${API_URL}/api/looter/debug/spawn-all-bags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId, lat: state.currentLat, lng: state.currentLng })
+          });
+          const data = await response.json();
+          if (data.success) {
+            notify(`Đã spawn ${data.count} loại balo xung quanh bạn!`, 'success');
+            // Refresh world items to see them immediately
+            stateManager.loadWorldItems(state.currentLat, state.currentLng);
+          }
+        } catch (err) {
+          console.error('[Debug Spawn Bags]', err);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [deviceId, API_URL, state.currentLat, state.currentLng, notify, stateManager]);
+
   return (
     <LooterStateContext.Provider value={stateValue}>
       <LooterActionsContext.Provider value={actionsValue}>
