@@ -5,7 +5,8 @@ interface FullscreenToggleProps {
 }
 
 const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
-    const [dragBallPos, setDragBallPos] = useState(0);
+    const dragBallRef = useRef<HTMLDivElement>(null);
+    const touchZoneRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragType, setDragType] = useState<'up' | 'down' | null>(null);
     const dragStartY = useRef(0);
@@ -16,16 +17,51 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
     useEffect(() => {
         if (isDesktop) return;
 
-        // Force body height to allow scrolling for Safari bar hiding
-        const originalHeight = document.body.style.height;
-        const originalMinHeight = document.documentElement.style.minHeight;
+        // Force body/html height exactly like in the test file
+        const originalBodyHeight = document.body.style.height;
+        const originalBodyMinHeight = document.body.style.minHeight;
+        const originalHtmlHeight = document.documentElement.style.height;
+        const originalHtmlMinHeight = document.documentElement.style.minHeight;
         
-        document.body.style.height = '200vh';
+        document.body.style.minHeight = '200vh';
+        document.body.style.width = '100vw';
         document.documentElement.style.minHeight = '200vh';
 
+        // Global scroll listener for touchZone positioning like in test file
+        const syncTouchZone = () => {
+            if (touchZoneRef.current) {
+                touchZoneRef.current.style.top = (window.scrollY + 70) + 'px';
+            }
+        };
+
+        syncTouchZone();
+        window.addEventListener('scroll', syncTouchZone, { passive: true });
+
+        // Global touchmove preventDefault logic from test file
+        const handleGlobalTouchMove = (e: TouchEvent) => {
+            // Check if it's our touch zone
+            if (e.target instanceof HTMLElement && e.target.closest('#touch-zone-id')) return;
+
+            // Check for inner scroll (like backpack)
+            const innerScroll = (e.target as HTMLElement).closest('.inner-scroll');
+            if (innerScroll) {
+                // Let the inner scroll work
+                return;
+            }
+
+            // Prevent global scroll unless it's our joystick
+            e.preventDefault();
+        };
+
+        document.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
+
         return () => {
-            document.body.style.height = originalHeight;
-            document.documentElement.style.minHeight = originalMinHeight;
+            document.body.style.minHeight = originalBodyMinHeight;
+            document.body.style.height = originalBodyHeight;
+            document.documentElement.style.minHeight = originalHtmlMinHeight;
+            document.documentElement.style.height = originalHtmlHeight;
+            window.removeEventListener('scroll', syncTouchZone);
+            document.removeEventListener('touchmove', handleGlobalTouchMove);
         };
     }, [isDesktop]);
 
@@ -39,14 +75,16 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
         const currentY = e.touches[0].clientY;
         const deltaY = currentY - dragStartY.current;
         
-        setDragBallPos(deltaY);
-
-        if (deltaY < -10) {
+        if (deltaY < -5) {
             setDragType('up');
-        } else if (deltaY > 10) {
+        } else if (deltaY > 5) {
             setDragType('down');
         } else {
             setDragType(null);
+        }
+
+        if (dragBallRef.current) {
+            dragBallRef.current.style.transform = `scale(1.15) translateY(${deltaY}px)`;
         }
     };
 
@@ -54,23 +92,25 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
         if (!isDragging) return;
         
         if (dragType === 'up') {
-            // Scroll down to hide browser bars - Using native scrollTo without smooth to trigger bar hide more reliably
             window.scrollTo(0, 500);
         } else if (dragType === 'down') {
-            // Scroll to top to show browser bars
             window.scrollTo(0, 0);
         }
 
-        // Reset state
+        // Reset state exactly like stopDragging() in test file
         setIsDragging(false);
-        setDragBallPos(0);
         setDragType(null);
+        if (dragBallRef.current) {
+            dragBallRef.current.style.transform = '';
+        }
     };
 
     return (
         <>
-            {/* Control Ball */}
+            {/* Control Ball (drag-ball) */}
             <div 
+                ref={dragBallRef}
+                id="drag-ball"
                 style={{
                     position: 'fixed',
                     top: '80px',
@@ -90,29 +130,30 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     opacity: isDragging ? 1 : 0.6,
-                    transform: isDragging ? `scale(1.15) translateY(${dragBallPos}px)` : 'scale(1)',
-                    transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: isDragging ? 'none' : 'opacity 0.3s, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-color 0.3s',
                     pointerEvents: 'none',
                     color: 'white',
                     fontSize: '20px',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                 }}
             >
                 ↕
             </div>
 
-            {/* Touch Zone (Invisible layer to catch events) */}
+            {/* Touch Zone (touch-zone) */}
             <div 
+                ref={touchZoneRef}
+                id="touch-zone-id"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchEnd}
                 style={{
-                    position: 'fixed',
-                    top: '40px',
+                    position: 'absolute', // Absolute to follow scroll via syncTouchZone
                     left: '5px',
                     width: '70px',
-                    height: '140px',
+                    height: '120px',
                     zIndex: 9999,
                     touchAction: 'none'
                 }}
