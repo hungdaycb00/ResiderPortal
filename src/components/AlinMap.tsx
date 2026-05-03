@@ -119,7 +119,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 }
             }, 500);
         }
-    }, [wsCtx.isConnecting, wsCtx.wsStatus, isLooterGameMode, centerBoatHandler, nav]);
+    }, [wsCtx.isConnecting, wsCtx.wsStatus, isLooterGameMode, looterActions.centerOnBoat, nav]);
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
