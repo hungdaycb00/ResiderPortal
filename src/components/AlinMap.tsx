@@ -312,6 +312,7 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
                 searchTag={searchTag}
                 isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
+                postPrivacy={posts.postPrivacy}
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
                 radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
                 showNotification={showNotification}
@@ -327,7 +328,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setMyDisplayName={wsCtx.setMyDisplayName}
                 myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
                 setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
-                handleCreatePost={posts.handleCreatePost} handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
+                setPostPrivacy={posts.setPostPrivacy}
+                handleCreatePost={posts.handleCreatePost}
+                handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
+                handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
                 handlePlayGame={handlePlayGame}
                 cloudflareUrl={cloudflareUrl}
                 triggerAuth={triggerAuth}

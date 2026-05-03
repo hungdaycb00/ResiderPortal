@@ -31,6 +31,7 @@ interface BottomSheetProps {
     searchTag: string;
     isCreatingPost: boolean;
     postTitle: string;
+    postPrivacy: 'public' | 'friends' | 'private';
     isSavingPost: boolean;
     galleryActive: boolean;
     currentProvince: string | null;
@@ -55,7 +56,9 @@ interface BottomSheetProps {
     setMyAvatarUrl: (v: string) => void;
     setIsCreatingPost: (v: boolean) => void;
     setPostTitle: (v: string) => void;
+    setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
     handleCreatePost: (files: File[]) => void;
+    handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
     cloudflareUrl?: string;
@@ -76,8 +79,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         ws, panX, panY, onLocateUser, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setMyDisplayName,
-        setIsCreatingPost, setPostTitle, fetchUserPosts,
-        handleCreatePost, handleStarPost, handleDeletePost, handleUpdateRadius,
+        setIsCreatingPost, setPostTitle, setPostPrivacy, fetchUserPosts,
+        handleCreatePost, handleUpdatePostPrivacy, handleStarPost, handleDeletePost, handleUpdateRadius,
         myAvatarUrl, setMyAvatarUrl,
         cloudflareUrl, triggerAuth, requireAuth, logout, externalOpenList, onOpenListChange, onPublishSuccess, requestLocation
     } = props;
@@ -304,9 +307,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                         activeTab={activeTab as any} setActiveTab={setActiveTab as any} galleryActive={galleryActive}
                                         setMyDisplayName={setMyDisplayName}
                                         radius={radius} handleUpdateRadius={handleUpdateRadius} games={games} userPosts={userPosts} isCreatingPost={isCreatingPost}
-                                        setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle} isSavingPost={isSavingPost}
+                                        setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle}
+                                        postPrivacy={postPrivacy} setPostPrivacy={setPostPrivacy}
+                                        isSavingPost={isSavingPost}
                                         ws={ws} myObfPos={myObfPos} user={user} showNotification={showNotification} setIsSheetExpanded={setIsSheetExpanded}
-                                        setMainTab={setMainTab} handleCreatePost={handleCreatePost} handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
+                                        setMainTab={setMainTab} handleCreatePost={handleCreatePost} 
+                                        handleUpdatePostPrivacy={handleUpdatePostPrivacy}
+                                        handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi} setMyAvatarUrl={setMyAvatarUrl}
                                         triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
                                         requestLocation={requestLocation} friends={friends} setSelectedUser={setSelectedUser}

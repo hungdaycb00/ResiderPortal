@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
-import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Edit } from 'lucide-react';
+import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Globe, Users, Lock } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
-const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts, requireAuth }: any) => {
+const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi, fetchUserPosts, requireAuth }: any) => {
     const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
-    const [liked, setLiked] = React.useState(post.isLiked);
-    const [likeCount, setLikeCount] = React.useState(post.likeCount || 0);
-    const [archived, setArchived] = React.useState(post.isArchived);
-    const [commentCount, setCommentCount] = React.useState(post.commentCount || 0);
-    const [comments, setComments] = React.useState<any[]>(post.comments || []);
-    const [showComments, setShowComments] = React.useState(false);
-    const [newCmt, setNewCmt] = React.useState('');
-    const [loadingCmt, setLoadingCmt] = React.useState(false);
+    const [liked, setLiked] = useState(post.isLiked);
+    const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+    const [archived, setArchived] = useState(post.isArchived);
+    const [commentCount, setCommentCount] = useState(post.commentCount || 0);
+    const [comments, setComments] = useState<any[]>(post.comments || []);
+    const [showComments, setShowComments] = useState(false);
+    const [newCmt, setNewCmt] = useState('');
+    const [loadingCmt, setLoadingCmt] = useState(false);
+    const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
 
     const toggleLike = async () => {
         if (requireAuth && !requireAuth('thich bai viet')) return;
@@ -63,6 +65,27 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts,
         finally { setLoadingCmt(false); }
     };
 
+    const handlePrivacyChange = (newPrivacy: string) => {
+        onUpdatePrivacy?.(post.id, newPrivacy);
+        setShowPrivacyPopup(false);
+    };
+
+    const getPrivacyIcon = (privacy: string) => {
+        switch (privacy) {
+            case 'friends': return <Users className="w-3 h-3" />;
+            case 'private': return <Lock className="w-3 h-3" />;
+            default: return <Globe className="w-3 h-3" />;
+        }
+    };
+
+    const getPrivacyLabel = (privacy: string) => {
+        switch (privacy) {
+            case 'friends': return 'Bạn bè';
+            case 'private': return 'Riêng tư';
+            default: return 'Công khai';
+        }
+    };
+
     return (
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4">
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -72,14 +95,58 @@ const PostCard = ({ post, isSelf, onStar, onDelete, externalApi, fetchUserPosts,
                         alt="author" 
                         className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-100" 
                     />
-                    <div>
+                    <div className="flex flex-col">
                         <div className="flex items-center gap-1.5">
                             <h4 className="text-[14px] font-bold text-gray-900">{post.author?.name || 'Unknown User'}</h4>
                             {post.isStarred && !post.isArchivedState && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
                         </div>
-                        <p className="text-[10px] text-gray-400">
-                            {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-gray-400">
+                                {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <div className="relative">
+                                <button 
+                                    onClick={() => isSelf && setShowPrivacyPopup(!showPrivacyPopup)}
+                                    className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isSelf ? 'bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer' : 'text-gray-400'}`}
+                                >
+                                    {getPrivacyIcon(post.privacy)}
+                                    {getPrivacyLabel(post.privacy)}
+                                </button>
+
+                                <AnimatePresence>
+                                    {showPrivacyPopup && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowPrivacyPopup(false)} />
+                                            <motion.div 
+                                                initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                                                className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-100 shadow-xl rounded-xl p-1.5 flex flex-col gap-1 w-[120px]"
+                                            >
+                                                <button 
+                                                    onClick={() => handlePrivacyChange('public')}
+                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${post.privacy === 'public' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+                                                >
+                                                    <Globe className="w-3.5 h-3.5" /> Công khai
+                                                </button>
+                                                <button 
+                                                    onClick={() => handlePrivacyChange('friends')}
+                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${post.privacy === 'friends' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+                                                >
+                                                    <Users className="w-3.5 h-3.5" /> Bạn bè
+                                                </button>
+                                                <button 
+                                                    onClick={() => handlePrivacyChange('private')}
+                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${post.privacy === 'private' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+                                                >
+                                                    <Lock className="w-3.5 h-3.5" /> Riêng tư
+                                                </button>
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {isSelf && !post.isArchivedState && (

@@ -24,6 +24,8 @@ interface MyProfileViewProps {
     setIsCreatingPost: (v: boolean) => void;
     postTitle: string;
     setPostTitle: (v: string) => void;
+    postPrivacy: string;
+    setPostPrivacy: (v: string) => void;
     isSavingPost: boolean;
     ws: React.MutableRefObject<WebSocket | null>;
     myObfPos: any;
@@ -32,6 +34,7 @@ interface MyProfileViewProps {
     setIsSheetExpanded: (v: boolean) => void;
     setMainTab: (tab: any) => void;
     handleCreatePost: (files: File[]) => void;
+    handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
     fetchUserPosts: (uid: string) => void;
@@ -52,9 +55,9 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         setMyDisplayName,
         radius, handleUpdateRadius,
         games, userPosts,
-        isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, isSavingPost,
+        isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, postPrivacy, setPostPrivacy, isSavingPost,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
-        handleCreatePost, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
+        handleCreatePost, handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
         setMyAvatarUrl,
         triggerAuth, requireAuth, logout, requestLocation,
         friends, setSelectedUser
@@ -278,9 +281,14 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 <div className="pb-8">
                     <div className="mb-6">
                         <CreatePostForm
-                            isCreatingPost={isCreatingPost} setIsCreatingPost={openCreatePost}
-                            postTitle={postTitle} setPostTitle={setPostTitle}
-                            isSavingPost={isSavingPost} handleCreatePost={submitPost}
+                            isCreatingPost={isCreatingPost}
+                            setIsCreatingPost={setIsCreatingPost}
+                            postTitle={postTitle}
+                            setPostTitle={setPostTitle}
+                            postPrivacy={postPrivacy}
+                            setPostPrivacy={setPostPrivacy}
+                            isSavingPost={isSavingPost}
+                            handleCreatePost={handleCreatePost}
                         />
                     </div>
                     {userPosts.length > 0 ? (
@@ -289,6 +297,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                                 <PostCard
                                     key={post.id} post={post} isSelf={true}
                                     onStar={handleStarPost} onDelete={handleDeletePost}
+                                    onUpdatePrivacy={handleUpdatePostPrivacy}
                                     externalApi={externalApi} fetchUserPosts={fetchUserPosts}
                                     requireAuth={requireAuth}
                                 />

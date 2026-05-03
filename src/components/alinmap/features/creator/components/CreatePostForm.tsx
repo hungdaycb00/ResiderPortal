@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Edit, X, Smile, Image as ImageIcon } from 'lucide-react';
+import { Edit, X, Smile, Image as ImageIcon, Globe, Users, Lock } from 'lucide-react';
 
 interface CreatePostFormProps {
     isCreatingPost: boolean;
     setIsCreatingPost: (v: boolean) => void;
     postTitle: string;
     setPostTitle: (v: string) => void;
+    postPrivacy: 'public' | 'friends' | 'private';
+    setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
     isSavingPost: boolean;
     handleCreatePost: (files: File[]) => void;
 }
@@ -14,7 +16,8 @@ const QUICK_EMOJIS = ['🎮', '🔥', '✨', '😂', '😎', '💀', '💯', '�
 const POPULAR_TAGS = ['#game', '#shop', '#chill', '#event', '#trading', '#friends'];
 
 const CreatePostForm: React.FC<CreatePostFormProps> = ({
-    isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, isSavingPost, handleCreatePost,
+    isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, 
+    postPrivacy, setPostPrivacy, isSavingPost, handleCreatePost,
 }) => {
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -64,6 +67,30 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
 
     return (
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between mb-1 px-1">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">New Post</span>
+                <div className="flex bg-gray-200/50 p-1 rounded-xl gap-1">
+                    <button 
+                        onClick={() => setPostPrivacy('public')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${postPrivacy === 'public' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <Globe className="w-3 h-3" /> Công khai
+                    </button>
+                    <button 
+                        onClick={() => setPostPrivacy('friends')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${postPrivacy === 'friends' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <Users className="w-3 h-3" /> Bạn bè
+                    </button>
+                    <button 
+                        onClick={() => setPostPrivacy('private')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${postPrivacy === 'private' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <Lock className="w-3 h-3" /> Riêng tư
+                    </button>
+                </div>
+            </div>
+
             <div className="relative">
                 <input
                     type="text"

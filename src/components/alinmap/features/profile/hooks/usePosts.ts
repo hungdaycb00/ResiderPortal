@@ -48,6 +48,7 @@ export function usePosts({
   const selfPostsIdentifier = resolvedSelfUserId || 'me';
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [postTitle, setPostTitle] = useState('');
+  const [postPrivacy, setPostPrivacy] = useState<'public' | 'friends' | 'private'>('public');
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [isSavingPost, setIsSavingPost] = useState(false);
   const [userGames, setUserGames] = useState<any[]>([]);
@@ -98,6 +99,7 @@ export function usePosts({
       const formData = new FormData();
       validFiles.forEach(f => formData.append('images', f));
       formData.append('title', postTitle);
+      formData.append('privacy', postPrivacy);
       const deviceId = externalApi.getDeviceId();
       const resp = await fetch(`${API_BASE}/api/user/post`, {
         method: 'POST', headers: { 'X-Device-Id': deviceId }, body: formData
@@ -105,6 +107,7 @@ export function usePosts({
       const data = await resp.json();
       if (data.success) {
         setPostTitle('');
+        setPostPrivacy('public');
         setIsCreatingPost(false);
         fetchUserPosts(selfPostsIdentifier);
         sendGallerySync();
@@ -112,6 +115,23 @@ export function usePosts({
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
     } catch (err) { console.error('Create post error:', err); }
     finally { setIsSavingPost(false); }
+  };
+
+  const handleUpdatePostPrivacy = async (postId: string, newPrivacy: string) => {
+    if (!user) return;
+    const deviceId = externalApi.getDeviceId();
+    try {
+      const resp = await fetch(`${API_BASE}/api/user/post/${postId}/privacy`, {
+        method: 'PUT',
+        headers: { 'X-Device-Id': deviceId, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ privacy: newPrivacy })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setUserPosts(prev => prev.map(p => p.id === postId ? { ...p, privacy: newPrivacy } : p));
+        showNotification?.('Đã cập nhật quyền riêng tư', 'success');
+      }
+    } catch (err) { console.error('Update privacy error:', err); }
   };
 
   const handleStarPost = async (postId: string) => {
@@ -184,9 +204,11 @@ export function usePosts({
 
   return {
     userPosts, postTitle, setPostTitle,
+    postPrivacy, setPostPrivacy,
     isCreatingPost, setIsCreatingPost,
     isSavingPost, userGames,
     handleCreatePost, fetchUserPosts,
     handleStarPost, handleDeletePost,
+    handleUpdatePostPrivacy,
   };
 }
