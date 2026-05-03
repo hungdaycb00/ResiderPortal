@@ -53,6 +53,7 @@ export function useLooterBoat({
         myObfPos, panX, panY,
         currentLat: state?.currentLat ?? null,
         currentLng: state?.currentLng ?? null,
+        encounter,
     });
 
 

@@ -8,9 +8,10 @@ interface UseBoatAnimationParams {
   panY: MotionValue<number>;
   currentLat: number | null;
   currentLng: number | null;
+  encounter: any | null;
 }
 
-export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng }: UseBoatAnimationParams) {
+export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng, encounter }: UseBoatAnimationParams) {
   const boatOffsetX = useMotionValue(0);
   const boatOffsetY = useMotionValue(0);
   const isAnimatingRef = useRef(false);
@@ -51,7 +52,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng 
 
   const syncBoatPosition = useCallback(() => {
     // Không tự động sync camera nếu đang trong trận đấu hoặc đang chạy animation di chuyển
-    if (!myObfPos || currentLat == null || currentLng == null || isAnimatingRef.current || state.encounter) return;
+    if (!myObfPos || currentLat == null || currentLng == null || isAnimatingRef.current || encounter) return;
     const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
     const nextBoatY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
     boatOffsetX.set(nextBoatX);
