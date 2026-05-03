@@ -15,7 +15,7 @@ const CombatScreen: React.FC = () => {
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
         curseChoice, showNotification, setIsChallengeActive, moveBoat,
-        returnToFortress
+        returnToFortress, dropCombatLoot
     } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
@@ -29,14 +29,17 @@ const CombatScreen: React.FC = () => {
 
     if (!encounter) return null;
 
-    const handleClose = () => {
+    const handleClose = async () => {
         if (combat.frameRef.current) cancelAnimationFrame(combat.frameRef.current);
         
-        // Chỉ set kết quả toàn cục khi đóng màn hình này
+        // Chỉ xử lý kết quả khi đóng màn hình này
         if (combat.pendingResult) {
-            setCombatResult(combat.pendingResult);
             if (combat.pendingResult.result === 'win') {
                 showNotification('Bạn đã chiến thắng!', 'success');
+                // Tự động rơi đồ ra Map khi bấm Tiếp tục
+                if (combat.pendingResult.loot && combat.pendingResult.loot.length > 0) {
+                    await dropCombatLoot(combat.pendingResult.loot);
+                }
             } else {
                 showNotification('Bạn đã thất bại...', 'error');
                 // Khi thất bại: teleport về thành trì + tắt challenge

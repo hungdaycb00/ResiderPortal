@@ -3,7 +3,6 @@ import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
 import FortressStorageModal from './backpack/FortressStorageModal';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
-import CombatLootModal from './backpack/CombatLootModal';
 import { PickupMinigame } from './PickupMinigame';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
@@ -38,11 +37,6 @@ const LooterGameUI: React.FC = () => {
                 </ErrorBoundary>
             )}
             
-            {combatResult?.result === 'win' && combatResult?.loot && combatResult.loot.length > 0 && (
-                <ErrorBoundary name="Loot">
-                    <CombatLootModal />
-                </ErrorBoundary>
-            )}
 
             <ErrorBoundary name="Minigame">
                 <PickupMinigame />
