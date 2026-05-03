@@ -25,22 +25,27 @@ interface InventoryGridProps {
   gridH?: number;
 }
 
-const InventoryGrid: React.FC<InventoryGridProps> = ({
-  items,
-  bags,
-  readOnly = false,
-  onItemDoubleClick,
-  onItemClick,
-  onItemLayoutChange,
-  onDropOutside,
-  onEquipBag,
-  onDragStateChange,
-  cellSize = 40,
-  gridW = MAX_GRID_W,
-  gridH = MAX_GRID_H,
-}) => {
-  const [selectedItem, setSelectedItem] = React.useState<LooterItem | null>(null);
-  const [popupPos, setPopupPos] = React.useState({ x: 0, y: 0 });
+  const InventoryGrid: React.FC<InventoryGridProps> = ({
+    items,
+    bags,
+    readOnly = false,
+    onItemDoubleClick,
+    onItemClick,
+    onItemLayoutChange,
+    onDropOutside,
+    onEquipBag,
+    onDragStateChange,
+    cellSize = 40,
+    gridW = MAX_GRID_W,
+    gridH = MAX_GRID_H,
+  }) => {
+    const [selectedItem, setSelectedItem] = React.useState<LooterItem | null>(null);
+    const [popupPos, setPopupPos] = React.useState({ x: 0, y: 0 });
+  
+    const handleDoubleClick = React.useCallback((item: LooterItem) => {
+      setSelectedItem(null); // Close popup on double click
+      onItemDoubleClick?.(item);
+    }, [onItemDoubleClick]);
 
   const activeBag = Array.isArray(bags) ? bags[0] : undefined;
 
@@ -154,7 +159,7 @@ const InventoryGrid: React.FC<InventoryGridProps> = ({
               isDragging={draggingItem?.uid === item.uid}
               style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
               onPointerDown={readOnly ? undefined : onPointerDown}
-              onDoubleClick={readOnly ? undefined : onItemDoubleClick}
+              onDoubleClick={readOnly ? undefined : handleDoubleClick}
               onClick={() => {
                 const pos = { x: item.gridX * cellSize, y: item.gridY * cellSize };
                 setSelectedItem(item);

@@ -67,7 +67,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
           clickTimerRef.current = setTimeout(() => {
             onClick?.();
             clickTimerRef.current = null;
-          }, 200);
+          }, 300);
         } else {
           onClick?.();
         }
