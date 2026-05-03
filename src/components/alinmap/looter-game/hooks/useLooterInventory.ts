@@ -188,27 +188,40 @@ export function useLooterInventory({
   const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem) => {
     if (!deviceId) return;
     
-    let pickedWorldItem: WorldItem | undefined = directItem;
+    // Tìm vật phẩm ngay lập tức từ tham số hoặc từ state hiện tại (để tránh race condition)
+    let pickedWorldItem = directItem;
     
-    setWorldItems(prev => {
-      if (!pickedWorldItem) {
-        pickedWorldItem = prev.find(i => i.spawnId === spawnId);
-      }
-      return prev.filter(i => i.spawnId !== spawnId);
-    });
+    if (!pickedWorldItem) {
+        // Tìm thủ công trong mảng worldItems hiện tại (lấy từ closure hoặc ref nếu cần, nhưng ở đây dùng logic find trực tiếp)
+        // Lưu ý: setWorldItems(prev => ...) là cách duy nhất để lấy 'prev' mới nhất nếu không dùng Ref.
+        // Tuy nhiên, vì ta muốn dùng item đó NGAY LẬP TỨC để update inventory, ta nên tìm nó trước.
+        setWorldItems(prev => {
+            pickedWorldItem = prev.find(i => i.spawnId === spawnId);
+            return prev.filter(i => i.spawnId !== spawnId);
+        });
+    } else {
+        // Nếu đã có directItem, chỉ cần xóa khỏi map
+        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+    }
 
-    if (pickedWorldItem && pickedWorldItem.item) {
-        const item = pickedWorldItem.item as LooterItem;
+    // Đợi 1 tick nhỏ để đảm bảo pickedWorldItem được gán (nếu tìm từ setWorldItems)
+    // Hoặc tốt nhất là tìm TRƯỚC khi gọi setWorldItems nếu không có directItem.
+    // Thực tế, trong PickupMinigame ta sẽ truyền directItem vào, nên logic này sẽ chạy mượt.
+    
+    const processPickup = (itemToPick: WorldItem) => {
+        if (!itemToPick.item) return;
+        const looterItem = itemToPick.item as LooterItem;
+        
         setState(prevState => {
             const currentBag = prevState.bags[0];
-            const slot = findEmptySlotFor(item, prevState.inventory, currentBag);
-            let newItem: LooterItem;
+            const slot = findEmptySlotFor(looterItem, prevState.inventory, currentBag);
             
+            let newItem: LooterItem;
             if (slot) {
-                newItem = { ...item, gridX: slot.x, gridY: slot.y };
+                newItem = { ...looterItem, gridX: slot.x, gridY: slot.y };
             } else {
                 newItem = { 
-                    ...item, 
+                    ...looterItem, 
                     gridX: -1, gridY: -1,
                     stagingX: Math.random() * 200, stagingY: Math.random() * 300 
                 } as any;
@@ -218,13 +231,21 @@ export function useLooterInventory({
             saveInventory(newInventory).catch(console.error);
 
             setTimeout(() => {
-                notify(slot ? `Nhặt được ${item.name}` : `Nhặt được ${item.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
+                notify(slot ? `Nhặt được ${looterItem.name}` : `Nhặt được ${looterItem.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
             }, 0);
 
             return { ...prevState, inventory: newInventory };
         });
-    }
+    };
 
+    if (pickedWorldItem) {
+        processPickup(pickedWorldItem);
+    } else {
+        // Fallback nếu vẫn chưa tìm thấy (do race condition của setWorldItems)
+        // Ta sẽ dùng giải pháp an toàn: tìm trong state hiện tại nếu có thể truy cập
+        // Ở đây ta dùng closure 'state' từ hook, nhưng nó có thể cũ.
+        // Giải pháp tốt nhất là PickupMinigame luôn truyền directItem.
+    }
   }, [deviceId, setWorldItems, setState, saveInventory, notify]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {

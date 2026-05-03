@@ -79,7 +79,7 @@ export interface LooterGameActions {
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
-  pickupItem: (spawnId: string) => Promise<void>;
+  pickupItem: (spawnId: string, directItem?: WorldItem) => Promise<void>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
 
   saveInventory: (inventory: LooterItem[]) => Promise<void>;

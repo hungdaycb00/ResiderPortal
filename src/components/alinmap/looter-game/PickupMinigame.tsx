@@ -47,7 +47,7 @@ export const PickupMinigame: React.FC = () => {
         }
         // API call chạy nền, không block UI
         if (success) {
-            pickupItem(spawnId);
+            pickupItem(spawnId, showMinigame);
         } else {
             inflictMinigamePenalty(spawnId);
         }
