@@ -13,6 +13,7 @@ import {
   type LooterGameActions
 } from './LooterGameContext';
 import { GAME_CONFIG } from './gameConfig';
+import { looterApi } from './services/looterApi';
 
 // Hooks
 import { useLooterQueue } from './hooks/useLooterQueue';
