@@ -13,6 +13,7 @@ import LooterGameUI from './alinmap/looter-game/LooterGameUI';
 import TierSelectionOverlay from './alinmap/looter-game/TierSelectionOverlay';
 import { SocialProvider } from './alinmap/features/social/context/SocialContext';
 import { ProfileProvider } from './alinmap/features/profile/context/ProfileContext';
+import FullscreenToggle from './alinmap/components/FullscreenToggle';
 
 // Hooks
 import { useGeolocation } from './alinmap/hooks/useGeolocation';
@@ -219,6 +220,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             selectedUser={nav.selectedUser}
         >
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
+            {/* Fullscreen Toggle for Mobile */}
+            <FullscreenToggle isDesktop={nav.isDesktop} />
+
             {/* Header / Search Bar */}
             <SearchHeader
                 searchTag={searchTag}

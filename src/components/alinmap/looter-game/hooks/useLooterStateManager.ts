@@ -85,12 +85,12 @@ export function useLooterStateManager({
         if (data.settings) setGlobalSettings(data.settings);
         
         const distToFortress = getDistanceMeters(s.currentLat, s.currentLng, s.fortressLat, s.fortressLng);
-        // Tier -1 = đang ở thành trì (chưa bắt đầu thử thách). 
         const isNearFortress = distToFortress <= FORTRESS_INTERACTION_METERS;
-        const shouldBeActive = !isNearFortress || (s.worldTier ?? -1) > 0;
         
-        // Cập nhật worldTier nội bộ nếu đang ở thành trì mà state chưa đồng bộ
+        // Trả về đúng logic gốc: worldTier lấy từ server, chỉ update -1 nếu đang ở gần và chưa active
         const finalWorldTier = (isNearFortress && !isChallengeActive) ? -1 : s.worldTier;
+
+        const shouldBeActive = !isNearFortress || (finalWorldTier ?? -1) > 0;
 
         setState({
           ...s,

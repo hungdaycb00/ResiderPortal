@@ -84,7 +84,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
   }, []);
 
   // Camera focus vào midpoint giữa thuyền User và Enemy (+60px X)
-  const centerOnCombat = useCallback((yOffsetPx: number = 0) => {
+  const centerOnCombat = useCallback((yOffsetPx: number = -60) => {
     // CRITICAL: Dừng tất cả animation thuyền trước khi tính midpoint
     // để đảm bảo boatOffsetX/Y đã ổn định, tránh camera target sai
     stopAllAnimations();

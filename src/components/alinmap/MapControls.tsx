@@ -112,32 +112,6 @@ const MapControls: React.FC<MapControlsProps> = ({
                         </button>
                     </div>
                 )}
-                {isLooterGameMode && (
-                    <div className="flex flex-col gap-2 mt-2">
-                        {/* Định vị Thuyền */}
-                        <button
-                            onClick={() => {
-                                let yOffset = 0;
-                                if (!isDesktop && isSheetExpanded) {
-                                    const backpack = document.getElementById('looter-backpack-view');
-                                    const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-                                    // yOffset = (Tâm màn hình) - (Tâm vùng trống)
-                                    // Tâm vùng trống = backpackTop / 2
-                                    yOffset = (window.innerHeight / 2) - (backpackTop / 2);
-                                }
-                                if (looterState.encounter) {
-                                    centerOnCombat(yOffset);
-                                } else {
-                                    centerOnBoat(yOffset);
-                                }
-                            }}
-                            className="w-10 h-10 md:w-12 md:h-12 bg-cyan-600 text-white rounded-xl md:rounded-2xl shadow-lg shadow-cyan-900/40 flex items-center justify-center active:scale-95 transition-all border border-cyan-400/30"
-                            title="Định vị Thuyền"
-                        >
-                            <Navigation className="w-5 h-5 md:w-6 md:h-6 fill-current rotate-45" />
-                        </button>
-                    </div>
-                )}
             </div>
 
 

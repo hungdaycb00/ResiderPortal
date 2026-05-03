@@ -26,13 +26,13 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                         <motion.div
                             key={flyingItem.item.uid + flyingItem.from}
                             initial={{ 
-                                x: flyingItem.from === 'A' ? '50vw' : 'calc(50vw + 60px)', 
-                                y: flyingItem.from === 'A' ? '50vh' : 'calc(50vh - 40px)', 
+                                x: flyingItem.from === 'A' ? '50vw' : 'calc(50vw + 120px)', 
+                                y: '50vh', 
                                 opacity: 1, scale: 1.2 
                             }}
                             animate={{ 
-                                x: flyingItem.from === 'A' ? 'calc(50vw + 60px)' : '50vw', 
-                                y: flyingItem.from === 'A' ? 'calc(50vh - 40px)' : '50vh', 
+                                x: flyingItem.from === 'A' ? 'calc(50vw + 120px)' : '50vw', 
+                                y: '50vh', 
                                 opacity: 0.3, scale: 0.6 
                             }}
                             exit={{ opacity: 0 }}
@@ -131,8 +131,8 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                 {flyingItem && (
                     <motion.div
                         key={flyingItem.item.uid + flyingItem.from}
-                        initial={{ x: flyingItem.from === 'A' ? '20vw' : '80vw', y: '-5vh', opacity: 1, scale: 1.5 }}
-                        animate={{ x: flyingItem.from === 'A' ? '75vw' : '20vw', y: '10vh', opacity: 0.3, scale: 0.8 }}
+                        initial={{ x: flyingItem.from === 'A' ? '20%' : '80%', y: '10%', opacity: 1, scale: 1.5 }}
+                        animate={{ x: flyingItem.from === 'A' ? '80%' : '20%', y: '10%', opacity: 0.3, scale: 0.8 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.6, ease: 'easeIn' }}
                         className="absolute z-50 flex flex-col items-center"

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown, Database } from 'lucide-react';
+import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown, Database, Navigation } from 'lucide-react';
 import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
@@ -25,7 +25,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const { 
     state, saveInventory, equipBag, showNotification, 
     dropItems, toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems
+    storeItems, centerOnBoat, centerOnCombat
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -132,6 +132,50 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
       id="looter-backpack-container"
       className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0"
     >
+      {/* Floating Action Buttons - Attached to Backpack Top Edge */}
+      <div className="absolute -top-11 left-0 right-0 z-[200] pointer-events-none px-2 flex justify-between items-center h-10">
+        {/* Fortress Storage Button (Left) */}
+        {state.worldTier === -1 && (() => {
+            const dist = Math.sqrt(
+                Math.pow((state.currentLat || 0) - (state.fortressLat || 0), 2) +
+                Math.pow(((state.currentLng || 0) - (state.fortressLng || 0)) * Math.cos(((state.currentLat || 0) * Math.PI) / 180), 2)
+            ) * 111000;
+            return dist <= 300;
+        })() ? (
+            <button
+                onClick={(e) => { e.stopPropagation(); toggleIntegratedStorage(); }}
+                className={`pointer-events-auto p-2 rounded-xl border transition-all shadow-2xl ${
+                    isIntegratedStorageOpen 
+                    ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.6)] scale-110' 
+                    : 'bg-[#0a1526]/90 border-cyan-500/30 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-400'
+                }`}
+                title="Kho đồ thành trì"
+            >
+                <Database className="w-5 h-5" />
+            </button>
+        ) : <div />}
+
+        {/* Locate Boat Button (Right) */}
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                let yOffset = 0;
+                // Since this button is INSIDE BackpackView, it only renders when sheet is expanded or active
+                const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
+                yOffset = (window.innerHeight / 2) - (backpackTop / 2);
+                
+                if (state.encounter) {
+                    centerOnCombat(yOffset);
+                } else {
+                    centerOnBoat(yOffset);
+                }
+            }}
+            className="pointer-events-auto p-2 rounded-xl border bg-[#0a1526]/90 border-cyan-500/30 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-400 transition-all shadow-2xl shadow-black/50 active:scale-90"
+            title="Định vị Thuyền"
+        >
+            <Navigation className="w-5 h-5 fill-current rotate-45" />
+        </button>
+      </div>
       <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[150] relative">
         <div className="flex items-center gap-4">
           {/* Gold */}
