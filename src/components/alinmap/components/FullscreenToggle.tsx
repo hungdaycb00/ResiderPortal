@@ -8,7 +8,65 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
     const [dragBallPos, setDragBallPos] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [dragType, setDragType] = useState<'up' | 'down' | null>(null);
+    const [touchZoneTop, setTouchZoneTop] = useState(70);
     const dragStartY = useRef(0);
+
+    // Sync touch zone position with scroll (like in the example)
+    useEffect(() => {
+        const syncTouchZone = () => {
+            setTouchZoneTop(window.scrollY + 70);
+        };
+        window.addEventListener('scroll', syncTouchZone, { passive: true });
+        syncTouchZone();
+        return () => window.removeEventListener('scroll', syncTouchZone);
+    }, []);
+
+    // Global touch move prevention logic (like in the example)
+    useEffect(() => {
+        if (isDesktop) return;
+
+        let touchStartYGlobal = 0;
+        
+        const handleGlobalTouchStart = (e: TouchEvent) => {
+            touchStartYGlobal = e.touches[0].clientY;
+        };
+
+        const handleGlobalTouchMove = (e: TouchEvent) => {
+            // If interacting with our touch zone, don't prevent default
+            if ((e.target as HTMLElement).closest('#fullscreen-touch-zone')) return;
+
+            // Allow inner scroll for specific elements if needed
+            const innerScroll = (e.target as HTMLElement).closest('.inner-scroll') || 
+                               (e.target as HTMLElement).closest('#looter-backpack-view') ||
+                               (e.target as HTMLElement).closest('.sheet-content');
+            
+            if (innerScroll) {
+                const touchY = e.touches[0].clientY;
+                const dy = touchY - touchStartYGlobal;
+                const scrollTop = (innerScroll as HTMLElement).scrollTop;
+                const scrollHeight = (innerScroll as HTMLElement).scrollHeight;
+                const clientHeight = (innerScroll as HTMLElement).clientHeight;
+
+                const isAtTop = scrollTop <= 0;
+                const isAtBottom = scrollHeight - scrollTop <= clientHeight + 1;
+
+                if (isAtTop && dy > 0) e.preventDefault();
+                else if (isAtBottom && dy < 0) e.preventDefault();
+                return;
+            }
+
+            // Prevent scroll for everything else to keep fullscreen state stable
+            e.preventDefault();
+        };
+
+        document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+        document.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
+
+        return () => {
+            document.removeEventListener('touchstart', handleGlobalTouchStart);
+            document.removeEventListener('touchmove', handleGlobalTouchMove);
+        };
+    }, [isDesktop]);
 
     // Only show on mobile
     if (isDesktop) return null;
@@ -25,9 +83,9 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
         
         setDragBallPos(deltaY);
 
-        if (deltaY < -10) {
+        if (deltaY < -5) {
             setDragType('up');
-        } else if (deltaY > 10) {
+        } else if (deltaY > 5) {
             setDragType('down');
         } else {
             setDragType(null);
@@ -61,6 +119,7 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
         <>
             {/* Control Ball */}
             <div 
+                id="fullscreen-drag-ball"
                 style={{
                     position: 'fixed',
                     top: '80px',
@@ -91,18 +150,19 @@ const FullscreenToggle: React.FC<FullscreenToggleProps> = ({ isDesktop }) => {
                 ↕
             </div>
 
-            {/* Touch Zone (Invisible layer to catch events) */}
+            {/* Touch Zone (Absolute position synchronized with scroll like in the example) */}
             <div 
+                id="fullscreen-touch-zone"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchEnd}
                 style={{
-                    position: 'fixed',
-                    top: '40px',
+                    position: 'absolute',
+                    top: `${touchZoneTop}px`,
                     left: '5px',
                     width: '70px',
-                    height: '140px',
+                    height: '120px',
                     zIndex: 9999,
                     touchAction: 'none'
                 }}
