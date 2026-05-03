@@ -75,7 +75,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const {
         isDesktop, isSheetExpanded, selectedUser, activeTab, mainTab, nearbyUsers, friends, games, userGames, userPosts,
         myUserId, myDisplayName, myObfPos, user, searchTag,
-        isCreatingPost, postTitle, isSavingPost, galleryActive, currentProvince, radius,
+        isCreatingPost, postTitle, postPrivacy, isSavingPost, galleryActive, currentProvince, radius,
         ws, panX, panY, onLocateUser, externalApi, onOpenChat, showNotification, handlePlayGame,
         setIsSheetExpanded, setSelectedUser, setActiveTab, setMainTab, setSearchTag,
         setMyDisplayName,
