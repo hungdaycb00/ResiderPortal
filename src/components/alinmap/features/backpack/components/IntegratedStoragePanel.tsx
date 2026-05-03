@@ -105,9 +105,10 @@ export default function IntegratedStoragePanel() {
 
   return (
     <>
-      {/* Global Transparent Overlay to catch clicks outside the panel */}
+      {/* Global Transparent Overlay - Only covers top part (Map) to allow backpack interaction */}
       <div 
-        className="fixed inset-0 z-[190] bg-black/20 backdrop-blur-[2px] pointer-events-auto" 
+        className="fixed inset-x-0 top-0 z-[190] bg-black/40 backdrop-blur-[2px] pointer-events-auto" 
+        style={{ height: 'calc(100vh - 400px)' }} // Assuming backpack is ~400px
         onClick={() => setIsIntegratedStorageOpen(false)}
       />
 

@@ -100,6 +100,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     const [panelWidth, setPanelWidth] = React.useState(400);
     const [exploreSubTab, setExploreSubTab] = React.useState<'games' | 'creator'>('games');
+    const [socialSubTab, setSocialSubTab] = React.useState<'posts' | 'nearby'>('posts');
     const shouldHideSearch = ['profile', 'backpack'].includes(mainTab);
 
     const handleEnterWorld = React.useCallback(() => {
@@ -286,34 +287,57 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                     </div>
                                 )}
                                 {mainTab === 'friends' && (
-                                    <SocialView
-                                        myUserId={myUserId} myObfPos={myObfPos}
-                                        friends={friends} nearbyUsers={nearbyUsers}
-                                        setSelectedUser={setSelectedUser} radius={radius}
-                                        handleUpdateRadius={handleUpdateRadius}
-                                        isVisibleOnMap={isVisibleOnMap}
-                                        setIsVisibleOnMap={setIsVisibleOnMap}
-                                        requestLocation={requestLocation}
-                                        ws={ws}
-                                        
-                                        userPosts={userPosts}
-                                        isCreatingPost={isCreatingPost}
-                                        setIsCreatingPost={setIsCreatingPost}
-                                        postTitle={postTitle}
-                                        setPostTitle={setPostTitle}
-                                        postPrivacy={postPrivacy}
-                                        setPostPrivacy={setPostPrivacy}
-                                        isSavingPost={isSavingPost}
-                                        handleCreatePost={handleCreatePost}
-                                        handleUpdatePostPrivacy={handleUpdatePostPrivacy}
-                                        handleStarPost={handleStarPost}
-                                        handleDeletePost={handleDeletePost}
-                                        fetchUserPosts={fetchUserPosts}
-                                        externalApi={externalApi}
-                                        galleryActive={galleryActive}
-                                        user={user}
-                                        requireAuth={requireAuth}
-                                    />
+                                    <div className="flex flex-col h-full">
+                                        <SocialView
+                                            myUserId={myUserId} myObfPos={myObfPos}
+                                            friends={friends} nearbyUsers={nearbyUsers}
+                                            setSelectedUser={setSelectedUser} radius={radius}
+                                            handleUpdateRadius={handleUpdateRadius}
+                                            isVisibleOnMap={isVisibleOnMap}
+                                            setIsVisibleOnMap={setIsVisibleOnMap}
+                                            requestLocation={requestLocation}
+                                            ws={ws}
+                                            
+                                            userPosts={userPosts}
+                                            isCreatingPost={isCreatingPost}
+                                            setIsCreatingPost={setIsCreatingPost}
+                                            postTitle={postTitle}
+                                            setPostTitle={setPostTitle}
+                                            postPrivacy={postPrivacy}
+                                            setPostPrivacy={setPostPrivacy}
+                                            isSavingPost={isSavingPost}
+                                            handleCreatePost={handleCreatePost}
+                                            handleUpdatePostPrivacy={handleUpdatePostPrivacy}
+                                            handleStarPost={handleStarPost}
+                                            handleDeletePost={handleDeletePost}
+                                            fetchUserPosts={fetchUserPosts}
+                                            externalApi={externalApi}
+                                            galleryActive={galleryActive}
+                                            user={user}
+                                            requireAuth={requireAuth}
+                                            socialSubTab={socialSubTab}
+                                        />
+
+                                        {/* Social Sub-tabs Switcher */}
+                                        {!selectedUser && (
+                                            <div className="absolute bottom-[72px] left-0 right-0 z-[160] px-6 pb-4 pointer-events-none">
+                                                <div className="flex bg-white/80 backdrop-blur-2xl p-1.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto max-w-[400px] mx-auto">
+                                                    <button 
+                                                        onClick={() => setSocialSubTab('posts')}
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${socialSubTab === 'posts' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                                                    >
+                                                        <span>📰 Posts</span>
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setSocialSubTab('nearby')}
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${socialSubTab === 'nearby' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                                                    >
+                                                        <span>📍 Nearby</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                                 {mainTab === 'notifications' && (
                                     <NotificationsView externalApi={externalApi} />

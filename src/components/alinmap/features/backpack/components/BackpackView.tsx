@@ -130,34 +130,23 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   return (
     <div id="looter-backpack-view" className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
       <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[150] relative">
-        <div className="flex items-center gap-3">
-          {state.worldTier === -1 && (
-            <button
-              onClick={toggleIntegratedStorage}
-              className={`p-2 rounded-xl border transition-all ${
-                isIntegratedStorageOpen 
-                  ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_15px_rgba(34,211,238,0.5)]' 
-                  : 'bg-white/5 border-white/10 text-cyan-400 hover:bg-white/10'
-              }`}
-              title="Kho đồ thành trì"
-            >
-              <Database className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex items-center gap-4">
+          {/* Gold */}
+          <div className="flex items-center gap-1.5">
+            <Coins className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-[12px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
+          </div>
+          
+          {/* HP */}
+          <div className="flex items-center gap-1.5">
+            <Heart className="h-3.5 w-3.5 text-red-500" />
+            <span className="text-[12px] font-black">{state.currentHp}</span>
+          </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <Coins className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-[12px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Heart className="h-3.5 w-3.5 text-red-500" />
-              <span className="text-[12px] font-black">{state.currentHp}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-blue-500" />
-              <span className="text-[12px] font-black">{state.energyMax + totalStats.energyMax}</span>
-            </div>
+          {/* Energy */}
+          <div className="flex items-center gap-1.5">
+            <Zap className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-[12px] font-black">{state.energyMax + totalStats.energyMax}</span>
           </div>
         </div>
 
