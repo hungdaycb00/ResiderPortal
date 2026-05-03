@@ -43,14 +43,16 @@ export function useLooterInventory({
 
     const currentBag = state.bags[0];
     const newBagData = (itemToEquip as any).bagData || itemToEquip;
+    const bagW = newBagData.width || 4;
+    const bagH = newBagData.height || 4;
     const newBag: BagItem = {
       uid: itemToEquip.uid,
       name: itemToEquip.name,
       icon: itemToEquip.icon,
       rarity: itemToEquip.rarity,
-      width: newBagData.width || 4,
-      height: newBagData.height || 4,
-      shape: newBagData.shape || Array.from({ length: 4 }, () => Array(4).fill(true)),
+      width: bagW,
+      height: bagH,
+      shape: newBagData.shape || Array.from({ length: bagH }, () => Array(bagW).fill(true)),
       gridX: currentBag.gridX,
       gridY: currentBag.gridY
     };
