@@ -1,21 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown } from 'lucide-react';
-import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
-import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid, BAG_DEFAULTS } from '../../../looter-game/backpack';
+import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown, Database } from 'lucide-react';
+import { useLooterGame } from '../../../looter-game/LooterGameContext';
+import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
-
-const TIER_LABELS = [
-  { tier: 0, cost: 0, label: '0' },
-  { tier: 1, cost: 10, label: '10' },
-  { tier: 2, cost: 100, label: '100' },
-  { tier: 3, cost: 1000, label: '1K' },
-  { tier: 4, cost: 10000, label: '10K' },
-  { tier: 5, cost: 100000, label: '100K' },
-];
-
-const TIER_MULTIPLIERS = [0.5, 1, 3, 8, 20, 50];
 
 const BAG_SLOT_RARITY: Record<string, string> = {
   common: 'border-sky-500/40 bg-sky-950/20 text-sky-200',
@@ -33,7 +22,11 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
-  const { state, saveInventory, openFortressStorage, equipBag, showNotification, pickupItem, dropItems } = useLooterGame();
+  const { 
+    state, saveInventory, equipBag, showNotification, 
+    dropItems, toggleIntegratedStorage, isIntegratedStorageOpen,
+    storeItems
+  } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
   const [selectedItem, setSelectedItem] = useState<LooterItem | null>(null);
@@ -43,8 +36,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const bagStats = getBagBonuses(activeBag);
 
   const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
-
-
 
   const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
     saveInventory(newItems);
@@ -112,7 +103,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     lastPosRef.current = { lat: state.currentLat, lng: state.currentLng };
   }, [state.currentLat, state.currentLng, state.inventory, activeBag, dropItems, isItemInsideBag]);
 
-  // Theo dõi tọa độ toàn cục để xử lý hover trên Mobile
   useEffect(() => {
     if (!draggingItem || (draggingItem as any).type !== 'bag') {
       setIsHoveringBagSlot(false);
@@ -139,42 +129,47 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   return (
     <div id="looter-backpack-view" className="flex h-full flex-col overflow-hidden text-white relative bg-[#040911] pb-24 md:pb-0">
-      {/* Header Area - Horizontal Stats */}
       <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[150] relative">
-        <div className="flex items-center gap-4">
-          {/* Gold */}
-          <div className="flex items-center gap-1.5">
-            <Coins className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-[12px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
-          </div>
-          
-          {/* HP */}
-          <div className="flex items-center gap-1.5">
-            <Heart className="h-3.5 w-3.5 text-red-500" />
-            <span className="text-[12px] font-black">{state.currentHp}</span>
-          </div>
- 
-          {/* Energy */}
-          <div className="flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5 text-blue-500" />
-            <span className="text-[12px] font-black">{state.energyMax + totalStats.energyMax}</span>
+        <div className="flex items-center gap-3">
+          {state.worldTier === -1 && (
+            <button
+              onClick={toggleIntegratedStorage}
+              className={`p-2 rounded-xl border transition-all ${
+                isIntegratedStorageOpen 
+                  ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_15px_rgba(34,211,238,0.5)]' 
+                  : 'bg-white/5 border-white/10 text-cyan-400 hover:bg-white/10'
+              }`}
+              title="Kho đồ thành trì"
+            >
+              <Database className="w-4 h-4" />
+            </button>
+          )}
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Coins className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-[12px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Heart className="h-3.5 w-3.5 text-red-500" />
+              <span className="text-[12px] font-black">{state.currentHp}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[12px] font-black">{state.energyMax + totalStats.energyMax}</span>
+            </div>
           </div>
         </div>
- 
+
         <div className="flex items-center gap-4">
-          {/* Speed */}
           <div className="flex items-center gap-1.5">
             <Wind className="h-3.5 w-3.5 text-emerald-500" />
             <span className="text-[12px] font-black">{state.moveSpeed}x</span>
           </div>
- 
-          {/* Weight/DMG */}
           <div className="flex items-center gap-1.5">
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[12px] font-black">{totalStats.weight}</span>
           </div>
- 
-          {/* Bag Slot - Integrated in Header */}
           <div 
             id="header-bag-slot"
             className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${
@@ -198,8 +193,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
              <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
           </div>
         </div>
- 
-        {/* Collapse Button - Part of header now */}
+
         <button 
           onClick={() => (window as any).collapseLooterTab?.()}
           className="ml-2 p-1 text-white/40 hover:text-white transition-colors"
@@ -207,8 +201,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           <ChevronDown className="w-5 h-5" />
         </button>
       </div>
- 
-      {/* Main Grid Area - Full Tab */}
+
       <div className="flex-1 relative overflow-hidden subtle-scrollbar">
         <div className="w-full h-full">
           <InventoryGrid
@@ -220,6 +213,8 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             onItemDoubleClick={(item) => {
               if ((item as any).type === 'bag') {
                 equipBag(item.uid);
+              } else if (state.worldTier === -1) {
+                storeItems([item.uid], 'store', 'fortress');
               }
             }}
             onDropOutside={(item, e) => {
@@ -227,7 +222,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                 const bagSlot = document.getElementById('header-bag-slot');
                 if (bagSlot) {
                   const rect = bagSlot.getBoundingClientRect();
-                  // Thêm padding nhỏ (10px) để dễ thả hơn trên điện thoại
                   if (
                     e.clientX >= rect.left - 10 &&
                     e.clientX <= rect.right + 10 &&
@@ -243,7 +237,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                 }
               }
 
-              // Dự phòng bằng isHoveringBagSlot cho PC
               if (isHoveringBagSlot && (item as any).type === 'bag') {
                 equipBag(item.uid);
                 setIsHoveringBagSlot(false);

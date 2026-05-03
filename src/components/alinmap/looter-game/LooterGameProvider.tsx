@@ -29,6 +29,7 @@ const defaultState: LooterGameState = {
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
   cursePercent: 0, looterGold: 0, worldTier: 0, inventory: [], storage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100, activeCurses: {},
+  isIntegratedStorageOpen: false,
 };
 
 const { SYNC_HEARTBEAT_MS } = GAME_CONFIG;
@@ -45,6 +46,7 @@ interface UIState {
   isChallengeActive: boolean;
   isFortressStorageOpen: boolean;
   fortressStorageMode: StorageAccessMode;
+  isIntegratedStorageOpen: boolean;
 }
 
 type UIAction =
@@ -56,12 +58,15 @@ type UIAction =
   | { type: 'SET_CHALLENGE_ACTIVE'; payload: boolean }
   | { type: 'SET_FORTRESS_STORAGE_OPEN'; payload: boolean }
   | { type: 'SET_FORTRESS_STORAGE_MODE'; payload: StorageAccessMode }
-  | { type: 'OPEN_FORTRESS_STORAGE'; payload: StorageAccessMode };
+  | { type: 'OPEN_FORTRESS_STORAGE'; payload: StorageAccessMode }
+  | { type: 'SET_INTEGRATED_STORAGE_OPEN'; payload: boolean }
+  | { type: 'TOGGLE_INTEGRATED_STORAGE' };
 
 const initialUIState: UIState = {
   encounter: null, combatResult: null,
   showCurseModal: false, showMinigame: null, isLooterGameMode: false,
   isChallengeActive: false, isFortressStorageOpen: false, fortressStorageMode: 'fortress',
+  isIntegratedStorageOpen: false,
 };
 
 function uiReducer(state: UIState, action: UIAction): UIState {
@@ -75,6 +80,8 @@ function uiReducer(state: UIState, action: UIAction): UIState {
     case 'SET_FORTRESS_STORAGE_OPEN': return { ...state, isFortressStorageOpen: action.payload };
     case 'SET_FORTRESS_STORAGE_MODE': return { ...state, fortressStorageMode: action.payload };
     case 'OPEN_FORTRESS_STORAGE': return { ...state, fortressStorageMode: action.payload, isFortressStorageOpen: true };
+    case 'SET_INTEGRATED_STORAGE_OPEN': return { ...state, isIntegratedStorageOpen: action.payload };
+    case 'TOGGLE_INTEGRATED_STORAGE': return { ...state, isIntegratedStorageOpen: !state.isIntegratedStorageOpen };
     default: return state;
   }
 }
@@ -168,6 +175,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     },
     setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
+    setIsIntegratedStorageOpen: (v) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
+    toggleIntegratedStorage: () => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE' }),
     openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
     setOpenBackpackHandler,
     centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },
@@ -236,6 +245,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isLooterGameMode: ui.isLooterGameMode,
     isChallengeActive: ui.isChallengeActive,
     isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,
+    isIntegratedStorageOpen: ui.isIntegratedStorageOpen,
     globalSettings, isMoving: movement.isMoving, isSyncing,
     pregeneratedMinigames
   }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing, pregeneratedMinigames]);

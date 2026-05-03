@@ -1,6 +1,8 @@
 import React from 'react';
-import { Copy, MessageCircle, Navigation, Compass } from 'lucide-react';
+import { MessageCircle, Navigation, Compass, Edit, Users, Newspaper } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
+import CreatePostForm from '../../creator/components/CreatePostForm';
+import PostCard from '../../profile/components/PostCard';
 
 interface SocialViewProps {
     myUserId: string | null;
@@ -14,13 +16,37 @@ interface SocialViewProps {
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
     ws: React.MutableRefObject<WebSocket | null>;
+    
+    // Posts props
+    userPosts: any[];
+    isCreatingPost: boolean;
+    setIsCreatingPost: (v: boolean) => void;
+    postTitle: string;
+    setPostTitle: (v: string) => void;
+    postPrivacy: string;
+    setPostPrivacy: (v: string) => void;
+    isSavingPost: boolean;
+    handleCreatePost: (files: File[]) => void;
+    handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
+    handleStarPost: (postId: string) => void;
+    handleDeletePost: (postId: string) => void;
+    fetchUserPosts: (uid: string) => void;
+    externalApi: any;
+    galleryActive: boolean;
+    user: any;
 }
 
 const SocialView: React.FC<SocialViewProps> = ({
     myUserId, myObfPos, nearbyUsers,
     setSelectedUser, radius, handleUpdateRadius,
-    isVisibleOnMap, setIsVisibleOnMap, requireAuth, requestLocation, ws
+    isVisibleOnMap, setIsVisibleOnMap, requireAuth, requestLocation, ws,
+    userPosts, isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
+    postPrivacy, setPostPrivacy, isSavingPost, handleCreatePost,
+    handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts,
+    externalApi, galleryActive, user
 }) => {
+    const [socialSubTab, setSocialSubTab] = React.useState<'posts' | 'nearby'>('posts');
+
     const nearbyUsersInRange = nearbyUsers.filter((u) => {
         if (!myObfPos || typeof u?.lat !== 'number' || typeof u?.lng !== 'number') return true;
         const dLat = u.lat - myObfPos.lat;
@@ -30,104 +56,149 @@ const SocialView: React.FC<SocialViewProps> = ({
     });
 
     return (
-        <div className="space-y-5">
-            <h3 className="text-lg font-black text-gray-900 px-1">Social</h3>
+        <div className="flex flex-col h-full relative">
+            <div className="flex-1 overflow-y-auto space-y-4 pb-20">
+                <h3 className="text-lg font-black text-gray-900 px-1">Mạng xã hội</h3>
 
-            {/* User ID + Copy */}
-            <div className="bg-gray-50 rounded-2xl p-3 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Your User ID</p>
-                    <p className="text-[13px] font-mono font-bold text-gray-900 break-all">{myUserId || '...'}</p>
-                </div>
-                <button 
-                    onClick={() => {
-                        if (!myUserId) return;
-                        navigator.clipboard.writeText(myUserId);
-                    }}
-                    className="p-2.5 bg-white hover:bg-blue-50 border border-gray-200 rounded-xl transition-colors active:scale-95 shrink-0"
-                    title="Copy ID"
-                >
-                    <Copy className="w-4 h-4 text-gray-500" />
-                </button>
-            </div>
-
-            {/* Privacy & Location */}
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                <h4 className="text-[13px] font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-blue-500" /> Privacy & Location
-                </h4>
-                <div className="space-y-4">
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="text-[11px] font-bold text-gray-500">Obfuscation Radius</span>
-                            <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                {socialSubTab === 'posts' ? (
+                    <div className="space-y-4">
+                        {/* Posts Section */}
+                        <div className="mb-4">
+                            <CreatePostForm
+                                isCreatingPost={isCreatingPost}
+                                setIsCreatingPost={setIsCreatingPost}
+                                postTitle={postTitle}
+                                setPostTitle={setPostTitle}
+                                postPrivacy={postPrivacy}
+                                setPostPrivacy={setPostPrivacy}
+                                isSavingPost={isSavingPost}
+                                handleCreatePost={handleCreatePost}
+                            />
                         </div>
-                        <input type="range" min="0" max="10000" step="10" value={radius} onChange={(e) => {
-                            if (requireAuth && !requireAuth('cap nhat quyen rieng tu')) return;
-                            handleUpdateRadius(parseInt(e.target.value));
-                        }} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none" />
-                    </div>
-                    <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
-                        <div>
-                            <span className="text-[11px] font-bold text-gray-700 block">Visible on Map</span>
-                            <span className="text-[9px] font-medium text-gray-400">{isVisibleOnMap ? 'Others can see you' : 'Ghost mode'}</span>
-                        </div>
-                        <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
-                            if (requireAuth && !requireAuth('cap nhat hien thi tren map')) return;
-                            const newVal = !isVisibleOnMap;
-                            if (newVal && requestLocation) {
-                                requestLocation(false, ws, setIsVisibleOnMap);
-                                return;
-                            }
-                            setIsVisibleOnMap(newVal);
-                            if (ws.current?.readyState === WebSocket.OPEN) {
-                                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
-                            }
-                        }}>
-                            <div className={`w-9 h-5 rounded-full transition-colors ${isVisibleOnMap ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                                <div className={`w-4 h-4 bg-white rounded-full mt-0.5 ml-0.5 transition-transform shadow-sm flex items-center justify-center ${isVisibleOnMap ? 'translate-x-4' : 'translate-x-0'}`}>
-                                    {isVisibleOnMap && <div className="w-1 h-1 bg-blue-600 rounded-full" />}
-                                </div>
+                        {userPosts.length > 0 ? (
+                            <div className="space-y-0">
+                                {userPosts.map((post) => (
+                                    <PostCard
+                                        key={post.id} post={post} isSelf={post.user_id === myUserId}
+                                        onStar={handleStarPost} onDelete={handleDeletePost}
+                                        onUpdatePrivacy={handleUpdatePostPrivacy}
+                                        externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                        requireAuth={requireAuth}
+                                    />
+                                ))}
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Nearby People Section */}
-            <div>
-                <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">Nearby People ({nearbyUsersInRange.length})</h4>
-                {nearbyUsersInRange.length > 0 ? (
-                    <div className="divide-y divide-gray-50">
-                        {nearbyUsersInRange.map(u => (
-                            <div
-                                key={u.id}
-                                onClick={() => setSelectedUser(u)}
-                                className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer group"
-                            >
-                                <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
-                                    <img src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`} className="w-full h-full object-cover" alt={u.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
-                                    {u.gallery?.active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                    <Edit className="w-7 h-7 text-gray-200" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                        <h4 className="font-bold text-gray-900 text-sm truncate">{u.username || 'Mysterious User'}</h4>
-                                        {u.isSelf && <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">You</span>}
-                                    </div>
-                                    <p className="text-[11px] text-gray-400 truncate">{u.status || "Exploring digital world"}</p>
-                                </div>
-                                <div className="text-[10px] text-gray-300 font-bold uppercase group-hover:text-blue-500 transition-colors">View</div>
+                                <p className="text-gray-400 text-sm">Chưa có bài viết nào</p>
+                                <p className="text-[10px] text-gray-400 mt-1">Hãy là người đầu tiên chia sẻ điều gì đó!</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 ) : (
-                    <div className="py-12 text-center bg-gray-50 rounded-[32px]">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
-                            <Navigation className="w-6 h-6 text-gray-200" />
+                    <div className="space-y-5 pt-1">
+                        {/* Privacy & Location */}
+                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                            <h4 className="text-[13px] font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <Compass className="w-4 h-4 text-blue-500" /> Quyền riêng tư & Vị trí
+                            </h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-[11px] font-bold text-gray-500">Bán kính ẩn danh</span>
+                                        <span className="text-[11px] font-bold text-blue-600">{radius} km</span>
+                                    </div>
+                                    <input type="range" min="0" max="10000" step="10" value={radius} onChange={(e) => {
+                                        if (requireAuth && !requireAuth('cap nhat quyen rieng tu')) return;
+                                        handleUpdateRadius(parseInt(e.target.value));
+                                    }} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none" />
+                                </div>
+                                <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
+                                    <div>
+                                        <span className="text-[11px] font-bold text-gray-700 block">Hiển thị trên bản đồ</span>
+                                        <span className="text-[9px] font-medium text-gray-400">{isVisibleOnMap ? 'Người khác có thể thấy bạn' : 'Chế độ ẩn danh'}</span>
+                                    </div>
+                                    <div className="relative inline-flex items-center cursor-pointer" onClick={() => {
+                                        if (requireAuth && !requireAuth('cap nhat hien thi tren map')) return;
+                                        const newVal = !isVisibleOnMap;
+                                        if (newVal && requestLocation) {
+                                            requestLocation(false, ws, setIsVisibleOnMap);
+                                            return;
+                                        }
+                                        setIsVisibleOnMap(newVal);
+                                        if (ws.current?.readyState === WebSocket.OPEN) {
+                                            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { visible: newVal } }));
+                                        }
+                                    }}>
+                                        <div className={`w-9 h-5 rounded-full transition-colors ${isVisibleOnMap ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                            <div className={`w-4 h-4 bg-white rounded-full mt-0.5 ml-0.5 transition-transform shadow-sm flex items-center justify-center ${isVisibleOnMap ? 'translate-x-4' : 'translate-x-0'}`}>
+                                                {isVisibleOnMap && <div className="w-1 h-1 bg-blue-600 rounded-full" />}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-gray-400 text-xs font-medium">No active users found nearby</p>
+
+                        {/* Nearby People Section */}
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">Người quanh đây ({nearbyUsersInRange.length})</h4>
+                            {nearbyUsersInRange.length > 0 ? (
+                                <div className="divide-y divide-gray-50">
+                                    {nearbyUsersInRange.map(u => (
+                                        <div
+                                            key={u.id}
+                                            onClick={() => setSelectedUser(u)}
+                                            className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
+                                                <img src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`} className="w-full h-full object-cover" alt={u.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
+                                                {u.gallery?.active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <h4 className="font-bold text-gray-900 text-sm truncate">{u.username || 'Mysterious User'}</h4>
+                                                    {u.isSelf && <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">You</span>}
+                                                </div>
+                                                <p className="text-[11px] text-gray-400 truncate">{u.status || "Exploring digital world"}</p>
+                                            </div>
+                                            <div className="text-[10px] text-gray-300 font-bold uppercase group-hover:text-blue-500 transition-colors">Xem</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-12 text-center bg-gray-50 rounded-[32px]">
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                        <Navigation className="w-6 h-6 text-gray-200" />
+                                    </div>
+                                    <p className="text-gray-400 text-xs font-medium">Không tìm thấy ai ở gần đây</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
+            </div>
+
+            {/* Social Sub-tabs switcher (Bottom Sticky) */}
+            <div className="absolute bottom-[72px] left-0 right-0 z-[160] px-6 pb-4 pointer-events-none">
+                <div className="flex bg-white/80 backdrop-blur-2xl p-1.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto max-w-[400px] mx-auto">
+                    <button 
+                        onClick={() => setSocialSubTab('posts')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${socialSubTab === 'posts' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <Newspaper className="w-3.5 h-3.5" />
+                        <span>Bài viết</span>
+                    </button>
+                    <button 
+                        onClick={() => setSocialSubTab('nearby')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${socialSubTab === 'nearby' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Cạnh đây</span>
+                    </button>
+                </div>
             </div>
         </div>
     );

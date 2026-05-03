@@ -3,6 +3,7 @@ import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
 import FortressStorageModal from './backpack/FortressStorageModal';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
+import IntegratedStoragePanel from '../features/backpack/components/IntegratedStoragePanel';
 import { PickupMinigame } from './PickupMinigame';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
@@ -40,6 +41,10 @@ const LooterGameUI: React.FC = () => {
 
             <ErrorBoundary name="Minigame">
                 <PickupMinigame />
+            </ErrorBoundary>
+
+            <ErrorBoundary name="IntegratedStorage">
+                <IntegratedStoragePanel />
             </ErrorBoundary>
         </>
     );

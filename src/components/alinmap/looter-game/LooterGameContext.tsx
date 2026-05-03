@@ -58,6 +58,7 @@ export interface LooterGameState {
   energyMax: number;
   energyCurrent: number;
   activeCurses: Record<string, number>;
+  isIntegratedStorageOpen: boolean;
 }
 
 export const isLooterAtFortress = (state: Pick<LooterGameState, 'currentLat' | 'currentLng' | 'fortressLat' | 'fortressLng'>) =>
@@ -73,6 +74,8 @@ export interface LooterGameActions {
   setShowCurseModal: (v: boolean) => void;
   setShowMinigame: (item: WorldItem | null) => void;
   setIsLooterGameMode: (v: boolean) => void;
+  setIsIntegratedStorageOpen: (v: boolean) => void;
+  toggleIntegratedStorage: () => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
   centerOnBoat: (yOffset?: number) => void;

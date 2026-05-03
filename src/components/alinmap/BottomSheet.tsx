@@ -289,13 +289,30 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                     <SocialView
                                         myUserId={myUserId} myObfPos={myObfPos}
                                         friends={friends} nearbyUsers={nearbyUsers}
-                                        setSelectedUser={setSelectedUser} setActiveTab={setActiveTab as any}
-                                        radius={radius}
+                                        setSelectedUser={setSelectedUser} radius={radius}
                                         handleUpdateRadius={handleUpdateRadius}
                                         isVisibleOnMap={isVisibleOnMap}
                                         setIsVisibleOnMap={setIsVisibleOnMap}
                                         requestLocation={requestLocation}
                                         ws={ws}
+                                        
+                                        userPosts={userPosts}
+                                        isCreatingPost={isCreatingPost}
+                                        setIsCreatingPost={setIsCreatingPost}
+                                        postTitle={postTitle}
+                                        setPostTitle={setPostTitle}
+                                        postPrivacy={postPrivacy}
+                                        setPostPrivacy={setPostPrivacy}
+                                        isSavingPost={isSavingPost}
+                                        handleCreatePost={handleCreatePost}
+                                        handleUpdatePostPrivacy={handleUpdatePostPrivacy}
+                                        handleStarPost={handleStarPost}
+                                        handleDeletePost={handleDeletePost}
+                                        fetchUserPosts={fetchUserPosts}
+                                        externalApi={externalApi}
+                                        galleryActive={galleryActive}
+                                        user={user}
+                                        requireAuth={requireAuth}
                                     />
                                 )}
                                 {mainTab === 'notifications' && (
@@ -304,15 +321,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                                 {mainTab === 'profile' && !selectedUser && (
                                     <MyProfileView
                                         myUserId={myUserId} myDisplayName={myDisplayName} myAvatarUrl={myAvatarUrl} currentProvince={currentProvince}
-                                        activeTab={activeTab as any} setActiveTab={setActiveTab as any} galleryActive={galleryActive}
+                                        activeTab={(activeTab === 'posts' ? 'info' : activeTab) as any} setActiveTab={setActiveTab as any}
                                         setMyDisplayName={setMyDisplayName}
-                                        radius={radius} handleUpdateRadius={handleUpdateRadius} games={games} userPosts={userPosts} isCreatingPost={isCreatingPost}
-                                        setIsCreatingPost={setIsCreatingPost} postTitle={postTitle} setPostTitle={setPostTitle}
-                                        postPrivacy={postPrivacy} setPostPrivacy={setPostPrivacy}
-                                        isSavingPost={isSavingPost}
+                                        radius={radius} handleUpdateRadius={handleUpdateRadius} games={games} userPosts={userPosts}
                                         ws={ws} myObfPos={myObfPos} user={user} showNotification={showNotification} setIsSheetExpanded={setIsSheetExpanded}
-                                        setMainTab={setMainTab} handleCreatePost={handleCreatePost} 
-                                        handleUpdatePostPrivacy={handleUpdatePostPrivacy}
+                                        setMainTab={setMainTab} 
                                         handleStarPost={handleStarPost} handleDeletePost={handleDeletePost}
                                         fetchUserPosts={fetchUserPosts} externalApi={externalApi} setMyAvatarUrl={setMyAvatarUrl}
                                         triggerAuth={triggerAuth} requireAuth={requireAuth} logout={logout}
