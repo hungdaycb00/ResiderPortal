@@ -219,10 +219,9 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             onOpenChat={onOpenChat}
             selectedUser={nav.selectedUser}
         >
-        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none overflow-hidden">
-            <div className="absolute inset-0 overflow-y-auto no-scrollbar" style={{ height: '100%' }}>
-                <div style={{ minHeight: '200vh', width: '100%' }}>
-                    <div className="sticky top-0 w-full h-[100dvh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
+            {/* Fullscreen Toggle for Mobile */}
+            <FullscreenToggle isDesktop={nav.isDesktop} />
 
             {/* Header / Search Bar */}
             <SearchHeader
@@ -427,12 +426,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                     }
                 }}
             />
-                    </div>
-                </div>
-            </div>
-            
-            {/* Fullscreen Toggle for Mobile - Moved here to be above the scroll container */}
-            <FullscreenToggle isDesktop={nav.isDesktop} />
         </div>
         </SocialProvider>
         </ProfileProvider>
