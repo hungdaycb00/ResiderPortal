@@ -118,9 +118,10 @@ export default function IntegratedStoragePanel() {
           initial={{ y: -400, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -400, opacity: 0 }}
-          className="fixed inset-x-0 top-0 z-[200] h-[40vh] border-b border-cyan-500/30 bg-[#050b14]/95 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+          className="fixed inset-x-0 top-0 z-[400] h-[40vh] border-b border-cyan-500/30 bg-[#050b14]/95 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="mx-auto h-full max-w-7xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/5 bg-black/20 px-6 py-3">
             <div className="flex items-center gap-3">
@@ -174,6 +175,7 @@ export default function IntegratedStoragePanel() {
                 cellSize={42}
               />
             </div>
+          </div>
           </div>
         </motion.div>
 

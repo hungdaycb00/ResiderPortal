@@ -35,6 +35,8 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   style,
   className = '',
 }) => {
+  const clickTimerRef = React.useRef<any>(null);
+
   return (
     <motion.div
       className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm 
@@ -50,10 +52,25 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         top: (typeof style?.top === 'number' ? style.top : 0) + 1,
       }}
       onPointerDown={(e) => onPointerDown?.(e, item)}
-      onDoubleClick={() => onDoubleClick?.(item)}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (clickTimerRef.current) {
+          clearTimeout(clickTimerRef.current);
+          clickTimerRef.current = null;
+        }
+        onDoubleClick?.(item);
+      }}
       onClick={(e) => {
         e.stopPropagation();
-        onClick?.();
+        if (onDoubleClick) {
+          if (clickTimerRef.current) return;
+          clickTimerRef.current = setTimeout(() => {
+            onClick?.();
+            clickTimerRef.current = null;
+          }, 200);
+        } else {
+          onClick?.();
+        }
       }}
     >
       {Array.from({ length: item.gridH || 1 }).map((_, r) =>

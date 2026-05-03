@@ -4,7 +4,7 @@ import type { BagItem } from './types';
 // Grid Dimensions
 // ==========================================
 export const MAX_GRID_W = 10;
-export const MAX_GRID_H = 12;
+export const MAX_GRID_H = 7;
 
 // ==========================================
 // Bag Preset Defaults
