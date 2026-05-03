@@ -127,9 +127,11 @@ const MapControls: React.FC<MapControlsProps> = ({
                                     yOffset = (window.innerHeight / 2) - (backpackTop / 2);
                                 }
                                 if (handleCenterBoat) {
+                                    console.log('[MapControls] Using handleCenterBoat (Visual)');
                                     handleCenterBoat(yOffset);
                                     return;
                                 }
+                                console.log('[MapControls] Fallback to handleCenterTo (State/Destination)');
                                 if (looterState?.currentLat != null && looterState?.currentLng != null) {
                                     handleCenterTo(looterState.currentLat, looterState.currentLng, yOffset);
                                 }

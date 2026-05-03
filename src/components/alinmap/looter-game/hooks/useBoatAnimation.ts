@@ -69,6 +69,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     // Lấy vị trí visual thực tế của thuyền tại thời điểm bấm nút
     const pxX = boatOffsetX.get();
     const pxY = boatOffsetY.get();
+    console.log('[BoatCenter] Centering to visual:', { pxX, pxY, yOffsetPx });
 
     // Di chuyển camera (pan) đến vị trí đó
     animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
