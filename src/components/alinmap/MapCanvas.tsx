@@ -76,6 +76,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const looterState = useLooterState();
     const looterActions = useLooterActions();
     const { isLooterGameMode, state: looterStateObj, isChallengeActive } = looterState;
+    const isMapInteractionLocked = !!(
+        looterState.showMinigame ||
+        looterState.encounter ||
+        looterState.showCurseModal ||
+        looterState.combatResult
+    );
     
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
@@ -112,6 +118,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         panX, panY, scale, isLooterGameMode: !!isLooterGameMode,
         looterStateObj, isChallengeActive: !!isChallengeActive,
         myObfPos, looterBoat, encounter: looterState.encounter,
+        isInteractionLocked: isMapInteractionLocked,
         setIsTierSelectorOpen
     });
     

@@ -129,6 +129,7 @@ export function useLooterBoat({
 
         isAnimatingRef.current = true;
         setBoatTargetPin({ lat, lng });
+        setIsSheetExpanded(false);
         
         // Tính toán khoảng cách và thời gian
         const multiplier = globalSettings?.speedMultiplier || 1.0;

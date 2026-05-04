@@ -63,9 +63,13 @@ export const PickupMinigame: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute inset-0 z-[200] flex flex-col bg-slate-900/90 backdrop-blur-md"
+                className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-950/90 p-3 backdrop-blur-md md:p-6"
             >
-                <div className="flex-1 w-full h-full p-4 flex items-center justify-center">
+                <div
+                    className="flex max-h-[92dvh] w-full max-w-[min(94vw,720px)] items-center justify-center overflow-auto rounded-2xl border border-cyan-500/30 bg-slate-950/95 p-3 shadow-2xl md:p-5"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                >
                     {!isMinesweeper ? (
                         <FruitGame 
                             autoStart={true}

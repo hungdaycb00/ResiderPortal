@@ -25,7 +25,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const {
     state, saveInventory, equipBag, dropItems,
     toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems, centerOnBoat, centerOnCombat, encounter
+    storeItems, centerOnBoat, centerOnCombat, encounter, isMoving
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -83,6 +83,14 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   }, [cellSize]);
 
   const lastPosRef = useRef({ lat: state.currentLat, lng: state.currentLng });
+  const wasMovingRef = useRef(false);
+
+  useEffect(() => {
+    if (isMoving && !wasMovingRef.current) {
+      (window as any).collapseLooterTab?.();
+    }
+    wasMovingRef.current = !!isMoving;
+  }, [isMoving]);
 
   useEffect(() => {
     if (state.currentLat === null || state.currentLng === null) return;
@@ -222,7 +230,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           <InventoryGrid
             items={state.inventory}
             bags={state.bags}
-            readOnly={readOnly}
+            readOnly={readOnly || !!isMoving}
             onDragStateChange={setDraggingItem}
             onItemLayoutChange={readOnly ? undefined : memoizedSaveInventory}
             onItemDoubleClick={(item) => {

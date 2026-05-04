@@ -72,7 +72,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     cameraYOffsetRef.current = yOffsetPx;
 
     // Lấy vị trí visual thực tế của thuyền tại thời điểm bấm nút
-    const hasCurrentBoatPosition = !!myObfPos && currentLat != null && currentLng != null;
+    const hasCurrentBoatPosition = !!myObfPos && currentLat != null && currentLng != null && !isAnimatingRef.current;
     const pxX = hasCurrentBoatPosition
       ? (currentLng - myObfPos.lng) * DEGREES_TO_PX
       : boatOffsetX.get();

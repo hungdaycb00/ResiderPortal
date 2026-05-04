@@ -12,13 +12,14 @@ interface UseMapInteractionsProps {
     myObfPos: { lat: number; lng: number } | null;
     looterBoat: any;
     encounter: any;
+    isInteractionLocked?: boolean;
     setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 export function useMapInteractions({
     panX, panY, scale,
     isLooterGameMode, looterStateObj, isChallengeActive,
-    myObfPos, looterBoat, encounter, setIsTierSelectorOpen
+    myObfPos, looterBoat, encounter, isInteractionLocked = false, setIsTierSelectorOpen
 }: UseMapInteractionsProps) {
 
     const mapDragRef = useRef<{
@@ -43,6 +44,11 @@ export function useMapInteractions({
 
     const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
+        if (isInteractionLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
         if (interactiveTarget && !isLooterGameMode) {
             looterBoat.handlePointerDown(e);
@@ -77,10 +83,14 @@ export function useMapInteractions({
             e.currentTarget.setPointerCapture(e.pointerId);
         } catch {}
         e.preventDefault();
-    }, [isLooterGameMode, panX, panY, looterBoat, encounter]);
+    }, [isLooterGameMode, panX, panY, looterBoat, encounter, isInteractionLocked]);
 
     const handleMapPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
+        if (isInteractionLocked) {
+            e.preventDefault();
+            return;
+        }
         if (!dragState.active || dragState.pointerId !== e.pointerId) return;
 
         const currentScale = scale?.get?.() ?? 1;
@@ -93,10 +103,17 @@ export function useMapInteractions({
         panX.set(dragState.startPanX + deltaX);
         panY.set(dragState.startPanY + deltaY);
         e.preventDefault();
-    }, [panX, panY, scale, encounter]);
+    }, [panX, panY, scale, encounter, isInteractionLocked]);
 
     const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
+        if (isInteractionLocked) {
+            dragState.active = false;
+            looterBoat.handlePointerCancel();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
 
         if (dragState.active && dragState.pointerId === e.pointerId) {
@@ -129,10 +146,15 @@ export function useMapInteractions({
              }
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
+    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, isInteractionLocked, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
+        if (isInteractionLocked) {
+            dragState.active = false;
+            looterBoat.handlePointerCancel();
+            return;
+        }
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
             try {
@@ -140,15 +162,20 @@ export function useMapInteractions({
             } catch {}
         }
         looterBoat.handlePointerCancel();
-    }, [looterBoat]);
+    }, [looterBoat, isInteractionLocked]);
 
     const handleMapClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
+        if (isInteractionLocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         if (!dragState.suppressClick) return;
         dragState.suppressClick = false;
         e.preventDefault();
         e.stopPropagation();
-    }, []);
+    }, [isInteractionLocked]);
 
     return {
         handleMapPointerDown,
