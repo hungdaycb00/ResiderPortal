@@ -38,7 +38,7 @@ const ITEM_SHAPES = {
 };
 
 const MAX_GRID_W = 10;
-const MAX_GRID_H = 7;
+const MAX_GRID_H = 12;
 
 const BAG_POOL = [
   { id: 'basic_bag',   name: 'Balo Cơ Bản',      icon: '🎒', rarity: RARITY.COMMON,    width: 3, height: 3, cells: 9,  dropRate: 0,

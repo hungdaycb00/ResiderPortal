@@ -1,6 +1,7 @@
 import type { WorldItem, LooterGameState } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
 import { GAME_CONFIG } from '../gameConfig';
+import { MAX_GRID_W, MAX_GRID_H } from '../backpack/constants';
 
 const { PORTAL_SPACING_METERS, PORTAL_SEARCH_RADIUS } = GAME_CONFIG;
 const CHUNK_SIZE_METERS = 1000;
@@ -91,48 +92,63 @@ export const findEmptySlotFor = (
   inventory: LooterItem[], 
   bag: BagItem | undefined
 ): { x: number; y: number } | null => {
-  if (!bag) return null;
-  
   const w = item.gridW || 1;
   const h = item.gridH || 1;
   const shape = item.shape;
 
-  const isOccupied = (x: number, y: number) => {
+  const itemOccupiesCell = (placed: LooterItem, x: number, y: number) => {
+    const iw = placed.gridW || 1;
+    const ih = placed.gridH || 1;
+    const ishape = placed.shape;
+
+    if (x < placed.gridX || x >= placed.gridX + iw || y < placed.gridY || y >= placed.gridY + ih) {
+      return false;
+    }
+    return !ishape || !!ishape[y - placed.gridY]?.[x - placed.gridX];
+  };
+
+  const isCellInBag = (x: number, y: number) => {
+    if (!bag) return false;
     const bagX = x - bag.gridX;
     const bagY = y - bag.gridY;
-    
-    if (bagX < 0 || bagY < 0 || bagX >= bag.width || bagY >= bag.height) return true;
-    if (!bag.shape[bagY][bagX]) return true;
-    
+    return bagX >= 0 && bagY >= 0 && bagX < bag.width && bagY < bag.height && !!bag.shape?.[bagY]?.[bagX];
+  };
+
+  const isOccupied = (x: number, y: number) => {
     return inventory.some(i => {
       if (i.gridX < 0) return false;
-      const iw = i.gridW || 1;
-      const ih = i.gridH || 1;
-      const ishape = i.shape;
-      
-      if (x >= i.gridX && x < i.gridX + iw && y >= i.gridY && y < i.gridY + ih) {
-        if (!ishape) return true;
-        return ishape[y - i.gridY][x - i.gridX];
-      }
-      return false;
+      return itemOccupiesCell(i, x, y);
     });
   };
 
-  const canPlace = (startX: number, startY: number) => {
-    if (startX + w > 7 || startY + h > 6) return false;
+  const canPlace = (startX: number, startY: number, requireBagCells: boolean, forbidBagCells: boolean) => {
+    if (startX < 0 || startY < 0 || startX + w > MAX_GRID_W || startY + h > MAX_GRID_H) return false;
     for (let r = 0; r < h; r++) {
       for (let c = 0; c < w; c++) {
         if (!shape || shape[r][c]) {
-          if (isOccupied(startX + c, startY + r)) return false;
+          const x = startX + c;
+          const y = startY + r;
+          const inBag = isCellInBag(x, y);
+          if (requireBagCells && !inBag) return false;
+          if (forbidBagCells && inBag) return false;
+          if (isOccupied(x, y)) return false;
         }
       }
     }
     return true;
   };
 
-  for (let y = 0; y <= 6 - h; y++) {
-    for (let x = 0; x <= 7 - w; x++) {
-      if (canPlace(x, y)) return { x, y };
+  if (bag) {
+    for (let y = 0; y <= MAX_GRID_H - h; y++) {
+      for (let x = 0; x <= MAX_GRID_W - w; x++) {
+        if (canPlace(x, y, true, false)) return { x, y };
+      }
+    }
+  }
+
+  for (let y = 0; y <= MAX_GRID_H - h; y++) {
+    for (let x = 0; x <= MAX_GRID_W - w; x++) {
+      if (canPlace(x, y, false, true)) return { x, y };
     }
   }
   

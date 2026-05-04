@@ -98,16 +98,28 @@ interface InventoryGridProps {
     const findEmptySpot = (item: LooterItem, currentItems: LooterItem[]) => {
       const w = item.gridW || 1;
       const h = item.gridH || 1;
-      for (let y = 0; y <= gridH - h; y++) {
-        for (let x = 0; x <= gridW - w; x++) {
-          let allInBag = true;
-          for (let dy = 0; dy < h && allInBag; dy++) {
-            for (let dx = 0; dx < w && allInBag; dx++) {
-              if (!bagOcc[y + dy]?.[x + dx]) allInBag = false;
+      const canUseSpot = (x: number, y: number, requireBagCells: boolean, forbidBagCells: boolean) => {
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            const occupiesCell = !item.shape || !!item.shape[dy]?.[dx];
+            if (!occupiesCell) continue;
+
+            const inBag = !!bagOcc[y + dy]?.[x + dx];
+            if (requireBagCells && !inBag) return false;
+            if (forbidBagCells && inBag) return false;
             }
           }
-          if (!allInBag) continue;
-          if (!checkOverlap(item, x, y, currentItems)) return { x, y };
+        return !checkOverlap(item, x, y, currentItems);
+      };
+
+      for (let y = 0; y <= gridH - h; y++) {
+        for (let x = 0; x <= gridW - w; x++) {
+          if (canUseSpot(x, y, true, false)) return { x, y };
+        }
+      }
+      for (let y = 0; y <= gridH - h; y++) {
+        for (let x = 0; x <= gridW - w; x++) {
+          if (canUseSpot(x, y, false, true)) return { x, y };
         }
       }
       return null;

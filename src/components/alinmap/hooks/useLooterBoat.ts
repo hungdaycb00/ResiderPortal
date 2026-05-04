@@ -28,7 +28,7 @@ export function useLooterBoat({
     
     const { 
         state, worldItems, isChallengeActive, showMinigame, 
-        isFortressStorageOpen, encounter, showCurseModal, combatResult,
+        isFortressStorageOpen, isIntegratedStorageOpen, encounter, showCurseModal, combatResult,
         globalSettings
     } = looterState;
     
@@ -90,7 +90,7 @@ export function useLooterBoat({
     }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat]);
 
     const executeMoveToExact = useCallback((lat: number, lng: number) => {
-        if (showMinigame || encounter || showCurseModal || combatResult) {
+        if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
             const now = Date.now();
             if (now - lastBlockTimeRef.current < 2000) {

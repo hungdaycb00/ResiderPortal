@@ -122,6 +122,7 @@ export interface LooterGameStateContextType {
   worldItems: WorldItem[];
   isFortressStorageOpen: boolean;
   fortressStorageMode: StorageAccessMode;
+  isIntegratedStorageOpen: boolean;
   encounter: Encounter | null;
   combatResult: CombatResult | null;
   showCurseModal: boolean;

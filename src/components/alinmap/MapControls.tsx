@@ -46,7 +46,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode,
     isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded
 }) => {
-    const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();
+    const { isLooterGameMode, encounter, state, centerOnBoat, centerOnCombat } = useLooterGame();
     
     const [copyToast, setCopyToast] = useState(false);
 
@@ -58,6 +58,9 @@ const MapControls: React.FC<MapControlsProps> = ({
             centerOnCombat(0);
         } else {
             centerOnBoat(0);
+            if (state.currentLat != null && state.currentLng != null) {
+                handleCenterTo(state.currentLat, state.currentLng);
+            }
         }
     };
 

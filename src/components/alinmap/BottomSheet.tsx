@@ -149,7 +149,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     }}
                 >
                     {/* Fortress Storage Edge Button */}
-                    {mainTab === 'backpack' && isLooterAtFortress(looterState) && (
+                    {mainTab === 'backpack' && (looterState.worldTier ?? -1) === -1 && isLooterAtFortress(looterState) && (
                         <button
                             type="button"
                             data-map-interactive="true"
