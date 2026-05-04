@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown, Database, Navigation } from 'lucide-react';
-import { useLooterGame } from '../../../looter-game/LooterGameContext';
+import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
@@ -25,7 +25,8 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const {
     state, saveInventory, equipBag, dropItems,
     toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems, centerOnBoat, centerOnCombat, encounter
+    storeItems, centerOnBoat, centerOnCombat, encounter,
+    openFortressStorage
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -187,12 +188,34 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           </div>
         </div>
 
-        <button
-          onClick={() => (window as any).collapseLooterTab?.()}
-          className="ml-2 p-1 text-white/40 hover:text-white transition-colors"
-        >
-          <ChevronDown className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Locate Boat Button */}
+          <button
+            onClick={() => centerOnBoat?.()}
+            className="p-2 text-cyan-400 hover:bg-cyan-400/10 rounded-xl transition-colors"
+            title="Định vị thuyền"
+          >
+            <Navigation className="w-5 h-5" />
+          </button>
+
+          {/* Fortress Storage Button - Only show if at fortress */}
+          {isLooterAtFortress(state) && (
+            <button
+              onClick={() => openFortressStorage?.('fortress')}
+              className="p-2 text-amber-400 hover:bg-amber-400/10 rounded-xl transition-colors animate-pulse"
+              title="Mở Kho Thành Trì"
+            >
+              <Database className="w-5 h-5" />
+            </button>
+          )}
+
+          <button
+            onClick={() => (window as any).collapseLooterTab?.()}
+            className="p-2 text-white/40 hover:text-white transition-colors"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 relative overflow-auto subtle-scrollbar">
