@@ -20,6 +20,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
   const panMoveXRef = useRef<any>(null);
   const panMoveYRef = useRef<any>(null);
   const userDraggingRef = useRef(false);
+  const cameraYOffsetRef = useRef(0);
 
   const stopAllAnimations = useCallback(() => {
     if (boatMoveXRef.current) { boatMoveXRef.current.stop(); boatMoveXRef.current = null; }
@@ -58,13 +59,14 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     boatOffsetX.set(nextBoatX);
     boatOffsetY.set(nextBoatY);
     panX.set(-nextBoatX);
-    panY.set(-nextBoatY);
+    panY.set(-nextBoatY - cameraYOffsetRef.current);
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
   const centerOnBoat = useCallback((yOffsetPx: number = 0) => {
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
+    cameraYOffsetRef.current = yOffsetPx;
 
     // Lấy vị trí visual thực tế của thuyền tại thời điểm bấm nút
     const pxX = boatOffsetX.get();
@@ -91,6 +93,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
+    cameraYOffsetRef.current = yOffsetPx;
     
     const boatX = boatOffsetX?.get?.() ?? 0;
     const boatY = boatOffsetY?.get?.() ?? 0;

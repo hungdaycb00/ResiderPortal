@@ -23,9 +23,8 @@ interface BackpackViewProps {
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
   const { 
-    state, saveInventory, equipBag, showNotification, 
-    dropItems, toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems, centerOnBoat, centerOnCombat
+    storeItems, centerOnBoat, centerOnCombat,
+    encounter
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -170,7 +169,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                 const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
                 yOffset = (window.innerHeight / 2) - (backpackTop / 2);
                 
-                if (state.encounter) {
+                if (encounter) {
                     centerOnCombat(yOffset);
                 } else {
                     centerOnBoat(yOffset);
