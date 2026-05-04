@@ -47,10 +47,25 @@ const MapControls: React.FC<MapControlsProps> = ({
     onOpenTierSelector,
     isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded, isDesktop
 }) => {
-    const { isLooterGameMode, isChallengeActive, state: looterState, isSyncing, centerOnBoat, centerOnCombat } = useLooterGame();
+    const { isLooterGameMode, isChallengeActive, state: looterState, encounter, isSyncing, centerOnBoat, centerOnCombat } = useLooterGame();
     const { setWorldTier } = useLooterActions(); 
     
     const [copyToast, setCopyToast] = useState(false);
+
+    const handleLocateBoat = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        let yOffset = 0;
+        if (!isDesktop) {
+            const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
+            yOffset = (window.innerHeight / 2) - (backpackTop / 2);
+        }
+
+        if (encounter) {
+            centerOnCombat(yOffset);
+        } else {
+            centerOnBoat(yOffset);
+        }
+    };
 
     const handleCopyLocation = () => {
         if (!myObfPos) return;
@@ -67,6 +82,15 @@ const MapControls: React.FC<MapControlsProps> = ({
             <div className={`absolute right-2 md:right-8 z-[120] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? (isSheetExpanded ? 'bottom-[62%]' : 'bottom-[42%]') : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
 
+                {isLooterGameMode && (
+                    <button
+                        onClick={handleLocateBoat}
+                        className="w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-cyan-500/60 bg-[#0a1526]/85 text-cyan-300 shadow-[0_0_24px_rgba(8,145,178,0.35)] backdrop-blur-xl flex items-center justify-center active:scale-95 transition-all hover:bg-[#0f213a] hover:border-cyan-300"
+                        title="Định vị thuyền"
+                    >
+                        <LocateFixed className="w-5 h-5 md:w-6 md:h-6" />
+                    </button>
+                )}
 
                 {!isLooterGameMode && (
                     <>

@@ -163,7 +163,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
         {/* Locate Boat Button (Right) - Nằm trên nút đóng và trên viền */}
         <button
-            onPointerDown={(e) => {
+            onClick={(e) => {
                 e.stopPropagation();
                 console.log("[Looter] Click Locate Boat");
                 let yOffset = 0;

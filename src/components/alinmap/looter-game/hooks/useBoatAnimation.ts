@@ -69,15 +69,26 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     cameraYOffsetRef.current = yOffsetPx;
 
     // Lấy vị trí visual thực tế của thuyền tại thời điểm bấm nút
-    const pxX = boatOffsetX.get();
-    const pxY = boatOffsetY.get();
-    console.log('[BoatCenter] Centering to visual:', { pxX, pxY, yOffsetPx });
+    const hasCurrentBoatPosition = !!myObfPos && currentLat != null && currentLng != null;
+    const pxX = hasCurrentBoatPosition
+      ? (currentLng - myObfPos.lng) * DEGREES_TO_PX
+      : boatOffsetX.get();
+    const pxY = hasCurrentBoatPosition
+      ? -(currentLat - myObfPos.lat) * DEGREES_TO_PX
+      : boatOffsetY.get();
+
+    if (hasCurrentBoatPosition) {
+      boatOffsetX.set(pxX);
+      boatOffsetY.set(pxY);
+    }
+
+    console.log('[BoatCenter] Centering to boat:', { pxX, pxY, yOffsetPx });
 
     // Di chuyển camera (pan) đến vị trí đó
     animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
     // Trừ yOffsetPx để đẩy thuyền lên trên một chút (thường dùng khi mở BottomSheet)
     animate(panY, -pxY - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
-  }, [boatOffsetX, boatOffsetY, panX, panY]);
+  }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
   const stopPanFollow = useCallback(() => {
     userDraggingRef.current = true;
