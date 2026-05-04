@@ -159,7 +159,7 @@ export function useLooterMovement({
         }
 
         if (distToFortress > FORTRESS_INTERACTION_METERS) {
-            setIsChallengeActive(true);
+            // No auto-activation here, keep current UI state
         } else if (!isStep) {
             setState(prev => ({ ...prev, worldTier: -1 }));
             setIsChallengeActive(false);

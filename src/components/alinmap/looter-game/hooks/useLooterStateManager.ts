@@ -198,10 +198,6 @@ export function useLooterStateManager({
         } as LooterGameState);
 
         if (data.settings) setGlobalSettings(data.settings);
-        
-        if (shouldBeActive && !isChallengeActive) {
-          setIsChallengeActive(true);
-        }
       }
     } catch (err) {
       console.error('[LooterGame] loadState error:', err);
