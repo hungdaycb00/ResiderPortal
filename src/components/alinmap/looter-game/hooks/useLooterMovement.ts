@@ -101,6 +101,19 @@ export function useLooterMovement({
                 } as any;
             }
         }
+
+        if (deviceId) {
+            try {
+                const moveResult: any = await looterApi.moveBoat(apiUrl, deviceId, toLat, toLng);
+                if (moveResult?.success) {
+                    newCurse = moveResult.cursePercent ?? newCurse;
+                    curseTrigger = !!moveResult.curseTrigger;
+                    encounter = moveResult.encounter || encounter;
+                }
+            } catch (moveErr) {
+                console.warn('[LooterGame] server move sync failed:', moveErr);
+            }
+        }
         
         setState(prev => ({
           ...prev,

@@ -93,8 +93,8 @@ export const looterApi = {
 
 
 
-  pickupItem: (apiUrl: string, deviceId: string, spawnId: string, force = false) =>
-    post(apiUrl, 'pickup', { deviceId, spawnId, force }),
+  pickupItem: (apiUrl: string, deviceId: string, spawnId: string, force = false, currentLat?: number, currentLng?: number) =>
+    post(apiUrl, 'pickup', { deviceId, spawnId, force, currentLat, currentLng }),
 
   minigameLose: (apiUrl: string, deviceId: string, spawnId: string) =>
     post(apiUrl, 'minigame-lose', { deviceId, spawnId }),

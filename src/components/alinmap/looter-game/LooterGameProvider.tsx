@@ -178,13 +178,13 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsFortressStorageOpen,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
-      if (openBackpackHandler) openBackpackHandler();
+      if (typeof openBackpackHandler === 'function') openBackpackHandler();
     },
     setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
     setIsIntegratedStorageOpen: (v) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
-    openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
+    openBackpack: () => { if (typeof openBackpackHandler === 'function') openBackpackHandler(); },
     setOpenBackpackHandler,
     centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },
     setCenterBoatHandler,
@@ -196,7 +196,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     loadState: (opts) => runInQueue(() => stateManager.loadState(), opts),
     moveBoat: (lat, lng, isStep, stepDist) => runInQueue(() => movement.moveBoat(lat, lng, isStep, stepDist)),
     // Pickup và penalty chạy song song — không block bởi heartbeat loadState
-    pickupItem: (spawnId, directItem) => inventory.pickupItem(spawnId, directItem),
+    pickupItem: (spawnId, directItem, currentLat, currentLng) => inventory.pickupItem(spawnId, directItem, currentLat, currentLng),
     inflictMinigamePenalty: (sid) => stateManager.inflictMinigamePenalty(sid),
 
     saveInventory: (inv) => {

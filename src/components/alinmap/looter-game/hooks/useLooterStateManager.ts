@@ -104,7 +104,16 @@ export function useLooterStateManager({
           if (fallback.success) {
             const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
             const mapItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
-            const normalItems = mapItems.filter((item) => (item as any)?.item?.type !== 'portal');
+            const curLat = state.currentLat ?? state.fortressLat ?? 0;
+            const curLng = state.currentLng ?? state.fortressLng ?? 0;
+            const normalItems = mapItems
+              .filter((item) => (item as any)?.item?.type !== 'portal')
+              .sort((a, b) => {
+                const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
+                const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
+                return ad - bd;
+              })
+              .slice(0, 3);
             setWorldItems([...portalItems, ...normalItems]);
           }
           return;
@@ -122,13 +131,21 @@ export function useLooterStateManager({
       }
 
       const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+      const curLat = state.currentLat ?? state.fortressLat ?? 0;
+      const curLng = state.currentLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
         .flatMap(key => cache.get(key)?.items || [])
-        .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal');
+        .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal')
+        .sort((a, b) => {
+          const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
+          const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
+          return ad - bd;
+        })
+        .slice(0, 3);
 
       let items = [...portalItems, ...normalItems];
       if (!forceActive && !isChallengeActive) {
-        items = [...portalItems, ...normalItems.slice(0, isMobile ? 4 : 8)];
+        items = [...portalItems, ...normalItems];
       }
       setWorldItems(items);
     } catch (err) {
@@ -206,10 +223,13 @@ export function useLooterStateManager({
     try {
       const data = await looterApi.setWorldTier(apiUrl, deviceId, tier);
       if (data.success) {
-        setState(prev => ({ ...prev, worldTier: tier }));
+        setState(prev => ({ ...prev, worldTier: tier, looterGold: data.looterGold ?? prev.looterGold }));
         setIsChallengeActive(true);
         notify(`Đã chuyển sang Tier ${tier}`, 'success');
         setTimeout(() => loadWorldItems(true), 500);
+      } else {
+        setIsChallengeActive(false);
+        notify(data?.error || 'Khong the bat dau thu thach', 'error');
       }
     } catch (err) {
       console.error('[LooterGame] setWorldTier error:', err);

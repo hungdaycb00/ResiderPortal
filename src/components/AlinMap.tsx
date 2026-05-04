@@ -61,8 +61,10 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     const looterState = useLooterState();
     const looterActions = useLooterActions();
     
-    const { isLooterGameMode, state: looterStateObj, pickupRewardItem, isChallengeActive } = looterState;
-    const { setPickupRewardItem, setIsLooterGameMode, setOpenBackpackHandler, saveInventory, setWorldTier } = looterActions;
+    const { isLooterGameMode, state: looterStateObj, isChallengeActive } = looterState;
+    const { setIsLooterGameMode, setOpenBackpackHandler, saveInventory, setWorldTier } = looterActions;
+    const pickupRewardItem = (looterState as any).pickupRewardItem;
+    const setPickupRewardItem = (looterActions as any).setPickupRewardItem || (() => {});
 
     // --- WebSocket ---
     const wsCtx = useAlinWebSocket({
@@ -403,9 +405,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                         if (typeof looterActions.setWorldTier === 'function') {
                             setIsTierSelectorOpen(false);
                             setIsLooterGameMode(true);
-                            if (typeof looterActions.setIsChallengeActive === 'function') {
-                                looterActions.setIsChallengeActive(true); // Optimistic update
-                            }
                             // Run in background so UI feels instant
                             looterActions.setWorldTier(tier).catch(err => {
                                 console.error('[AlinMap] Background setWorldTier error:', err);

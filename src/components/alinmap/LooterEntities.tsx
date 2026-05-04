@@ -57,6 +57,10 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 lastPickupTimeRef.current = now;
 
                 const currentDist = distMetersTransform.get();
+                const ox = boatOffsetX?.get?.() ?? 0;
+                const oy = boatOffsetY?.get?.() ?? 0;
+                const currentLat = myObfPos.lat - oy / DEGREES_TO_PX;
+                const currentLng = myObfPos.lng + ox / DEGREES_TO_PX;
                 // ClickTolerance bằng đúng InteractionRadius để đảm bảo độ chuẩn xác < 250m
                 const clickTolerance = interactionRadius;
 
@@ -71,10 +75,10 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                     if (currentDist <= clickTolerance) {
                         if (item.minigameType) {
                             stopBoat?.();
-                            setShowMinigame?.(item);
+                            setShowMinigame?.({ ...item, currentLat, currentLng });
                         } else {
                             stopBoat?.();
-                            pickupItem?.(item.spawnId, item);
+                            pickupItem?.(item.spawnId, item, currentLat, currentLng);
                         }
                     } else {
                         executeMoveToExact?.(item.lat, item.lng);

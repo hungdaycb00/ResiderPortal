@@ -223,7 +223,7 @@ export function useLooterInventory({
 
 
 
-  const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem) => {
+  const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem, currentLat?: number, currentLng?: number) => {
     if (!deviceId) return;
     
     // Tìm vật phẩm ngay lập tức từ tham số hoặc từ state hiện tại (để tránh race condition)
@@ -247,7 +247,7 @@ export function useLooterInventory({
     // Thực tế, trong PickupMinigame ta sẽ truyền directItem vào, nên logic này sẽ chạy mượt.
     
     try {
-      const result: any = await looterApi.pickupItem(apiUrl, deviceId, spawnId);
+      const result: any = await looterApi.pickupItem(apiUrl, deviceId, spawnId, false, currentLat, currentLng);
       if (!result?.success || !result?.item) {
         notify(result?.error || 'Khong the nhat vat pham', 'error');
         return;
