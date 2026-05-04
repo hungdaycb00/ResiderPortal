@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Swords, Coins, Heart, Zap, Wind, Anchor, ChevronDown, Database, Navigation } from 'lucide-react';
+import { Swords, Coins, Heart, Zap, Wind, ChevronDown, Database } from 'lucide-react';
 import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
@@ -25,7 +25,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const {
     state, saveInventory, equipBag, dropItems,
     toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems, centerOnBoat, centerOnCombat, encounter, isMoving
+    storeItems, encounter, isMoving
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -196,15 +196,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Locate Boat Button */}
-          <button
-            onClick={() => centerOnBoat?.()}
-            className="p-2 text-cyan-400 hover:bg-cyan-400/10 rounded-xl transition-colors"
-            title="Định vị thuyền"
-          >
-            <Navigation className="w-5 h-5" />
-          </button>
-
           {/* Fortress Storage Button - Only show if at fortress */}
           {isLooterAtFortress(state) && (
             <button

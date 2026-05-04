@@ -18,6 +18,7 @@ interface UseLooterInventoryProps {
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
   saveBags: (bags: BagItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
+  openBackpack?: () => void;
   chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
   consumedSpawnIdsRef: React.MutableRefObject<Set<string>>;
 }
@@ -33,6 +34,7 @@ export function useLooterInventory({
   saveInventory,
   saveBags,
   saveStorage,
+  openBackpack,
   chunkCacheRef,
   consumedSpawnIdsRef
 }: UseLooterInventoryProps) {
@@ -276,6 +278,7 @@ export function useLooterInventory({
           inventory: result.inventory,
           storage: Array.isArray(result.storage) ? result.storage : prev.storage,
         }));
+        openBackpack?.();
         notify(
           result.item?.gridX != null && result.item.gridX >= 0
             ? `Nháº·t Ä‘Æ°á»£c ${result.item.name}`
@@ -335,7 +338,7 @@ export function useLooterInventory({
         // Ở đây ta dùng closure 'state' từ hook, nhưng nó có thể cũ.
         // Giải pháp tốt nhất là PickupMinigame luôn truyền directItem.
     }
-  }, [deviceId, apiUrl, state.currentLat, state.currentLng, setWorldItems, setState, saveInventory, saveStorage, notify, chunkCacheRef, consumedSpawnIdsRef]);
+  }, [deviceId, apiUrl, state.currentLat, state.currentLng, setWorldItems, setState, saveInventory, saveStorage, notify, chunkCacheRef, consumedSpawnIdsRef, openBackpack]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
     if (!deviceId || itemUids.length === 0) return;
@@ -410,7 +413,8 @@ export function useLooterInventory({
 
     // 3. Thực hiện rơi đồ ra Map tại vị trí hiện tại của thuyền
     await dropItems(itemUids, state.currentLat || 0, state.currentLng || 0);
-  }, [deviceId, state.inventory, state.currentLat, state.currentLng, saveInventory, dropItems, notify]);
+    openBackpack?.();
+  }, [deviceId, state.inventory, state.currentLat, state.currentLng, saveInventory, dropItems, notify, openBackpack]);
 
   return useMemo(() => ({ 
     saveInventory, saveBags, saveStorage, 

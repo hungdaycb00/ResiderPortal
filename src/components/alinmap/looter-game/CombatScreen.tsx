@@ -15,7 +15,7 @@ const CombatScreen: React.FC = () => {
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
         curseChoice, showNotification, setIsChallengeActive, moveBoat,
-        returnToFortress, dropCombatLoot
+        returnToFortress, dropCombatLoot, openBackpack
     } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
@@ -56,6 +56,7 @@ const CombatScreen: React.FC = () => {
         combat.setPhase('ready');
         combat.setInitialPlayerInventory([]);
         combat.setPendingResult(null);
+        openBackpack?.();
         loadState();
     };
 

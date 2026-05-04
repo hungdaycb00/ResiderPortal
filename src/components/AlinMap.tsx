@@ -13,7 +13,6 @@ import LooterGameUI from './alinmap/looter-game/LooterGameUI';
 import TierSelectionOverlay from './alinmap/looter-game/TierSelectionOverlay';
 import { SocialProvider } from './alinmap/features/social/context/SocialContext';
 import { ProfileProvider } from './alinmap/features/profile/context/ProfileContext';
-import FullscreenToggle from './alinmap/components/FullscreenToggle';
 
 // Hooks
 import { useGeolocation } from './alinmap/hooks/useGeolocation';
@@ -163,14 +162,19 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         const subGame = extractExploreGame(location.pathname);
         if (subGame === 'looter-game' && !isLooterGameMode) {
             looterActions.setIsLooterGameMode(true);
+            nav.setMainTab('backpack');
+            nav.setIsSheetExpanded(true);
         }
     }, []); // Run once on mount
 
     useEffect(() => {
+        const subGame = extractExploreGame(location.pathname);
         let newPath = '/explore';
         
         if (isLooterGameMode) {
             newPath = '/explore/looter-game';
+        } else if (subGame) {
+            newPath = location.pathname;
         } else if (nav.mainTab !== 'discover') {
             // Optional: Show main tab in URL if you want, e.g. /explore/social
             // But per user request, we focus on "games in explore"
@@ -222,9 +226,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
             selectedUser={nav.selectedUser}
         >
         <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
-            {/* Fullscreen Toggle for Mobile */}
-            <FullscreenToggle isDesktop={nav.isDesktop} />
-
             {/* Header / Search Bar */}
             <SearchHeader
                 searchTag={searchTag}

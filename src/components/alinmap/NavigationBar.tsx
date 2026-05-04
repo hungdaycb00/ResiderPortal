@@ -48,6 +48,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
             </div>
 
             {/* Mobile Bottom Navigation */}
+            {!isDesktop && mainTab === 'backpack' && !isSheetExpanded && !showFullNav && (
+                <button
+                    onClick={() => handleTabClick('backpack')}
+                    className="md:hidden fixed bottom-5 left-1/2 z-[210] -translate-x-1/2 rounded-2xl border border-amber-400/50 bg-[#111827]/95 px-4 py-2 text-amber-200 shadow-[0_10px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl flex items-center gap-2 active:scale-95 transition-transform"
+                    title="Mo backpack"
+                >
+                    <Package className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Backpack</span>
+                </button>
+            )}
+
             {/* Mobile Open Navigation Button */}
             {!isDesktop && (
                 <div className={`md:hidden fixed bottom-0 left-0 right-0 z-[200] pointer-events-auto transition-transform duration-300 ${mainTab === 'backpack' && !showFullNav ? 'translate-y-0' : 'translate-y-full'}`}>

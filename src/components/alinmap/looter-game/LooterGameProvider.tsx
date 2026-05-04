@@ -133,6 +133,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
   const { runInQueue, isSyncing } = useLooterQueue();
   const { saveInventory, saveBags, saveStorage, syncState } = useLooterData({ deviceId, apiUrl: API_URL, setState });
+  const openBackpack = useCallback(() => {
+    if (typeof openBackpackHandler === 'function') openBackpackHandler();
+  }, [openBackpackHandler]);
 
   // Handle BeforeUnload for final sync
   useEffect(() => {
@@ -159,7 +162,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const inventory = useLooterInventory({
     deviceId, apiUrl: API_URL, state, setState, notify,
     setWorldItems, loadWorldItems: stateManager.loadWorldItems,
-    saveInventory, saveBags, saveStorage, chunkCacheRef, consumedSpawnIdsRef
+    saveInventory, saveBags, saveStorage, openBackpack, chunkCacheRef, consumedSpawnIdsRef
   });
 
   const movement = useLooterMovement({
@@ -178,13 +181,13 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsFortressStorageOpen,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
-      if (typeof openBackpackHandler === 'function') openBackpackHandler();
+      openBackpack();
     },
     setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
     setIsIntegratedStorageOpen: (v) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
-    openBackpack: () => { if (typeof openBackpackHandler === 'function') openBackpackHandler(); },
+    openBackpack,
     setOpenBackpackHandler,
     centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },
     setCenterBoatHandler,
@@ -237,7 +240,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     showNotification: notify,
     clearPregeneratedFruit
   }), [
-    stateManager, inventory, movement, runInQueue, openBackpackHandler, showNotification,
+    stateManager, inventory, movement, runInQueue, openBackpack, showNotification,
     centerBoatHandler, centerCombatHandler, setCenterBoatHandler, setCenterCombatHandler,
     setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen,
