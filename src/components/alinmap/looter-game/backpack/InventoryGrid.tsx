@@ -89,25 +89,17 @@ interface InventoryGridProps {
   }, [activeBag, gridW, gridH]);
 
   const gridItems = React.useMemo(() => items.filter((i) => i.gridX >= 0), [items]);
-  const stagingItems = React.useMemo(() => items.filter((i) => i.gridX < 0), [items]);
-
-  const getStablePos = (seed: string, max: number) => {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-    return Math.abs(hash % max);
-  };
 
   React.useEffect(() => {
     const staging = items.filter(i => i.gridX < 0);
     if (staging.length === 0) return;
-    if (!activeBag || activeBag.gridX < 0) return; // Không có balo → không auto-place
+    if (!activeBag || activeBag.gridX < 0) return;
 
     const findEmptySpot = (item: LooterItem, currentItems: LooterItem[]) => {
       const w = item.gridW || 1;
       const h = item.gridH || 1;
       for (let y = 0; y <= gridH - h; y++) {
         for (let x = 0; x <= gridW - w; x++) {
-          // Kiểm tra TẤT CẢ ô của item phải nằm trong vùng active bag
           let allInBag = true;
           for (let dy = 0; dy < h && allInBag; dy++) {
             for (let dx = 0; dx < w && allInBag; dx++) {

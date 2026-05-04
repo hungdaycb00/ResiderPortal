@@ -89,6 +89,7 @@ export interface LooterGameActions {
   pickupItem: (spawnId: string, directItem?: WorldItem) => Promise<void>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
+  saveInventory: (inventory: LooterItem[]) => void;
   saveBags: (bags: BagItem[]) => Promise<void>;
   equipBag: (itemUid: string) => Promise<void>;
   executeCombat: (opponentId: string, opponentInventory?: LooterItem[], opponentHp?: number, opponentBags?: BagItem[]) => Promise<CombatResult>;

@@ -163,7 +163,6 @@ export default function IntegratedStoragePanel() {
                 items={storageItems}
                 bags={[VIRTUAL_STORAGE_BAG]}
                 gridH={STORAGE_GRID_H}
-                hideStorage
                 onItemLayoutChange={(newItems) => saveStorage(newItems)}
                 onItemDoubleClick={(item) => {
                   setSelectedItem(null); // Force close popup

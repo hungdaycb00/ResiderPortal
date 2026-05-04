@@ -5,6 +5,8 @@ import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterGameState, Encounter, WorldItem } from '../LooterGameContext';
 import type { LooterItem } from '../backpack/types';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
+import { generateBot } from '../engine/entities';
+import { calcTotalStats } from '../engine/combat';
 
 interface UseLooterMovementProps {
   deviceId: string | null;
@@ -40,9 +42,7 @@ export function useLooterMovement({
         const fromLat = state.currentLat || state.fortressLat || 0;
         const fromLng = state.currentLng || state.fortressLng || 0;
         const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
-        const currentDistToFortress = getDistanceMeters(fromLat, fromLng, state.fortressLat, state.fortressLng);
 
-        // worldTier === -1 nghĩa là đang ở Thành Trì, cần bắt đầu thử thách mới
         if ((state.worldTier ?? -1) === -1 && distToFortress > FORTRESS_INTERACTION_METERS) {
             if (!isStep) notify('Bạn cần bắt đầu thử thách mới để ra khơi!', 'info');
             setIsMoving(false);
@@ -51,22 +51,19 @@ export function useLooterMovement({
 
         const distMeters = isStep ? (stepDist || 0) : getDistanceMeters(fromLat, fromLng, toLat, toLng);
 
-        // Tính toán item cần ném ra TRƯỚC setState
         let itemsToDrop: LooterItem[] = [];
         if (!isStep) {
             const activeBag = state.bags?.[0];
             itemsToDrop = (state.inventory || []).filter(item => {
-                // Item ở staging (ô chờ) - tọa độ âm
                 if (item.gridX < 0 || item.gridY < 0) return true;
-                // Không có balo active: tất cả item trên lưới đều bị ném
                 if (!activeBag) return true;
-                // Item nằm ngoài vùng balo active
+
                 const bagX = activeBag.gridX ?? 0;
                 const bagY = activeBag.gridY ?? 0;
                 const bagW = activeBag.width ?? 5;
                 const bagH = activeBag.height ?? 5;
-                const itemW = item.gridW ?? item.width ?? 1;
-                const itemH = item.gridH ?? item.height ?? 1;
+                const itemW = item.gridW ?? 1;
+                const itemH = item.gridH ?? 1;
                 return (
                     item.gridX < bagX ||
                     item.gridY < bagY ||
@@ -77,7 +74,6 @@ export function useLooterMovement({
         }
 
         const dropUids = new Set(itemsToDrop.map(i => i.uid));
-        // Inventory SAU khi loại bỏ items ngoài active
         const cleanedInventory = (state.inventory || []).filter(i => !dropUids.has(i.uid));
         
         let newCurse = state.cursePercent;
@@ -92,7 +88,7 @@ export function useLooterMovement({
             curseTrigger = rollCurse(newCurse);
             
             if (curseTrigger) {
-                newCurse = 0; // Reset
+                newCurse = 0;
                 const bot = generateBot(state.worldTier || 1, cleanedInventory.length);
                 const botStats = calcTotalStats(bot.inventory, bot.bags[0], {});
                 encounter = {
@@ -100,11 +96,10 @@ export function useLooterMovement({
                     ...bot,
                     totalWeight: botStats.totalWeight,
                     totalHp: bot.baseMaxHp + botStats.totalHp,
-                };
+                } as any;
             }
         }
         
-        // Atomic setState: cập nhật vị trí + xóa items ngoài active cùng lúc
         setState(prev => ({
           ...prev,
           inventory: prev.inventory.filter(i => !dropUids.has(i.uid)),
@@ -114,7 +109,6 @@ export function useLooterMovement({
           distance: prev.distance + Math.round(distMeters),
         }));
 
-        // Sau khi state đã clean, thêm dropped items lên world map + sync server
         if (itemsToDrop.length > 0) {
             setWorldItems(wItems => {
                 const newWorldItems = itemsToDrop.map((item, i) => ({
@@ -134,7 +128,6 @@ export function useLooterMovement({
         if (distToFortress > FORTRESS_INTERACTION_METERS) {
             setIsChallengeActive(true);
         } else if (!isStep) {
-            // Về đến thành trì: reset về trạng thái "ở thành trì" (-1) và tắt challenge (chỉ thực hiện nếu tới bến)
             setState(prev => ({ ...prev, worldTier: -1 }));
             setIsChallengeActive(false);
         }
@@ -163,7 +156,7 @@ export function useLooterMovement({
           ...prev,
           currentLat: prev.fortressLat,
           currentLng: prev.fortressLng,
-          worldTier: -1  // -1 = đang ở thành trì, cần thử thách mới
+          worldTier: -1
         }));
         setIsChallengeActive(false);
         notify('Đã quay về Thành trì', 'success');

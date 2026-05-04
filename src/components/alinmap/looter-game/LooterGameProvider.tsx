@@ -257,7 +257,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     if (!deviceId || !ui.isLooterGameMode || initialLoadDoneRef.current) return;
     
     initialLoadDoneRef.current = true;
-    actionsValue.loadState({ skipIfBusy: true });
+    actionsValue.loadState();
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
 
   // Background Minigame Generation
@@ -304,7 +304,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
           if (data.success) {
             notify(`Đã spawn ${data.count} loại balo xung quanh bạn!`, 'success');
             // Refresh world items to see them immediately
-            stateManager.loadWorldItems(state.currentLat, state.currentLng);
+            stateManager.loadWorldItems(true);
           }
         } catch (err) {
           console.error('[Debug Spawn Bags]', err);
