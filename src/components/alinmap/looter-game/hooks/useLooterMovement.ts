@@ -35,7 +35,7 @@ export function useLooterMovement({
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
 
-  const moveBoat = useCallback(async (toLat: number, toLng: number) => {
+  const moveBoat = useCallback(async (toLat: number, toLng: number, isStep?: boolean, stepDist?: number) => {
     setIsMoving(true);
     try {
         const fromLat = state.currentLat || state.fortressLat || 0;
@@ -45,17 +45,19 @@ export function useLooterMovement({
 
         // worldTier === -1 nghĩa là đang ở Thành Trì, cần bắt đầu thử thách mới
         if ((state.worldTier ?? -1) === -1 && distToFortress > FORTRESS_INTERACTION_METERS) {
-            notify('Bạn cần bắt đầu thử thách mới để ra khơi!', 'info');
+            if (!isStep) notify('Bạn cần bắt đầu thử thách mới để ra khơi!', 'info');
             setIsMoving(false);
             return { curseTrigger: false, encounter: null };
         }
 
-        const distMeters = getDistanceMeters(fromLat, fromLng, toLat, toLng);
+        const distMeters = isStep ? (stepDist || 0) : getDistanceMeters(fromLat, fromLng, toLat, toLng);
 
-        // Auto eject staging items (outside bag)
-        const itemsToDrop = (state.inventory || []).filter(i => i.gridX >= 0 && !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
-        if (itemsToDrop.length > 0) {
-            dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
+        // Auto eject staging items (outside bag) - chỉ chạy khi kết thúc chuyến đi
+        if (!isStep) {
+            const itemsToDrop = (state.inventory || []).filter(i => i.gridX >= 0 && !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
+            if (itemsToDrop.length > 0) {
+                dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
+            }
         }
         
         let newCurse = state.cursePercent;
@@ -92,8 +94,8 @@ export function useLooterMovement({
 
         if (distToFortress > FORTRESS_INTERACTION_METERS) {
             setIsChallengeActive(true);
-        } else {
-            // Về đến thành trì: reset về trạng thái "ở thành trì" (-1) và tắt challenge
+        } else if (!isStep) {
+            // Về đến thành trì: reset về trạng thái "ở thành trì" (-1) và tắt challenge (chỉ thực hiện nếu tới bến)
             setState(prev => ({ ...prev, worldTier: -1 }));
             setIsChallengeActive(false);
         }

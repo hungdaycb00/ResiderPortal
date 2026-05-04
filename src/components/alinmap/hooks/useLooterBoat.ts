@@ -127,29 +127,85 @@ export function useLooterBoat({
         const distLat = lat - boatLat;
         const distDeg = Math.sqrt(distLng * distLng + distLat * distLat);
 
+        isAnimatingRef.current = true;
+        setBoatTargetPin({ lat, lng });
+        
+        // Tính toán khoảng cách và thời gian
         const multiplier = globalSettings?.speedMultiplier || 1.0;
         const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
         const duration = baseDuration / multiplier;
 
-        // Curse visual interpolation
+        // Lưu lại vị trí bắt đầu
+        const startLat = boatLat;
+        const startLng = boatLng;
+        const totalDistMeters = distDeg * 111000;
+
+        let lastCheckedDist = 0;
+        const CURSE_CHECK_INTERVAL = 30; // Check curse mỗi 30 mét
+
+        // Curse visual interpolation tổng
         const currentCurse = state.cursePercent || 0;
         const curseGainMultiplier = state.activeCurses?.curse_gain ? 1.5 : 1;
-        const distMeters = distDeg * 111000;
-        const expectedCurseGain = (distMeters / 100) * curseGainMultiplier;
+        const expectedCurseGain = (totalDistMeters / 100) * curseGainMultiplier;
         const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
+        
         animate(curseVisual, nextCurse, { duration, ease: "linear" });
-
-        isAnimatingRef.current = true;
-        setBoatTargetPin({ lat, lng });
-        moveBoat(lat, lng).then(res => {
-            if (res?.curseTrigger) {
-                // CRITICAL: Dừng animation thuyền TRƯỚC khi center camera
-                // để boatOffsetX/Y ổn định, tránh camera target sai
-                stopAllAnimations();
-                centerOnCombat();
-            }
-        });
         animateBoatTo(lat, lng, duration);
+
+        // Theo dõi quá trình cập nhật
+        const intervalId = setInterval(() => {
+             if (!isAnimatingRef.current) {
+                 clearInterval(intervalId);
+                 return;
+             }
+             const curPxX = boatOffsetX.get();
+             const curPxY = boatOffsetY.get();
+             const currentLngVal = myObfPos.lng + curPxX / DEGREES_TO_PX;
+             const currentLatVal = myObfPos.lat - curPxY / DEGREES_TO_PX;
+
+             const movedDist = getDistanceMeters(startLat, startLng, currentLatVal, currentLngVal);
+
+             // Chỉ gọi moveBoat theo từng đoạn nhỏ để tăng curse từ từ và cập nhật vị trí
+             if (movedDist - lastCheckedDist >= CURSE_CHECK_INTERVAL) {
+                  const stepDist = movedDist - lastCheckedDist;
+                  lastCheckedDist = movedDist;
+                  
+                  // Gọi API nội bộ moveBoat theo từng Step
+                  moveBoat(currentLatVal, currentLngVal, true, stepDist).then(res => {
+                      if (res?.curseTrigger) {
+                          clearInterval(intervalId);
+                          stopAllAnimations();
+                          setBoatTargetPin(null);
+                          centerOnCombat();
+                      }
+                  });
+             }
+        }, 100);
+
+        // Set timeout để chạy lần cuối nếu tới đích bình thường
+        setTimeout(() => {
+            clearInterval(intervalId);
+            if (isAnimatingRef.current) return; // Nếu bị combat chặn, isAnimatingRef.current = false do stopAllAnimations
+            
+            // Xoá pin target
+            setBoatTargetPin(null);
+            
+            // Tính nốt phần dư
+            const curPxX = boatOffsetX.get();
+            const curPxY = boatOffsetY.get();
+            const finalLngVal = myObfPos.lng + curPxX / DEGREES_TO_PX;
+            const finalLatVal = myObfPos.lat - curPxY / DEGREES_TO_PX;
+            const finalDist = getDistanceMeters(startLat, startLng, finalLatVal, finalLngVal);
+            const remainingDist = finalDist - lastCheckedDist;
+            
+            // Gọi moveBoat lần cuối cùng (không phải là step nữa)
+            moveBoat(lat, lng, false, remainingDist).then(res => {
+                if (res?.curseTrigger) {
+                    centerOnCombat();
+                }
+            });
+        }, duration * 1000 + 50);
+
     }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
     const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {

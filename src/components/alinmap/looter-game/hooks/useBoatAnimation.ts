@@ -9,9 +9,11 @@ interface UseBoatAnimationParams {
   currentLat: number | null;
   currentLng: number | null;
   encounter: any | null;
+  onBoatMoveStep?: (lat: number, lng: number) => void;
+  onBoatMoveComplete?: (lat: number, lng: number) => void;
 }
 
-export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng, encounter }: UseBoatAnimationParams) {
+export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng, encounter, onBoatMoveStep, onBoatMoveComplete }: UseBoatAnimationParams) {
   const boatOffsetX = useMotionValue(0);
   const boatOffsetY = useMotionValue(0);
   const isAnimatingRef = useRef(false);
@@ -21,6 +23,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
   const panMoveYRef = useRef<any>(null);
   const userDraggingRef = useRef(false);
   const cameraYOffsetRef = useRef(0);
+  const lastStepDistRef = useRef(0);
 
   const stopAllAnimations = useCallback(() => {
     if (boatMoveXRef.current) { boatMoveXRef.current.stop(); boatMoveXRef.current = null; }
@@ -31,25 +34,41 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
   const animateBoatTo = useCallback((lat: number, lng: number, duration: number) => {
     if (!myObfPos) return;
     isAnimatingRef.current = true;
+    lastStepDistRef.current = 0; // Reset khoảng cách đã đi
 
+    const startX = boatOffsetX.get();
+    const startY = boatOffsetY.get();
     const newBoatPxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const newBoatPxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
 
-    boatMoveXRef.current = animate(boatOffsetX, newBoatPxX, { duration, ease: 'easeInOut' });
-    boatMoveYRef.current = animate(boatOffsetY, newBoatPxY, { duration, ease: 'easeInOut' });
+    boatMoveXRef.current = animate(boatOffsetX, newBoatPxX, { 
+      duration, 
+      ease: 'linear', // Di chuyển đều để dễ tính step
+      onUpdate: (latestX) => {
+        // Cập nhật vị trí hiện tại của thuyền về cho Looter Engine
+        if (onBoatMoveStep) {
+           const curY = boatOffsetY.get();
+           const curLng = myObfPos.lng + latestX / DEGREES_TO_PX;
+           const curLat = myObfPos.lat - curY / DEGREES_TO_PX;
+           onBoatMoveStep(curLat, curLng);
+        }
+      }
+    });
+    boatMoveYRef.current = animate(boatOffsetY, newBoatPxY, { duration, ease: 'linear' });
 
-    panMoveXRef.current = animate(panX, -newBoatPxX, { duration, ease: 'easeInOut' });
+    panMoveXRef.current = animate(panX, -newBoatPxX, { duration, ease: 'linear' });
     panMoveYRef.current = animate(panY, -newBoatPxY, {
-      duration, ease: 'easeInOut',
+      duration, ease: 'linear',
       onComplete: () => {
         isAnimatingRef.current = false;
         boatMoveXRef.current = null;
         boatMoveYRef.current = null;
         panMoveXRef.current = null;
         panMoveYRef.current = null;
+        if (onBoatMoveComplete) onBoatMoveComplete(lat, lng);
       }
     });
-  }, [myObfPos, boatOffsetX, boatOffsetY, panX, panY]);
+  }, [myObfPos, boatOffsetX, boatOffsetY, panX, panY, onBoatMoveStep, onBoatMoveComplete]);
 
   const syncBoatPosition = useCallback(() => {
     // Không tự động sync camera nếu đang trong trận đấu hoặc đang chạy animation di chuyển
