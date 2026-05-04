@@ -14,4 +14,3 @@ export { getBagBonuses, countBagCells, createStarterBag, repairBagData, getDista
 // Components
 export { default as InventoryGrid } from './InventoryGrid';
 export { default as CombatInventoryGrid } from './CombatInventoryGrid';
-export { default as FortressStorageModal } from './FortressStorageModal';

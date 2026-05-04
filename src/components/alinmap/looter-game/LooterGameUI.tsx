@@ -1,7 +1,6 @@
 import React from 'react';
 import CombatScreen from './CombatScreen';
 import CurseModal from './CurseModal';
-import FortressStorageModal from './backpack/FortressStorageModal';
 import ChallengeStatusHeader from './components/ChallengeStatusHeader';
 import IntegratedStoragePanel from '../features/backpack/components/IntegratedStoragePanel';
 import { PickupMinigame } from './PickupMinigame';
@@ -93,12 +92,6 @@ const LooterGameUI: React.FC = () => {
                         currentGold={state.looterGold || 0}
                         onSelectTier={(tier) => setWorldTier(tier)}
                     />
-                </ErrorBoundary>
-            )}
-
-            {state.initialized && (
-                <ErrorBoundary name="Storage">
-                    <FortressStorageModal />
                 </ErrorBoundary>
             )}
 

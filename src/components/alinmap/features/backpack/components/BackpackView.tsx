@@ -25,8 +25,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const {
     state, saveInventory, equipBag, dropItems,
     toggleIntegratedStorage, isIntegratedStorageOpen,
-    storeItems, centerOnBoat, centerOnCombat, encounter,
-    openFortressStorage
+    storeItems, centerOnBoat, centerOnCombat, encounter
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
