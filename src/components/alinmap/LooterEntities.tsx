@@ -141,12 +141,6 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
         return Math.round(distDeg * 111000);
     });
 
-    const fText = useTransform(fDistTransform, (d) => {
-        if (d <= fInteractionRadius) return 'Thành Trì';
-        return d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
-    });
-    const fColorClass = useTransform(fDistTransform, (d) => d <= fInteractionRadius ? 'text-emerald-400' : 'text-gray-300');
-
     return (
         <div
             data-looter-entity="true"
@@ -171,9 +165,6 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
         >
             <div className="relative flex flex-col items-center group">
                 <span className="text-6xl drop-shadow-lg">🏝️</span>
-                <motion.div className="absolute -bottom-1 whitespace-nowrap text-[10px] font-black drop-shadow-md" style={{ color: fColorClass as any }}>
-                    <motion.span>{fText}</motion.span>
-                </motion.div>
             </div>
         </div>
     );
