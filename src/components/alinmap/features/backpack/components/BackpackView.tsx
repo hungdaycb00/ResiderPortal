@@ -131,7 +131,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   return (
     <div
       id="looter-backpack-container"
-      className="flex h-full flex-col overflow-visible text-white relative bg-[#040911] pb-24 md:pb-0"
+      className="flex h-full flex-col overflow-visible text-white relative bg-[#040911]"
       style={isMobileViewport ? { height: '45dvh' } : undefined}
     >
       {/* Floating Action Buttons - Nổi bên trên viền Backpack */}
