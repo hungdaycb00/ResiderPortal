@@ -22,7 +22,7 @@ interface BackpackViewProps {
 }
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
-  const { 
+  const {
     state, saveInventory, equipBag, dropItems,
     toggleIntegratedStorage, isIntegratedStorageOpen,
     storeItems, centerOnBoat, centerOnCombat, encounter
@@ -46,7 +46,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     const w = item.gridW || 1;
     const h = item.gridH || 1;
     const shape = item.shape;
-    
+
     for (let r = 0; r < h; r++) {
       for (let c = 0; c < w; c++) {
         if (!shape || shape[r][c]) {
@@ -63,7 +63,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   const totalStats = useMemo(() => {
     if (!activeBag) return { hp: 0, weight: 0, energyMax: 0, regen: 0 };
-    
+
     return state.inventory.filter((item) => item.gridX >= 0 && isItemInsideBag(item, activeBag)).reduce(
       (acc, item) => ({
         hp: acc.hp + (item.hpBonus || 0),
@@ -77,7 +77,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   const dynamicGridH = useMemo(() => {
     const headerHeight = 48;
-    const bottomNavHeight = window.innerWidth < 768 ? 96 : 0; 
+    const bottomNavHeight = window.innerWidth < 768 ? 96 : 0;
     const availableHeight = window.innerHeight - headerHeight - bottomNavHeight;
     return Math.max(MAX_GRID_H, Math.floor(availableHeight / cellSize));
   }, [cellSize]);
@@ -86,21 +86,21 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   useEffect(() => {
     if (state.currentLat === null || state.currentLng === null) return;
-    
+
     const hasMoved = state.currentLat !== lastPosRef.current.lat || state.currentLng !== lastPosRef.current.lng;
-    
+
     if (hasMoved && activeBag) {
-      const itemsOutside = state.inventory.filter(item => 
+      const itemsOutside = state.inventory.filter(item =>
         item.gridX >= 0 && !isItemInsideBag(item, activeBag)
       );
-      
+
       if (itemsOutside.length > 0) {
         console.log(`[Looter] Boat moved, dropping ${itemsOutside.length} items outside bag`);
         const uids = itemsOutside.map(i => i.uid);
         dropItems(uids, state.currentLat, state.currentLng);
       }
     }
-    
+
     lastPosRef.current = { lat: state.currentLat, lng: state.currentLng };
   }, [state.currentLat, state.currentLng, state.inventory, activeBag, dropItems, isItemInsideBag]);
 
@@ -134,54 +134,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
       className="flex h-full flex-col overflow-visible text-white relative bg-[#040911]"
       style={isMobileViewport ? { height: '45dvh' } : undefined}
     >
-      {/* Floating Action Buttons - Nổi bên trên viền Backpack */}
-      <div className="absolute -top-20 left-0 right-0 z-[9999] pointer-events-none px-4 flex justify-between items-end h-16">
-        {/* Fortress Storage Button (Left) */}
-        {state.worldTier === -1 && (() => {
-            const dist = Math.sqrt(
-                Math.pow((state.currentLat || 0) - (state.fortressLat || 0), 2) +
-                Math.pow(((state.currentLng || 0) - (state.fortressLng || 0)) * Math.cos(((state.currentLat || 0) * Math.PI) / 180), 2)
-            ) * 111000;
-            return dist <= 300;
-        })() ? (
-            <button
-                onPointerDown={(e) => { 
-                    e.stopPropagation(); 
-                    console.log("[Looter] Click Fortress Storage");
-                    toggleIntegratedStorage(); 
-                }}
-                className={`pointer-events-auto p-2.5 rounded-2xl border transition-all shadow-2xl backdrop-blur-xl active:scale-90 ${
-                    isIntegratedStorageOpen 
-                    ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_25px_rgba(34,211,238,0.6)] scale-110' 
-                    : 'bg-[#0a1526]/80 border-cyan-500/40 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-400 shadow-black/80'
-                }`}
-                title="Kho đồ thành trì"
-            >
-                <Database className="w-6 h-6" />
-            </button>
-        ) : <div />}
-
-        {/* Locate Boat Button (Right) - Nằm trên nút đóng và trên viền */}
-        <button
-            onClick={(e) => {
-                e.stopPropagation();
-                console.log("[Looter] Click Locate Boat");
-                let yOffset = 0;
-                const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
-                yOffset = (window.innerHeight / 2) - (backpackTop / 2);
-                
-                if (encounter) {
-                    centerOnCombat(yOffset);
-                } else {
-                    centerOnBoat(yOffset);
-                }
-            }}
-            className="pointer-events-auto p-2.5 rounded-2xl border bg-[#0a1526]/80 border-cyan-500/60 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-300 transition-all shadow-[0_0_30px_rgba(0,0,0,0.9),0_0_15px_rgba(34,211,238,0.4)] active:scale-90 backdrop-blur-xl group"
-            title="Định vị Thuyền"
-        >
-            <Navigation className="w-6 h-6 fill-current rotate-45 group-hover:scale-110 transition-transform" />
-        </button>
-      </div>
       <div className="flex items-center justify-between px-4 py-2 bg-black/40 backdrop-blur-md border-b border-white/5 z-[150] relative">
         <div className="flex items-center gap-4">
           {/* Gold */}
@@ -189,7 +141,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             <Coins className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-[12px] font-black text-amber-400">{(state.looterGold || 0).toLocaleString()}</span>
           </div>
-          
+
           {/* HP */}
           <div className="flex items-center gap-1.5">
             <Heart className="h-3.5 w-3.5 text-red-500" />
@@ -212,15 +164,14 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[12px] font-black">{totalStats.weight}</span>
           </div>
-          <div 
+          <div
             id="header-bag-slot"
-            className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${
-              (draggingItem as any)?.type === 'bag' 
-                ? isHoveringBagSlot 
-                  ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]' 
-                  : 'scale-110 border-cyan-400 bg-cyan-400/10 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-                : `${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`
-            }`}
+            className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${(draggingItem as any)?.type === 'bag'
+              ? isHoveringBagSlot
+                ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]'
+                : 'scale-110 border-cyan-400 bg-cyan-400/10 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+              : `${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`
+              }`}
             onPointerEnter={() => setIsHoveringBagSlot(true)}
             onPointerLeave={() => setIsHoveringBagSlot(false)}
             onPointerDown={(e) => {
@@ -232,11 +183,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             }}
             title={formatBagTooltip(activeBag)}
           >
-             <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
+            <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
           </div>
         </div>
 
-        <button 
+        <button
           onClick={() => (window as any).collapseLooterTab?.()}
           className="ml-2 p-1 text-white/40 hover:text-white transition-colors"
         >
