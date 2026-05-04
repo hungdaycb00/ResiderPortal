@@ -8,6 +8,7 @@ import { PickupMinigame } from './PickupMinigame';
 import { Database, Navigation } from 'lucide-react';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import ErrorBoundary from '../../ErrorBoundary';
+import TierSelectionOverlay from './TierSelectionOverlay';
 
 // Internal hook to handle media queries since the external one was not found
 const useMediaQuery = (query: string) => {
@@ -73,7 +74,12 @@ const LooterGameUI: React.FC = () => {
                         ) * 111000;
                         return dist <= 300; // Thêm 50m sai số
                     })() && (
-                        <TierSelector />
+                        <TierSelectionOverlay 
+                            isOpen={true}
+                            onClose={() => {}} // Hoặc logic đóng nếu cần
+                            currentGold={state.looterGold || 0}
+                            onSelectTier={(tier) => setWorldTier(tier)}
+                        />
                     )}
                 </ErrorBoundary>
             )}
