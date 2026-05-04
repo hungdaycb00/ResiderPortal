@@ -263,30 +263,25 @@ export function MinesweeperGame({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full h-full flex flex-col items-center justify-start relative p-0.5 md:p-4 gap-1 md:gap-4 overflow-hidden"
+            className="w-full h-full flex flex-col items-center justify-center relative p-1 md:p-4 gap-2 md:gap-4 overflow-visible"
           >
-            {/* Header Dashboard - Absolute Top Center */}
+            {/* Header Dashboard */}
             <div
-              className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-row justify-center items-center w-fit bg-white/20 p-1 md:px-6 md:py-3 rounded-xl md:rounded-[30px] backdrop-blur-sm border border-white/30 shrink-0 z-40"
+              className="flex w-full max-w-[min(96vw,520px)] flex-row items-center justify-between gap-2 bg-white/20 p-2 md:px-4 md:py-3 rounded-xl md:rounded-[24px] backdrop-blur-sm border border-white/30 shrink-0 z-40"
               style={{ WebkitBackdropFilter: 'blur(4px)' }}
             >
-              <div className="flex flex-row gap-6 md:gap-16 items-center">
-                <div className="flex flex-col items-center">
-                  <span className="text-[7px] md:text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-1">Mines</span>
-                  <span className="font-black text-lg md:text-3xl text-white tabular-nums leading-none flex items-center gap-1"><Bomb size={10} />{minesLeft}</span>
-                </div>
-
-                <div className="flex flex-col px-2 items-center">
-                  <span className="text-[7px] md:text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-1">Time</span>
-                  <span className="font-black text-lg md:text-3xl text-white tabular-nums leading-none">
-                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                  </span>
-                </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[7px] md:text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-1">Mines</span>
+                <span className="font-black text-lg md:text-2xl text-white tabular-nums leading-none flex items-center gap-1"><Bomb size={10} />{minesLeft}</span>
               </div>
-            </div>
 
-            {/* Navigation Button Container - Absolute Top Right */}
-            <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+              <div className="flex flex-col px-2 items-center">
+                <span className="text-[7px] md:text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-1">Time</span>
+                <span className="font-black text-lg md:text-2xl text-white tabular-nums leading-none">
+                  {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+
               {autoStart && onComplete && (
                 <button
                   onClick={() => {
@@ -294,7 +289,7 @@ export function MinesweeperGame({
                     triggerHaptic('medium');
                     onComplete(false);
                   }}
-                  className="w-10 h-10 bg-red-500/20 hover:bg-red-500/40 text-red-100 rounded-xl flex items-center justify-center border border-red-500/30 transition-all active:scale-95 shadow-md backdrop-blur-md"
+                  className="w-10 h-10 bg-red-500/20 hover:bg-red-500/40 text-red-100 rounded-xl flex items-center justify-center border border-red-500/30 transition-all active:scale-95 shadow-md backdrop-blur-md shrink-0"
                 >
                   <XCircle size={24} />
                 </button>
@@ -313,7 +308,7 @@ export function MinesweeperGame({
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 flex flex-col items-center justify-center w-full">
+            <div className="min-h-0 flex-1 flex flex-col items-center justify-center w-full">
               {/* Grid Area */}
               <div
                 className="p-1 md:p-4 bg-white/30 backdrop-blur-sm rounded-[30px] border-2 border-white/50 flex items-center justify-center z-10 shadow-inner overflow-hidden mx-auto"

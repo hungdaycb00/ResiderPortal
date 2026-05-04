@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLooterState, useLooterActions, useLooterGame } from './looter-game/LooterGameContext';
+import { useLooterGame } from './looter-game/LooterGameContext';
 import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home, Cloud } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
 
@@ -44,28 +44,20 @@ const MapControls: React.FC<MapControlsProps> = ({
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode,
-    onOpenTierSelector,
-    isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded, isDesktop
+    isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded
 }) => {
-    const { isLooterGameMode, isChallengeActive, state: looterState, encounter, isSyncing, centerOnBoat, centerOnCombat } = useLooterGame();
-    const { setWorldTier } = useLooterActions(); 
+    const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();
     
     const [copyToast, setCopyToast] = useState(false);
 
     const handleLocateBoat = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         e.stopPropagation();
-        let yOffset = 0;
-        if (!isDesktop) {
-            const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
-            yOffset = (window.innerHeight / 2) - (backpackTop / 2);
-        }
 
         if (encounter) {
-            centerOnCombat(yOffset);
-        } else if (looterState.currentLat != null && looterState.currentLng != null) {
-            centerOnBoat(yOffset);
+            centerOnCombat(0);
         } else {
-            centerOnBoat(yOffset);
+            centerOnBoat(0);
         }
     };
 
@@ -86,6 +78,9 @@ const MapControls: React.FC<MapControlsProps> = ({
 
                 {isLooterGameMode && (
                     <button
+                        type="button"
+                        data-map-interactive="true"
+                        onPointerDown={(e) => e.stopPropagation()}
                         onClick={handleLocateBoat}
                         className="w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-cyan-500/60 bg-[#0a1526]/85 text-cyan-300 shadow-[0_0_24px_rgba(8,145,178,0.35)] backdrop-blur-xl flex items-center justify-center active:scale-95 transition-all hover:bg-[#0f213a] hover:border-cyan-300"
                         title="Định vị thuyền"

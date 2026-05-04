@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Swords, Coins, Heart, Zap, Wind, ChevronDown, Database } from 'lucide-react';
-import { useLooterGame, isLooterAtFortress } from '../../../looter-game/LooterGameContext';
+import { Swords, Coins, Heart, Zap, Wind, ChevronDown } from 'lucide-react';
+import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
@@ -24,7 +24,7 @@ interface BackpackViewProps {
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
   const {
     state, saveInventory, equipBag, dropItems,
-    toggleIntegratedStorage, isIntegratedStorageOpen,
+    isIntegratedStorageOpen,
     storeItems, encounter, isMoving
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
@@ -196,17 +196,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Fortress Storage Button - Only show if at fortress */}
-          {isLooterAtFortress(state) && (
-            <button
-              onClick={() => toggleIntegratedStorage?.('fortress')}
-              className="p-2 text-amber-400 hover:bg-amber-400/10 rounded-xl transition-colors animate-pulse"
-              title="Mở Kho Thành Trì"
-            >
-              <Database className="w-5 h-5" />
-            </button>
-          )}
-
           <button
             onClick={() => (window as any).collapseLooterTab?.()}
             className="p-2 text-white/40 hover:text-white transition-colors"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Database, Search, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DiscoverView from './features/explore/components/DiscoverView';
 import SocialView from './features/social/components/SocialView';
@@ -11,7 +11,7 @@ import BackpackView from './features/backpack/components/BackpackView';
 import SheetSearchResults from './SheetSearchResults';
 import { useSocial } from './features/social/context/SocialContext';
 import { useProfile } from './features/profile/context/ProfileContext';
-import { useLooterGame } from './looter-game/LooterGameContext';
+import { isLooterAtFortress, useLooterGame } from './looter-game/LooterGameContext';
 
 interface BottomSheetProps {
     isDesktop: boolean;
@@ -86,7 +86,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     } = props;
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
-    const { isItemDragging, encounter } = useLooterGame();
+    const { isItemDragging, encounter, state: looterState, toggleIntegratedStorage } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
 
     React.useEffect(() => {
@@ -148,6 +148,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         }
                     }}
                 >
+                    {/* Fortress Storage Edge Button */}
+                    {mainTab === 'backpack' && isLooterAtFortress(looterState) && (
+                        <button
+                            type="button"
+                            data-map-interactive="true"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsSheetExpanded(true);
+                                toggleIntegratedStorage?.('fortress');
+                            }}
+                            className="absolute -top-12 left-3 z-[190] flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-300/50 bg-[#121417]/95 text-amber-300 shadow-[0_0_24px_rgba(245,158,11,0.35)] backdrop-blur-xl transition-all hover:border-amber-200 hover:text-amber-100 active:scale-95 md:top-4 md:-left-14"
+                            title="Mở Kho Thành Trì"
+                        >
+                            <Database className="h-5 w-5" />
+                        </button>
+                    )}
+
                     {/* PC Hinge Toggle Button */}
                     <button
                         onClick={() => {
