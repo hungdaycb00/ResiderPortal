@@ -112,7 +112,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     return (
         <>
             <div
-                className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : 'top-0 bottom-0 overflow-hidden w-full'}`}
+                className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : (mainTab === 'backpack' ? 'top-0 bottom-0 overflow-visible w-full' : 'top-0 bottom-0 overflow-hidden w-full')}`}
                 style={isDesktop ? { width: panelWidth } : {}}
             >
                 <motion.div
@@ -217,7 +217,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     </div>
 
                     {mainTab === 'backpack' ? (
-                      <div className="flex-1 relative z-[100] flex flex-col overflow-hidden">
+                      <div className="flex-1 relative z-[100] flex flex-col overflow-visible">
                         <BackpackView onEnterWorld={handleEnterWorld} readOnly={!!encounter} />
                       </div>
                     ) : (

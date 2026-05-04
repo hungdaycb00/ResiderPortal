@@ -117,11 +117,19 @@ export function useInventoryDrag({
       setDragStartInfo({ item, x: e.clientX, y: e.clientY });
     } else {
       // Start panning if clicking on background
+      const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+        if (!el) return null;
+        const style = window.getComputedStyle(el);
+        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
+        return findScrollParent(el.parentElement);
+      };
+      
+      const scrollParent = findScrollParent(container);
       setPanStart({
         x: e.clientX,
         y: e.clientY,
-        scrollLeft: container.parentElement?.scrollLeft || 0,
-        scrollTop: container.parentElement?.scrollTop || 0
+        scrollLeft: scrollParent?.scrollLeft || 0,
+        scrollTop: scrollParent?.scrollTop || 0
       });
     }
   }, []);
@@ -132,12 +140,19 @@ export function useInventoryDrag({
 
     // 1. Handle Panning (Cuộn nền)
     if (panStart) {
-      const parent = container.parentElement;
-      if (parent) {
+      const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+        if (!el) return null;
+        const style = window.getComputedStyle(el);
+        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
+        return findScrollParent(el.parentElement);
+      };
+
+      const scrollParent = findScrollParent(container);
+      if (scrollParent) {
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
-        parent.scrollLeft = panStart.scrollLeft - dx;
-        parent.scrollTop = panStart.scrollTop - dy;
+        scrollParent.scrollLeft = panStart.scrollLeft - dx;
+        scrollParent.scrollTop = panStart.scrollTop - dy;
       }
       return;
     }
