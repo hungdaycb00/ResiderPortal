@@ -59,6 +59,16 @@ export function useMapInteractions({
             moved: false,
             suppressClick: false,
         };
+        
+        if (encounter) {
+            // Trong lúc combat, chỉ cập nhật trạng thái drag (để pan bản đồ) chứ KHÔNG gọi handlePointerDown để di chuyển thuyền
+            try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {}
+            e.preventDefault();
+            return;
+        }
+
         if (isLooterGameMode) {
             looterBoat.stopPanFollow?.();
         }
@@ -104,6 +114,11 @@ export function useMapInteractions({
 
         if (interactiveTarget) {
             looterBoat.handlePointerCancel();
+            return;
+        }
+
+        if (encounter) {
+            // Trong lúc combat, không cho phép thả map gây di chuyển thuyền. Chỉ di chuyển camera ở trên.
             return;
         }
 

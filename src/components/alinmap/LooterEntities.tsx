@@ -15,7 +15,7 @@ interface LooterEntitiesProps {
 const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat }: any) => {
     const { openFortressStorage, setShowMinigame, pickupItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
-    const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
+    const interactionRadius = 250;
 
     const distMetersTransform = useTransform([boatOffsetX || new MotionValue(0), boatOffsetY || new MotionValue(0)], ([ox, oy]: number[]) => {
         const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
@@ -50,13 +50,14 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
             onClick={(e) => {
                 e.stopPropagation();
 
-                // Cooldown Check (1s)
+                // Cooldown Check (giảm xuống 300ms để tránh kẹt nhặt liên tục)
                 const now = Date.now();
-                if (now - lastPickupTimeRef.current < 1000) return;
+                if (now - lastPickupTimeRef.current < 300) return;
                 lastPickupTimeRef.current = now;
 
                 const currentDist = distMetersTransform.get();
-                const clickTolerance = interactionRadius + 50;
+                // ClickTolerance bằng đúng InteractionRadius để đảm bảo độ chuẩn xác < 250m
+                const clickTolerance = interactionRadius;
 
                 if (isPortal) {
                     if (currentDist <= interactionRadius) {
@@ -122,7 +123,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
 
 const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, toggleIntegratedStorage, stopBoat }: any) => {
     // Tăng bán kính tương tác thành trì lên 250m để đồng bộ cảm giác nhặt đồ
-    const fInteractionRadius = 250 * (1 + boatScaleStack * 0.05);
+    const fInteractionRadius = 250;
 
     const fDistTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
         const oy = boatOffsetY?.get() || 0;
