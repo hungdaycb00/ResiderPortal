@@ -43,8 +43,6 @@ export function useMapInteractions({
 
     const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
-        // Khóa tương tác map khi đang chiến đấu
-        if (encounter) return;
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
         if (interactiveTarget && !isLooterGameMode) {
             looterBoat.handlePointerDown(e);
@@ -72,8 +70,6 @@ export function useMapInteractions({
     }, [isLooterGameMode, panX, panY, looterBoat, encounter]);
 
     const handleMapPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-        // Khóa kéo map khi đang chiến đấu
-        if (encounter) return;
         const dragState = mapDragRef.current;
         if (!dragState.active || dragState.pointerId !== e.pointerId) return;
 
@@ -90,8 +86,6 @@ export function useMapInteractions({
     }, [panX, panY, scale, encounter]);
 
     const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-        // Khóa click map khi đang chiến đấu
-        if (encounter) return;
         const dragState = mapDragRef.current;
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
 
