@@ -43,9 +43,13 @@ export function useMapNavigation({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const lastInitialTabRef = React.useRef(initialMainTab);
+
   useEffect(() => {
-    if (initialMainTab) {
+    // Chỉ chạy logic đồng bộ nếu initialMainTab thực sự thay đổi từ bên ngoài (ví dụ: qua URL)
+    if (initialMainTab && initialMainTab !== lastInitialTabRef.current) {
       const resolvedTab = initialMainTab === 'creator' ? 'discover' : initialMainTab;
+      lastInitialTabRef.current = initialMainTab;
       
       setMainTab(prev => {
         if (prev !== resolvedTab && resolvedTab !== 'discover') {
@@ -56,7 +60,7 @@ export function useMapNavigation({
         return resolvedTab as MainTab;
       });
     }
-  }, [initialMainTab, isDesktop, user]);
+  }, [initialMainTab, isDesktop]);
 
   useEffect(() => {
     if (mainTab === 'backpack' && looterStateObj.initialized && !isLooterGameMode) {
