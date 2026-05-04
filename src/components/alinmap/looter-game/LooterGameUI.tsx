@@ -31,23 +31,7 @@ const LooterGameUI: React.FC = () => {
         isLooterGameMode,
     } = useLooterState();
     const { setWorldTier, centerOnBoat, centerOnCombat } = useLooterActions();
-    const [isTierOverlayDismissed, setIsTierOverlayDismissed] = React.useState(false);
 
-    const isBoatAtFortress = React.useMemo(() => {
-        const dist = Math.sqrt(
-            Math.pow((state.currentLat || 0) - (state.fortressLat || 0), 2) +
-            Math.pow(((state.currentLng || 0) - (state.fortressLng || 0)) * Math.cos(((state.currentLat || 0) * Math.PI) / 180), 2)
-        ) * 111000;
-        return dist <= 300;
-    }, [state.currentLat, state.currentLng, state.fortressLat, state.fortressLng]);
-
-    const shouldShowTierOverlay = state.initialized && !isChallengeActive && state.worldTier === -1 && isBoatAtFortress;
-
-    React.useEffect(() => {
-        if (!shouldShowTierOverlay) {
-            setIsTierOverlayDismissed(false);
-        }
-    }, [shouldShowTierOverlay]);
 
     if (!isLooterGameMode) return null;
 
@@ -84,16 +68,6 @@ const LooterGameUI: React.FC = () => {
                 <CurseModal />
             </ErrorBoundary>
 
-            {shouldShowTierOverlay && !isTierOverlayDismissed && (
-                <ErrorBoundary name="TierSelector">
-                    <TierSelectionOverlay
-                        isOpen={true}
-                        onClose={() => setIsTierOverlayDismissed(true)}
-                        currentGold={state.looterGold || 0}
-                        onSelectTier={(tier) => setWorldTier(tier)}
-                    />
-                </ErrorBoundary>
-            )}
 
             <ErrorBoundary name="Minigame">
                 <PickupMinigame />
