@@ -133,7 +133,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
       className="flex h-full flex-col overflow-visible text-white relative bg-[#040911] pb-24 md:pb-0"
     >
       {/* Floating Action Buttons - Nổi bên trên viền Backpack */}
-      <div className="absolute -top-16 left-0 right-0 z-[200] pointer-events-none px-4 flex justify-between items-end h-12">
+      <div className="absolute -top-20 left-0 right-0 z-[9999] pointer-events-none px-4 flex justify-between items-end h-16">
         {/* Fortress Storage Button (Left) */}
         {state.worldTier === -1 && (() => {
             const dist = Math.sqrt(
@@ -143,8 +143,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             return dist <= 300;
         })() ? (
             <button
-                onClick={(e) => { e.stopPropagation(); toggleIntegratedStorage(); }}
-                className={`pointer-events-auto p-2.5 rounded-2xl border transition-all shadow-2xl backdrop-blur-xl ${
+                onPointerDown={(e) => { 
+                    e.stopPropagation(); 
+                    console.log("[Looter] Click Fortress Storage");
+                    toggleIntegratedStorage(); 
+                }}
+                className={`pointer-events-auto p-2.5 rounded-2xl border transition-all shadow-2xl backdrop-blur-xl active:scale-90 ${
                     isIntegratedStorageOpen 
                     ? 'bg-cyan-500 border-cyan-400 text-white shadow-[0_0_25px_rgba(34,211,238,0.6)] scale-110' 
                     : 'bg-[#0a1526]/80 border-cyan-500/40 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-400 shadow-black/80'
@@ -157,8 +161,9 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
         {/* Locate Boat Button (Right) - Nằm trên nút đóng và trên viền */}
         <button
-            onClick={(e) => {
+            onPointerDown={(e) => {
                 e.stopPropagation();
+                console.log("[Looter] Click Locate Boat");
                 let yOffset = 0;
                 const backpackTop = document.getElementById('looter-backpack-container')?.getBoundingClientRect().top || window.innerHeight;
                 yOffset = (window.innerHeight / 2) - (backpackTop / 2);
@@ -169,7 +174,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                     centerOnBoat(yOffset);
                 }
             }}
-            className="pointer-events-auto p-2.5 rounded-2xl border bg-[#0a1526]/80 border-cyan-500/50 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-300 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_15px_rgba(34,211,238,0.3)] active:scale-90 backdrop-blur-xl group"
+            className="pointer-events-auto p-2.5 rounded-2xl border bg-[#0a1526]/80 border-cyan-500/60 text-cyan-400 hover:bg-[#0f213a] hover:border-cyan-300 transition-all shadow-[0_0_30px_rgba(0,0,0,0.9),0_0_15px_rgba(34,211,238,0.4)] active:scale-90 backdrop-blur-xl group"
             title="Định vị Thuyền"
         >
             <Navigation className="w-6 h-6 fill-current rotate-45 group-hover:scale-110 transition-transform" />

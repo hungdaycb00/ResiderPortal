@@ -117,6 +117,11 @@ export function useInventoryDrag({
       setDragStartInfo({ item, x: e.clientX, y: e.clientY });
     } else {
       // Start panning if clicking on background
+      const target = e.currentTarget as HTMLElement;
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch (err) {}
+
       const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
         if (!el) return null;
         const style = window.getComputedStyle(el);
@@ -209,6 +214,13 @@ export function useInventoryDrag({
   }, [dragStartInfo, draggingItem, cellSize, panStart]);
 
   const onPointerUp = useCallback((e: PointerEvent | React.PointerEvent) => {
+    if (panStart) {
+      const target = e.currentTarget as HTMLElement;
+      try {
+        target.releasePointerCapture((e as any).pointerId);
+      } catch (err) {}
+    }
+
     setDragStartInfo(null);
     setPanStart(null);
 
