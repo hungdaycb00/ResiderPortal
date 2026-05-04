@@ -100,12 +100,21 @@ interface InventoryGridProps {
   React.useEffect(() => {
     const staging = items.filter(i => i.gridX < 0);
     if (staging.length === 0) return;
+    if (!activeBag || activeBag.gridX < 0) return; // Không có balo → không auto-place
 
     const findEmptySpot = (item: LooterItem, currentItems: LooterItem[]) => {
       const w = item.gridW || 1;
       const h = item.gridH || 1;
       for (let y = 0; y <= gridH - h; y++) {
         for (let x = 0; x <= gridW - w; x++) {
+          // Kiểm tra TẤT CẢ ô của item phải nằm trong vùng active bag
+          let allInBag = true;
+          for (let dy = 0; dy < h && allInBag; dy++) {
+            for (let dx = 0; dx < w && allInBag; dx++) {
+              if (!bagOcc[y + dy]?.[x + dx]) allInBag = false;
+            }
+          }
+          if (!allInBag) continue;
           if (!checkOverlap(item, x, y, currentItems)) return { x, y };
         }
       }
@@ -125,7 +134,7 @@ interface InventoryGridProps {
     if (changed) {
       onItemLayoutChange?.(updated);
     }
-  }, [items, gridW, gridH, checkOverlap, onItemLayoutChange]);
+  }, [items, gridW, gridH, checkOverlap, onItemLayoutChange, activeBag, bagOcc]);
 
   React.useEffect(() => {
     onDragStateChange?.(draggingItem);

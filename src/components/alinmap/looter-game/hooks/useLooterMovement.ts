@@ -2,7 +2,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
-import type { LooterGameState, Encounter } from '../LooterGameContext';
+import type { LooterGameState, Encounter, WorldItem } from '../LooterGameContext';
 import type { LooterItem } from '../backpack/types';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
 
@@ -16,7 +16,8 @@ interface UseLooterMovementProps {
   setIsChallengeActive: (v: boolean) => void;
   setEncounter: (e: Encounter | null) => void;
   setShowCurseModal: (v: boolean) => void;
-  dropItems: (uids: string[], lat: number, lng: number) => Promise<void>;
+  setWorldItems: React.Dispatch<React.SetStateAction<WorldItem[]>>;
+  saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
 }
 
 export function useLooterMovement({
@@ -28,7 +29,8 @@ export function useLooterMovement({
   setIsChallengeActive,
   setEncounter,
   setShowCurseModal,
-  dropItems
+  setWorldItems,
+  saveInventory
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
 
@@ -49,10 +51,11 @@ export function useLooterMovement({
 
         const distMeters = isStep ? (stepDist || 0) : getDistanceMeters(fromLat, fromLng, toLat, toLng);
 
-        // Auto eject: ném tất cả item nằm ngoài vùng active bag khi thuyền di chuyển
+        // Tính toán item cần ném ra TRƯỚC setState
+        let itemsToDrop: LooterItem[] = [];
         if (!isStep) {
             const activeBag = state.bags?.[0];
-            const itemsToDrop = (state.inventory || []).filter(item => {
+            itemsToDrop = (state.inventory || []).filter(item => {
                 // Item ở staging (ô chờ) - tọa độ âm
                 if (item.gridX < 0 || item.gridY < 0) return true;
                 // Không có balo active: tất cả item trên lưới đều bị ném
@@ -71,16 +74,17 @@ export function useLooterMovement({
                     item.gridY + itemH > bagY + bagH
                 );
             });
-            if (itemsToDrop.length > 0) {
-                dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
-            }
         }
+
+        const dropUids = new Set(itemsToDrop.map(i => i.uid));
+        // Inventory SAU khi loại bỏ items ngoài active
+        const cleanedInventory = (state.inventory || []).filter(i => !dropUids.has(i.uid));
         
         let newCurse = state.cursePercent;
         let curseTrigger = false;
         let encounter: Encounter | null = null;
         
-        const hasItems = state.inventory && state.inventory.length > 0;
+        const hasItems = cleanedInventory.length > 0;
         
         if (hasItems) {
             const curseGain = calculateCurseGain('move', distMeters, state.activeCurses);
@@ -89,7 +93,7 @@ export function useLooterMovement({
             
             if (curseTrigger) {
                 newCurse = 0; // Reset
-                const bot = generateBot(state.worldTier || 1, state.inventory.length);
+                const bot = generateBot(state.worldTier || 1, cleanedInventory.length);
                 const botStats = calcTotalStats(bot.inventory, bot.bags[0], {});
                 encounter = {
                     type: 'bot',
@@ -100,13 +104,32 @@ export function useLooterMovement({
             }
         }
         
+        // Atomic setState: cập nhật vị trí + xóa items ngoài active cùng lúc
         setState(prev => ({
           ...prev,
+          inventory: prev.inventory.filter(i => !dropUids.has(i.uid)),
           currentLat: toLat,
           currentLng: toLng,
           cursePercent: newCurse,
           distance: prev.distance + Math.round(distMeters),
         }));
+
+        // Sau khi state đã clean, thêm dropped items lên world map + sync server
+        if (itemsToDrop.length > 0) {
+            setWorldItems(wItems => {
+                const newWorldItems = itemsToDrop.map((item, i) => ({
+                    spawnId: `dropped_${item.uid}_${Date.now()}_${i}`,
+                    lat: fromLat + (Math.random() - 0.5) * 0.0001,
+                    lng: fromLng + (Math.random() - 0.5) * 0.0001,
+                    item: item,
+                    isExpander: false,
+                    minigameType: null
+                }));
+                return [...wItems, ...newWorldItems];
+            });
+            saveInventory(cleanedInventory);
+            notify(`Đã ném ${itemsToDrop.length} vật phẩm ra Map`, 'info');
+        }
 
         if (distToFortress > FORTRESS_INTERACTION_METERS) {
             setIsChallengeActive(true);
@@ -129,7 +152,7 @@ export function useLooterMovement({
     } finally {
       setIsMoving(false);
     }
-  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, dropItems]);
+  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, setWorldItems, saveInventory, notify]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;

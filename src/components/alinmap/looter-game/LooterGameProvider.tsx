@@ -160,7 +160,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     deviceId, apiUrl: API_URL, state, setState, notify,
     setIsChallengeActive,
     setEncounter, setShowCurseModal,
-    dropItems: inventory.dropItems
+    setWorldItems, saveInventory
   });
 
   const clearPregeneratedFruit = useCallback(() => {
