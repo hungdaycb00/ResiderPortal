@@ -61,7 +61,11 @@ export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps
     if (!deviceId) return;
     try {
       const result: any = await looterApi.saveBags(apiUrl, deviceId, bags);
-      setState(prev => ({ ...prev, bags: Array.isArray(result?.bags) ? result.bags : bags }));
+      setState(prev => ({
+        ...prev,
+        bags: Array.isArray(result?.bags) ? result.bags : bags,
+        inventory: Array.isArray(result?.inventory) ? result.inventory : prev.inventory,
+      }));
     } catch (err) {
       console.error('[Looter] Save bags error', err);
     }

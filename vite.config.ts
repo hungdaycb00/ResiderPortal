@@ -20,5 +20,21 @@ export default defineConfig(({mode}) => {
       allowedHosts: true,
       // Xóa cấu hình HMR tĩnh để Vite tự động phân tích WSS/WS dựa vào trình duyệt khi dùng qua Tunnel
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) return 'vendor-react';
+            if (id.includes('firebase/')) return 'vendor-firebase';
+            if (id.includes('framer-motion') || id.includes('motion/')) return 'vendor-motion';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('socket.io')) return 'vendor-socket';
+            if (id.includes('@google/genai') || id.includes('jszip')) return 'vendor-tools';
+            return undefined;
+          },
+        },
+      },
+    },
   };
 });

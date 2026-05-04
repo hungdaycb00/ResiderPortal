@@ -263,6 +263,27 @@ export function useLooterInventory({
         item: result.item,
         isExpander: !!result.isExpander,
       } as WorldItem;
+
+      consumedSpawnIdsRef.current.add(spawnId);
+      for (const entry of chunkCacheRef.current.values()) {
+        entry.items = entry.items.filter(i => i.spawnId !== spawnId);
+      }
+      setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+
+      if (Array.isArray(result.inventory)) {
+        setState(prev => ({
+          ...prev,
+          inventory: result.inventory,
+          storage: Array.isArray(result.storage) ? result.storage : prev.storage,
+        }));
+        notify(
+          result.item?.gridX != null && result.item.gridX >= 0
+            ? `Nháº·t Ä‘Æ°á»£c ${result.item.name}`
+            : `Nháº·t Ä‘Æ°á»£c ${result.item.name} nhÆ°ng balo Ä‘Ã£ Ä‘áº§y!`,
+          result.item?.gridX != null && result.item.gridX >= 0 ? 'success' : 'info'
+        );
+        return;
+      }
     } catch (err) {
       console.error('[LooterGame] pickup confirm error:', err);
       notify('Khong the xac thuc vat pham voi server', 'error');
@@ -327,6 +348,9 @@ export function useLooterInventory({
       }
 
       setState(prev => {
+        if (Array.isArray(result.inventory)) {
+          return { ...prev, inventory: result.inventory };
+        }
         const uidsToDrop = new Set(itemUids);
         const newInventory = prev.inventory.filter(i => !uidsToDrop.has(i.uid));
         return { ...prev, inventory: newInventory };
