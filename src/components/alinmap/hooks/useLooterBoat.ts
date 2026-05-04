@@ -140,71 +140,35 @@ export function useLooterBoat({
         const startLng = boatLng;
         const totalDistMeters = distDeg * 111000;
 
-        let lastCheckedDist = 0;
-        const CURSE_CHECK_INTERVAL = 30; // Check curse mỗi 30 mét
-
-        // Curse visual interpolation tổng
+        // Hiệu ứng Curse visual interpolation chạy offline trong lúc di chuyển
         const currentCurse = state.cursePercent || 0;
         const curseGainMultiplier = state.activeCurses?.curse_gain ? 1.5 : 1;
         const expectedCurseGain = (totalDistMeters / 100) * curseGainMultiplier;
         const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
-        
         animate(curseVisual, nextCurse, { duration, ease: "linear" });
-        animateBoatTo(lat, lng, duration);
 
-        // Theo dõi quá trình cập nhật
-        const intervalId = setInterval(() => {
-             if (!isAnimatingRef.current) {
-                 clearInterval(intervalId);
-                 return;
-             }
-             const curPxX = boatOffsetX.get();
-             const curPxY = boatOffsetY.get();
-             const currentLngVal = myObfPos.lng + curPxX / DEGREES_TO_PX;
-             const currentLatVal = myObfPos.lat - curPxY / DEGREES_TO_PX;
-
-             const movedDist = getDistanceMeters(startLat, startLng, currentLatVal, currentLngVal);
-
-             // Chỉ gọi moveBoat theo từng đoạn nhỏ để tăng curse từ từ và cập nhật vị trí
-             if (movedDist - lastCheckedDist >= CURSE_CHECK_INTERVAL) {
-                  const stepDist = movedDist - lastCheckedDist;
-                  lastCheckedDist = movedDist;
-                  
-                  // Gọi API nội bộ moveBoat theo từng Step
-                  moveBoat(currentLatVal, currentLngVal, true, stepDist).then(res => {
-                      if (res?.curseTrigger) {
-                          clearInterval(intervalId);
-                          stopAllAnimations();
-                          setBoatTargetPin(null);
-                          centerOnCombat();
-                      }
-                  });
-             }
-        }, 100);
-
-        // Set timeout để chạy lần cuối nếu tới đích bình thường
-        setTimeout(() => {
-            clearInterval(intervalId);
-            if (isAnimatingRef.current) return; // Nếu bị combat chặn, isAnimatingRef.current = false do stopAllAnimations
+        // Animation Offline: Thuyền trượt mượt trên map, sau khi kết thúc mới gọi moveBoat cập nhật logic
+        animateBoatTo(lat, lng, duration).then(() => {
+            // Nếu animation bị dừng giữa chừng (ví dụ user click chỗ khác), thì isAnimatingRef sẽ là false
+            // Không thực hiện update logic ở đích nữa vì stopBoat() đã ghi nhận vị trí rồi.
+            if (!isAnimatingRef.current) return;
             
-            // Xoá pin target
             setBoatTargetPin(null);
             
-            // Tính nốt phần dư
+            // Tính khoảng cách đã di chuyển (toàn bộ quãng đường tới đích)
             const curPxX = boatOffsetX.get();
             const curPxY = boatOffsetY.get();
             const finalLngVal = myObfPos.lng + curPxX / DEGREES_TO_PX;
             const finalLatVal = myObfPos.lat - curPxY / DEGREES_TO_PX;
             const finalDist = getDistanceMeters(startLat, startLng, finalLatVal, finalLngVal);
-            const remainingDist = finalDist - lastCheckedDist;
             
-            // Gọi moveBoat lần cuối cùng (không phải là step nữa)
-            moveBoat(lat, lng, false, remainingDist).then(res => {
+            // Update logic (Offline - gọi moveBoat để update react state, sinh curse, mở combat nếu có)
+            moveBoat(lat, lng, false, finalDist).then(res => {
                 if (res?.curseTrigger) {
                     centerOnCombat();
                 }
             });
-        }, duration * 1000 + 50);
+        });
 
     }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
