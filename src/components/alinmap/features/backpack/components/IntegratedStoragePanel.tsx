@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, X, Package, MousePointer2 } from 'lucide-react';
+import { Database, X, Package, Home } from 'lucide-react';
 import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { InventoryGrid, MAX_GRID_W } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
@@ -70,9 +70,19 @@ const buildPlacedStorage = (items: LooterItem[]) => {
 };
 
 export default function IntegratedStoragePanel() {
-  const { state, isIntegratedStorageOpen, setIsIntegratedStorageOpen, saveStorage, storeItems } = useLooterGame();
+  const {
+    state,
+    fortressStorageMode,
+    isIntegratedStorageOpen,
+    setIsIntegratedStorageOpen,
+    openFortressStorage,
+    saveStorage,
+    storeItems,
+    returnToFortress,
+  } = useLooterGame();
   const [selectedItem, setSelectedItem] = useState<LooterItem | null>(null);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+  const [isReturning, setIsReturning] = useState(false);
   
   // Drag-to-scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -102,6 +112,19 @@ export default function IntegratedStoragePanel() {
   };
 
   const handleMouseUp = () => setIsDraggingScroll(false);
+
+  const handleReturnToFortress = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isReturning) return;
+
+    setIsReturning(true);
+    try {
+      await returnToFortress();
+      openFortressStorage('fortress');
+    } finally {
+      setIsReturning(false);
+    }
+  }, [isReturning, openFortressStorage, returnToFortress]);
 
   if (!isIntegratedStorageOpen) return null;
 
@@ -201,6 +224,22 @@ export default function IntegratedStoragePanel() {
           </div>
           </div>
         </motion.div>
+
+        {fortressStorageMode === 'portal' && (
+          <motion.button
+            type="button"
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            onClick={handleReturnToFortress}
+            disabled={isReturning}
+            className="fixed left-1/2 top-[40vh] z-[410] flex -translate-x-1/2 items-center gap-2 rounded-b-xl border-x border-b border-amber-400/40 bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-[0_10px_28px_rgba(245,158,11,0.35)] transition-colors hover:bg-amber-300 disabled:cursor-wait disabled:opacity-70"
+            title="Về Thành Trì"
+          >
+            <Home className="h-4 w-4" />
+            {isReturning ? 'Đang về...' : 'Về Thành Trì'}
+          </motion.button>
+        )}
 
         {/* Item Info Popup */}
         {selectedItem && createPortal(

@@ -75,7 +75,7 @@ export interface LooterGameActions {
   setShowMinigame: (item: WorldItem | null) => void;
   setIsLooterGameMode: (v: boolean) => void;
   setIsIntegratedStorageOpen: (v: boolean) => void;
-  toggleIntegratedStorage: () => void;
+  toggleIntegratedStorage: (mode?: StorageAccessMode) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
   centerOnBoat: (yOffset?: number) => void;

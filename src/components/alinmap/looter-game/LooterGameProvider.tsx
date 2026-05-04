@@ -60,7 +60,7 @@ type UIAction =
   | { type: 'SET_FORTRESS_STORAGE_MODE'; payload: StorageAccessMode }
   | { type: 'OPEN_FORTRESS_STORAGE'; payload: StorageAccessMode }
   | { type: 'SET_INTEGRATED_STORAGE_OPEN'; payload: boolean }
-  | { type: 'TOGGLE_INTEGRATED_STORAGE' };
+  | { type: 'TOGGLE_INTEGRATED_STORAGE'; payload?: StorageAccessMode };
 
 const initialUIState: UIState = {
   encounter: null, combatResult: null,
@@ -79,9 +79,12 @@ function uiReducer(state: UIState, action: UIAction): UIState {
     case 'SET_CHALLENGE_ACTIVE': return { ...state, isChallengeActive: action.payload };
     case 'SET_FORTRESS_STORAGE_OPEN': return { ...state, isFortressStorageOpen: action.payload };
     case 'SET_FORTRESS_STORAGE_MODE': return { ...state, fortressStorageMode: action.payload };
-    case 'OPEN_FORTRESS_STORAGE': return { ...state, fortressStorageMode: action.payload, isFortressStorageOpen: true };
+    case 'OPEN_FORTRESS_STORAGE': return { ...state, fortressStorageMode: action.payload, isFortressStorageOpen: true, isIntegratedStorageOpen: true };
     case 'SET_INTEGRATED_STORAGE_OPEN': return { ...state, isIntegratedStorageOpen: action.payload };
-    case 'TOGGLE_INTEGRATED_STORAGE': return { ...state, isIntegratedStorageOpen: !state.isIntegratedStorageOpen };
+    case 'TOGGLE_INTEGRATED_STORAGE':
+      return state.isIntegratedStorageOpen
+        ? { ...state, isIntegratedStorageOpen: false }
+        : { ...state, fortressStorageMode: action.payload ?? 'fortress', isIntegratedStorageOpen: true };
     default: return state;
   }
 }
@@ -172,11 +175,12 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsFortressStorageOpen,
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
+      if (openBackpackHandler) openBackpackHandler();
     },
     setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
     setIsIntegratedStorageOpen: (v) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
-    toggleIntegratedStorage: () => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE' }),
+    toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack: () => { if (openBackpackHandler) openBackpackHandler(); },
     setOpenBackpackHandler,
     centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },

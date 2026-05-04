@@ -200,7 +200,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           {/* Fortress Storage Button - Only show if at fortress */}
           {isLooterAtFortress(state) && (
             <button
-              onClick={() => toggleIntegratedStorage?.()}
+              onClick={() => toggleIntegratedStorage?.('fortress')}
               className="p-2 text-amber-400 hover:bg-amber-400/10 rounded-xl transition-colors animate-pulse"
               title="Mở Kho Thành Trì"
             >

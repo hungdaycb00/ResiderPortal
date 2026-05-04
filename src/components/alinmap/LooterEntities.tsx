@@ -151,7 +151,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
                 const dist = fDistTransform.get();
                 if (dist <= fInteractionRadius) {
                     stopBoat?.();
-                    toggleIntegratedStorage?.();
+                    toggleIntegratedStorage?.('fortress');
                 } else {
                     executeMoveToExact?.(fortressLat, fortressLng);
                 }
