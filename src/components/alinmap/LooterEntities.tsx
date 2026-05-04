@@ -120,7 +120,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
     );
 });
 
-const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, openFortressStorage, stopBoat }: any) => {
+const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, toggleIntegratedStorage, stopBoat }: any) => {
     // Tăng bán kính tương tác thành trì lên 250m để đồng bộ cảm giác nhặt đồ
     const fInteractionRadius = 250 * (1 + boatScaleStack * 0.05);
 
@@ -150,7 +150,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
                 const dist = fDistTransform.get();
                 if (dist <= fInteractionRadius) {
                     stopBoat?.();
-                    openFortressStorage?.('fortress');
+                    toggleIntegratedStorage?.();
                 } else {
                     executeMoveToExact?.(fortressLat, fortressLng);
                 }
@@ -206,7 +206,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact, stopBoat
 }) => {
     const { state: looterStateObj, worldItems, encounter } = useLooterState();
-    const { openFortressStorage } = useLooterActions();
+    const { toggleIntegratedStorage } = useLooterActions();
     
     // Chỉ lấy các giá trị cần thiết để giảm re-render
     const fortressLat = looterStateObj?.fortressLat;
@@ -291,7 +291,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                     boatOffsetY={boatOffsetY} 
                     boatScaleStack={boatScaleStack}
                     executeMoveToExact={executeMoveToExact} 
-                    openFortressStorage={openFortressStorage}
+                    toggleIntegratedStorage={toggleIntegratedStorage}
                     stopBoat={stopBoat}
                 />
             )}
