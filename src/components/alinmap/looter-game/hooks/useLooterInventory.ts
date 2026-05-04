@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import { findEmptySlotFor } from '../utils/looterHelpers';
+import { looterApi } from '../services/looterApi';
 import { repairBagData, createStarterBag } from '../backpack/utils';
 import { BAG_DEFAULTS } from '../backpack/constants';
-import type { LooterGameState, WorldItem } from '../LooterGameContext';
+import type { LooterChunkCacheEntry, LooterGameState, WorldItem } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
 
 interface UseLooterInventoryProps {
@@ -17,6 +18,8 @@ interface UseLooterInventoryProps {
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
   saveBags: (bags: BagItem[]) => Promise<void>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
+  chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
+  consumedSpawnIdsRef: React.MutableRefObject<Set<string>>;
 }
 
 export function useLooterInventory({
@@ -29,7 +32,9 @@ export function useLooterInventory({
   loadWorldItems,
   saveInventory,
   saveBags,
-  saveStorage
+  saveStorage,
+  chunkCacheRef,
+  consumedSpawnIdsRef
 }: UseLooterInventoryProps) {
 
 
@@ -205,17 +210,40 @@ export function useLooterInventory({
         // Tuy nhiên, vì ta muốn dùng item đó NGAY LẬP TỨC để update inventory, ta nên tìm nó trước.
         setWorldItems(prev => {
             pickedWorldItem = prev.find(i => i.spawnId === spawnId);
-            return prev.filter(i => i.spawnId !== spawnId);
+            return prev;
         });
     } else {
         // Nếu đã có directItem, chỉ cần xóa khỏi map
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+        // Wait for server confirmation before removing the item from the map.
     }
 
     // Đợi 1 tick nhỏ để đảm bảo pickedWorldItem được gán (nếu tìm từ setWorldItems)
     // Hoặc tốt nhất là tìm TRƯỚC khi gọi setWorldItems nếu không có directItem.
     // Thực tế, trong PickupMinigame ta sẽ truyền directItem vào, nên logic này sẽ chạy mượt.
     
+    try {
+      const result: any = await looterApi.pickupItem(apiUrl, deviceId, spawnId);
+      if (!result?.success || !result?.item) {
+        notify(result?.error || 'Khong the nhat vat pham', 'error');
+        return;
+      }
+      pickedWorldItem = {
+        ...(pickedWorldItem || {
+          spawnId,
+          lat: state.currentLat || 0,
+          lng: state.currentLng || 0,
+          isExpander: false,
+          minigameType: null,
+        }),
+        item: result.item,
+        isExpander: !!result.isExpander,
+      } as WorldItem;
+    } catch (err) {
+      console.error('[LooterGame] pickup confirm error:', err);
+      notify('Khong the xac thuc vat pham voi server', 'error');
+      return;
+    }
+
     const processPickup = (itemToPick: WorldItem) => {
         if (!itemToPick.item) return;
         const looterItem = itemToPick.item as LooterItem;
@@ -249,6 +277,11 @@ export function useLooterInventory({
     };
 
     if (pickedWorldItem) {
+        consumedSpawnIdsRef.current.add(spawnId);
+        for (const entry of chunkCacheRef.current.values()) {
+          entry.items = entry.items.filter(i => i.spawnId !== spawnId);
+        }
+        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
         processPickup(pickedWorldItem);
     } else {
         // Fallback nếu vẫn chưa tìm thấy (do race condition của setWorldItems)
@@ -256,35 +289,54 @@ export function useLooterInventory({
         // Ở đây ta dùng closure 'state' từ hook, nhưng nó có thể cũ.
         // Giải pháp tốt nhất là PickupMinigame luôn truyền directItem.
     }
-  }, [deviceId, setWorldItems, setState, saveInventory, saveStorage, notify]);
+  }, [deviceId, apiUrl, state.currentLat, state.currentLng, setWorldItems, setState, saveInventory, saveStorage, notify, chunkCacheRef, consumedSpawnIdsRef]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
     if (!deviceId || itemUids.length === 0) return;
     
-    setState(prev => {
-      const droppedItems = prev.inventory.filter(i => itemUids.includes(i.uid));
-      const newInventory = prev.inventory.filter(i => !itemUids.includes(i.uid));
-      
-      saveInventory(newInventory);
-      
-      // Add dropped items to world locally
-      setWorldItems(wItems => {
-        const newWorldItems = droppedItems.map((item, i) => ({
-            spawnId: `dropped_${item.uid}_${Date.now()}_${i}`,
-            lat: lat + (Math.random() - 0.5) * 0.0001,
-            lng: lng + (Math.random() - 0.5) * 0.0001,
-            item: item,
-            isExpander: false,
-            minigameType: null
-        }));
-        return [...wItems, ...newWorldItems];
+    try {
+      const result: any = await looterApi.dropItems(apiUrl, deviceId, itemUids, lat, lng);
+      if (!result?.success) {
+        notify(result?.error || 'Khong the nem vat pham ra map', 'error');
+        return;
+      }
+
+      setState(prev => {
+        const uidsToDrop = new Set(itemUids);
+        const newInventory = prev.inventory.filter(i => !uidsToDrop.has(i.uid));
+        return { ...prev, inventory: newInventory };
       });
 
-      return { ...prev, inventory: newInventory };
-    });
+      if (Array.isArray(result.items) && result.items.length > 0) {
+        const droppedItems = result.items as WorldItem[];
+        const now = Date.now();
+        for (const item of droppedItems) {
+          if (item.chunkX == null || item.chunkY == null) continue;
+          const key = `${item.chunkX}:${item.chunkY}`;
+          const entry = chunkCacheRef.current.get(key);
+          if (entry) {
+            entry.items = [...entry.items.filter(i => i.spawnId !== item.spawnId), item];
+            entry.touchedAt = now;
+          } else {
+            chunkCacheRef.current.set(key, {
+              key,
+              chunkX: item.chunkX,
+              chunkY: item.chunkY,
+              items: [item],
+              touchedAt: now,
+            });
+          }
+        }
+        setWorldItems(wItems => [...wItems.filter(i => !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
+      }
+    } catch (err) {
+      console.error('[LooterGame] drop item error:', err);
+      notify('Khong the xac thuc nem vat pham voi server', 'error');
+      return;
+    }
     
     notify(`Đã ném ${itemUids.length} vật phẩm ra Map`, 'success');
-  }, [deviceId, setState, setWorldItems, saveInventory, notify]);
+  }, [deviceId, apiUrl, setState, setWorldItems, notify, chunkCacheRef]);
 
   const dropCombatLoot = useCallback(async (items: LooterItem[]) => {
     if (!deviceId || items.length === 0) return;

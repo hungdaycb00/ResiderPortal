@@ -6,6 +6,7 @@ import {
   LooterActionsContext,
   type LooterGameState, 
   type WorldItem, 
+  type LooterChunkCacheEntry,
   type Encounter, 
   type CombatResult, 
   type StorageAccessMode,
@@ -110,6 +111,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const saveTimerRef = useRef<any>(null);
   const storageTimerRef = useRef<any>(null);
   const initialLoadDoneRef = useRef(false);
+  const chunkCacheRef = useRef<Map<string, LooterChunkCacheEntry>>(new Map());
+  const consumedSpawnIdsRef = useRef<Set<string>>(new Set());
 
   const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
     if (typeof showNotification === 'function') {
@@ -150,20 +153,20 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const stateManager = useLooterStateManager({
     deviceId, apiUrl: API_URL, state, setState, setWorldItems,
     setIsChallengeActive, setGlobalSettings, notify, isChallengeActive: ui.isChallengeActive,
-    saveBags, syncState
+    saveBags, syncState, chunkCacheRef, consumedSpawnIdsRef
   });
 
   const inventory = useLooterInventory({
     deviceId, apiUrl: API_URL, state, setState, notify,
     setWorldItems, loadWorldItems: stateManager.loadWorldItems,
-    saveInventory, saveBags, saveStorage
+    saveInventory, saveBags, saveStorage, chunkCacheRef, consumedSpawnIdsRef
   });
 
   const movement = useLooterMovement({
     deviceId, apiUrl: API_URL, state, setState, notify,
     setIsChallengeActive,
     setEncounter, setShowCurseModal,
-    setWorldItems, saveInventory
+    setWorldItems, saveInventory, chunkCacheRef
   });
 
   const clearPregeneratedFruit = useCallback(() => {

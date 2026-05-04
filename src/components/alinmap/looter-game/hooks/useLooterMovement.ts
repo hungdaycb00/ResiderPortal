@@ -2,7 +2,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
-import type { LooterGameState, Encounter, WorldItem } from '../LooterGameContext';
+import type { LooterChunkCacheEntry, LooterGameState, Encounter, WorldItem } from '../LooterGameContext';
 import type { LooterItem } from '../backpack/types';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
 import { generateBot } from '../engine/entities';
@@ -20,6 +20,7 @@ interface UseLooterMovementProps {
   setShowCurseModal: (v: boolean) => void;
   setWorldItems: React.Dispatch<React.SetStateAction<WorldItem[]>>;
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
+  chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
 }
 
 export function useLooterMovement({
@@ -32,7 +33,8 @@ export function useLooterMovement({
   setEncounter,
   setShowCurseModal,
   setWorldItems,
-  saveInventory
+  saveInventory,
+  chunkCacheRef
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
 
@@ -110,18 +112,36 @@ export function useLooterMovement({
         }));
 
         if (itemsToDrop.length > 0) {
-            setWorldItems(wItems => {
-                const newWorldItems = itemsToDrop.map((item, i) => ({
-                    spawnId: `dropped_${item.uid}_${Date.now()}_${i}`,
-                    lat: fromLat + (Math.random() - 0.5) * 0.0001,
-                    lng: fromLng + (Math.random() - 0.5) * 0.0001,
-                    item: item,
-                    isExpander: false,
-                    minigameType: null
-                }));
-                return [...wItems, ...newWorldItems];
-            });
-            saveInventory(cleanedInventory);
+            try {
+                const dropData = await looterApi.dropItems(apiUrl, deviceId!, itemsToDrop.map(item => item.uid), fromLat, fromLng);
+                if (dropData?.success && Array.isArray(dropData.items)) {
+                    const droppedItems = dropData.items as WorldItem[];
+                    const now = Date.now();
+                    for (const item of droppedItems) {
+                        if (item.chunkX == null || item.chunkY == null) continue;
+                        const key = `${item.chunkX}:${item.chunkY}`;
+                        const entry = chunkCacheRef.current.get(key);
+                        if (entry) {
+                            entry.items = [...entry.items.filter(i => i.spawnId !== item.spawnId), item];
+                            entry.touchedAt = now;
+                        } else {
+                            chunkCacheRef.current.set(key, {
+                                key,
+                                chunkX: item.chunkX,
+                                chunkY: item.chunkY,
+                                items: [item],
+                                touchedAt: now,
+                            });
+                        }
+                    }
+                    setWorldItems(wItems => [...wItems.filter(i => !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
+                } else {
+                    await saveInventory(cleanedInventory);
+                }
+            } catch (dropErr) {
+                console.error('[LooterGame] auto drop item error:', dropErr);
+                await saveInventory(cleanedInventory);
+            }
             notify(`Đã ném ${itemsToDrop.length} vật phẩm ra Map`, 'info');
         }
 
@@ -145,7 +165,7 @@ export function useLooterMovement({
     } finally {
       setIsMoving(false);
     }
-  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, setWorldItems, saveInventory, notify]);
+  }, [deviceId, apiUrl, state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, setWorldItems, saveInventory, notify, chunkCacheRef]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;

@@ -11,9 +11,21 @@ export interface WorldItem {
   spawnId: string;
   lat: number;
   lng: number;
+  chunkX?: number;
+  chunkY?: number;
+  slotIndex?: number;
+  source?: 'legacy' | 'procedural' | 'dropped' | 'portal';
   isExpander: boolean;
   minigameType: 'chest' | null;
   item: LooterItem | GridExpander | BagItem | PortalItem;
+}
+
+export interface LooterChunkCacheEntry {
+  key: string;
+  chunkX: number;
+  chunkY: number;
+  items: WorldItem[];
+  touchedAt: number;
 }
 
 export interface Encounter {

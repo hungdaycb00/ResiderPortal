@@ -3,6 +3,40 @@ import type { LooterItem, BagItem } from '../backpack/types';
 import { GAME_CONFIG } from '../gameConfig';
 
 const { PORTAL_SPACING_METERS, PORTAL_SEARCH_RADIUS } = GAME_CONFIG;
+const CHUNK_SIZE_METERS = 1000;
+
+export const chunkKey = (chunkX: number, chunkY: number) => `${chunkX}:${chunkY}`;
+
+export const getChunkCoords = (
+  lat: number | null,
+  lng: number | null,
+  originLat: number | null,
+  originLng: number | null,
+  chunkSizeMeters = CHUNK_SIZE_METERS
+) => {
+  if (lat == null || lng == null) return { chunkX: 0, chunkY: 0 };
+
+  const baseLat = originLat ?? lat;
+  const baseLng = originLng ?? lng;
+  const cosLat = Math.max(0.25, Math.cos((baseLat * Math.PI) / 180));
+  const xMeters = (lng - baseLng) * 111000 * cosLat;
+  const yMeters = (lat - baseLat) * 111000;
+
+  return {
+    chunkX: Math.floor(xMeters / chunkSizeMeters),
+    chunkY: Math.floor(yMeters / chunkSizeMeters),
+  };
+};
+
+export const getActiveChunkKeys = (center: { chunkX: number; chunkY: number }, radius: number) => {
+  const keys: string[] = [];
+  for (let y = center.chunkY - radius; y <= center.chunkY + radius; y += 1) {
+    for (let x = center.chunkX - radius; x <= center.chunkX + radius; x += 1) {
+      keys.push(chunkKey(x, y));
+    }
+  }
+  return keys;
+};
 
 /**
  * Tạo danh sách các cổng Portal xung quanh vị trí hiện tại

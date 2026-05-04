@@ -12,10 +12,11 @@ interface LooterEntitiesProps {
     stopBoat?: () => void;
 }
 
-const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat }: any) => {
+const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY, boatScaleStack, executeMoveToExact, stopBoat, reduceMotion }: any) => {
     const { openFortressStorage, setShowMinigame, pickupItem } = useLooterActions();
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 250;
+    const animationDelayRef = React.useRef(Math.random() * 2);
 
     const distMetersTransform = useTransform([boatOffsetX || new MotionValue(0), boatOffsetY || new MotionValue(0)], ([ox, oy]: number[]) => {
         const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
@@ -41,11 +42,11 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1, y: [-2, 2, -2] }}
+            animate={{ scale: 1, opacity: 1, y: reduceMotion && !isPortal ? 0 : [-2, 2, -2] }}
             transition={{ 
                 scale: { type: "spring", stiffness: 260, damping: 20 },
                 opacity: { duration: 0.5 },
-                y: { duration: isPortal ? 3.2 : 2.5, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }
+                y: { duration: isPortal ? 3.2 : 2.5, repeat: reduceMotion && !isPortal ? 0 : Infinity, ease: 'easeInOut', delay: animationDelayRef.current }
             }}
             onClick={(e) => {
                 e.stopPropagation();
@@ -214,7 +215,14 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
     const fortressLng = looterStateObj?.fortressLng;
     const boatScaleStack = looterStateObj?.activeCurses?.boat_scale || 0;
     const [visibleItemIds, setVisibleItemIds] = React.useState<Set<string>>(new Set());
+    const [isMobileViewport, setIsMobileViewport] = React.useState(() => window.innerWidth < 768);
     const lastPosRef = React.useRef({ lat: 0, lng: 0 });
+
+    React.useEffect(() => {
+        const onResize = () => setIsMobileViewport(window.innerWidth < 768);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     // Culling Logic: Kiểm tra vật phẩm nào trong tầm nhìn mỗi 500ms
     React.useEffect(() => {
@@ -236,9 +244,11 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
             const nextVisible = new Set<string>();
             const CULL_DEG = 5000 / 111000; // Khoảng 0.045 độ
 
+            const activeCullDeg = isMobileViewport ? 2800 / 111000 : CULL_DEG;
+
             for (const item of worldItems) {
                 // Bounding box check (nhanh hơn Math.sqrt)
-                if (Math.abs(item.lat - curLat) < CULL_DEG && Math.abs(item.lng - curLng) < CULL_DEG) {
+                if (Math.abs(item.lat - curLat) < activeCullDeg && Math.abs(item.lng - curLng) < activeCullDeg) {
                     nextVisible.add(item.spawnId);
                 }
             }
@@ -255,7 +265,26 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
         const timer = setInterval(updateVisibility, 500);
         updateVisibility();
         return () => clearInterval(timer);
-    }, [worldItems, myObfPos?.lat, myObfPos?.lng]);
+    }, [worldItems, myObfPos?.lat, myObfPos?.lng, isMobileViewport]);
+
+    const renderedWorldItems = React.useMemo(() => {
+        if (!worldItems) return [];
+        const curLat = lastPosRef.current.lat || myObfPos.lat;
+        const curLng = lastPosRef.current.lng || myObfPos.lng;
+        const maxItems = isMobileViewport ? 28 : 90;
+
+        return worldItems
+            .filter((item: any) => visibleItemIds.has(item.spawnId))
+            .map((item: any) => {
+                const isPortal = item?.item?.type === 'portal';
+                const dLat = item.lat - curLat;
+                const dLng = item.lng - curLng;
+                return { item, sortScore: (isPortal ? -1 : 0) + dLat * dLat + dLng * dLng };
+            })
+            .sort((a, b) => a.sortScore - b.sortScore)
+            .slice(0, maxItems)
+            .map(entry => entry.item);
+    }, [worldItems, visibleItemIds, myObfPos.lat, myObfPos.lng, isMobileViewport]);
 
     const lineX1 = useTransform(boatOffsetX, (v: number) => Math.round(5000 + v));
     const lineY1 = useTransform(boatOffsetY, (v: number) => Math.round(5000 + v));
@@ -320,7 +349,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
             )}
 
             {/* World Items - ẩn khi combat */}
-            {!encounter && worldItems?.filter((item: any) => visibleItemIds.has(item.spawnId)).map((item: any) => (
+            {!encounter && renderedWorldItems.map((item: any) => (
                 <LooterItemEntity 
                     key={item.spawnId}
                     item={item}
@@ -330,6 +359,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                     boatScaleStack={boatScaleStack}
                     executeMoveToExact={executeMoveToExact}
                     stopBoat={stopBoat}
+                    reduceMotion={isMobileViewport}
                 />
             ))}
         </>

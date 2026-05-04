@@ -90,6 +90,9 @@ export const looterApi = {
   fetchWorldItems: (apiUrl: string, deviceId: string) =>
     get(apiUrl, 'world-items', { deviceId }),
 
+  fetchChunks: (apiUrl: string, deviceId: string, chunks: string[]) =>
+    get(apiUrl, 'chunks', { deviceId, chunks: chunks.join(',') }),
+
   saveInventory: (apiUrl: string, deviceId: string, inventory: LooterItem[]) =>
     post(apiUrl, 'inventory', { deviceId, inventory }),
 
