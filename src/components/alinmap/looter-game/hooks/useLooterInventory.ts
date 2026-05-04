@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { looterApi } from '../services/looterApi';
+
 import { findEmptySlotFor } from '../utils/looterHelpers';
 import { repairBagData, createStarterBag } from '../backpack/utils';
 import { BAG_DEFAULTS } from '../backpack/constants';
@@ -179,8 +179,9 @@ export function useLooterInventory({
         }
 
         const nextState = { ...prev, inventory: newInventory, storage: newStorage };
-        // Sync once with full state
-        looterApi.syncState(apiUrl, deviceId, nextState).catch(console.error);
+        // Dùng saveInventory để đi qua debounce, tránh spam 429
+        saveInventory(newInventory);
+        saveStorage(newStorage);
         success = true;
         return nextState;
     });
@@ -237,9 +238,9 @@ export function useLooterInventory({
             const newInventory = [...prevState.inventory, newItem];
             const nextState = { ...prevState, inventory: newInventory };
 
-            // Đồng bộ trực tiếp lên server offline thay vì qua hook trung gian gây double-render (giật lag)
+            // Dùng saveInventory để đi qua debounce, tránh spam 429
             setTimeout(() => {
-                looterApi.syncState(apiUrl, deviceId, nextState).catch(console.error);
+                saveInventory(newInventory);
                 notify(slot ? `Nhặt được ${looterItem.name}` : `Nhặt được ${looterItem.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
             }, 0);
 
@@ -255,7 +256,7 @@ export function useLooterInventory({
         // Ở đây ta dùng closure 'state' từ hook, nhưng nó có thể cũ.
         // Giải pháp tốt nhất là PickupMinigame luôn truyền directItem.
     }
-  }, [deviceId, setWorldItems, setState, saveInventory, notify]);
+  }, [deviceId, setWorldItems, setState, saveInventory, saveStorage, notify]);
 
   const dropItems = useCallback(async (itemUids: string[], lat: number, lng: number) => {
     if (!deviceId || itemUids.length === 0) return;

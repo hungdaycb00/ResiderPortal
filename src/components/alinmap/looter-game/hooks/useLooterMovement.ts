@@ -113,7 +113,7 @@ export function useLooterMovement({
     } finally {
       setIsMoving(false);
     }
-  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal]);
+  }, [state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, dropItems]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;
