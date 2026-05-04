@@ -17,8 +17,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
     const isPortal = item?.item?.type === 'portal';
     const interactionRadius = 350 * (1 + boatScaleStack * 0.05);
 
-    const distMetersTransform = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
-        const oy = boatOffsetY?.get() || 0;
+    const distMetersTransform = useTransform([boatOffsetX || new MotionValue(0), boatOffsetY || new MotionValue(0)], ([ox, oy]: number[]) => {
         const curLat = myObfPos.lat - oy / DEGREES_TO_PX;
         const curLng = myObfPos.lng + ox / DEGREES_TO_PX;
         const dLat = item.lat - curLat;

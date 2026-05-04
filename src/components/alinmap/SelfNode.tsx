@@ -42,9 +42,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
     const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
 
-    const fortressDist = useTransform(boatOffsetX || new MotionValue(0), (ox: number) => {
+    const fortressDist = useTransform([boatOffsetX || new MotionValue(0), boatOffsetY || new MotionValue(0)], ([ox, oy]: number[]) => {
         if (!isLooterGameMode || !looterState?.fortressLat) return '';
-        const oy = boatOffsetY?.get() || 0;
         const dLat = looterState.fortressLat - (myObfPos.lat - oy / DEGREES_TO_PX);
         const dLng = looterState.fortressLng - (myObfPos.lng + ox / DEGREES_TO_PX);
         const dist = Math.round(Math.sqrt(dLat * dLat + dLng * dLng) * 111000);
