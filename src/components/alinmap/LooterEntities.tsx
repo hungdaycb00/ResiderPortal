@@ -40,8 +40,6 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                 left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1, y: [-2, 2, -2] }}
             transition={{ 
@@ -157,8 +155,8 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
                     executeMoveToExact?.(fortressLat, fortressLng);
                 }
             }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
+            onPointerDown={(e) => {}}
+            onPointerUp={(e) => {}}
             className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
             style={{
                 top: `calc(50% + ${-(fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
