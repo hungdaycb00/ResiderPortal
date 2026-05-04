@@ -235,13 +235,15 @@ export function useLooterInventory({
             }
 
             const newInventory = [...prevState.inventory, newItem];
-            saveInventory(newInventory).catch(console.error);
+            const nextState = { ...prevState, inventory: newInventory };
 
+            // Đồng bộ trực tiếp lên server offline thay vì qua hook trung gian gây double-render (giật lag)
             setTimeout(() => {
+                looterApi.syncState(apiUrl, deviceId, nextState).catch(console.error);
                 notify(slot ? `Nhặt được ${looterItem.name}` : `Nhặt được ${looterItem.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
             }, 0);
 
-            return { ...prevState, inventory: newInventory };
+            return nextState;
         });
     };
 
