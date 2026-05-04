@@ -61,6 +61,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         top: (typeof style?.top === 'number' ? style.top : 0) + 1,
       }}
       onPointerDown={(e) => {
+        e.stopPropagation();
         onPointerDown?.(e, item);
       }}
       onClick={(e) => {

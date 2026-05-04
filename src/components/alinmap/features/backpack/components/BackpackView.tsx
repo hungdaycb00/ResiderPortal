@@ -35,6 +35,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const activeBag = Array.isArray(state.bags) ? state.bags[0] : undefined;
   const bagStats = getBagBonuses(activeBag);
 
+  const isMobileViewport = window.innerWidth < 768;
   const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
 
   const memoizedSaveInventory = React.useCallback((newItems: LooterItem[]) => {
@@ -128,9 +129,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   }, [draggingItem]);
 
   return (
-    <div 
+    <div
       id="looter-backpack-container"
       className="flex h-full flex-col overflow-visible text-white relative bg-[#040911] pb-24 md:pb-0"
+      style={isMobileViewport ? { height: '45dvh' } : undefined}
     >
       {/* Floating Action Buttons - Nổi bên trên viền Backpack */}
       <div className="absolute -top-20 left-0 right-0 z-[9999] pointer-events-none px-4 flex justify-between items-end h-16">
