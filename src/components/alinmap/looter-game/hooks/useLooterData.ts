@@ -46,31 +46,36 @@ export function useLooterData({ deviceId, apiUrl, setState }: UseLooterDataProps
 
   const saveInventory = useCallback(async (inventory: LooterItem[]) => {
     if (!deviceId) return false;
-    setState(prev => {
-        const next = { ...prev, inventory };
-        syncState(next);
-        return next;
-    });
-    return true;
-  }, [deviceId, setState, syncState]);
+    try {
+      const result: any = await looterApi.saveInventory(apiUrl, deviceId, inventory);
+      if (!result?.success) return false;
+      setState(prev => ({ ...prev, inventory: Array.isArray(result.inventory) ? result.inventory : inventory }));
+      return true;
+    } catch (err) {
+      console.error('[Looter] Save inventory error', err);
+      return false;
+    }
+  }, [deviceId, apiUrl, setState]);
 
   const saveBags = useCallback(async (bags: BagItem[]) => {
     if (!deviceId) return;
-    setState(prev => {
-        const next = { ...prev, bags };
-        syncState(next);
-        return next;
-    });
-  }, [deviceId, setState, syncState]);
+    try {
+      const result: any = await looterApi.saveBags(apiUrl, deviceId, bags);
+      setState(prev => ({ ...prev, bags: Array.isArray(result?.bags) ? result.bags : bags }));
+    } catch (err) {
+      console.error('[Looter] Save bags error', err);
+    }
+  }, [deviceId, apiUrl, setState]);
 
   const saveStorage = useCallback(async (storage: LooterItem[]) => {
     if (!deviceId) return;
-    setState(prev => {
-        const next = { ...prev, storage };
-        syncState(next);
-        return next;
-    });
-  }, [deviceId, setState, syncState]);
+    try {
+      const result: any = await looterApi.saveStorageLayout(apiUrl, deviceId, storage);
+      setState(prev => ({ ...prev, storage: Array.isArray(result?.storage) ? result.storage : storage }));
+    } catch (err) {
+      console.error('[Looter] Save storage error', err);
+    }
+  }, [deviceId, apiUrl, setState]);
 
   return useMemo(() => ({ saveInventory, saveBags, saveStorage, syncState }), [saveInventory, saveBags, saveStorage, syncState]);
 }

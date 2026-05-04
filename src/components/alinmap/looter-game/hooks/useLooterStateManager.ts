@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { looterApi } from '../services/looterApi';
 import { chunkKey, createPortalWorldItems, getActiveChunkKeys, getChunkCoords } from '../utils/looterHelpers';
 import { simulateCombat } from '../engine/combat';
@@ -37,6 +37,8 @@ export function useLooterStateManager({
   chunkCacheRef,
   consumedSpawnIdsRef
 }: UseLooterStateManagerProps) {
+  const chunkBackoffUntilRef = useRef(0);
+  const chunkRequestRef = useRef<Promise<any> | null>(null);
 
   const loadWorldItems = useCallback(async (forceActive?: boolean) => {
     if (!deviceId) return;
@@ -59,10 +61,16 @@ export function useLooterStateManager({
         return !cached || now - cached.touchedAt > cacheTtlMs;
       });
 
-      if (missingKeys.length > 0) {
+      if (missingKeys.length > 0 && now >= chunkBackoffUntilRef.current) {
         let data: any = null;
         try {
-          data = await looterApi.fetchChunks(apiUrl, deviceId, missingKeys);
+          if (!chunkRequestRef.current) {
+            chunkRequestRef.current = looterApi.fetchChunks(apiUrl, deviceId, missingKeys)
+              .finally(() => {
+                chunkRequestRef.current = null;
+              });
+          }
+          data = await chunkRequestRef.current;
         } catch (chunkErr) {
           console.warn('[LooterGame] chunk fetch failed, using cache if available:', chunkErr);
         }
@@ -89,6 +97,8 @@ export function useLooterStateManager({
               touchedAt: now,
             });
           }
+        } else if (data?.rateLimited) {
+          chunkBackoffUntilRef.current = Date.now() + Math.max(1000, Number(data.retryAfter || 1500));
         } else if (cache.size === 0) {
           const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
           if (fallback.success) {

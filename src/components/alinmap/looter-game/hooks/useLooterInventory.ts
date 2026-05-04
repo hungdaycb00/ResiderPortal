@@ -136,24 +136,49 @@ export function useLooterInventory({
 
   const sellItems = useCallback(async (itemUids: string[]) => {
     if (!deviceId) return;
-    setState(prev => {
-        const itemsToSell = prev.inventory.filter(i => itemUids.includes(i.uid));
-        const newInventory = prev.inventory.filter(i => !itemUids.includes(i.uid));
-        const goldEarned = itemsToSell.reduce((sum, item) => sum + (item.price || 0), 0);
-        
-        const nextState = {
-            ...prev,
-            inventory: newInventory,
-            looterGold: (prev.looterGold || 0) + goldEarned
-        };
-        saveInventory(newInventory); // Triggers sync
-        return nextState;
-    });
+    try {
+      const result: any = await looterApi.sellItems(apiUrl, deviceId, itemUids);
+      if (!result?.success) {
+        notify(result?.error || 'Khong the ban vat pham', 'error');
+        return;
+      }
+
+      setState(prev => ({
+        ...prev,
+        inventory: Array.isArray(result.inventory) ? result.inventory : prev.inventory,
+        looterGold: result.looterGold ?? prev.looterGold,
+      }));
+    } catch (err) {
+      console.error('[LooterGame] sell item error:', err);
+      notify('Khong the xac thuc ban vat pham voi server', 'error');
+      return;
+    }
     notify(`Đã bán vật phẩm`, 'success');
-  }, [deviceId, setState, saveInventory, notify]);
+  }, [deviceId, apiUrl, setState, notify]);
 
   const storeItems = useCallback(async (itemUids: string[], action: 'store' | 'retrieve', mode: string = 'fortress', gridX?: number, gridY?: number) => {
     if (!deviceId) return;
+
+    try {
+      const result: any = await looterApi.storeItems(apiUrl, deviceId, itemUids, action, mode, gridX, gridY);
+      if (!result?.success) {
+        notify(result?.error || 'Khong the cap nhat kho', 'error');
+        return;
+      }
+
+      setState(prev => ({
+        ...prev,
+        inventory: Array.isArray(result.inventory) ? result.inventory : prev.inventory,
+        storage: Array.isArray(result.storage) ? result.storage : prev.storage,
+        looterGold: result.looterGold ?? prev.looterGold,
+      }));
+      notify(action === 'store' ? 'Da cat vat pham vao kho' : 'Da lay vat pham tu kho', 'success');
+      return;
+    } catch (err) {
+      console.error('[LooterGame] store item error:', err);
+      notify('Khong the xac thuc kho voi server', 'error');
+      return;
+    }
     
     let success = false;
     setState(prev => {

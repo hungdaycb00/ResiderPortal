@@ -46,7 +46,13 @@ export const transformLooterState = (raw: any): Partial<LooterGameState> => {
 async function get<T = any>(apiUrl: string, path: string, params: Record<string, string>): Promise<T> {
   const qs = new URLSearchParams(params).toString();
   const res = await fetch(`${apiUrl}/api/looter/${path}?${qs}`);
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  return {
+    ...data,
+    status: res.status,
+    rateLimited: res.status === 429,
+    retryAfter: Number(data?.retryAfter || res.headers.get('Retry-After') || 1000),
+  };
 }
 
 async function post<T = any>(apiUrl: string, path: string, body: Record<string, any>): Promise<T> {
@@ -55,7 +61,13 @@ async function post<T = any>(apiUrl: string, path: string, body: Record<string, 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  return {
+    ...data,
+    status: res.status,
+    rateLimited: res.status === 429,
+    retryAfter: Number(data?.retryAfter || res.headers.get('Retry-After') || 1000),
+  };
 }
 
 /**
