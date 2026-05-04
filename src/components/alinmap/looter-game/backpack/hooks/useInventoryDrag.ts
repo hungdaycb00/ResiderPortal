@@ -28,6 +28,7 @@ export function useInventoryDrag({
   const [dragClientPos, setDragClientPos] = useState({ x: 0, y: 0 });
   const [dragGridPos, setDragGridPos] = useState<{ x: number; y: number } | null>(null);
   const [dragStartInfo, setDragStartInfo] = useState<{ item: LooterItem; x: number; y: number } | null>(null);
+  const [panStart, setPanStart] = useState<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -105,20 +106,43 @@ export function useInventoryDrag({
     });
   }, [gridW, gridH]);
 
-  const onPointerDown = useCallback((e: React.PointerEvent, item: LooterItem) => {
-    if (e.button !== 0) return; // Only left click
+  const onPointerDown = useCallback((e: React.PointerEvent, item?: LooterItem) => {
+    if (e.button !== 0 && e.pointerType !== 'touch') return; // Only left click or touch
     
     const container = containerRef.current;
     if (!container) return;
 
-    // Store start info but don't set draggingItem yet to allow double-click
-    setDragStartInfo({ item, x: e.clientX, y: e.clientY });
+    if (item) {
+      // Store start info for item dragging
+      setDragStartInfo({ item, x: e.clientX, y: e.clientY });
+    } else {
+      // Start panning if clicking on background
+      setPanStart({
+        x: e.clientX,
+        y: e.clientY,
+        scrollLeft: container.parentElement?.scrollLeft || 0,
+        scrollTop: container.parentElement?.scrollTop || 0
+      });
+    }
   }, []);
 
   const onPointerMove = useCallback((e: PointerEvent | React.PointerEvent) => {
     const container = containerRef.current;
     if (!container) return;
 
+    // 1. Handle Panning (Cuộn nền)
+    if (panStart) {
+      const parent = container.parentElement;
+      if (parent) {
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        parent.scrollLeft = panStart.scrollLeft - dx;
+        parent.scrollTop = panStart.scrollTop - dy;
+      }
+      return;
+    }
+
+    // 2. Handle Item Dragging
     // If we have start info but not dragging yet, check for threshold
     if (dragStartInfo && !draggingItem) {
         const dx = e.clientX - dragStartInfo.x;
@@ -167,10 +191,12 @@ export function useInventoryDrag({
     const gy = Math.round(newY / cellSize);
     
     setDragGridPos({ x: gx, y: gy });
-  }, [dragStartInfo, draggingItem, cellSize]);
+  }, [dragStartInfo, draggingItem, cellSize, panStart]);
 
   const onPointerUp = useCallback((e: PointerEvent | React.PointerEvent) => {
     setDragStartInfo(null);
+    setPanStart(null);
+
     if (!draggingItem) return;
 
     const container = containerRef.current;
@@ -217,10 +243,10 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     setDragGridPos(null);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside]);
+  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemTouchingBag, isItemCompletelyInBag]);
 
   useEffect(() => {
-    if (dragStartInfo || draggingItem) {
+    if (dragStartInfo || draggingItem || panStart) {
       window.addEventListener('pointermove', onPointerMove);
       window.addEventListener('pointerup', onPointerUp);
       return () => {
@@ -228,7 +254,7 @@ export function useInventoryDrag({
         window.removeEventListener('pointerup', onPointerUp);
       };
     }
-  }, [dragStartInfo, draggingItem, onPointerMove, onPointerUp]);
+  }, [dragStartInfo, draggingItem, panStart, onPointerMove, onPointerUp]);
 
   return {
     draggingItem,

@@ -238,7 +238,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </button>
       </div>
 
-      <div className="flex-1 relative overflow-hidden subtle-scrollbar">
+      <div className="flex-1 relative overflow-auto subtle-scrollbar">
         <div className="w-full h-full">
           <InventoryGrid
             items={state.inventory}

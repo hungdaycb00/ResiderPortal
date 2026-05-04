@@ -141,6 +141,7 @@ interface InventoryGridProps {
           ref={containerRef}
           className="pointer-events-auto relative shrink-0 mx-auto bg-[#040911] border-2 border-white/10"
           style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
+          onPointerDown={(e) => onPointerDown(e)}
         >
           <GridBackground
             gridW={gridW}
