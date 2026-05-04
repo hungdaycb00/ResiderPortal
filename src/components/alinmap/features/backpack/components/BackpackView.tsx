@@ -23,8 +23,9 @@ interface BackpackViewProps {
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
   const { 
-    storeItems, centerOnBoat, centerOnCombat,
-    encounter
+    state, saveInventory, equipBag, dropItems,
+    toggleIntegratedStorage, isIntegratedStorageOpen,
+    storeItems, centerOnBoat, centerOnCombat, encounter
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
