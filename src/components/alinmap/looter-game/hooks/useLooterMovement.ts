@@ -5,9 +5,6 @@ import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterGameState, Encounter } from '../LooterGameContext';
 import type { LooterItem } from '../backpack/types';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
-import { calcTotalStats } from '../engine/combat';
-import { generateBot } from '../engine/entities';
-import { isItemInBag } from '../engine/utils';
 
 interface UseLooterMovementProps {
   deviceId: string | null;
@@ -52,9 +49,28 @@ export function useLooterMovement({
 
         const distMeters = isStep ? (stepDist || 0) : getDistanceMeters(fromLat, fromLng, toLat, toLng);
 
-        // Auto eject staging items (outside bag) - chỉ chạy khi kết thúc chuyến đi
+        // Auto eject: ném tất cả item nằm ngoài vùng active bag khi thuyền di chuyển
         if (!isStep) {
-            const itemsToDrop = (state.inventory || []).filter(i => i.gridX < 0 || i.gridY < 0 || !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
+            const activeBag = state.bags?.[0];
+            const itemsToDrop = (state.inventory || []).filter(item => {
+                // Item ở staging (ô chờ) - tọa độ âm
+                if (item.gridX < 0 || item.gridY < 0) return true;
+                // Không có balo active: tất cả item trên lưới đều bị ném
+                if (!activeBag) return true;
+                // Item nằm ngoài vùng balo active
+                const bagX = activeBag.gridX ?? 0;
+                const bagY = activeBag.gridY ?? 0;
+                const bagW = activeBag.width ?? 5;
+                const bagH = activeBag.height ?? 5;
+                const itemW = item.gridW ?? item.width ?? 1;
+                const itemH = item.gridH ?? item.height ?? 1;
+                return (
+                    item.gridX < bagX ||
+                    item.gridY < bagY ||
+                    item.gridX + itemW > bagX + bagW ||
+                    item.gridY + itemH > bagY + bagH
+                );
+            });
             if (itemsToDrop.length > 0) {
                 dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
             }
