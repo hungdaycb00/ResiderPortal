@@ -54,7 +54,7 @@ export function useLooterMovement({
 
         // Auto eject staging items (outside bag) - chỉ chạy khi kết thúc chuyến đi
         if (!isStep) {
-            const itemsToDrop = (state.inventory || []).filter(i => i.gridX >= 0 && !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
+            const itemsToDrop = (state.inventory || []).filter(i => i.gridX < 0 || i.gridY < 0 || !isItemInBag(i, i.gridX, i.gridY, state.bags?.[0]));
             if (itemsToDrop.length > 0) {
                 dropItems(itemsToDrop.map(i => i.uid), fromLat, fromLng).catch(console.error);
             }
