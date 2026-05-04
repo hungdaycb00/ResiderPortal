@@ -195,8 +195,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
     loadState: (opts) => runInQueue(() => stateManager.loadState(), opts),
     moveBoat: (lat, lng, isStep, stepDist) => runInQueue(() => movement.moveBoat(lat, lng, isStep, stepDist)),
-    // Pickup và penalty chạy song song — không block bởi heartbeat loadState
-    pickupItem: (spawnId, directItem, currentLat, currentLng) => inventory.pickupItem(spawnId, directItem, currentLat, currentLng),
+    // Pickup và penalty chạy trong hàng chờ để tránh race condition
+    pickupItem: (spawnId, directItem, currentLat, currentLng) => runInQueue(() => inventory.pickupItem(spawnId, directItem, currentLat, currentLng)),
     inflictMinigamePenalty: (sid) => stateManager.inflictMinigamePenalty(sid),
 
     saveInventory: (inv) => {
@@ -213,14 +213,14 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
             await stateManager.loadState();
           }
         });
-      }, 500); // 500ms debounce
+      }, 1000); // 1000ms debounce
     },
     saveStorage: (st) => {
       setState(prev => ({ ...prev, storage: st }));
       if (storageTimerRef.current) clearTimeout(storageTimerRef.current);
       storageTimerRef.current = setTimeout(() => {
         runInQueue(() => inventory.saveStorage(st));
-      }, 500);
+      }, 1000); // 1000ms debounce
     },
     saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
     equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),

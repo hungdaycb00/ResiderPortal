@@ -209,9 +209,11 @@ export function useLooterInventory({
         }
 
         const nextState = { ...prev, inventory: newInventory, storage: newStorage };
-        // Dùng saveInventory để đi qua debounce, tránh spam 429
-        saveInventory(newInventory);
-        saveStorage(newStorage);
+        // Dùng saveInventory/saveStorage từ props (đã được bọc debounce 1s trong Provider)
+        setTimeout(() => {
+            saveInventory(newInventory);
+            saveStorage(newStorage);
+        }, 0);
         success = true;
         return nextState;
     });
@@ -291,7 +293,8 @@ export function useLooterInventory({
             const newInventory = [...prevState.inventory, newItem];
             const nextState = { ...prevState, inventory: newInventory };
 
-            // Dùng saveInventory để đi qua debounce, tránh spam 429
+            // Dùng saveInventory (đã được bọc debounce 1s trong Provider)
+            // Không gọi trực tiếp inventory.saveInventory ở đây để tránh spam 429
             setTimeout(() => {
                 saveInventory(newInventory);
                 notify(slot ? `Nhặt được ${looterItem.name}` : `Nhặt được ${looterItem.name} nhưng balo đã đầy!`, slot ? 'success' : 'info');
