@@ -5,6 +5,8 @@
   X-Frame-Options: ALLOWALL
   X-Content-Type-Options: nosniff
   Access-Control-Allow-Origin: *
+
+/
   Cache-Control: no-store, max-age=0, must-revalidate
   Pragma: no-cache
   Expires: 0
