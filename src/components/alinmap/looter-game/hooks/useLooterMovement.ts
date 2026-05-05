@@ -4,7 +4,7 @@ import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS, sanitizeWorldItems } from '../LooterGameContext';
 import { isItemFullyInsideBag } from '../utils/looterHelpers';
-import { calculateCurseGain, rollCurse } from '../engine/curses';
+import { calculateCurseGain, rollCursePerIncrement } from '../engine/curses';
 import { generateBot } from '../engine/entities';
 import { calcTotalStats } from '../engine/combat';
 import type { LooterChunkCacheEntry, LooterGameState, Encounter, WorldItem } from '../LooterGameContext';
@@ -76,7 +76,7 @@ export function useLooterMovement({
       if (cleanedInventory.length > 0) {
         const curseGain = calculateCurseGain('move', distMeters, state.activeCurses);
         newCurse = Math.min((state.cursePercent || 0) + curseGain, 100);
-        curseTrigger = rollCurse(newCurse);
+        curseTrigger = rollCursePerIncrement(state.cursePercent || 0, curseGain);
 
         if (curseTrigger) {
           newCurse = 0;

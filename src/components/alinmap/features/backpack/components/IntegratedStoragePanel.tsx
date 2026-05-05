@@ -1,6 +1,6 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, X, Package, Home } from 'lucide-react';
+import { Database, X, Package, Home, Truck, DollarSign } from 'lucide-react';
 import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { InventoryGrid, MAX_GRID_W } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
@@ -74,30 +74,70 @@ export default function IntegratedStoragePanel() {
     state,
     fortressStorageMode,
     isIntegratedStorageOpen,
+    isItemDragging,
     setIsIntegratedStorageOpen,
     openFortressStorage,
     saveStorage,
+    savePortalStorage,
+    transportPortalItems,
     storeItems,
+    sellItems,
     returnToFortress,
   } = useLooterGame();
   const [selectedItem, setSelectedItem] = useState<LooterItem | null>(null);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [isReturning, setIsReturning] = useState(false);
+  const [isTransporting, setIsTransporting] = useState(false);
+  const [transportProgress, setTransportProgress] = useState(0);
+  const [sellZoneHover, setSellZoneHover] = useState(false);
   
   // Drag-to-scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDraggingScroll, setIsDraggingScroll] = useState(false);
   const [startY, setStartY] = useState(0);
   const [startScrollTop, setStartScrollTop] = useState(0);
+  const sellZoneRef = useRef<HTMLDivElement>(null);
 
   const cellSize = Math.min(42, (window.innerWidth - 10) / MAX_GRID_W);
 
-  const storageItems = useMemo(() => buildPlacedStorage(state.storage), [state.storage]);
+  const isPortalMode = fortressStorageMode === 'portal';
+  const activeItems = isPortalMode ? (state.portalStorage || []) : state.storage;
+  const storageItems = useMemo(() => buildPlacedStorage(activeItems), [activeItems]);
+  const activeSave = isPortalMode ? savePortalStorage : saveStorage;
+
+  // Transport fee calculation
+  const totalValue = useMemo(
+    () => (state.portalStorage || []).reduce((s, i) => s + (i.price || 0), 0),
+    [state.portalStorage]
+  );
+  const transportFee = Math.ceil(totalValue * 0.05);
+  const canTransport = !isTransporting && (state.portalStorage || []).length > 0 && state.looterGold >= transportFee;
+
+  // Transport progress animation
+  useEffect(() => {
+    if (!isTransporting) { setTransportProgress(0); return; }
+    const start = Date.now();
+    const duration = 3000;
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(elapsed / duration, 1);
+      setTransportProgress(pct * 100);
+      if (pct < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [isTransporting]);
+
+  const handleTransport = useCallback(async () => {
+    if (!canTransport) return;
+    setIsTransporting(true);
+    // Wait 3s for progress bar
+    await new Promise(r => setTimeout(r, 3000));
+    await transportPortalItems();
+    setIsTransporting(false);
+  }, [canTransport, transportPortalItems]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only scroll if clicking empty area (not an item)
     if ((e.target as HTMLElement).closest('.inventory-item')) return;
-    
     setIsDraggingScroll(true);
     setStartY(e.pageY - (scrollRef.current?.offsetTop || 0));
     setStartScrollTop(scrollRef.current?.scrollTop || 0);
@@ -107,7 +147,7 @@ export default function IntegratedStoragePanel() {
     if (!isDraggingScroll || !scrollRef.current) return;
     e.preventDefault();
     const y = e.pageY - scrollRef.current.offsetTop;
-    const walk = (y - startY) * 1.5; // Scroll speed multiplier
+    const walk = (y - startY) * 1.5;
     scrollRef.current.scrollTop = startScrollTop - walk;
   };
 
@@ -116,7 +156,6 @@ export default function IntegratedStoragePanel() {
   const handleReturnToFortress = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isReturning) return;
-
     setIsReturning(true);
     try {
       await returnToFortress();
@@ -126,14 +165,30 @@ export default function IntegratedStoragePanel() {
     }
   }, [isReturning, openFortressStorage, returnToFortress]);
 
+  // Check if item was dropped on sell zone
+  const checkSellZoneDrop = useCallback((item: LooterItem, e?: { clientX: number; clientY: number }) => {
+    if (!e || !sellZoneRef.current) return false;
+    const rect = sellZoneRef.current.getBoundingClientRect();
+    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      sellItems([item.uid]);
+      return true;
+    }
+    return false;
+  }, [sellItems]);
+
   if (!isIntegratedStorageOpen) return null;
+
+  const headerTitle = isPortalMode ? 'Kho Portal' : 'Kho Thành Trì';
+  const headerIcon = isPortalMode ? '🌀' : '🏰';
+  const borderColor = isPortalMode ? 'border-purple-500/30' : 'border-cyan-500/30';
+  const accentColor = isPortalMode ? 'purple' : 'cyan';
 
   return (
     <>
       {/* Global Transparent Overlay - Only covers top part (Map) to allow backpack interaction */}
       <div 
         className="fixed inset-x-0 top-0 z-[190] bg-black/40 backdrop-blur-[2px] pointer-events-auto" 
-        style={{ height: 'calc(100vh - 400px)' }} // Assuming backpack is ~400px
+        style={{ height: 'calc(100vh - 400px)' }}
         onClick={() => setIsIntegratedStorageOpen(false)}
       />
 
@@ -143,23 +198,43 @@ export default function IntegratedStoragePanel() {
           initial={{ y: -400, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -400, opacity: 0 }}
-          className="fixed inset-x-0 top-0 z-[400] h-[40vh] border-b border-cyan-500/30 bg-[#050b14]/95 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+          className={`fixed inset-x-0 top-0 z-[400] h-[40vh] border-b ${borderColor} bg-[#050b14]/95 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mx-auto h-full max-w-7xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/5 bg-black/20 px-6 py-3">
+          <div className="flex items-center justify-between border-b border-white/5 bg-black/20 px-4 py-2">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-${accentColor}-500/20 text-${accentColor}-400`}>
                 <Database className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-white">Kho Thành Trì</h3>
-                <p className="text-[10px] font-bold text-cyan-500/60 uppercase">Double-click để lấy đồ • Kéo để cuộn</p>
+                <h3 className="text-sm font-black uppercase tracking-widest text-white">
+                  <span className="mr-1">{headerIcon}</span>{headerTitle}
+                </h3>
+                <p className={`text-[10px] font-bold text-${accentColor}-500/60 uppercase`}>Double-click để lấy đồ • Kéo để cuộn</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {/* Sell Drop Zone */}
+              <div
+                ref={sellZoneRef}
+                onDragOver={(e) => { e.preventDefault(); setSellZoneHover(true); }}
+                onDragLeave={() => setSellZoneHover(false)}
+                onDrop={() => setSellZoneHover(false)}
+                className={`flex items-center gap-1 rounded-lg border-2 border-dashed px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                  isItemDragging
+                    ? sellZoneHover
+                      ? 'border-yellow-400 bg-yellow-500/30 text-yellow-300 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
+                      : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400 animate-pulse'
+                    : 'border-white/10 bg-white/5 text-white/30'
+                }`}
+              >
+                <DollarSign className="h-4 w-4" />
+                Bán
+              </div>
+
               <div className="hidden items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold text-white/40 md:flex">
                 <Package className="h-3 w-3" />
                 {storageItems.length} VẬT PHẨM
@@ -175,28 +250,33 @@ export default function IntegratedStoragePanel() {
 
           <div 
             ref={scrollRef}
-            className={`h-[calc(40vh-56px)] overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''}`}
+            className={`h-[calc(40vh-56px)] overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''} ${isTransporting ? 'pointer-events-none' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            <div className="flex justify-center p-4">
+            <div className={`flex justify-center p-4 transition-all duration-300 ${isTransporting ? 'grayscale opacity-50' : ''}`}>
               <InventoryGrid
                 items={storageItems}
                 bags={[VIRTUAL_STORAGE_BAG]}
                 gridH={STORAGE_GRID_H}
-                onItemLayoutChange={(newItems) => saveStorage(newItems)}
+                onItemLayoutChange={(newItems) => activeSave(newItems)}
                 onItemDoubleClick={(item) => {
-                  setSelectedItem(null); // Force close popup
-                  // Move back to backpack
+                  if (isTransporting) return;
+                  setSelectedItem(null);
                   storeItems([item.uid], 'retrieve', fortressStorageMode);
                 }}
                 onItemClick={(item, pos) => {
+                  if (isTransporting) return;
                   setSelectedItem(item);
                   setPopupPos(pos);
                 }}
                 onDropOutside={(item, e) => {
+                  if (isTransporting) return;
+                  // Check sell zone first
+                  if (checkSellZoneDrop(item, e)) return;
+
                   if (e) {
                     const backpack = document.getElementById('looter-backpack-container');
                     if (backpack) {
@@ -207,16 +287,12 @@ export default function IntegratedStoragePanel() {
                         e.clientY >= rect.top &&
                         e.clientY <= rect.bottom
                       ) {
-                        // Dropped into backpack!
                         storeItems([item.uid], 'retrieve', fortressStorageMode);
                         return;
                       }
                     }
                   }
-                  
-                  // If dropped elsewhere, do nothing (InventoryGrid will keep it in storage)
-                  // or we can refresh storage to ensure it's not lost
-                  saveStorage([...state.storage]); 
+                  activeSave([...activeItems]); 
                 }}
                 cellSize={cellSize}
               />
@@ -225,21 +301,68 @@ export default function IntegratedStoragePanel() {
           </div>
         </motion.div>
 
-        {fortressStorageMode === 'portal' && (
-          <motion.button
-            type="button"
+        {/* Portal-specific: Transport button + Return button */}
+        {isPortalMode && (
+          <motion.div
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
-            onClick={handleReturnToFortress}
-            disabled={isReturning}
-            className="fixed left-1/2 top-[40vh] z-[410] flex -translate-x-1/2 items-center gap-2 rounded-b-xl border-x border-b border-amber-400/40 bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-[0_10px_28px_rgba(245,158,11,0.35)] transition-colors hover:bg-amber-300 disabled:cursor-wait disabled:opacity-70"
-            title="Về Thành Trì"
+            className="fixed left-1/2 top-[40vh] z-[410] flex -translate-x-1/2 flex-col items-center gap-1"
           >
-            <Home className="h-4 w-4" />
-            {isReturning ? 'Đang về...' : 'Về Thành Trì'}
-          </motion.button>
+            {/* Transport button */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleTransport}
+                disabled={!canTransport}
+                className={`flex items-center gap-2 rounded-b-xl border-x border-b px-4 py-2 text-xs font-black uppercase tracking-widest shadow-lg transition-all duration-200 ${
+                  canTransport
+                    ? 'border-emerald-400/40 bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_10px_28px_rgba(16,185,129,0.35)]'
+                    : 'border-white/10 bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Truck className="h-4 w-4" />
+                {isTransporting ? 'Đang vận chuyển...' : 'Vận chuyển'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReturnToFortress}
+                disabled={isReturning}
+                className="flex items-center gap-2 rounded-b-xl border-x border-b border-amber-400/40 bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-[0_10px_28px_rgba(245,158,11,0.35)] transition-colors hover:bg-amber-300 disabled:cursor-wait disabled:opacity-70"
+              >
+                <Home className="h-4 w-4" />
+                {isReturning ? 'Đang về...' : 'Về Thành Trì'}
+              </button>
+            </div>
+
+            {/* Transport progress bar */}
+            {isTransporting && (
+              <div className="w-64 overflow-hidden rounded-full bg-black/60 border border-emerald-500/30">
+                <motion.div
+                  className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300"
+                  style={{ width: `${transportProgress}%` }}
+                />
+                <p className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">
+                  {Math.floor(transportProgress)}%
+                </p>
+              </div>
+            )}
+
+            {/* Fee + risk info */}
+            {!isTransporting && (state.portalStorage || []).length > 0 && (
+              <div className="flex flex-col items-center gap-0.5 rounded-lg bg-black/60 px-3 py-1 backdrop-blur-sm">
+                <p className="text-[10px] font-bold text-yellow-400">
+                  Phí: {transportFee}G (5%)
+                </p>
+                <p className="text-[9px] font-bold text-red-400/80">
+                  ⚠ 25% tỷ lệ mất đồ khi vận chuyển
+                </p>
+              </div>
+            )}
+          </motion.div>
         )}
+
 
         {/* Item Info Popup */}
         {selectedItem && createPortal(

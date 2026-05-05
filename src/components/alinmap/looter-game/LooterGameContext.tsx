@@ -89,6 +89,7 @@ export interface LooterGameState {
   worldTier: number;
   inventory: LooterItem[];
   storage: LooterItem[];
+  portalStorage: LooterItem[];
   bags: BagItem[];
   distance: number;
   energyMax: number;
@@ -127,6 +128,8 @@ export interface LooterGameActions {
   pickupItem: (spawnId: string, directItem?: WorldItem, currentLat?: number, currentLng?: number) => Promise<void>;
   inflictMinigamePenalty: (spawnId: string) => Promise<boolean>;
   saveStorage: (storage: LooterItem[]) => Promise<void>;
+  savePortalStorage: (storage: LooterItem[]) => Promise<void>;
+  transportPortalItems: () => Promise<void>;
   saveInventory: (inventory: LooterItem[]) => void;
   saveBags: (bags: BagItem[]) => Promise<void>;
   equipBag: (itemUid: string) => Promise<void>;
@@ -147,6 +150,7 @@ export interface LooterGameStateContextType {
   state: LooterGameState;
   inventory: LooterItem[];
   storage: LooterItem[];
+  portalStorage: LooterItem[];
   bags: BagItem[];
   cursePercent: number;
   worldItems: WorldItem[];

@@ -8,6 +8,22 @@ function rollCurse(cursePercent) {
   return Math.random() * 100 < cursePercent;
 }
 
+/**
+ * Roll thử thách cho MỖI 1% curse tăng thêm.
+ * Ví dụ: curse từ 30% -> 35% (gain=5), sẽ roll 5 lần tại 31%, 32%, 33%, 34%, 35%.
+ * Return true ngay khi trúng lần đầu tiên.
+ */
+function rollCursePerIncrement(currentCurse: number, curseGain: number): boolean {
+  const steps = Math.floor(curseGain);
+  for (let i = 1; i <= steps; i++) {
+    const curseAtStep = currentCurse + i;
+    if (Math.random() * 100 < curseAtStep) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function calculateCurseGain(type, distanceMeters, activeCurses = {}) {
   const settings = getSettings();
   const distPerCurse = settings.distancePerCurseMeters || 250;
@@ -30,5 +46,6 @@ function calculateCurseGain(type, distanceMeters, activeCurses = {}) {
 
 export { 
   rollCurse,
+  rollCursePerIncrement,
   calculateCurseGain,
  };

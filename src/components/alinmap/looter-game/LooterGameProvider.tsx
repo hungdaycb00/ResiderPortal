@@ -30,7 +30,7 @@ import { FRUITS } from './minigames/FruitGame';
 const defaultState: LooterGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
   baseMaxHp: 100, currentHp: 100, moveSpeed: 1.0, inventoryWidth: 6, inventoryHeight: 4,
-  cursePercent: 0, looterGold: 0, worldTier: 0, inventory: [], storage: [], bags: [], distance: 0,
+  cursePercent: 0, looterGold: 0, worldTier: 0, inventory: [], storage: [], portalStorage: [], bags: [], distance: 0,
   energyMax: 100, energyCurrent: 100, activeCurses: {},
   isIntegratedStorageOpen: false,
 };
@@ -131,6 +131,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const API_URL = useMemo(() => getLooterServerUrl(), []);
   const saveTimerRef = useRef<any>(null);
   const storageTimerRef = useRef<any>(null);
+  const portalStorageTimerRef = useRef<any>(null);
   const initialLoadDoneRef = useRef(false);
   const chunkCacheRef = useRef<Map<string, LooterChunkCacheEntry>>(new Map());
   const consumedSpawnIdsRef = useRef<Set<string>>(new Set());
@@ -261,6 +262,49 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         }, 500);
       });
     },
+    savePortalStorage: (st) => {
+      setState(prev => ({ ...prev, portalStorage: st }));
+      if (portalStorageTimerRef.current) clearTimeout(portalStorageTimerRef.current);
+      return new Promise<void>((resolve) => {
+        portalStorageTimerRef.current = setTimeout(() => {
+          runInQueue(() => inventory.saveStorage(st))
+            .then(() => resolve())
+            .catch(() => resolve());
+        }, 500);
+      });
+    },
+    transportPortalItems: async () => {
+      const portalItems = state.portalStorage;
+      if (!portalItems || portalItems.length === 0) return;
+
+      const totalValue = portalItems.reduce((sum, item) => sum + (item.price || 0), 0);
+      const fee = Math.ceil(totalValue * 0.05);
+
+      if (state.looterGold < fee) {
+        notify(`Không đủ vàng! Cần ${fee}G`, 'error');
+        return;
+      }
+
+      // Trừ vàng ngay (UI sẽ hiện progress bar 3s)
+      setState(prev => ({ ...prev, looterGold: prev.looterGold - fee }));
+
+      // Roll random: 75% thành công, 25% thất bại
+      const success = Math.random() < 0.75;
+
+      if (success) {
+        // Chuyển items từ portalStorage sang storage
+        setState(prev => ({
+          ...prev,
+          storage: [...prev.storage, ...prev.portalStorage.map(item => ({ ...item, gridX: -1, gridY: -1 }))],
+          portalStorage: [],
+        }));
+        notify('Vận chuyển thành công! Đồ đã về kho Thành Trì.', 'success');
+      } else {
+        // Mất đồ
+        setState(prev => ({ ...prev, portalStorage: [] }));
+        notify('Vận chuyển thất bại! Hàng hóa đã bị mất.', 'error');
+      }
+    },
     saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
     equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),
     executeCombat: (id, inv, hp, bags) => runInQueue(() => stateManager.executeCombat(id, inv, hp, bags)),
@@ -287,6 +331,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     state,
     inventory: state.inventory,
     storage: state.storage,
+    portalStorage: state.portalStorage,
     bags: state.bags,
     cursePercent: state.cursePercent,
     worldItems,
