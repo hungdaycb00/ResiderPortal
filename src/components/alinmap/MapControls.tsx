@@ -36,7 +36,6 @@ interface MapControlsProps {
     setIsWidgetExpanded: (v: boolean) => void;
     isSheetExpanded: boolean;
     isDesktop: boolean;
-    mainTab?: string;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -45,8 +44,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode,
-    isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded, isDesktop,
-    mainTab
+    isWidgetExpanded, setIsWidgetExpanded, isSheetExpanded
 }) => {
     const { isLooterGameMode, encounter, state, centerOnBoat, centerOnCombat } = useLooterGame();
     
@@ -80,10 +78,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 
-                ${isLooterGameMode ? (isSheetExpanded ? 'bottom-[62%]' : 'bottom-[42%]') : 'bottom-[75px] md:bottom-12'}
-                ${(!isLooterGameMode && isSheetExpanded && ['discover', 'friends', 'profile', 'notifications', 'creator'].includes(mainTab || '')) ? 'opacity-0 pointer-events-none translate-x-4 scale-95' : 'opacity-100 pointer-events-auto translate-x-0 scale-100'}
-            `}>
+            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? (isSheetExpanded ? 'bottom-[62%]' : 'bottom-[42%]') : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
 
                 {isLooterGameMode && (

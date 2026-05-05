@@ -317,7 +317,6 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
                 isSheetExpanded={nav.isSheetExpanded}
                 isDesktop={nav.isDesktop}
-                mainTab={nav.mainTab}
             />
 
             <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
@@ -333,13 +332,13 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
                 radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
                 showNotification={showNotification}
-                ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
+                                ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
                 onLocateUser={(lat, lng) => {
                     nav.handleCenterTo(lat, lng);
                     nav.scale.set(2);
                 }}
                 externalApi={externalApi} onOpenChat={onOpenChat}
-                handleUpdateRadius={handleUpdateRadius}
+                handleUpdateRadius={nav.handleUpdateRadius}
                 setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
                 setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
                 setMyDisplayName={wsCtx.setMyDisplayName}
