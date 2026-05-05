@@ -6,6 +6,8 @@ import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterChunkCacheEntry, LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
 
+const LOOT_RENDER_LIMIT = 3;
+
 interface UseLooterStateManagerProps {
   deviceId: string | null;
   apiUrl: string;
@@ -107,7 +109,7 @@ export function useLooterStateManager({
         } else if (cache.size === 0) {
           const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
           if (fallback.success) {
-            const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+            const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng);
             const mapItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
             const curLat = centerLat ?? state.fortressLat ?? 0;
             const curLng = centerLng ?? state.fortressLng ?? 0;
@@ -118,7 +120,7 @@ export function useLooterStateManager({
                 const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
                 return ad - bd;
               })
-              .slice(0, 24);
+              .slice(0, LOOT_RENDER_LIMIT);
             setWorldItems([...portalItems, ...normalItems]);
           }
           return;
@@ -135,7 +137,7 @@ export function useLooterStateManager({
         for (const [key] of entries.slice(maxCacheEntries)) cache.delete(key);
       }
 
-      const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
+      const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng);
       const curLat = centerLat ?? state.fortressLat ?? 0;
       const curLng = centerLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
@@ -146,7 +148,7 @@ export function useLooterStateManager({
           const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
           return ad - bd;
         })
-        .slice(0, 24);
+        .slice(0, LOOT_RENDER_LIMIT);
 
       let items = [...portalItems, ...normalItems];
       if (!forceActive && !isChallengeActive) {

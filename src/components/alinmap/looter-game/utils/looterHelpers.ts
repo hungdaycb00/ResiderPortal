@@ -5,6 +5,7 @@ import { MAX_GRID_W, MAX_GRID_H } from '../backpack/constants';
 
 const { PORTAL_SPACING_METERS, PORTAL_SEARCH_RADIUS } = GAME_CONFIG;
 const CHUNK_SIZE_METERS = 1000;
+const MAX_VISIBLE_PORTALS = 1;
 
 export const chunkKey = (chunkX: number, chunkY: number) => `${chunkX}:${chunkY}`;
 
@@ -37,6 +38,18 @@ export const getActiveChunkKeys = (center: { chunkX: number; chunkY: number }, r
     }
   }
   return keys;
+};
+
+const getDistanceMetersLocal = (
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number
+) => {
+  const cosLat = Math.max(0.25, Math.cos((fromLat * Math.PI) / 180));
+  const dx = (toLng - fromLng) * 111000 * cosLat;
+  const dy = (toLat - fromLat) * 111000;
+  return Math.sqrt(dx * dx + dy * dy);
 };
 
 /**
@@ -81,7 +94,14 @@ export const createPortalWorldItems = (
       });
     }
   }
-  return items;
+  return items
+    .map(item => ({
+      item,
+      distanceMeters: getDistanceMetersLocal(currentLat, currentLng, item.lat, item.lng),
+    }))
+    .sort((a, b) => a.distanceMeters - b.distanceMeters)
+    .slice(0, MAX_VISIBLE_PORTALS)
+    .map(({ item }) => item);
 };
 
 /**
