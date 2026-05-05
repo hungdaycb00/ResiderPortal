@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
 
 interface UseAlinWebSocketParams {
   position: [number, number] | null;
@@ -422,8 +422,8 @@ export function useAlinWebSocket({
   const handleRefresh = useCallback(() => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
       setIsConnecting(true);
-      const scanLng = myObfPos.lng + (-panX.get() / DEGREES_TO_PX);
-      const scanLat = myObfPos.lat + (panY.get() / DEGREES_TO_PX);
+      const scanLng = myObfPos.lng + (-(panX?.get?.() ?? 0) / MAP_PLANE_SCALE / DEGREES_TO_PX);
+      const scanLat = myObfPos.lat + ((panY?.get?.() ?? 0) / MAP_PLANE_Y_SCALE / DEGREES_TO_PX);
       ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
       setTimeout(() => setIsConnecting(false), 1000);
     }

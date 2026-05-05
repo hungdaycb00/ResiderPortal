@@ -4,11 +4,17 @@ import { Diamond } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DEGREES_TO_PX, SpatialNodeProps } from './constants';
 
+const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(-60deg) translateZ(44px)`;
+
 const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
     const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
     const [hoverScale, setHoverScale] = useState(1.1);
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    const animationTiming = React.useRef({
+        duration: 3 + Math.random() * 2,
+        delay: Math.random() * 5,
+    });
 
     return (
         <motion.div
@@ -23,19 +29,21 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                 const s = mapScale.get();
                 setHoverScale(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1);
             }}
-            className="absolute w-10 h-10 -ml-5 -mt-10 cursor-pointer group hover:z-50 pointer-events-auto"
+            className="absolute w-10 h-10 -ml-5 -mt-10 cursor-pointer group hover:z-50 pointer-events-auto alin-map-billboard"
             style={{
                 left: `calc(50% + ${dx}px)`,
-                top: `calc(50% + ${dy}px)`
+                top: `calc(50% + ${dy}px)`,
+                transformOrigin: 'center bottom'
             }}
+            transformTemplate={billboardTransform}
             animate={{
                 y: [0, -5, 0],
             }}
             transition={{
-                duration: 3 + Math.random() * 2,
+                duration: animationTiming.current.duration,
                 repeat: Infinity,
                 ease: "easeInOut",
-                delay: Math.random() * 5
+                delay: animationTiming.current.delay
             }}
             whileHover={{ scale: hoverScale, y: -10 }}
             whileTap={{ scale: 0.95 }}
@@ -43,6 +51,8 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.4)] border-cyan-500 bg-[#1a1d24]">
                 <img
                     src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
                 />
@@ -67,6 +77,8 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                         <div className="w-full aspect-video bg-black/40">
                             <img
                                 src={normalizeImageUrl(user.gallery.images[0])}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover opacity-80"
                                 alt="Ads"
                             />

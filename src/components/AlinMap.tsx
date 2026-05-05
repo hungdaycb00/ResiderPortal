@@ -22,6 +22,7 @@ import { useMapNavigation } from './alinmap/hooks/useMapNavigation';
 import { useDesktopSearch } from './alinmap/hooks/useDesktopSearch';
 import { extractExploreGame } from '../utils/routing';
 import { useLocation } from 'react-router-dom';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './alinmap/constants';
 
 const AlinMapInner: React.FC<AlinMapProps> = ({
     user,
@@ -127,9 +128,8 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
     const handleRefresh = useCallback(() => {
         if (wsCtx.ws.current && wsCtx.ws.current.readyState === WebSocket.OPEN && geo.myObfPos) {
-            const DEGREES_TO_PX = 11100;
-            const scanLng = geo.myObfPos.lng + (-nav.panX.get() / DEGREES_TO_PX);
-            const scanLat = geo.myObfPos.lat + (nav.panY.get() / DEGREES_TO_PX);
+            const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
+            const scanLat = geo.myObfPos.lat + (nav.panY.get() / MAP_PLANE_Y_SCALE / DEGREES_TO_PX);
             wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
         }
     }, [wsCtx.ws, geo.myObfPos, nav.panX, nav.panY]);

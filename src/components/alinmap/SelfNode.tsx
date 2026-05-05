@@ -2,7 +2,9 @@ import React from 'react';
 import { Diamond } from 'lucide-react';
 import { motion, MotionValue, useTransform } from 'framer-motion';
 import { normalizeImageUrl } from '../../services/externalApi';
-import { DEGREES_TO_PX } from './constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './constants';
+
+const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(-60deg) translateZ(52px)`;
 
 interface SelfNodeProps {
     isLooterGameMode: boolean;
@@ -58,8 +60,9 @@ const SelfNode: React.FC<SelfNodeProps> = ({
         return (
                 <motion.div
                     data-map-interactive="true"
-                    className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[100] select-none"
-                    style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale }}
+                    className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[100] select-none alin-map-billboard"
+                    style={{ top: '50%', left: '50%', x: boatOffsetX, y: boatOffsetY, scale: finalBoatScale, transformOrigin: 'center bottom' }}
+                    transformTemplate={billboardTransform}
                     onDoubleClick={(e) => e.stopPropagation()}
                 >
                 <motion.div
@@ -94,8 +97,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             onDragEnd={(e, info) => {
                 if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
                     const currentScale = scale?.get?.() || 1;
-                    const deltaLng = (info.offset.x / currentScale) / DEGREES_TO_PX;
-                    const deltaLat = (-info.offset.y / currentScale) / DEGREES_TO_PX;
+                    const deltaLng = (info.offset.x / currentScale / MAP_PLANE_SCALE) / DEGREES_TO_PX;
+                    const deltaLat = (-info.offset.y / currentScale / MAP_PLANE_Y_SCALE) / DEGREES_TO_PX;
                     const newLat = myObfPos.lat + deltaLat;
                     const newLng = myObfPos.lng + deltaLng;
                     ws.current.send(JSON.stringify({
@@ -124,8 +127,9 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                 });
             }}
             onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute group pointer-events-auto z-[100] select-none w-12 h-12 cursor-grab active:cursor-grabbing -ml-6 -mt-12"
-            style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY }}
+            className="absolute group pointer-events-auto z-[100] select-none w-12 h-12 cursor-grab active:cursor-grabbing -ml-6 -mt-12 alin-map-billboard"
+            style={{ top: '50%', left: '50%', x: selfDragX, y: selfDragY, transformOrigin: 'center bottom' }}
+            transformTemplate={billboardTransform}
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             onPointerEnter={() => {

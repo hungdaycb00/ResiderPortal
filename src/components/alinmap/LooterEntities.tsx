@@ -3,6 +3,8 @@ import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-mot
 import { DEGREES_TO_PX } from './constants';
 import { sanitizeWorldItems, useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
+const billboardTransform = (_: any, generated: string) => `${generated} rotateX(-60deg) translateZ(46px)`;
+
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
     looterState?: any;
@@ -37,11 +39,13 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
         <motion.div
             data-looter-entity="true"
             data-map-interactive="true"
-            className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
+            className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 alin-map-billboard ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
             style={{
                 top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
+                left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`,
+                transformOrigin: 'center bottom'
             }}
+            transformTemplate={billboardTransform}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1, y: reduceMotion && !isPortal ? 0 : [-2, 2, -2] }}
             transition={{ 
@@ -158,7 +162,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
             }}
             onPointerDown={(e) => {}}
             onPointerUp={(e) => {}}
-            className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
+            className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90] alin-map-billboard"
             style={{
                 top: `calc(50% + ${-(fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                 left: `calc(50% + ${(fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
@@ -180,8 +184,9 @@ const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any
 
     return (
         <motion.div
-            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[200] select-none"
-            style={{ top: '50%', left: '50%', x: enemyX, y: enemyY }}
+            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[200] select-none alin-map-billboard"
+            style={{ top: '50%', left: '50%', x: enemyX, y: enemyY, transformOrigin: 'center bottom' }}
+            transformTemplate={billboardTransform}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -329,7 +334,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
             {/* Target Pin - ẩn khi combat */}
             {!encounter && boatTargetPin && (
                 <div
-                    className="absolute w-12 h-12 -ml-6 -mt-12 flex items-center justify-center pointer-events-none z-[85]"
+                    className="absolute w-12 h-12 -ml-6 -mt-12 flex items-center justify-center pointer-events-none z-[85] alin-map-billboard"
                     style={{
                         top: `calc(50% + ${-(boatTargetPin.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                         left: `calc(50% + ${(boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX}px)`

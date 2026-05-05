@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, MotionValue } from 'framer-motion';
 import { Home, ArrowUp } from 'lucide-react';
 import { useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
 
 interface FortressWaypointProps {
     myObfPos: { lat: number; lng: number } | null;
@@ -37,8 +37,8 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
 
-            const screenX = cx + (dx + currentPanX) * currentScale;
-            const screenY = cy + (dy + currentPanY) * currentScale;
+            const screenX = cx + (dx * MAP_PLANE_SCALE + currentPanX) * currentScale;
+            const screenY = cy + (dy * MAP_PLANE_Y_SCALE + currentPanY) * currentScale;
 
             const margin = 20; // Khoảng cách từ mép màn hình (đã giảm từ 45)
             const minX = margin;

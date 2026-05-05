@@ -22,7 +22,7 @@ export const SearchMarkerPin: React.FC<{
     pos: { lat: number; lng: number };
     myObfPos: { lat: number; lng: number };
 }> = ({ pos, myObfPos }) => (
-    <div className="absolute w-10 h-10 -ml-5 -mt-10 flex items-center justify-center pointer-events-none z-[105]" style={{
+    <div className="absolute w-10 h-10 -ml-5 -mt-10 flex items-center justify-center pointer-events-none z-[105] alin-map-billboard" style={{
         top: `calc(50% + ${-(pos.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
         left: `calc(50% + ${(pos.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
     }}>

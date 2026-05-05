@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useMotionValue, animate, MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX } from '../../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../../constants';
 
 interface UseBoatAnimationParams {
   myObfPos: { lat: number; lng: number } | null;
@@ -39,8 +39,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
         boatMoveXRef.current = animate(boatOffsetX, newBoatPxX, { duration, ease: 'linear' });
         boatMoveYRef.current = animate(boatOffsetY, newBoatPxY, { duration, ease: 'linear' });
 
-        panMoveXRef.current = animate(panX, -newBoatPxX, { duration, ease: 'linear' });
-        panMoveYRef.current = animate(panY, -newBoatPxY, {
+        panMoveXRef.current = animate(panX, -newBoatPxX * MAP_PLANE_SCALE, { duration, ease: 'linear' });
+        panMoveYRef.current = animate(panY, -newBoatPxY * MAP_PLANE_Y_SCALE, {
           duration, ease: 'linear',
           onComplete: () => {
             isAnimatingRef.current = false;
@@ -61,8 +61,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     const nextBoatY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
     boatOffsetX.set(nextBoatX);
     boatOffsetY.set(nextBoatY);
-    panX.set(-nextBoatX);
-    panY.set(-nextBoatY - cameraYOffsetRef.current);
+    panX.set(-nextBoatX * MAP_PLANE_SCALE);
+    panY.set(-nextBoatY * MAP_PLANE_Y_SCALE - cameraYOffsetRef.current);
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
   const centerOnBoat = useCallback((yOffsetPx: number = 0) => {
@@ -88,9 +88,9 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     console.log('[BoatCenter] Centering to boat:', { pxX, pxY, yOffsetPx });
 
     // Di chuyển camera (pan) đến vị trí đó
-    animate(panX, -pxX, { duration: 0.45, ease: 'easeInOut' });
+    animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 0.45, ease: 'easeInOut' });
     // Trừ yOffsetPx để đẩy thuyền lên trên một chút (thường dùng khi mở BottomSheet)
-    animate(panY, -pxY - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
+    animate(panY, -pxY * MAP_PLANE_Y_SCALE - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
   const stopPanFollow = useCallback(() => {
@@ -114,8 +114,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, currentLat, currentLng,
     // Enemy boat render at boatX + 120px -> midpoint = boatX + 60px
     const midX = boatX + 60;
     const midY = boatY;
-    animate(panX, -midX, { duration: 0.8, ease: 'easeInOut' });
-    animate(panY, -midY - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });
+    animate(panX, -midX * MAP_PLANE_SCALE, { duration: 0.8, ease: 'easeInOut' });
+    animate(panY, -midY * MAP_PLANE_Y_SCALE - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });
   }, [stopAllAnimations, boatOffsetX, boatOffsetY, panX, panY]);
 
   return {

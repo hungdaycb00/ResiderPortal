@@ -146,67 +146,71 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
             {/* Map Canvas Layer */}
             {position && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none alin-map-scene">
                     <motion.div style={{ scale }} className="w-full h-full flex items-center justify-center">
                         <motion.div
                             style={{ x: panX, y: panY, touchAction: 'none' }}
-                            className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0"
+                            className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0 alin-map-pan-layer"
                             onPointerDown={handleMapPointerDown}
                             onPointerMove={handleMapPointerMove}
                             onPointerUp={handleMapPointerUp}
                             onPointerCancel={handleMapPointerCancel}
                             onClickCapture={handleMapClickCapture}
                         >
-                            <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
-                            <MapGrid mapMode={mapMode} />
+                            <div className="absolute inset-0 flex items-center justify-center alin-map-tilt-plane">
+                                <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
+                                <MapGrid mapMode={mapMode} />
 
-                            {myObfPos && (
-                                <>
-                                    {currentProvince && <MapBoundary currentProvince={currentProvince} />}
-                                    
-                                    {(user || isLooterGameMode) ? (
-                                        <SelfNode
-                                            isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
-                                            myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
-                                            user={user} myUserId={myUserId} galleryActive={galleryActive}
-                                            galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                            scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
-                                            panX={panX} panY={panY}
-                                            boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                            ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
-                                            setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                            setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
+                                {myObfPos && (
+                                    <>
+                                        {currentProvince && <MapBoundary currentProvince={currentProvince} />}
+                                        
+                                        {(user || isLooterGameMode) ? (
+                                            <SelfNode
+                                                isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
+                                                myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
+                                                user={user} myUserId={myUserId} galleryActive={galleryActive}
+                                                galleryTitle={galleryTitle} galleryImages={galleryImages}
+                                                scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
+                                                panX={panX} panY={panY}
+                                                boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                                ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
+                                                setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
+                                                setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
+                                            />
+                                        ) : (
+                                            <GuestNode />
+                                        )}
+
+                                        {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
+
+                                        {isLooterGameMode && (
+                                            <LooterEntities
+                                                myObfPos={myObfPos} looterState={looterStateObj}
+                                                boatTargetPin={looterBoat.boatTargetPin}
+                                                boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                                executeMoveToExact={looterBoat.executeMoveToExact}
+                                                stopBoat={looterBoat.stopBoat}
+                                            />
+                                        )}
+
+                                        <UserLayer 
+                                            nearbyUsers={nearbyUsers} myUserId={myUserId} user={user}
+                                            myObfPos={myObfPos} searchTag={searchTag} filterDistance={filterDistance}
+                                            filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
+                                            isLooterGameMode={!!isLooterGameMode} scale={scale}
+                                            setSelectedUser={setSelectedUser} setContextMenu={setContextMenu}
                                         />
-                                    ) : (
-                                        <GuestNode />
-                                    )}
-
-                                    {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
-
-                                    {isLooterGameMode && (
-                                        <LooterEntities
-                                            myObfPos={myObfPos} looterState={looterStateObj}
-                                            boatTargetPin={looterBoat.boatTargetPin}
-                                            boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                            executeMoveToExact={looterBoat.executeMoveToExact}
-                                            stopBoat={looterBoat.stopBoat}
-                                        />
-                                    )}
-
-                                    <UserLayer 
-                                        nearbyUsers={nearbyUsers} myUserId={myUserId} user={user}
-                                        myObfPos={myObfPos} searchTag={searchTag} filterDistance={filterDistance}
-                                        filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
-                                        isLooterGameMode={!!isLooterGameMode} scale={scale}
-                                        setSelectedUser={setSelectedUser} setContextMenu={setContextMenu}
-                                    />
-                                </>
-                            )}
+                                    </>
+                                )}
+                            </div>
                         </motion.div>
                     </motion.div>
 
                     {/* Global Synchronizing Spinner */}
                     {!myObfPos && <LoadingSpinner />}
+                    <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#001424]/75 via-[#001424]/25 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#001424]/65 to-transparent pointer-events-none" />
                 </div>
             )}
 
@@ -239,7 +243,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
 // Internal sub-components for cleaner structure
 const GuestNode = () => (
-    <div className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none" style={{ top: '50%', left: '50%' }}>
+    <div className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none alin-map-billboard" style={{ top: '50%', left: '50%' }}>
         <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
         <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
             <UserRound className="w-6 h-6 text-slate-200" />

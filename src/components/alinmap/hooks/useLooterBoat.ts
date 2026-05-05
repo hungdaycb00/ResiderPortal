@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { animate, useMotionValue, MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
@@ -178,8 +178,8 @@ export function useLooterBoat({
         const currentScale = scale?.get?.() || 1;
         const offsetX = clientX - window.innerWidth / 2;
         const offsetY = clientY - window.innerHeight / 2;
-        const mapX = offsetX / currentScale - (panX?.get?.() ?? 0);
-        const mapY = offsetY / currentScale - (panY?.get?.() ?? 0);
+        const mapX = (offsetX / currentScale - (panX?.get?.() ?? 0)) / MAP_PLANE_SCALE;
+        const mapY = (offsetY / currentScale - (panY?.get?.() ?? 0)) / MAP_PLANE_Y_SCALE;
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
         executeMoveToExact(lat, lng);

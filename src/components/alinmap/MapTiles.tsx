@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX } from './constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './constants';
 
 interface MapTilesProps {
   panX: MotionValue<number>;
@@ -34,8 +34,8 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, calculatedZ)) / 360);
     const tileWidthPx = TILE_SIZE * ratio;
 
-    const currentPanX = panX?.get?.() ?? 0;
-    const currentPanY = panY?.get?.() ?? 0;
+    const currentPanX = (panX?.get?.() ?? 0) / MAP_PLANE_SCALE;
+    const currentPanY = (panY?.get?.() ?? 0) / MAP_PLANE_Y_SCALE;
     const nextTileOffset = {
       x: -Math.floor(currentPanX / tileWidthPx),
       y: -Math.floor(currentPanY / tileWidthPx),
@@ -89,8 +89,8 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
 
   const tiles = [];
   // Render a grid of tiles
-  for (let i = -6 + tileOffset.x; i <= 6 + tileOffset.x; i++) {
-    for (let j = -6 + tileOffset.y; j <= 6 + tileOffset.y; j++) {
+  for (let i = -8 + tileOffset.x; i <= 8 + tileOffset.x; i++) {
+    for (let j = -8 + tileOffset.y; j <= 8 + tileOffset.y; j++) {
       const tx = Math.floor(centerTile.x) + i;
       const ty = Math.floor(centerTile.y) + j;
       

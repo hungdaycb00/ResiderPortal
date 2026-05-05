@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMotionValue, animate } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
 
 interface UseMapNavigationParams {
   initialMainTab: string;
@@ -83,12 +84,11 @@ export function useMapNavigation({
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
     if (!myObfPos) return;
-    const DEGREES_TO_PX = 11100;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
-    animate(panX, -pxX, { duration: 1.5, ease: "easeInOut" });
+    animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 1.5, ease: "easeInOut" });
     // Reverse yOffsetPx sign: subtract to push the boat UP on screen when sheet is open
-    animate(panY, -pxY - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
+    animate(panY, -pxY * MAP_PLANE_Y_SCALE - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {

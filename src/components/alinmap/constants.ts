@@ -4,6 +4,9 @@ import { MotionValue } from 'framer-motion';
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
 // So 1 degree = 111 * 100 = 11100 pixels
 export const DEGREES_TO_PX = 11100;
+export const MAP_TILT_DEGREES = 60;
+export const MAP_PLANE_SCALE = 1.32;
+export const MAP_PLANE_Y_SCALE = MAP_PLANE_SCALE * Math.cos((MAP_TILT_DEGREES * Math.PI) / 180);
 
 export interface AlinMapProps {
     user: any;
