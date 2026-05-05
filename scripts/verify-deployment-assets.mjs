@@ -1,5 +1,8 @@
-const target = process.argv[2] || "https://alin.city/";
-const baseUrl = new URL(target);
+const targets = process.argv.slice(2);
+if (targets.length === 0) {
+  targets.push("https://alin.city/");
+}
+const baseUrl = new URL(targets[0]);
 
 function fail(message) {
   console.error(`[asset-check] ${message}`);
@@ -30,7 +33,14 @@ function extractAssets(html) {
 }
 
 async function checkAsset(assetPath) {
-  const response = await fetch(resolveAssetUrl(assetPath), { redirect: "manual" });
+  const response = await fetch(resolveAssetUrl(assetPath), {
+    redirect: "manual",
+    cache: "no-store",
+    headers: {
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+    },
+  });
   const contentType = (response.headers.get("content-type") || "").toLowerCase();
 
   if (!response.ok) {
@@ -49,23 +59,38 @@ async function checkAsset(assetPath) {
   }
 }
 
-const indexResponse = await fetch(baseUrl, { redirect: "follow" });
-if (!indexResponse.ok) {
-  fail(`${baseUrl} returned HTTP ${indexResponse.status}`);
+const allAssets = new Set();
+
+for (const target of targets) {
+  const pageUrl = new URL(target, baseUrl);
+  const indexResponse = await fetch(pageUrl, {
+    redirect: "follow",
+    cache: "no-store",
+    headers: {
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+    },
+  });
+
+  if (!indexResponse.ok) {
+    fail(`${pageUrl} returned HTTP ${indexResponse.status}`);
+    continue;
+  }
+
+  for (const asset of extractAssets(await indexResponse.text())) {
+    allAssets.add(asset);
+  }
+}
+
+if (allAssets.size === 0) {
+  fail("No /assets references found in checked HTML");
   process.exit();
 }
 
-const assets = extractAssets(await indexResponse.text());
-
-if (assets.length === 0) {
-  fail("No /assets references found in index HTML");
-  process.exit();
-}
-
-await Promise.all(assets.map(checkAsset));
+await Promise.all([...allAssets].map(checkAsset));
 
 if (process.exitCode) {
   process.exit();
 }
 
-console.log(`[asset-check] ${assets.length} assets verified for ${baseUrl}`);
+console.log(`[asset-check] ${allAssets.size} assets verified for ${targets.join(", ")}`);

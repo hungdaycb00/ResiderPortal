@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "prebuild": "node scripts/preserve-live-assets.mjs https://alin.city/",
     "build": "vite build",
-    "verify:deploy-assets": "node scripts/verify-deployment-assets.mjs https://alin.city/",
+    "preserve:live-assets": "node scripts/preserve-live-assets.mjs https://alin.city/",
+    "verify:deploy-assets": "node scripts/verify-deployment-assets.mjs https://alin.city/ https://alin.city/explore",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"

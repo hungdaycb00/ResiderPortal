@@ -21,10 +21,64 @@
           }
         }
 
+        function recoverStylesheet(link) {
+          if (!link || link.dataset.assetRecovered === 'true') return;
+          link.dataset.assetRecovered = 'true';
+          try {
+            const bustedUrl = new URL(link.href);
+            bustedUrl.searchParams.set('asset_reload', Date.now().toString());
+
+            const replacement = document.createElement('link');
+            replacement.rel = 'stylesheet';
+            replacement.crossOrigin = link.crossOrigin || 'anonymous';
+            replacement.href = bustedUrl.toString();
+            replacement.onload = function() {
+              console.warn('[Auto-Recovery] CSS đã được nạp lại bằng URL chống cache.');
+            };
+            replacement.onerror = function() {
+              triggerRecovery('CSS vẫn lỗi sau khi thử URL chống cache');
+            };
+            link.after(replacement);
+          } catch (err) {
+            console.warn('[Auto-Recovery] Không thể tự nạp lại CSS:', err);
+          }
+        }
+
+        function clearLegacyBrowserCaches() {
+          const key = 'legacy_asset_cache_cleanup_v3';
+          if (localStorage.getItem(key) === 'done') return;
+          localStorage.setItem(key, 'done');
+
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              registrations.forEach(function(registration) {
+                if (registration.scope && registration.scope.indexOf(window.location.origin) === 0) {
+                  registration.unregister();
+                }
+              });
+            }).catch(function() {});
+          }
+
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(cacheKey) {
+                if (/asset|vite|workbox|game|alin|resider/i.test(cacheKey)) {
+                  caches.delete(cacheKey);
+                }
+              });
+            }).catch(function() {});
+          }
+        }
+
+        clearLegacyBrowserCaches();
+
         window.addEventListener('error', function(e) {
           if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
             const url = e.target.src || e.target.href;
             if (url && url.includes('/assets/')) {
+              if (e.target.tagName === 'LINK' && e.target.rel === 'stylesheet') {
+                recoverStylesheet(e.target);
+              }
               triggerRecovery('Phát hiện asset cũ (error event)');
             }
           }
@@ -46,7 +100,7 @@
       })();
     </script>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*.trycloudflare.com https://static.cloudflareinsights.com https://api.alin.city https://*.alin.city https://alin.city; frame-src 'self' data: blob: https://*.trycloudflare.com https://*.alin.city https://alin.city; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.trycloudflare.com wss://*.trycloudflare.com http://localhost:* ws://localhost:* wss://localhost:* https://ipapi.co https://api.alin.city wss://api.alin.city wss://alin-social.alin.city https://*.alin.city wss://*.alin.city https://alin.city wss://alin.city https://www.alin.city wss://www.alin.city https://nominatim.openstreetmap.org https://api.open-meteo.com; img-src 'self' data: blob: https://* http://localhost:*;">
-    <script type="module" crossorigin src="/assets/app-CPZZ52r1.js"></script>
+    <script type="module" crossorigin src="/assets/app-BbSF6q32.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react-RkwrWYbJ.js">
     <link rel="modulepreload" crossorigin href="/assets/app-services-DGopz-ly.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-motion-D-SuLOgJ.js">
@@ -55,7 +109,7 @@
     <link rel="modulepreload" crossorigin href="/assets/feature-creator-D1RHTUEL.js">
     <link rel="modulepreload" crossorigin href="/assets/feature-map-CB3n-PNq.js">
     <link rel="modulepreload" crossorigin href="/assets/feature-tabs-DcGjKf1g.js">
-    <link rel="stylesheet" crossorigin href="/assets/app-C1anTbkx.css">
+    <link rel="stylesheet" crossorigin href="/assets/app-CVGysF_w.css">
   </head>
   <body>
     <div id="root"></div>

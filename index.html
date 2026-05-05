@@ -21,10 +21,64 @@
           }
         }
 
+        function recoverStylesheet(link) {
+          if (!link || link.dataset.assetRecovered === 'true') return;
+          link.dataset.assetRecovered = 'true';
+          try {
+            const bustedUrl = new URL(link.href);
+            bustedUrl.searchParams.set('asset_reload', Date.now().toString());
+
+            const replacement = document.createElement('link');
+            replacement.rel = 'stylesheet';
+            replacement.crossOrigin = link.crossOrigin || 'anonymous';
+            replacement.href = bustedUrl.toString();
+            replacement.onload = function() {
+              console.warn('[Auto-Recovery] CSS đã được nạp lại bằng URL chống cache.');
+            };
+            replacement.onerror = function() {
+              triggerRecovery('CSS vẫn lỗi sau khi thử URL chống cache');
+            };
+            link.after(replacement);
+          } catch (err) {
+            console.warn('[Auto-Recovery] Không thể tự nạp lại CSS:', err);
+          }
+        }
+
+        function clearLegacyBrowserCaches() {
+          const key = 'legacy_asset_cache_cleanup_v3';
+          if (localStorage.getItem(key) === 'done') return;
+          localStorage.setItem(key, 'done');
+
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              registrations.forEach(function(registration) {
+                if (registration.scope && registration.scope.indexOf(window.location.origin) === 0) {
+                  registration.unregister();
+                }
+              });
+            }).catch(function() {});
+          }
+
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(cacheKey) {
+                if (/asset|vite|workbox|game|alin|resider/i.test(cacheKey)) {
+                  caches.delete(cacheKey);
+                }
+              });
+            }).catch(function() {});
+          }
+        }
+
+        clearLegacyBrowserCaches();
+
         window.addEventListener('error', function(e) {
           if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
             const url = e.target.src || e.target.href;
             if (url && url.includes('/assets/')) {
+              if (e.target.tagName === 'LINK' && e.target.rel === 'stylesheet') {
+                recoverStylesheet(e.target);
+              }
               triggerRecovery('Phát hiện asset cũ (error event)');
             }
           }
