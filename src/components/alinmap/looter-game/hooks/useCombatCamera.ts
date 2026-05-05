@@ -33,7 +33,7 @@ export function useCombatCamera(
         const yOffset = !isDesktop ? window.innerHeight * 0.25 : 0;
         
         // Zoom nhẹ để nhìn rõ trận đấu hơn
-        if (scale) scale.set(1.5);
+        if (scale && (scale.get?.() ?? 1) !== 1.5) scale.set(1.5);
         
         // Focus vào trung điểm giữa 2 thuyền
         centerOnCombat(yOffset);
@@ -47,7 +47,7 @@ export function useCombatCamera(
       lastEncounterUid.current = null;
       
       // Trả lại zoom bình thường và focus về thuyền người chơi
-      if (scale) scale.set(1);
+      if (scale && (scale.get?.() ?? 1) !== 1) scale.set(1);
       centerOnBoat();
     }
   }, [encounter, centerOnCombat, centerOnBoat, scale, setMainTab, setIsSheetExpanded]);

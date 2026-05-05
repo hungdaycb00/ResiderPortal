@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX } from './constants';
 
@@ -23,32 +23,58 @@ function project(lat: number, lng: number, zoom: number) {
 const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }) => {
   const [zLevel, setZLevel] = useState(14);
   const [tileOffset, setTileOffset] = useState({ x: 0, y: 0 });
+  const zLevelRef = useRef(zLevel);
+  const tileOffsetRef = useRef(tileOffset);
+  const frameRef = useRef<number | null>(null);
+
+  const commitViewport = () => {
+    const currentScale = scale?.get?.() ?? 1;
+    const calculatedZ = Math.min(21, Math.max(2, 14 + Math.floor(Math.log2(currentScale))));
+
+    const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, calculatedZ)) / 360);
+    const tileWidthPx = TILE_SIZE * ratio;
+
+    const currentPanX = panX?.get?.() ?? 0;
+    const currentPanY = panY?.get?.() ?? 0;
+    const nextTileOffset = {
+      x: -Math.floor(currentPanX / tileWidthPx),
+      y: -Math.floor(currentPanY / tileWidthPx),
+    };
+
+    if (zLevelRef.current !== calculatedZ) {
+      zLevelRef.current = calculatedZ;
+      setZLevel(calculatedZ);
+    }
+
+    if (
+      tileOffsetRef.current.x !== nextTileOffset.x ||
+      tileOffsetRef.current.y !== nextTileOffset.y
+    ) {
+      tileOffsetRef.current = nextTileOffset;
+      setTileOffset(nextTileOffset);
+    }
+  };
 
   useEffect(() => {
-    const checkViewport = () => {
-      const currentScale = scale?.get?.() ?? 1;
-      const calculatedZ = Math.min(21, Math.max(2, 14 + Math.floor(Math.log2(currentScale))));
-      setZLevel(calculatedZ);
-
-      const ratio = DEGREES_TO_PX / ((TILE_SIZE * Math.pow(2, calculatedZ)) / 360);
-      const tileWidthPx = TILE_SIZE * ratio;
-      
-      const currentPanX = panX?.get?.() ?? 0;
-      const currentPanY = panY?.get?.() ?? 0;
-      
-      setTileOffset({
-        x: -Math.floor(currentPanX / tileWidthPx),
-        y: -Math.floor(currentPanY / tileWidthPx)
+    const scheduleViewportCommit = () => {
+      if (frameRef.current != null) return;
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        commitViewport();
       });
     };
 
-    const unsubscribeX = panX.on('change', checkViewport);
-    const unsubscribeY = panY.on('change', checkViewport);
-    const unsubscribeScale = scale.on('change', checkViewport);
+    const unsubscribeX = panX.on('change', scheduleViewportCommit);
+    const unsubscribeY = panY.on('change', scheduleViewportCommit);
+    const unsubscribeScale = scale.on('change', scheduleViewportCommit);
 
-    checkViewport();
+    scheduleViewportCommit();
 
     return () => {
+      if (frameRef.current != null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
       unsubscribeX();
       unsubscribeY();
       unsubscribeScale();
