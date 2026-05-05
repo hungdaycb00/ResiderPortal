@@ -4,6 +4,7 @@ import { findEmptySlotFor } from '../utils/looterHelpers';
 import { looterApi } from '../services/looterApi';
 import { repairBagData, createStarterBag } from '../backpack/utils';
 import { BAG_DEFAULTS } from '../backpack/constants';
+import { sanitizeWorldItems } from '../LooterGameContext';
 import type { LooterChunkCacheEntry, LooterGameState, WorldItem } from '../LooterGameContext';
 import type { LooterItem, BagItem } from '../backpack/types';
 
@@ -237,8 +238,9 @@ export function useLooterInventory({
         // Lưu ý: setWorldItems(prev => ...) là cách duy nhất để lấy 'prev' mới nhất nếu không dùng Ref.
         // Tuy nhiên, vì ta muốn dùng item đó NGAY LẬP TỨC để update inventory, ta nên tìm nó trước.
         setWorldItems(prev => {
-            pickedWorldItem = prev.find((i: any) => i && i.spawnId === spawnId);
-            return prev;
+            const sanitized = sanitizeWorldItems(prev);
+            pickedWorldItem = sanitized.find(i => i.spawnId === spawnId);
+            return sanitized;
         });
     } else {
         // Nếu đã có directItem, chỉ cần xóa khỏi map
@@ -269,9 +271,9 @@ export function useLooterInventory({
 
       consumedSpawnIdsRef.current.add(spawnId);
       for (const entry of chunkCacheRef.current.values()) {
-        entry.items = entry.items.filter((i: any) => i && i.spawnId !== spawnId);
+        entry.items = sanitizeWorldItems(entry.items).filter(i => i.spawnId !== spawnId);
       }
-      setWorldItems(prev => prev.filter((i: any) => i && i.spawnId !== spawnId));
+      setWorldItems(prev => sanitizeWorldItems(prev).filter(i => i.spawnId !== spawnId));
 
       if (Array.isArray(result.inventory)) {
         setState(prev => ({
@@ -329,9 +331,9 @@ export function useLooterInventory({
     if (pickedWorldItem) {
         consumedSpawnIdsRef.current.add(spawnId);
         for (const entry of chunkCacheRef.current.values()) {
-          entry.items = entry.items.filter((i: any) => i && i.spawnId !== spawnId);
+          entry.items = sanitizeWorldItems(entry.items).filter(i => i.spawnId !== spawnId);
         }
-        setWorldItems(prev => prev.filter((i: any) => i && i.spawnId !== spawnId));
+        setWorldItems(prev => sanitizeWorldItems(prev).filter(i => i.spawnId !== spawnId));
         processPickup(pickedWorldItem);
     } else {
         // Fallback nếu vẫn chưa tìm thấy (do race condition của setWorldItems)
@@ -361,14 +363,14 @@ export function useLooterInventory({
       });
 
       if (Array.isArray(result.items) && result.items.length > 0) {
-        const droppedItems = (result.items as WorldItem[]).filter((item: any): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId);
+        const droppedItems = sanitizeWorldItems(result.items);
         const now = Date.now();
         for (const item of droppedItems) {
           if (item.chunkX == null || item.chunkY == null) continue;
           const key = `${item.chunkX}:${item.chunkY}`;
           const entry = chunkCacheRef.current.get(key);
           if (entry) {
-            entry.items = [...entry.items.filter(i => i.spawnId !== item.spawnId), item];
+            entry.items = [...sanitizeWorldItems(entry.items).filter(i => i.spawnId !== item.spawnId), item];
             entry.touchedAt = now;
           } else {
             chunkCacheRef.current.set(key, {
@@ -380,7 +382,7 @@ export function useLooterInventory({
             });
           }
         }
-        setWorldItems(wItems => [...wItems.filter((i: any) => i && !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
+        setWorldItems(wItems => [...sanitizeWorldItems(wItems).filter(i => !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
       }
     } catch (err) {
       console.error('[LooterGame] drop item error:', err);

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
-import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
+import { FORTRESS_INTERACTION_METERS, sanitizeWorldItems } from '../LooterGameContext';
 import { isItemFullyInsideBag } from '../utils/looterHelpers';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
 import { generateBot } from '../engine/entities';
@@ -104,9 +104,7 @@ export function useLooterMovement({
             newCurse = moveResult.cursePercent ?? newCurse;
             curseTrigger = !!moveResult.curseTrigger;
             encounter = moveResult.encounter || encounter;
-            serverDroppedItems = Array.isArray(moveResult.droppedItems)
-              ? moveResult.droppedItems.filter((item: any): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId)
-              : [];
+            serverDroppedItems = sanitizeWorldItems(moveResult.droppedItems);
             serverInventory = Array.isArray(moveResult.inventory) ? moveResult.inventory : null;
           }
         } catch (moveErr) {
@@ -132,7 +130,7 @@ export function useLooterMovement({
             const key = `${item.chunkX}:${item.chunkY}`;
             const entry = chunkCacheRef.current.get(key);
             if (entry) {
-              entry.items = [...entry.items.filter((existing: any) => existing && existing.spawnId !== item.spawnId), item];
+              entry.items = [...sanitizeWorldItems(entry.items).filter(existing => existing.spawnId !== item.spawnId), item];
               entry.touchedAt = now;
             } else {
               chunkCacheRef.current.set(key, {
@@ -145,7 +143,7 @@ export function useLooterMovement({
             }
           }
           setWorldItems(worldItems => [
-            ...worldItems.filter((existing: any) => existing && !serverDroppedItems.some(item => item.spawnId === existing.spawnId)),
+            ...sanitizeWorldItems(worldItems).filter(existing => !serverDroppedItems.some(item => item.spawnId === existing.spawnId)),
             ...serverDroppedItems,
           ]);
         } else if (!deviceId) {

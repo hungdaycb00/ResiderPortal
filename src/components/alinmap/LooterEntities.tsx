@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import { DEGREES_TO_PX } from './constants';
-import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
+import { sanitizeWorldItems, useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
@@ -208,10 +208,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
 }) => {
     const { state: looterStateObj, worldItems, encounter } = useLooterState();
     const { openFortressStorage } = useLooterActions();
-    const safeWorldItems = React.useMemo(
-        () => (Array.isArray(worldItems) ? worldItems.filter((item: any) => item && typeof item === 'object' && item.spawnId) : []),
-        [worldItems]
-    );
+    const safeWorldItems = React.useMemo(() => sanitizeWorldItems(worldItems), [worldItems]);
     
     // Chỉ lấy các giá trị cần thiết để giảm re-render
     const fortressLat = looterStateObj?.fortressLat;

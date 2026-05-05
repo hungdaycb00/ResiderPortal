@@ -20,6 +20,25 @@ export interface WorldItem {
   item: LooterItem | GridExpander | BagItem | PortalItem;
 }
 
+export function isValidWorldItem(item: unknown): item is WorldItem {
+  if (!item || typeof item !== 'object') return false;
+  const value = item as Partial<WorldItem>;
+  return (
+    typeof value.spawnId === 'string' &&
+    value.spawnId.length > 0 &&
+    typeof value.lat === 'number' &&
+    Number.isFinite(value.lat) &&
+    typeof value.lng === 'number' &&
+    Number.isFinite(value.lng) &&
+    !!value.item &&
+    typeof value.item === 'object'
+  );
+}
+
+export function sanitizeWorldItems(items: unknown): WorldItem[] {
+  return Array.isArray(items) ? items.filter(isValidWorldItem) : [];
+}
+
 export interface LooterChunkCacheEntry {
   key: string;
   chunkX: number;

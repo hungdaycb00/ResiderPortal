@@ -4,6 +4,8 @@ import type { LooterItem, BagItem } from './backpack/types';
 import { 
   LooterStateContext, 
   LooterActionsContext,
+  isValidWorldItem,
+  sanitizeWorldItems,
   type LooterGameState, 
   type WorldItem, 
   type LooterChunkCacheEntry,
@@ -117,7 +119,7 @@ interface LooterGameProviderProps {
 export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children, deviceId, showNotification }) => {
   // 1. Core State
   const [state, setState] = useState<LooterGameState>(defaultState);
-  const [worldItems, setWorldItems] = useState<WorldItem[]>([]);
+  const [worldItems, setWorldItemsRaw] = useState<WorldItem[]>([]);
   const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
@@ -141,11 +143,21 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     }
   }, [showNotification]);
 
+  const setWorldItems = useCallback<React.Dispatch<React.SetStateAction<WorldItem[]>>>((next) => {
+    setWorldItemsRaw(prev => {
+      const safePrev = sanitizeWorldItems(prev);
+      const resolved = typeof next === 'function' ? next(safePrev) : next;
+      return sanitizeWorldItems(resolved);
+    });
+  }, []);
+
   // Stable dispatch wrappers
   const setEncounter = useCallback((v: Encounter | null) => dispatch({ type: 'SET_ENCOUNTER', payload: v }), []);
   const setCombatResult = useCallback((v: CombatResult | null) => dispatch({ type: 'SET_COMBAT_RESULT', payload: v }), []);
   const setShowCurseModal = useCallback((v: boolean) => dispatch({ type: 'SET_SHOW_CURSE_MODAL', payload: v }), []);
-  const setShowMinigame = useCallback((v: WorldItem | null) => dispatch({ type: 'SET_SHOW_MINIGAME', payload: v }), []);
+  const setShowMinigame = useCallback((v: WorldItem | null) => {
+    dispatch({ type: 'SET_SHOW_MINIGAME', payload: isValidWorldItem(v) ? v : null });
+  }, []);
   const setIsLooterGameMode = useCallback((v: boolean) => dispatch({ type: 'SET_LOOTER_GAME_MODE', payload: v }), []);
   const setIsChallengeActive = useCallback((v: boolean) => dispatch({ type: 'SET_CHALLENGE_ACTIVE', payload: v }), []);
   const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);

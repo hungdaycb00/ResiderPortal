@@ -3,7 +3,7 @@ import { looterApi } from '../services/looterApi';
 import { chunkKey, createPortalWorldItems, getActiveChunkKeys, getChunkCoords } from '../utils/looterHelpers';
 import { simulateCombat } from '../engine/combat';
 import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/utils';
-import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
+import { FORTRESS_INTERACTION_METERS, isValidWorldItem, sanitizeWorldItems } from '../LooterGameContext';
 import type { LooterChunkCacheEntry, LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
 
 const LOOT_RENDER_LIMIT = 5;
@@ -82,7 +82,7 @@ export function useLooterStateManager({
           console.warn('[LooterGame] chunk fetch failed, using cache if available:', chunkErr);
         }
         if (data?.success) {
-          const fetchedItems: WorldItem[] = Array.isArray(data.items) ? data.items : [];
+          const fetchedItems = sanitizeWorldItems(data.items);
           const fetchedByChunk = new Map<string, WorldItem[]>();
 
           for (const item of fetchedItems) {
@@ -100,7 +100,7 @@ export function useLooterStateManager({
               key,
               chunkX,
               chunkY,
-              items: (fetchedByChunk.get(key) || []).filter(item => !consumedSpawnIdsRef.current.has(item.spawnId)),
+              items: sanitizeWorldItems(fetchedByChunk.get(key)).filter(item => !consumedSpawnIdsRef.current.has(item.spawnId)),
               touchedAt: now,
             });
           }
@@ -109,8 +109,8 @@ export function useLooterStateManager({
         } else if (cache.size === 0) {
           const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
           if (fallback.success) {
-            const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng);
-            const mapItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
+            const portalItems = sanitizeWorldItems(createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng));
+            const mapItems = sanitizeWorldItems(fallback.items);
             const curLat = centerLat ?? state.fortressLat ?? 0;
             const curLng = centerLng ?? state.fortressLng ?? 0;
             const normalItems = mapItems
@@ -137,12 +137,12 @@ export function useLooterStateManager({
         for (const [key] of entries.slice(maxCacheEntries)) cache.delete(key);
       }
 
-      const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng);
+      const portalItems = sanitizeWorldItems(createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng));
       const curLat = centerLat ?? state.fortressLat ?? 0;
       const curLng = centerLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
         .flatMap(key => cache.get(key)?.items || [])
-        .filter((item): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId)
+        .filter(isValidWorldItem)
         .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal')
         .sort((a, b) => {
           const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
@@ -151,9 +151,9 @@ export function useLooterStateManager({
         })
         .slice(0, LOOT_RENDER_LIMIT);
 
-      let items = [...portalItems, ...normalItems];
+      let items = sanitizeWorldItems([...portalItems, ...normalItems]);
       if (!forceActive && !isChallengeActive) {
-        items = [...portalItems, ...normalItems];
+        items = sanitizeWorldItems([...portalItems, ...normalItems]);
       }
       setWorldItems(items);
 
@@ -161,9 +161,7 @@ export function useLooterStateManager({
         try {
           const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
           if (fallback.success) {
-              const fallbackItems: WorldItem[] = Array.isArray(fallback.items)
-                ? fallback.items.filter((item: any): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId)
-                : [];
+              const fallbackItems = sanitizeWorldItems(fallback.items);
               const merged = new Map<string, WorldItem>();
               for (const item of [...portalItems, ...normalItems, ...fallbackItems]) {
                 if (!item?.spawnId) continue;
@@ -352,7 +350,7 @@ export function useLooterStateManager({
 
   const inflictMinigamePenalty = useCallback(async (spawnId: string) => {
     if (!deviceId) return false;
-    setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+    setWorldItems(prev => sanitizeWorldItems(prev).filter(i => i.spawnId !== spawnId));
     try {
       // Offline minigame penalty: increase curse percent by 10%
       let newCurse = 0;
