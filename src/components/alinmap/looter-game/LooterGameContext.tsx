@@ -192,3 +192,4 @@ export function useLooterGame() {
   const actions = useLooterActions();
   return { ...state, ...state.state, ...actions };
 }
+// Cache buster: 2026-05-05
