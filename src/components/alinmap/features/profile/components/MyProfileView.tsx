@@ -6,6 +6,9 @@ import PostCard from './PostCard';
 import { useProfile } from '../context/ProfileContext';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
 
+const INITIAL_SAVED_POST_LIMIT = 8;
+const SAVED_POST_BATCH_SIZE = 8;
+
 interface MyProfileViewProps {
     myUserId: string | null;
     myDisplayName: string;
@@ -62,6 +65,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
 
     const [isAddingTag, setIsAddingTag] = React.useState(false);
     const [tagInput, setTagInput] = React.useState('');
+    const [visibleSavedPostCount, setVisibleSavedPostCount] = React.useState(INITIAL_SAVED_POST_LIMIT);
+
+    React.useEffect(() => {
+        setVisibleSavedPostCount(INITIAL_SAVED_POST_LIMIT);
+    }, [activeTab, userPosts]);
 
     const persistStatus = async (nextStatus: string) => {
         await externalApi.request('/api/update-profile', {
@@ -117,9 +125,16 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         setIsAddingTag(false);
     };
 
-    const parsedTags = myStatus.split(' ')
+    const parsedTags = React.useMemo(() => myStatus.split(' ')
         .filter(w => w.startsWith('#'))
-        .map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, ''));
+        .map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')), [myStatus]);
+
+    const visibleSavedPosts = React.useMemo(() => (
+        userPosts.slice(0, visibleSavedPostCount)
+    ), [userPosts, visibleSavedPostCount]);
+    const archivedVisibleSavedPosts = React.useMemo(() => (
+        visibleSavedPosts.map((post) => ({ ...post, isArchivedState: true }))
+    ), [visibleSavedPosts]);
 
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi });
 
@@ -249,14 +264,23 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 <div className="pb-8">
                     {userPosts.length > 0 ? (
                         <div className="space-y-0">
-                            {userPosts.map((post) => (
+                            {archivedVisibleSavedPosts.map((post) => (
                                 <PostCard
-                                    key={post.id} post={{...post, isArchivedState: true}} isSelf={true}
+                                    key={post.id} post={post} isSelf={true}
                                     onStar={handleStarPost} onDelete={handleDeletePost}
                                     externalApi={externalApi} fetchUserPosts={fetchUserPosts}
                                     requireAuth={requireAuth}
                                 />
                             ))}
+                            {visibleSavedPostCount < userPosts.length && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
+                                    className="w-full mt-2 rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
+                                >
+                                    Show more saved posts
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -273,4 +297,4 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     );
 };
 
-export default MyProfileView;
+export default React.memo(MyProfileView);

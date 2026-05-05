@@ -6,6 +6,10 @@ import { useProfile } from '../context/ProfileContext';
 import { useSocial } from '../../social/context/SocialContext';
 
 const DEGREES_TO_PX = 11100;
+const INITIAL_POST_LIMIT = 8;
+const POST_BATCH_SIZE = 8;
+const INITIAL_GAME_LIMIT = 12;
+const GAME_BATCH_SIZE = 12;
 
 interface SelectedUserViewProps {
     selectedUser: any;
@@ -35,6 +39,16 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
 }) => {
     const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
+    const [visiblePostCount, setVisiblePostCount] = React.useState(INITIAL_POST_LIMIT);
+    const [visibleGameCount, setVisibleGameCount] = React.useState(INITIAL_GAME_LIMIT);
+
+    React.useEffect(() => {
+        setVisiblePostCount(INITIAL_POST_LIMIT);
+        setVisibleGameCount(INITIAL_GAME_LIMIT);
+    }, [selectedUser?.id, activeTab]);
+
+    const visiblePosts = React.useMemo(() => userPosts.slice(0, visiblePostCount), [userPosts, visiblePostCount]);
+    const visibleGames = React.useMemo(() => (games || []).slice(0, visibleGameCount), [games, visibleGameCount]);
 
     return (
         <div className="pt-20 md:pt-6 pb-24 md:pb-6 px-2">
@@ -43,6 +57,8 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                     <img
                         src={normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`}
                         alt="Avatar"
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`; }}
                     />
@@ -153,11 +169,11 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         <div className="mt-2">
                             <h4 className="text-[13px] font-bold text-gray-900 mb-3">🎮 Games</h4>
                             <div className="space-y-2">
-                                {games.map((g) => (
+                                {visibleGames.map((g) => (
                                     <div key={g.id || g.gameId} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer group">
                                         <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0 overflow-hidden">
                                             {g.thumbnail ? (
-                                                <img src={normalizeImageUrl(g.thumbnail)} className="w-full h-full object-cover" />
+                                                <img src={normalizeImageUrl(g.thumbnail)} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                             ) : (
                                                 <span>🎮</span>
                                             )}
@@ -169,6 +185,15 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                                         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                     </div>
                                 ))}
+                                {visibleGameCount < games.length && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setVisibleGameCount((count) => count + GAME_BATCH_SIZE)}
+                                        className="w-full rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
+                                    >
+                                        Show more games
+                                    </button>
+                                )}
                                 {games.length === 0 && (
                                     <p className="text-[12px] text-gray-400 text-center py-4">No games created yet.</p>
                                 )}
@@ -180,7 +205,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                 <div className="pb-8">
                     {userPosts.length > 0 ? (
                         <div className="space-y-0">
-                            {userPosts.map((post) => (
+                            {visiblePosts.map((post) => (
                                 <PostCard 
                                     key={post.id} post={post} isSelf={false} 
                                     onStar={handleStarPost} onDelete={handleDeletePost} 
@@ -188,6 +213,15 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                                     requireAuth={requireAuth}
                                 />
                             ))}
+                            {visiblePostCount < userPosts.length && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisiblePostCount((count) => count + POST_BATCH_SIZE)}
+                                    className="w-full mt-2 rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
+                                >
+                                    Show more posts
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -204,4 +238,4 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     );
 };
 
-export default SelectedUserView;
+export default React.memo(SelectedUserView);

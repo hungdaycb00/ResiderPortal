@@ -70,6 +70,8 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
         <img
           src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`}
           alt="Me"
+          loading="lazy"
+          decoding="async"
           className="w-8 h-8 md:w-10 md:h-10 object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=100&bold=true`; }}
         />
@@ -115,7 +117,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Users</p>
                       {desktopSearchResults.users.map((u: any) => (
                         <div key={u.id} onClick={() => { setSelectedUser(u); setShowDesktopResults(false); }} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group">
-                          <img src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${u.displayName}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                          <img src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${u.displayName}&background=3b82f6&color=fff`} loading="lazy" decoding="async" className="w-10 h-10 rounded-full object-cover border border-gray-100" />
                           <div className="flex-1">
                             <p className="text-sm font-bold text-gray-900">{u.displayName}</p>
                             <p className="text-[11px] text-gray-500 truncate">{u.status || 'No status'}</p>
@@ -131,7 +133,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                       {desktopSearchResults.posts.map((p: any) => (
                         <div key={p.id} onClick={() => { setSelectedUser(p.author); setActiveTab('posts'); setShowDesktopResults(false); }} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
-                            {p.images?.[0] ? <img src={normalizeImageUrl(p.images[0])} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">📄</div>}
+                            {p.images?.[0] ? <img src={normalizeImageUrl(p.images[0])} loading="lazy" decoding="async" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">📄</div>}
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-bold text-gray-900 line-clamp-1">{p.title}</p>
@@ -152,4 +154,4 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   );
 };
 
-export default SearchHeader;
+export default React.memo(SearchHeader);

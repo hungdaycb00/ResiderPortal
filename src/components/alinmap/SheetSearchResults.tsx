@@ -18,42 +18,52 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const nearbyUsersRef = useRef(nearbyUsers);
     const API_BASE = getBaseUrl();
+    const normalizedSearchTag = searchTag.trim().toLowerCase();
 
     useEffect(() => {
-        if (!searchTag || searchTag.trim().length < 2) {
+        nearbyUsersRef.current = nearbyUsers;
+    }, [nearbyUsers]);
+
+    useEffect(() => {
+        if (!normalizedSearchTag || normalizedSearchTag.length < 2) {
             setSearchResults({ posts: [], users: [], games: [] });
             setShowSearchResults(false);
             return;
         }
+        const controller = new AbortController();
         setIsSearching(true);
         setShowSearchResults(true);
         if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         searchTimerRef.current = setTimeout(async () => {
             try {
-                const resp = await fetch(`${API_BASE}/api/looterrch?q=${encodeURIComponent(searchTag.trim())}`);
+                const resp = await fetch(`${API_BASE}/api/looterrch?q=${encodeURIComponent(normalizedSearchTag)}`, { signal: controller.signal });
                 const data = await resp.json();
                 if (data.success) {
                     // Merge nearby users matching tag
-                    const localUserMatches = nearbyUsers.filter(u =>
-                        (u.username || '').toLowerCase().includes(searchTag.toLowerCase()) ||
-                        (u.status || '').toLowerCase().includes(searchTag.toLowerCase())
-                    ).map(u => ({ id: u.id, displayName: u.username, avatar: u.avatar_url, status: u.status || '' }));
+                    const localUserMatches = nearbyUsersRef.current.filter(u =>
+                        (u.username || '').toLowerCase().includes(normalizedSearchTag) ||
+                        (u.status || '').toLowerCase().includes(normalizedSearchTag)
+                    ).slice(0, 10).map(u => ({ id: u.id, displayName: u.username, avatar: u.avatar_url, status: u.status || '' }));
 
                     const allUsers = [...data.users];
                     localUserMatches.forEach(lu => {
                         if (!allUsers.find((u: any) => u.id === lu.id)) allUsers.push(lu);
                     });
 
-                    setSearchResults({ posts: data.posts, users: allUsers.slice(0, 10), games: data.games || [] });
+                    setSearchResults({ posts: (data.posts || []).slice(0, 10), users: allUsers.slice(0, 10), games: (data.games || []).slice(0, 10) });
                 }
             } catch (err) {
-                console.error('[Search]', err);
+                if (!controller.signal.aborted) console.error('[Search]', err);
             }
-            setIsSearching(false);
+            if (!controller.signal.aborted) setIsSearching(false);
         }, 300);
-        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
-    }, [searchTag]);
+        return () => {
+            controller.abort();
+            if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        };
+    }, [API_BASE, normalizedSearchTag]);
 
     if (!showSearchResults || searchTag.trim().length < 2) return null;
 
@@ -93,6 +103,8 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                             >
                                 <img
                                     src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`}
+                                    loading="lazy"
+                                    decoding="async"
                                     className="w-9 h-9 rounded-full object-cover bg-gray-100 shrink-0"
                                     alt=""
                                     onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`; }}
@@ -126,7 +138,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
                             >
                                 {p.images && p.images.length > 0 ? (
-                                    <img src={normalizeImageUrl(p.images[0])} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
+                                    <img src={normalizeImageUrl(p.images[0])} loading="lazy" decoding="async" className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                                         <Edit className="w-4 h-4 text-blue-400" />
@@ -157,7 +169,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
                             >
                                 {g.thumbnail ? (
-                                    <img src={normalizeImageUrl(g.thumbnail)} className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
+                                    <img src={normalizeImageUrl(g.thumbnail)} loading="lazy" decoding="async" className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
                                         <Gamepad2 className="w-4 h-4 text-emerald-500" />
@@ -179,4 +191,4 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
     );
 };
 
-export default SheetSearchResults;
+export default React.memo(SheetSearchResults);

@@ -114,6 +114,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const [socialSubTab, setSocialSubTab] = React.useState<'posts' | 'nearby'>('posts');
     const lastSocialFeedRequestRef = React.useRef('');
     const shouldHideSearch = ['profile', 'backpack'].includes(mainTab);
+    const deferredSearchTag = React.useDeferredValue(searchTag);
+    const shouldRenderSheetContent = isDesktop || isSheetExpanded || !!selectedUser || mainTab === 'backpack';
 
     React.useEffect(() => {
         if (selectedUser || mainTab !== 'friends' || socialSubTab !== 'posts') return;
@@ -281,11 +283,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         style={{ direction: 'rtl' }}
                         onPointerDown={(e) => e.stopPropagation()}
                       >
+                        {shouldRenderSheetContent && (
                         <div style={{ direction: 'ltr' }}>
                         {/* Instant Search Results */}
                         {!selectedUser && !shouldHideSearch && (
                             <SheetSearchResults
-                                searchTag={searchTag}
+                                searchTag={deferredSearchTag}
                                 nearbyUsers={nearbyUsers}
                                 setSelectedUser={setSelectedUser}
                                 setActiveTab={setActiveTab}
@@ -426,6 +429,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                           </div>
                         )}
                       </div>
+                        )}
                     </div>
                     )}
                 </motion.div>

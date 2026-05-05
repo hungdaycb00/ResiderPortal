@@ -93,6 +93,8 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                     <img 
                         src={normalizeImageUrl(post.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=random`} 
                         alt="author" 
+                        loading="lazy"
+                        decoding="async"
                         className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-100" 
                     />
                     <div className="flex flex-col">
@@ -167,7 +169,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                 <div className="flex overflow-x-auto gap-1 px-1 pb-1 scrollbar-hide snap-x">
                     {post.images.map((img: string, idx: number) => (
                         <div key={idx} className={`snap-start shrink-0 aspect-[4/5] bg-gray-900 overflow-hidden ${post.images.length === 1 ? 'w-full rounded-lg' : 'w-[85%] rounded-lg'}`}>
-                            <img src={normalizeImageUrl(img)} className="w-full h-full object-cover" alt="Post" />
+                            <img src={normalizeImageUrl(img)} loading="lazy" decoding="async" className="w-full h-full object-cover" alt="Post" />
                         </div>
                     ))}
                 </div>
@@ -200,7 +202,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                         ) : (
                             comments.map((c: any) => (
                                 <div key={c.id} className="flex gap-2">
-                                    <img src={normalizeImageUrl(c.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'User')}&background=random`} alt="cmt-author" className="w-7 h-7 rounded-full bg-gray-200 mt-0.5 object-cover" />
+                                    <img src={normalizeImageUrl(c.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'User')}&background=random`} loading="lazy" decoding="async" alt="cmt-author" className="w-7 h-7 rounded-full bg-gray-200 mt-0.5 object-cover" />
                                     <div className="flex-1 min-w-0">
                                         <div className="bg-gray-100 px-3 py-2 rounded-2xl rounded-tl-sm inline-block max-w-full">
                                             <p className="text-xs font-bold text-gray-900">{c.author?.name}</p>
@@ -224,4 +226,4 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     );
 };
 
-export default PostCard;
+export default React.memo(PostCard);
