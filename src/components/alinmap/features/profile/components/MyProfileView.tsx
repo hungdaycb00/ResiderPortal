@@ -14,8 +14,8 @@ interface MyProfileViewProps {
     myDisplayName: string;
     myAvatarUrl: string;
     currentProvince: string | null;
-    activeTab: 'info' | 'saved';
-    setActiveTab: (tab: 'info' | 'saved') => void;
+    activeTab: 'info' | 'posts' | 'saved';
+    setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMyDisplayName: (v: string) => void;
     radius: number;
     handleUpdateRadius: (v: number) => void;
@@ -29,6 +29,7 @@ interface MyProfileViewProps {
     setMainTab: (tab: any) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
+    handleUpdatePostPrivacy?: (postId: string, privacy: string) => void;
     fetchUserPosts: (uid: string) => void;
     externalApi: any;
     setMyAvatarUrl: (v: string) => void;
@@ -48,7 +49,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         radius, handleUpdateRadius,
         games, userPosts,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
-        handleStarPost, handleDeletePost, fetchUserPosts, externalApi,
+        handleStarPost, handleDeletePost, handleUpdatePostPrivacy, fetchUserPosts, externalApi,
         setMyAvatarUrl,
         triggerAuth, requireAuth, logout, requestLocation,
         friends, setSelectedUser
@@ -132,6 +133,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     const visibleSavedPosts = React.useMemo(() => (
         userPosts.slice(0, visibleSavedPostCount)
     ), [userPosts, visibleSavedPostCount]);
+    const visibleOwnPosts = visibleSavedPosts;
     const archivedVisibleSavedPosts = React.useMemo(() => (
         visibleSavedPosts.map((post) => ({ ...post, isArchivedState: true }))
     ), [visibleSavedPosts]);
@@ -239,7 +241,17 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     onClick={() => setActiveTab('info')}
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
-                    Info
+                    Friends
+                </button>
+                <button
+                    onClick={() => {
+                        if (requireAuth && !requireAuth('xem bai viet cua ban')) return;
+                        setActiveTab('posts');
+                        fetchUserPosts('me');
+                    }}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                    Posts
                 </button>
                 <button
                     onClick={() => {
@@ -260,6 +272,39 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     requireAuth={requireAuth} friends={friends}
                     setSelectedUser={setSelectedUser}
                 />
+            ) : activeTab === 'posts' ? (
+                <div className="pb-8">
+                    {userPosts.length > 0 ? (
+                        <div className="space-y-0">
+                            {visibleOwnPosts.map((post) => (
+                                <PostCard
+                                    key={post.id} post={post} isSelf={true}
+                                    onStar={handleStarPost} onDelete={handleDeletePost}
+                                    onUpdatePrivacy={handleUpdatePostPrivacy}
+                                    externalApi={externalApi} fetchUserPosts={fetchUserPosts}
+                                    requireAuth={requireAuth}
+                                />
+                            ))}
+                            {visibleSavedPostCount < userPosts.length && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
+                                    className="w-full mt-2 rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
+                                >
+                                    Show more posts
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                <Edit className="w-8 h-8 text-gray-200" />
+                            </div>
+                            <p className="text-gray-400 text-sm">No posts yet</p>
+                            <p className="text-[11px] text-gray-400 mt-1">Create a post from Social to show it here.</p>
+                        </div>
+                    )}
+                </div>
             ) : (
                 <div className="pb-8">
                     {userPosts.length > 0 ? (

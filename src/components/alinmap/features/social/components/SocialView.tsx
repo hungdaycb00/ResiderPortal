@@ -24,6 +24,8 @@ interface SocialViewProps {
     setPostTitle: (v: string) => void;
     postPrivacy: 'public' | 'friends' | 'private';
     setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
+    postIsStarred: boolean;
+    setPostIsStarred: (v: boolean) => void;
     isSavingPost: boolean;
     handleCreatePost: (files: File[]) => void;
     handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
@@ -46,7 +48,8 @@ const SocialView: React.FC<SocialViewProps> = ({
     setSelectedUser, radius, handleUpdateRadius,
     isVisibleOnMap, setIsVisibleOnMap, requireAuth, requestLocation, ws,
     userPosts, isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
-    postPrivacy, setPostPrivacy, isSavingPost, handleCreatePost,
+    postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
+    isSavingPost, handleCreatePost,
     handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts,
     externalApi, socialSubTab,
 }) => {
@@ -92,6 +95,8 @@ const SocialView: React.FC<SocialViewProps> = ({
                                 setPostTitle={setPostTitle}
                                 postPrivacy={postPrivacy}
                                 setPostPrivacy={setPostPrivacy}
+                                postIsStarred={postIsStarred}
+                                setPostIsStarred={setPostIsStarred}
                                 isSavingPost={isSavingPost}
                                 handleCreatePost={handleCreatePost}
                             />

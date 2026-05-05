@@ -325,6 +325,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 searchTag={searchTag}
                 isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
                 postPrivacy={posts.postPrivacy}
+                postIsStarred={posts.postIsStarred}
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
                 radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
                 showNotification={showNotification}
@@ -341,6 +342,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
                 setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
                 setPostPrivacy={posts.setPostPrivacy}
+                setPostIsStarred={posts.setPostIsStarred}
                 handleCreatePost={posts.handleCreatePost}
                 handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
                 handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}

@@ -58,11 +58,13 @@ export function usePosts({
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [postTitle, setPostTitle] = useState('');
   const [postPrivacy, setPostPrivacy] = useState<'public' | 'friends' | 'private'>('public');
+  const [postIsStarred, setPostIsStarred] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [isSavingPost, setIsSavingPost] = useState(false);
   const [userGames, setUserGames] = useState<any[]>([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const activeProfileRequestRef = useRef(0);
+  const activePostsSourceRef = useRef<string | null>(selfPostsIdentifier);
 
   const sendGallerySync = () => {
     const socket = ws.current;
@@ -75,8 +77,31 @@ export function usePosts({
     return true;
   };
 
+  const syncGalleryFromPosts = (posts: any[]) => {
+    const starred = posts.find((p: any) => p.isStarred);
+    if (starred) {
+      setGalleryActive(true);
+      setGalleryTitle(starred.title || '');
+      setGalleryImages(starred.images || []);
+    } else {
+      setGalleryActive(false);
+      setGalleryTitle('');
+      setGalleryImages([]);
+    }
+  };
+
+  const starPostRequest = async (postId: string) => {
+    const deviceId = externalApi.getDeviceId();
+    const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, {
+      method: 'PUT',
+      headers: { 'X-Device-Id': deviceId },
+    });
+    return resp.json();
+  };
+
   const fetchUserPosts = async (userId: string | null | undefined, requestId?: number) => {
     if (!userId || (userId === 'saved' && !user)) return;
+    activePostsSourceRef.current = userId;
     try {
       const endpoint = userId === 'saved'
         ? `${API_BASE}/api/user/archived-posts`
@@ -92,9 +117,7 @@ export function usePosts({
         const posts = sortNewestFirst(Array.isArray(data.posts) ? data.posts : []);
         setUserPosts(posts);
         if (userId !== 'feed' && userId !== 'saved') {
-          const starred = posts.find((p: any) => p.isStarred);
-          if (starred) { setGalleryActive(true); setGalleryTitle(starred.title || ''); setGalleryImages(starred.images || []); }
-          else { setGalleryActive(false); setGalleryTitle(''); setGalleryImages([]); }
+          syncGalleryFromPosts(posts);
         }
       }
     } catch (err) { console.error('Fetch posts error:', err); }
@@ -114,16 +137,26 @@ export function usePosts({
       validFiles.forEach(f => formData.append('images', f));
       formData.append('title', postTitle);
       formData.append('privacy', postPrivacy);
+      formData.append('isStarred', postIsStarred ? 'true' : 'false');
       const deviceId = externalApi.getDeviceId();
       const resp = await fetch(`${API_BASE}/api/user/post`, {
         method: 'POST', headers: { 'X-Device-Id': deviceId }, body: formData
       });
       const data = await resp.json();
       if (data.success) {
+        const createdPostId = data.post?.id || data.postId || data.id;
+        if (postIsStarred && createdPostId && !data.post?.isStarred) {
+          try {
+            await starPostRequest(createdPostId);
+          } catch (err) {
+            console.error('Star new post error:', err);
+          }
+        }
         setPostTitle('');
         setPostPrivacy('public');
+        setPostIsStarred(false);
         setIsCreatingPost(false);
-        fetchUserPosts('feed');
+        fetchUserPosts(activePostsSourceRef.current || 'feed');
         sendGallerySync();
         showNotification?.('Post created successfully!', 'success');
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }
@@ -153,11 +186,22 @@ export function usePosts({
       showNotification?.('Dang nhap de chon billboard.', 'info');
       return;
     }
-    const deviceId = externalApi.getDeviceId();
     try {
-      const resp = await fetch(`${API_BASE}/api/user/post/${postId}/star`, { method: 'PUT', headers: { 'X-Device-Id': deviceId } });
-      const data = await resp.json();
-      if (data.success) { fetchUserPosts(selfPostsIdentifier); sendGallerySync(); }
+      const data = await starPostRequest(postId);
+      if (data.success) {
+        setUserPosts(prev => {
+          const clickedPost = prev.find(p => p.id === postId);
+          const nextStarred = !clickedPost?.isStarred;
+          const nextPosts = prev.map(p => ({ ...p, isStarred: p.id === postId ? nextStarred : false }));
+          const currentSource = activePostsSourceRef.current;
+          if (currentSource && currentSource !== 'feed' && currentSource !== 'saved') {
+            syncGalleryFromPosts(nextPosts);
+          }
+          return nextPosts;
+        });
+        fetchUserPosts(activePostsSourceRef.current || selfPostsIdentifier);
+        sendGallerySync();
+      }
     } catch (err) { console.error('Star post error:', err); }
   };
 
@@ -171,7 +215,7 @@ export function usePosts({
     try {
       const resp = await fetch(`${API_BASE}/api/user/post/${postId}`, { method: 'DELETE', headers: { 'X-Device-Id': deviceId } });
       const data = await resp.json();
-      if (data.success) { fetchUserPosts(selfPostsIdentifier); sendGallerySync(); }
+      if (data.success) { fetchUserPosts(activePostsSourceRef.current || selfPostsIdentifier); sendGallerySync(); }
     } catch (err) { console.error('Delete post error:', err); }
   };
 
@@ -219,6 +263,7 @@ export function usePosts({
   return {
     userPosts, postTitle, setPostTitle,
     postPrivacy, setPostPrivacy,
+    postIsStarred, setPostIsStarred,
     isCreatingPost, setIsCreatingPost,
     isSavingPost, userGames,
     handleCreatePost, fetchUserPosts,

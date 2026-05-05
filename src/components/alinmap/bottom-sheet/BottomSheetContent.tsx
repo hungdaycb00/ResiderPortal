@@ -56,6 +56,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     panX,
     panY,
     postPrivacy,
+    postIsStarred,
     postTitle,
     radius,
     requireAuth,
@@ -68,6 +69,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     setMyAvatarUrl,
     setMyDisplayName,
     setPostPrivacy,
+    setPostIsStarred,
     setPostTitle,
     setSearchTag,
     setSelectedUser,
@@ -184,6 +186,8 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         setPostTitle={setPostTitle}
                                         postPrivacy={postPrivacy}
                                         setPostPrivacy={setPostPrivacy}
+                                        postIsStarred={postIsStarred}
+                                        setPostIsStarred={setPostIsStarred}
                                         isSavingPost={isSavingPost}
                                         handleCreatePost={handleCreatePost}
                                         handleUpdatePostPrivacy={handleUpdatePostPrivacy}
@@ -220,7 +224,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     myDisplayName={myDisplayName}
                                     myAvatarUrl={myAvatarUrl}
                                     currentProvince={currentProvince}
-                                    activeTab={(activeTab === 'posts' ? 'info' : activeTab) as any}
+                                    activeTab={activeTab as any}
                                     setActiveTab={setActiveTab as any}
                                     setMyDisplayName={setMyDisplayName}
                                     radius={radius}
@@ -235,6 +239,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     setMainTab={setMainTab}
                                     handleStarPost={handleStarPost}
                                     handleDeletePost={handleDeletePost}
+                                    handleUpdatePostPrivacy={handleUpdatePostPrivacy}
                                     fetchUserPosts={fetchUserPosts}
                                     externalApi={externalApi}
                                     setMyAvatarUrl={setMyAvatarUrl}

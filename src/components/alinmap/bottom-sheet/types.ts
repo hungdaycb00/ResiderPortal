@@ -32,6 +32,7 @@ export interface BottomSheetProps {
     isCreatingPost: boolean;
     postTitle: string;
     postPrivacy: 'public' | 'friends' | 'private';
+    postIsStarred: boolean;
     isSavingPost: boolean;
     galleryActive: boolean;
     currentProvince: string | null;
@@ -57,6 +58,7 @@ export interface BottomSheetProps {
     setIsCreatingPost: (v: boolean) => void;
     setPostTitle: (v: string) => void;
     setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
+    setPostIsStarred: (v: boolean) => void;
     handleCreatePost: (files: File[]) => void;
     handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
     handleStarPost: (postId: string) => void;

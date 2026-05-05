@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, X, Smile, Image as ImageIcon, Globe, Users, Lock } from 'lucide-react';
+import { Edit, X, Smile, Image as ImageIcon, Globe, Users, Lock, Star } from 'lucide-react';
 
 interface CreatePostFormProps {
     isCreatingPost: boolean;
@@ -8,6 +8,8 @@ interface CreatePostFormProps {
     setPostTitle: (v: string) => void;
     postPrivacy: 'public' | 'friends' | 'private';
     setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
+    postIsStarred?: boolean;
+    setPostIsStarred?: (v: boolean) => void;
     isSavingPost: boolean;
     handleCreatePost: (files: File[]) => void;
 }
@@ -17,7 +19,8 @@ const POPULAR_TAGS = ['#game', '#shop', '#chill', '#event', '#trading', '#friend
 
 const CreatePostForm: React.FC<CreatePostFormProps> = ({
     isCreatingPost, setIsCreatingPost, postTitle, setPostTitle, 
-    postPrivacy, setPostPrivacy, isSavingPost, handleCreatePost,
+    postPrivacy, setPostPrivacy, postIsStarred = false, setPostIsStarred,
+    isSavingPost, handleCreatePost,
 }) => {
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -44,6 +47,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
     const handleCancel = () => {
         setIsCreatingPost(false);
         setPostTitle('');
+        setPostIsStarred?.(false);
         setSelectedImages([]);
         setPreviewUrls([]);
     };
@@ -133,6 +137,20 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({
                     </button>
                 ))}
             </div>
+
+            <button
+                type="button"
+                onClick={() => setPostIsStarred?.(!postIsStarred)}
+                className={`w-full flex items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.99] ${postIsStarred ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 bg-white text-gray-600 hover:border-amber-200 hover:bg-amber-50/60'}`}
+            >
+                <span className="flex items-center gap-2">
+                    <Star className={`w-4 h-4 ${postIsStarred ? 'fill-amber-400 text-amber-500' : 'text-gray-400'}`} />
+                    <span className="text-xs font-bold">Show as Billboard</span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                    {postIsStarred ? 'On' : 'Off'}
+                </span>
+            </button>
 
             {previewUrls.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto py-2 px-1">
