@@ -2,38 +2,45 @@ import React from 'react';
 
 export const LooterBackground: React.FC = () => (
     <>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-cyan-500/5 blur-[120px] pointer-events-none rounded-full" />
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] pointer-events-none rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[600px] bg-cyan-500/10 blur-[120px] pointer-events-none rounded-[100%]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 blur-[150px] pointer-events-none rounded-full" />
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] pointer-events-none rounded-full" />
     </>
 );
 
 export const MapGrid: React.FC<{ mapMode: 'grid' | 'satellite' }> = ({ mapMode }) => (
-    <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${mapMode === 'satellite' ? 'opacity-30' : 'opacity-100'}`}>
+    <div className={`absolute inset-[-50%] pointer-events-none transition-opacity duration-700 flex items-center justify-center ${mapMode === 'satellite' ? 'opacity-30' : 'opacity-100'}`} style={{ transform: 'rotateZ(45deg) scale(1.5)', willChange: 'transform' }}>
         {/* Main Grid Lines */}
         <div className="absolute inset-0" style={{
             backgroundImage: `
-                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), 
-                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+                linear-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(59, 130, 246, 0.15) 1px, transparent 1px)
             `,
             backgroundSize: "100px 100px",
             backgroundPosition: "center center",
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
         }} />
         
-        {/* Sub-grid / Dots at intersections */}
+        {/* Intersection Glow Dots */}
         <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(circle at 0 0, rgba(59, 130, 246, 0.6) 1.5px, transparent 2px)`,
             backgroundSize: "100px 100px",
             backgroundPosition: "center center",
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
         }} />
 
         {/* Thinner secondary grid */}
-        <div className="absolute inset-0 opacity-40" style={{
+        <div className="absolute inset-0 opacity-30" style={{
             backgroundImage: `
-                linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), 
-                linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px)
+                linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px)
             `,
-            backgroundSize: "20px 20px",
+            backgroundSize: "25px 25px",
             backgroundPosition: "center center",
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
         }} />
     </div>
 );

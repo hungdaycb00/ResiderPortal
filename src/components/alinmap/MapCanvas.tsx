@@ -209,8 +209,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
                     {/* Global Synchronizing Spinner */}
                     {!myObfPos && <LoadingSpinner />}
-                    <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#001424]/75 via-[#001424]/25 to-transparent pointer-events-none" />
-                    <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#001424]/65 to-transparent pointer-events-none" />
+                    
+                    {/* Enhanced Depth Fog for 2.5D */}
+                    <div className="absolute inset-x-0 top-0 h-[40%] bg-gradient-to-b from-[#001424] via-[#001424]/70 to-transparent pointer-events-none" style={{ backdropFilter: 'blur(1px)' }} />
+                    <div className="absolute inset-x-0 bottom-0 h-[20%] bg-gradient-to-t from-[#001424]/80 to-transparent pointer-events-none" />
+                    {/* Vignette effect */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(0,20,36,0.6)_100%)] pointer-events-none" />
                 </div>
             )}
 
