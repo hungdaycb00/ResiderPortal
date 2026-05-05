@@ -17,8 +17,8 @@ function legacyAssetAliasPlugin(): Plugin {
     async closeBundle() {
       const assetsDir = path.resolve(__dirname, 'dist', 'assets');
       const files = await fs.readdir(assetsDir);
-      const currentEntryJs = files.find((file) => /^index-[\w-]+\.js$/.test(file));
-      const currentEntryCss = files.find((file) => /^index-[\w-]+\.css$/.test(file));
+      const currentEntryJs = files.find((file) => /^app-[\w-]+\.js$/.test(file));
+      const currentEntryCss = files.find((file) => /^app-[\w-]+\.css$/.test(file));
 
       if (!currentEntryJs || !currentEntryCss) {
         throw new Error('Build did not produce index JS/CSS assets.');
@@ -56,6 +56,11 @@ export default defineConfig(({mode}) => {
     build: {
       rollupOptions: {
         output: {
+          entryFileNames: 'assets/app-[hash].js',
+          assetFileNames(assetInfo) {
+            if (assetInfo.name?.endsWith('.css')) return 'assets/app-[hash][extname]';
+            return 'assets/[name]-[hash][extname]';
+          },
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) return 'vendor-react';
