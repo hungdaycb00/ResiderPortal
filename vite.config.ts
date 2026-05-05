@@ -62,7 +62,16 @@ export default defineConfig(({mode}) => {
             return 'assets/[name]-[hash][extname]';
           },
           manualChunks(id) {
-            if (!id.includes('node_modules')) return undefined;
+            const normalizedId = id.split(path.sep).join('/');
+            if (!normalizedId.includes('node_modules')) {
+              if (normalizedId.includes('/src/components/alinmap/looter-game/')) return 'feature-looter';
+              if (normalizedId.includes('/src/components/alinmap/')) return 'feature-alinmap';
+              if (normalizedId.includes('/src/components/creator/')) return 'feature-creator';
+              if (normalizedId.includes('/src/components/tabs/')) return 'feature-tabs';
+              if (normalizedId.includes('/src/components/')) return 'app-components';
+              if (normalizedId.includes('/src/hooks/') || normalizedId.includes('/src/services/') || normalizedId.includes('/src/utils/')) return 'app-services';
+              return undefined;
+            }
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) return 'vendor-react';
             if (id.includes('firebase/')) return 'vendor-firebase';
             if (id.includes('framer-motion') || id.includes('motion/')) return 'vendor-motion';
