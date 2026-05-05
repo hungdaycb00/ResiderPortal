@@ -310,7 +310,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(__dirname, "dist");
     const assetsPath = path.join(distPath, "assets");
 
     app.use("/assets", express.static(assetsPath, {
@@ -339,7 +339,14 @@ async function startServer() {
       res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
-      res.sendFile(path.join(distPath, "index.html"));
+      res.sendFile(path.join(distPath, "index.html"), (err) => {
+        if (err) {
+          console.error("[Static Error] Failed to serve index.html:", err.message);
+          if (!res.headersSent) {
+            res.status(500).send("Internal Server Error - Unable to load index.html");
+          }
+        }
+      });
     });
   }
 
