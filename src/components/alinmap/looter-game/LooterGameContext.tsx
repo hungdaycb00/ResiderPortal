@@ -136,7 +136,7 @@ export interface LooterGameActions {
   storeItems: (itemUids: string[], action: 'store' | 'retrieve', mode?: StorageAccessMode, gridX?: number, gridY?: number) => Promise<void>;
   setWorldTier: (tier: number) => Promise<void>;
   returnToFortress: () => Promise<void>;
-  loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => Promise<void>;
+  loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => Promise<void>;
   dropItems: (itemUids: string[], lat: number, lng: number) => Promise<void>;
   dropCombatLoot: (items: LooterItem[]) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;

@@ -164,7 +164,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 <>
                                     {currentProvince && <MapBoundary currentProvince={currentProvince} />}
                                     
-                                    {user ? (
+                                    {(user || isLooterGameMode) ? (
                                         <SelfNode
                                             isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
                                             myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}

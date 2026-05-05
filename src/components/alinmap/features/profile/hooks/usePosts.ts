@@ -38,6 +38,15 @@ const compressImage = (file: File): Promise<File> => {
   });
 };
 
+const getPostTimestamp = (post: any) => {
+  const raw = post?.createdAt || post?.created_at || post?.created || 0;
+  const time = new Date(raw).getTime();
+  return Number.isFinite(time) ? time : 0;
+};
+
+const sortNewestFirst = (posts: any[]) =>
+  [...posts].sort((a, b) => getPostTimestamp(b) - getPostTimestamp(a));
+
 export function usePosts({
   ws, externalApi, myUserId, user, selectedUser,
   showNotification, setGalleryActive, setGalleryTitle, setGalleryImages,
@@ -71,6 +80,8 @@ export function usePosts({
     try {
       const endpoint = userId === 'saved'
         ? `${API_BASE}/api/user/archived-posts`
+        : userId === 'feed'
+          ? `${API_BASE}/api/posts/feed`
         : userId === 'me'
           ? `${API_BASE}/api/user/me/posts`
         : `${API_BASE}/api/user/${userId}/posts`;
@@ -78,10 +89,13 @@ export function usePosts({
       const data = await resp.json();
       if (requestId != null && activeProfileRequestRef.current !== requestId) return;
       if (data.success) {
-        setUserPosts(data.posts);
-        const starred = data.posts.find((p: any) => p.isStarred);
-        if (starred) { setGalleryActive(true); setGalleryTitle(starred.title || ''); setGalleryImages(starred.images || []); }
-        else { setGalleryActive(false); setGalleryTitle(''); setGalleryImages([]); }
+        const posts = sortNewestFirst(Array.isArray(data.posts) ? data.posts : []);
+        setUserPosts(posts);
+        if (userId !== 'feed' && userId !== 'saved') {
+          const starred = posts.find((p: any) => p.isStarred);
+          if (starred) { setGalleryActive(true); setGalleryTitle(starred.title || ''); setGalleryImages(starred.images || []); }
+          else { setGalleryActive(false); setGalleryTitle(''); setGalleryImages([]); }
+        }
       }
     } catch (err) { console.error('Fetch posts error:', err); }
   };
@@ -109,7 +123,7 @@ export function usePosts({
         setPostTitle('');
         setPostPrivacy('public');
         setIsCreatingPost(false);
-        fetchUserPosts(selfPostsIdentifier);
+        fetchUserPosts('feed');
         sendGallerySync();
         showNotification?.('Post created successfully!', 'success');
       } else { showNotification?.(data.error || 'Post creation failed', 'error'); }

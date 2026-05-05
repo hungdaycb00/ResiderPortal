@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { LooterItem, BagItem } from '../types';
-import { isItemInBag } from '../../engine/utils';
 
 interface UseInventoryDragProps {
   items: LooterItem[];
@@ -31,21 +30,6 @@ export function useInventoryDrag({
   const [panStart, setPanStart] = useState<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const isItemTouchingBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
-    const isBag = (item as any).type === 'bag';
-    const w = item.gridW || (isBag ? 1 : (item as any).width) || 1;
-    const h = item.gridH || (isBag ? 1 : (item as any).height) || 1;
-    const bagW = bag.width;
-    const bagH = bag.height;
-
-    if (gx + w <= bag.gridX) return false;
-    if (gy + h <= bag.gridY) return false;
-    if (gx >= bag.gridX + bagW) return false;
-    if (gy >= bag.gridY + bagH) return false;
-
-    return true;
-  }, []);
 
   const isItemCompletelyInBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
     const isBag = (item as any).type === 'bag';
@@ -253,16 +237,12 @@ export function useInventoryDrag({
     let finalGx = gx;
     let finalGy = gy;
 
-    // 2. Kiểm tra balo active (Chỉ cho phép đặt vào nếu lọt thỏm trong vùng active)
-    if (activeBag && isItemTouchingBag(draggingItem, gx, gy, activeBag)) {
-      if (!isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
-        // Nếu chạm balo nhưng không lọt thỏm -> văng ra ngoài
-        finalGx = -1;
-        finalGy = -1;
-      }
+    // Only items fully inside the active bag stay in inventory after placement.
+    if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
+      finalGx = -1;
+      finalGy = -1;
     }
 
-    // Hợp lệ -> Lưu vị trí mới (kể cả ngoài balo)
     const newItems = items.map((i) => 
       i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i
     );
@@ -270,7 +250,7 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     setDragGridPos(null);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemTouchingBag, isItemCompletelyInBag]);
+  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemCompletelyInBag]);
 
   useEffect(() => {
     if (dragStartInfo || draggingItem || panStart) {

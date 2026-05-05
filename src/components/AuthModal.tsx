@@ -28,10 +28,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedPassword = String(password || '');
+    const normalizedConfirmPassword = String(confirmPassword || '');
     
     // --- LUỒNG QUÊN MẬT KHẨU ---
     if (isForgotPass) {
-      if (!email) {
+      if (!normalizedEmail) {
         setError('Vui lòng nhập email của bạn');
         return;
       }
@@ -39,7 +42,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       try {
         const data = await externalApi.request<{ success: boolean; error?: string; message?: string }>('/api/auth/forgot-password', {
           method: 'POST',
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ email: normalizedEmail })
         });
         if (!data.success) throw new Error(data.error);
         setSuccessMsg(data.message || 'Mật khẩu mới đã được gửi vào email của bạn!');
@@ -58,13 +61,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     }
 
     // --- LUỒNG ĐĂNG NHẬP / ĐĂNG KÝ ---
-    if (!email || !password) {
+    if (!normalizedEmail || !normalizedPassword) {
       setError('Vui lòng nhập đầy đủ email và mật khẩu');
       return;
     }
 
-    const emailPrefix = email.split('@')[0];
-    if (!email.toLowerCase().endsWith('@gmail.com')) {
+    const emailPrefix = normalizedEmail.split('@')[0];
+    if (!normalizedEmail.endsWith('@gmail.com')) {
       setError('Vui lòng sử dụng tài khoản @gmail.com');
       return;
     }
@@ -77,12 +80,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       return;
     }
 
-    if (password.length < 8) {
+    if (normalizedPassword.length < 8) {
       setError('Mật khẩu phải dài ít nhất 8 ký tự');
       return;
     }
 
-    if (isRegistering && password !== confirmPassword) {
+    if (isRegistering && normalizedPassword !== normalizedConfirmPassword) {
       setError('Mật khẩu không khớp!');
       return;
     }
@@ -97,7 +100,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     try {
       const data = await externalApi.request<{ success: boolean; error?: string; message?: string; user?: any }>('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password, isRegistering })
+        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword, isRegistering })
       });
 
       if (!data.success) {

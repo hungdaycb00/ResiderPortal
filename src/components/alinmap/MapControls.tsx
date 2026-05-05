@@ -78,7 +78,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     return (
         <>
             {/* Floating Controls - Right Side */}
-            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isLooterGameMode ? (isSheetExpanded ? 'bottom-[62%]' : 'bottom-[42%]') : 'bottom-[75px] md:bottom-12'}`}>
+            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4' : 'opacity-100 translate-x-0'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
 
                 {isLooterGameMode && (

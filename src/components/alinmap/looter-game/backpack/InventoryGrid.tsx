@@ -117,11 +117,6 @@ interface InventoryGridProps {
           if (canUseSpot(x, y, true, false)) return { x, y };
         }
       }
-      for (let y = 0; y <= gridH - h; y++) {
-        for (let x = 0; x <= gridW - w; x++) {
-          if (canUseSpot(x, y, false, true)) return { x, y };
-        }
-      }
       return null;
     };
 

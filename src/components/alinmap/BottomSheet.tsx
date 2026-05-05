@@ -101,7 +101,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const [panelWidth, setPanelWidth] = React.useState(400);
     const [exploreSubTab, setExploreSubTab] = React.useState<'games' | 'creator'>('games');
     const [socialSubTab, setSocialSubTab] = React.useState<'posts' | 'nearby'>('posts');
+    const lastSocialFeedRequestRef = React.useRef('');
     const shouldHideSearch = ['profile', 'backpack'].includes(mainTab);
+
+    React.useEffect(() => {
+        if (selectedUser || mainTab !== 'friends' || socialSubTab !== 'posts') return;
+        const requestKey = `${mainTab}:${socialSubTab}`;
+        if (lastSocialFeedRequestRef.current === requestKey) return;
+        lastSocialFeedRequestRef.current = requestKey;
+        fetchUserPosts('feed');
+    }, [mainTab, socialSubTab, selectedUser]);
 
     const handleEnterWorld = React.useCallback(() => {
         setIsSheetExpanded(false);

@@ -24,7 +24,7 @@ interface BackpackViewProps {
 
 const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
   const {
-    state, saveInventory, equipBag, dropItems,
+    state, saveInventory, saveBags, equipBag, dropItems,
     isIntegratedStorageOpen,
     fortressStorageMode,
     storeItems, encounter, isMoving, setIsItemDragging
@@ -67,6 +67,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   const lastPosRef = useRef({ lat: state.currentLat, lng: state.currentLng });
   const wasMovingRef = useRef(false);
+  const lastMobileBagLayoutRef = useRef('');
 
   useEffect(() => {
     if (isMoving && !wasMovingRef.current) {
@@ -84,6 +85,31 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   useEffect(() => {
     setIsItemDragging?.(!!draggingItem);
   }, [draggingItem, setIsItemDragging]);
+
+  useEffect(() => {
+    if (!isMobileViewport || !activeBag || activeBag.gridX < 0 || activeBag.gridY < 0) return;
+
+    const targetX = Math.max(0, Math.floor((MAX_GRID_W - activeBag.width) / 2));
+    const targetY = 0;
+    if (activeBag.gridX === targetX && activeBag.gridY === targetY) return;
+
+    const layoutKey = `${activeBag.uid}:${activeBag.gridX}:${activeBag.gridY}:${targetX}:${targetY}`;
+    if (lastMobileBagLayoutRef.current === layoutKey) return;
+    lastMobileBagLayoutRef.current = layoutKey;
+
+    const dx = targetX - activeBag.gridX;
+    const dy = targetY - activeBag.gridY;
+    const nextBags = state.bags.map((bag, index) =>
+      index === 0 ? { ...bag, gridX: targetX, gridY: targetY } : bag
+    );
+    const nextInventory = state.inventory.map((item) => {
+      if (item.gridX < 0 || item.gridY < 0 || !isItemFullyInsideBag(item, activeBag)) return item;
+      return { ...item, gridX: item.gridX + dx, gridY: item.gridY + dy };
+    });
+
+    void saveBags(nextBags);
+    saveInventory(nextInventory);
+  }, [isMobileViewport, activeBag, state.bags, state.inventory, saveBags, saveInventory]);
 
   useEffect(() => {
     if (!draggingItem || (draggingItem as any).type !== 'bag') {

@@ -55,6 +55,15 @@
 :root {
   background-color: #13151a;
   color-scheme: dark;
+  touch-action: manipulation;
+}
+
+html,
+body,
+#root {
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 body {

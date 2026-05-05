@@ -43,7 +43,7 @@ export function useLooterStateManager({
   const chunkRequestRef = useRef<Promise<any> | null>(null);
   const chunkRequestKeyRef = useRef('');
 
-  const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => {
+  const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => {
     if (!deviceId) return;
     try {
       const radius = 4;
@@ -52,11 +52,13 @@ export function useLooterStateManager({
       const maxCacheEntries = 80;
       const centerLat = centerOverride?.lat ?? state.currentLat;
       const centerLng = centerOverride?.lng ?? state.currentLng;
+      const fortressLat = centerOverride?.fortressLat ?? state.fortressLat;
+      const fortressLng = centerOverride?.fortressLng ?? state.fortressLng;
       const centerChunk = getChunkCoords(
         centerLat,
         centerLng,
-        state.fortressLat,
-        state.fortressLng
+        fortressLat,
+        fortressLng
       );
       const chunkKeys = getActiveChunkKeys(centerChunk, radius);
       const cache = chunkCacheRef.current;
@@ -107,9 +109,9 @@ export function useLooterStateManager({
         } else if (data?.rateLimited) {
           chunkBackoffUntilRef.current = Date.now() + Math.max(1000, Number(data.retryAfter || 1500));
         } else if (cache.size === 0) {
-          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
+          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
           if (fallback.success) {
-            const portalItems = sanitizeWorldItems(createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng));
+            const portalItems = sanitizeWorldItems(createPortalWorldItems(fortressLat, fortressLng, centerLat, centerLng));
             const mapItems = sanitizeWorldItems(fallback.items);
             const curLat = centerLat ?? state.fortressLat ?? 0;
             const curLng = centerLng ?? state.fortressLng ?? 0;
@@ -137,7 +139,7 @@ export function useLooterStateManager({
         for (const [key] of entries.slice(maxCacheEntries)) cache.delete(key);
       }
 
-      const portalItems = sanitizeWorldItems(createPortalWorldItems(state.fortressLat, state.fortressLng, centerLat, centerLng));
+      const portalItems = sanitizeWorldItems(createPortalWorldItems(fortressLat, fortressLng, centerLat, centerLng));
       const curLat = centerLat ?? state.fortressLat ?? 0;
       const curLng = centerLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
@@ -159,7 +161,7 @@ export function useLooterStateManager({
 
       if (normalItems.length < 2) {
         try {
-          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
+          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
           if (fallback.success) {
               const fallbackItems = sanitizeWorldItems(fallback.items);
               const merged = new Map<string, WorldItem>();
@@ -229,11 +231,13 @@ export function useLooterStateManager({
         if (shouldBeActive && !isChallengeActive) {
           setIsChallengeActive(true);
         }
+
+        void loadWorldItems(true, { lat: s.currentLat, lng: s.currentLng, fortressLat: s.fortressLat, fortressLng: s.fortressLng });
       }
     } catch (err) {
       console.error('[LooterGame] loadState error:', err);
     }
-  }, [deviceId, apiUrl, setState, setGlobalSettings, setIsChallengeActive, saveBags]);
+  }, [deviceId, apiUrl, setState, setGlobalSettings, setIsChallengeActive, saveBags, loadWorldItems]);
 
   const initGame = useCallback(async (lat: number, lng: number) => {
     if (!deviceId) return;

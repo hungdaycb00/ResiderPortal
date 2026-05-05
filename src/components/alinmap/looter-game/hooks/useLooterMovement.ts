@@ -21,7 +21,7 @@ interface UseLooterMovementProps {
   setShowCurseModal: (v: boolean) => void;
   setWorldItems: React.Dispatch<React.SetStateAction<WorldItem[]>>;
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
-  loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => Promise<void>;
+  loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => Promise<void>;
   chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
 }
 
@@ -114,7 +114,7 @@ export function useLooterMovement({
 
       setState(prev => ({
         ...prev,
-        inventory: serverInventory || prev.inventory.filter(item => !dropUids.has(item.uid)),
+        inventory: (serverInventory || prev.inventory).filter(item => !dropUids.has(item.uid)),
         currentLat: toLat,
         currentLng: toLng,
         cursePercent: newCurse,
@@ -146,7 +146,7 @@ export function useLooterMovement({
             ...sanitizeWorldItems(worldItems).filter(existing => !serverDroppedItems.some(item => item.spawnId === existing.spawnId)),
             ...serverDroppedItems,
           ]);
-        } else if (!deviceId) {
+        } else {
           await saveInventory(cleanedInventory);
         }
         notify(`Đã ném ${itemsToDrop.length} vật phẩm ra biển`, 'info');

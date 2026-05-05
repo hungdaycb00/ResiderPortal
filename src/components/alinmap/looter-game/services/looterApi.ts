@@ -99,8 +99,11 @@ export const looterApi = {
   minigameLose: (apiUrl: string, deviceId: string, spawnId: string) =>
     post(apiUrl, 'minigame-lose', { deviceId, spawnId }),
 
-  fetchWorldItems: (apiUrl: string, deviceId: string) =>
-    get(apiUrl, 'world-items', { deviceId }),
+  fetchWorldItems: (apiUrl: string, deviceId: string, lat?: number | null, lng?: number | null) =>
+    get(apiUrl, 'world-items', {
+      deviceId,
+      ...(lat != null && lng != null ? { lat: String(lat), lng: String(lng) } : {}),
+    }),
 
   fetchChunks: (apiUrl: string, deviceId: string, chunks: string[]) =>
     get(apiUrl, 'chunks', { deviceId, chunks: chunks.join(',') }),
