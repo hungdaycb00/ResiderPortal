@@ -5,21 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Alin.city</title>
     <script>
-      window.addEventListener('error', function(e) {
-        if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-          const url = e.target.src || e.target.href;
-          if (url && url.includes('/assets/')) {
-            console.warn('[Auto-Recovery] Phát hiện asset cũ hoặc lỗi kết nối, đang ép tải lại trang...');
-            if (!sessionStorage.getItem('reloaded_once_asset')) {
-              sessionStorage.setItem('reloaded_once_asset', 'true');
-              window.location.reload(true);
-            }
+      (function() {
+        const RECOVERY_KEY = 'last_asset_reload';
+        const COOLDOWN_MS = 10000;
+
+        function triggerRecovery(reason) {
+          console.warn('[Auto-Recovery]', reason, 'đang ép tải lại trang...');
+          const lastReload = sessionStorage.getItem(RECOVERY_KEY);
+          if (!lastReload || Date.now() - parseInt(lastReload) > COOLDOWN_MS) {
+            sessionStorage.setItem(RECOVERY_KEY, Date.now().toString());
+            const currentUrl = new URL(window.location.href);
+            // Append a cache-busting timestamp to bypass Cloudflare/browser cache
+            currentUrl.searchParams.set('reload_v', Date.now().toString());
+            window.location.href = currentUrl.toString();
           }
         }
-      }, true);
+
+        window.addEventListener('error', function(e) {
+          if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+            const url = e.target.src || e.target.href;
+            if (url && url.includes('/assets/')) {
+              triggerRecovery('Phát hiện asset cũ (error event)');
+            }
+          }
+        }, true);
+
+        // Vite specifically uses dynamic imports which throw unhandled rejections when chunks fail
+        window.addEventListener('unhandledrejection', function(e) {
+          const msg = e.reason && e.reason.message ? e.reason.message.toLowerCase() : '';
+          if (msg.includes('failed to fetch dynamically imported module') || 
+              msg.includes('importing a module script failed')) {
+            triggerRecovery('Lỗi tải module động (unhandledrejection)');
+          }
+        });
+        
+        // Listen to Vite's custom preload error event (if used)
+        window.addEventListener('vite:preloadError', function() {
+          triggerRecovery('Lỗi preload chunk (vite:preloadError)');
+        });
+      })();
     </script>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*.trycloudflare.com https://static.cloudflareinsights.com https://api.alin.city https://*.alin.city https://alin.city; frame-src 'self' data: blob: https://*.trycloudflare.com https://*.alin.city https://alin.city; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.trycloudflare.com wss://*.trycloudflare.com http://localhost:* ws://localhost:* wss://localhost:* https://ipapi.co https://api.alin.city wss://api.alin.city wss://alin-social.alin.city https://*.alin.city wss://*.alin.city https://alin.city wss://alin.city https://www.alin.city wss://www.alin.city https://nominatim.openstreetmap.org https://api.open-meteo.com; img-src 'self' data: blob: https://* http://localhost:*;">
-    <script type="module" crossorigin src="/assets/app-D2ytzHf0.js"></script>
+    <script type="module" crossorigin src="/assets/app-BdEuO2s6.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react-B905YyMg.js">
     <link rel="modulepreload" crossorigin href="/assets/app-services-Bh9V3Mm2.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-motion-CCyGiS-J.js">
@@ -29,7 +56,7 @@
     <link rel="modulepreload" crossorigin href="/assets/feature-alinmap-TT2zm67i.js">
     <link rel="modulepreload" crossorigin href="/assets/app-components-BZ9y9flC.js">
     <link rel="modulepreload" crossorigin href="/assets/feature-tabs-DN3ENBq_.js">
-    <link rel="stylesheet" crossorigin href="/assets/app-C1anTbkx.css">
+    <link rel="stylesheet" crossorigin href="/assets/app-CVGysF_w.css">
   </head>
   <body>
     <div id="root"></div>

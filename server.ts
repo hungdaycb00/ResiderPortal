@@ -334,6 +334,9 @@ async function startServer() {
 
     app.get("*", (req, res) => {
       if (req.path.startsWith("/assets/")) {
+        res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
         return res.status(404).type("text/plain").send("Asset not found.");
       }
       res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
