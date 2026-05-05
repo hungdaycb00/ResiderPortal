@@ -25,6 +25,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   const {
     state, saveInventory, equipBag, dropItems,
     isIntegratedStorageOpen,
+    fortressStorageMode,
     storeItems, encounter, isMoving
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
@@ -217,8 +218,8 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
               setSelectedItem(null); // Force close popup
               if ((item as any).type === 'bag') {
                 equipBag(item.uid);
-              } else if (state.worldTier === -1) {
-                storeItems([item.uid], 'store', 'fortress');
+              } else if (state.worldTier === -1 || fortressStorageMode === 'portal' || isIntegratedStorageOpen) {
+                storeItems([item.uid], 'store', fortressStorageMode || 'fortress');
               }
             }}
             onDropOutside={(item, e) => {
@@ -260,7 +261,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
                       e.clientY <= rect.bottom
                     ) {
                       // Dropped into storage!
-                      storeItems([item.uid], 'store', 'fortress');
+                      storeItems([item.uid], 'store', fortressStorageMode || 'fortress');
                       return;
                     }
                   }

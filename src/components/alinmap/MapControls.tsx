@@ -54,12 +54,17 @@ const MapControls: React.FC<MapControlsProps> = ({
         e.preventDefault();
         e.stopPropagation();
 
+        const backpack = document.getElementById('looter-backpack-container');
+        const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
+        const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
+        const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
+
         if (encounter) {
-            centerOnCombat(0);
+            centerOnCombat(yOffset);
         } else {
-            centerOnBoat(0);
+            centerOnBoat(yOffset);
             if (state.currentLat != null && state.currentLng != null) {
-                handleCenterTo(state.currentLat, state.currentLng);
+                handleCenterTo(state.currentLat, state.currentLng, yOffset);
             }
         }
     };

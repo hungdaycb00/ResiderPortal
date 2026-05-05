@@ -190,7 +190,7 @@ export default function IntegratedStoragePanel() {
                 onItemDoubleClick={(item) => {
                   setSelectedItem(null); // Force close popup
                   // Move back to backpack
-                  storeItems([item.uid], 'retrieve', 'fortress');
+                  storeItems([item.uid], 'retrieve', fortressStorageMode);
                 }}
                 onItemClick={(item, pos) => {
                   setSelectedItem(item);
@@ -208,7 +208,7 @@ export default function IntegratedStoragePanel() {
                         e.clientY <= rect.bottom
                       ) {
                         // Dropped into backpack!
-                        storeItems([item.uid], 'retrieve', 'fortress');
+                        storeItems([item.uid], 'retrieve', fortressStorageMode);
                         return;
                       }
                     }

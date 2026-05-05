@@ -132,7 +132,15 @@ export function useMapNavigation({
 
       const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
       const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
-      if (targetLat != null && targetLng != null) handleCenterTo(targetLat, targetLng);
+      if (targetLat != null && targetLng != null) {
+        setTimeout(() => {
+          const backpack = document.getElementById('looter-backpack-container');
+          const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
+          const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
+          const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
+          handleCenterTo(targetLat, targetLng, yOffset);
+        }, 120);
+      }
     } else {
       setIsLooterGameMode(false);
       setMainTab(tabId as MainTab);

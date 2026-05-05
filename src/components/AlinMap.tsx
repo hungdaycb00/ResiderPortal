@@ -201,6 +201,18 @@ const AlinMapInner: React.FC<AlinMapProps> = ({
         return () => setOpenBackpackHandler(null);
     }, [handleOpenBackpackFromPickup, setOpenBackpackHandler]);
 
+    useEffect(() => {
+        if (!isLooterGameMode || nav.mainTab !== 'backpack' || !nav.isSheetExpanded) return;
+        const timer = window.setTimeout(() => {
+            const backpack = document.getElementById('looter-backpack-container');
+            const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
+            const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
+            const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
+            looterActions.centerOnBoat(yOffset);
+        }, 140);
+        return () => window.clearTimeout(timer);
+    }, [isLooterGameMode, nav.mainTab, nav.isSheetExpanded, looterActions.centerOnBoat]);
+
     const handleDiscardPickupItem = async () => {
         if (!pickupRewardItem) return;
         const newInventory = looterState.inventory.filter((item) => item.uid !== pickupRewardItem.uid);

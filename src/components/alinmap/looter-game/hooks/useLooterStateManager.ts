@@ -39,18 +39,20 @@ export function useLooterStateManager({
 }: UseLooterStateManagerProps) {
   const chunkBackoffUntilRef = useRef(0);
   const chunkRequestRef = useRef<Promise<any> | null>(null);
+  const chunkRequestKeyRef = useRef('');
 
-  const loadWorldItems = useCallback(async (forceActive?: boolean) => {
+  const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => {
     if (!deviceId) return;
     try {
-      const isMobile = window.innerWidth < 768;
-      const radius = isMobile ? 1 : 2;
+      const radius = 3;
       const now = Date.now();
       const cacheTtlMs = forceActive ? 0 : 90_000;
-      const maxCacheEntries = isMobile ? 12 : 30;
+      const maxCacheEntries = 80;
+      const centerLat = centerOverride?.lat ?? state.currentLat;
+      const centerLng = centerOverride?.lng ?? state.currentLng;
       const centerChunk = getChunkCoords(
-        state.currentLat,
-        state.currentLng,
+        centerLat,
+        centerLng,
         state.fortressLat,
         state.fortressLng
       );
@@ -64,10 +66,13 @@ export function useLooterStateManager({
       if (missingKeys.length > 0 && now >= chunkBackoffUntilRef.current) {
         let data: any = null;
         try {
-          if (!chunkRequestRef.current) {
+          const requestKey = missingKeys.join(',');
+          if (!chunkRequestRef.current || chunkRequestKeyRef.current !== requestKey) {
+            chunkRequestKeyRef.current = requestKey;
             chunkRequestRef.current = looterApi.fetchChunks(apiUrl, deviceId, missingKeys)
               .finally(() => {
                 chunkRequestRef.current = null;
+                chunkRequestKeyRef.current = '';
               });
           }
           data = await chunkRequestRef.current;
@@ -104,8 +109,8 @@ export function useLooterStateManager({
           if (fallback.success) {
             const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
             const mapItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
-            const curLat = state.currentLat ?? state.fortressLat ?? 0;
-            const curLng = state.currentLng ?? state.fortressLng ?? 0;
+            const curLat = centerLat ?? state.fortressLat ?? 0;
+            const curLng = centerLng ?? state.fortressLng ?? 0;
             const normalItems = mapItems
               .filter((item) => (item as any)?.item?.type !== 'portal')
               .sort((a, b) => {
@@ -113,7 +118,7 @@ export function useLooterStateManager({
                 const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
                 return ad - bd;
               })
-              .slice(0, 3);
+              .slice(0, 24);
             setWorldItems([...portalItems, ...normalItems]);
           }
           return;
@@ -131,8 +136,8 @@ export function useLooterStateManager({
       }
 
       const portalItems = createPortalWorldItems(state.fortressLat, state.fortressLng, state.currentLat, state.currentLng);
-      const curLat = state.currentLat ?? state.fortressLat ?? 0;
-      const curLng = state.currentLng ?? state.fortressLng ?? 0;
+      const curLat = centerLat ?? state.fortressLat ?? 0;
+      const curLng = centerLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
         .flatMap(key => cache.get(key)?.items || [])
         .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal')
@@ -141,7 +146,7 @@ export function useLooterStateManager({
           const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
           return ad - bd;
         })
-        .slice(0, 3);
+        .slice(0, 24);
 
       let items = [...portalItems, ...normalItems];
       if (!forceActive && !isChallengeActive) {

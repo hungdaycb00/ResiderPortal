@@ -20,6 +20,7 @@ interface UseLooterMovementProps {
   setShowCurseModal: (v: boolean) => void;
   setWorldItems: React.Dispatch<React.SetStateAction<WorldItem[]>>;
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
+  loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => Promise<void>;
   chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
 }
 
@@ -34,6 +35,7 @@ export function useLooterMovement({
   setShowCurseModal,
   setWorldItems,
   saveInventory,
+  loadWorldItems,
   chunkCacheRef
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
@@ -130,6 +132,7 @@ export function useLooterMovement({
         cursePercent: newCurse,
         distance: prev.distance + Math.round(distMeters),
       }));
+      void loadWorldItems(true, { lat: toLat, lng: toLng });
 
       if (itemsToDrop.length > 0) {
         if (serverDroppedItems.length > 0) {
@@ -181,7 +184,7 @@ export function useLooterMovement({
     } finally {
       setIsMoving(false);
     }
-  }, [deviceId, apiUrl, state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, setWorldItems, saveInventory, notify, chunkCacheRef]);
+  }, [deviceId, apiUrl, state, setState, setIsChallengeActive, setEncounter, setShowCurseModal, setWorldItems, saveInventory, loadWorldItems, notify, chunkCacheRef]);
 
   const returnToFortress = useCallback(async () => {
     if (!deviceId) return;
