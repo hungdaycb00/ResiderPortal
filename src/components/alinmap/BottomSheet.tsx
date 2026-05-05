@@ -86,15 +86,26 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     } = props;
 
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
-    const { isItemDragging, encounter, state: looterState, toggleIntegratedStorage } = useLooterGame();
+    const {
+        isItemDragging,
+        encounter,
+        state: looterState,
+        toggleIntegratedStorage,
+        isIntegratedStorageOpen,
+        fortressStorageMode,
+    } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
 
     React.useEffect(() => {
         (window as any).collapseLooterTab = () => {
             setIsSheetExpanded(false);
         };
+        (window as any).expandLooterTab = () => {
+            setIsSheetExpanded(true);
+        };
         return () => {
             delete (window as any).collapseLooterTab;
+            delete (window as any).expandLooterTab;
         };
     }, [setIsSheetExpanded]);
 
@@ -117,6 +128,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     }, [setIsSheetExpanded]);
 
     const isWhiteBg = mainTab !== 'backpack';
+    const isPortalStorageOpen = mainTab === 'backpack' && isIntegratedStorageOpen && fortressStorageMode === 'portal';
+    const showFortressStorageButton = mainTab === 'backpack' && !isPortalStorageOpen && (looterState.worldTier ?? -1) === -1 && isLooterAtFortress(looterState);
+    const showStorageEdgeControls = showFortressStorageButton || isPortalStorageOpen;
 
     return (
         <>
@@ -157,9 +171,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         }
                     }}
                 >
-                    {/* Fortress Storage Edge Button */}
-                    {mainTab === 'backpack' && (looterState.worldTier ?? -1) === -1 && isLooterAtFortress(looterState) && (
+                    {/* Storage Edge Controls */}
+                    {showStorageEdgeControls && (
                         <div className="absolute -top-12 left-3 z-[190] flex items-center gap-2 md:top-4 md:-left-14 md:flex-col md:gap-3">
+                            {showFortressStorageButton && (
                             <button
                                 type="button"
                                 data-map-interactive="true"
@@ -175,6 +190,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                             >
                                 <Database className="h-5 w-5" />
                             </button>
+                            )}
 
                             {/* Global Sell Drop Zone */}
                             <div

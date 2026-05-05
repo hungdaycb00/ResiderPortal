@@ -173,7 +173,29 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <div
+            id="header-bag-slot"
+            className={`h-10 w-10 rounded-2xl border-2 flex items-center justify-center transition-all shadow-lg ${(draggingItem as any)?.type === 'bag'
+              ? isHoveringBagSlot
+                ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]'
+                : 'scale-110 border-cyan-400 bg-cyan-400/10 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+              : `${BAG_SLOT_RARITY[activeBag?.rarity || 'common'] || BAG_SLOT_RARITY.common}`
+              }`}
+            onPointerEnter={() => setIsHoveringBagSlot(true)}
+            onPointerLeave={() => setIsHoveringBagSlot(false)}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              if (activeBag) {
+                setSelectedItem(activeBag as any);
+                setPopupPos({ x: e.clientX, y: e.clientY });
+              }
+            }}
+            title={formatBagTooltip(activeBag)}
+            aria-label="Balo active"
+          >
+            <span className="text-xl leading-none">{activeBag?.icon || 'ðŸŽ’'}</span>
+          </div>
           <button
             onClick={() => (window as any).collapseLooterTab?.()}
             className="p-2 text-white/40 hover:text-white transition-colors"
@@ -183,14 +205,14 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
         </div>
       </div>
 
-      <div className="sticky top-0 z-[145] px-4 py-3 bg-[#040911]/95 backdrop-blur-md border-b border-white/5">
+      <div className="hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/40">Balo active</p>
             <p className="text-[13px] font-black text-white/90 truncate">{activeBag?.name || 'Chưa có balo'}</p>
           </div>
           <div
-            id="header-bag-slot"
+            id="legacy-header-bag-slot"
             className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center transition-all shadow-lg ${(draggingItem as any)?.type === 'bag'
               ? isHoveringBagSlot
                 ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]'

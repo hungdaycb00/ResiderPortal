@@ -214,6 +214,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     openFortressStorage: (mode: StorageAccessMode = 'fortress') => {
       dispatch({ type: 'OPEN_FORTRESS_STORAGE', payload: mode });
       openBackpack();
+      if (mode === 'fortress') {
+        (window as any).expandLooterTab?.();
+      }
     },
     setEncounter, setCombatResult,
     setShowCurseModal, setShowMinigame, setIsLooterGameMode,
