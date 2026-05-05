@@ -29,6 +29,7 @@ export interface LooterChunkCacheEntry {
 }
 
 export interface Encounter {
+  spawnId?: string;
   type: 'player' | 'bot';
   id: string;
   name: string;
@@ -39,6 +40,7 @@ export interface Encounter {
   totalWeight: number;
   totalHp: number;
   isBot?: boolean;
+  isGhost?: boolean;
 }
 
 export interface CombatResult {
@@ -47,6 +49,9 @@ export interface CombatResult {
   loot?: LooterItem[];
   droppedItems?: LooterItem[];
   finalHp: number;
+  finalHpA?: number;
+  finalHpB?: number;
+  totalTicks?: number;
 }
 
 export interface LooterGameState {
@@ -71,6 +76,7 @@ export interface LooterGameState {
   energyCurrent: number;
   activeCurses: Record<string, number>;
   isIntegratedStorageOpen: boolean;
+  showCurseModal?: boolean;
 }
 
 export const isLooterAtFortress = (state: Pick<LooterGameState, 'currentLat' | 'currentLng' | 'fortressLat' | 'fortressLng'>) =>
@@ -95,6 +101,7 @@ export interface LooterGameActions {
   centerOnCombat: (yOffset?: number) => void;
   setCenterCombatHandler: (h: ((yOffset?: number) => void) | null) => void;
   setIsChallengeActive: (v: boolean) => void;
+  setIsItemDragging: (v: boolean) => void;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number, isStep?: boolean, stepDist?: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
@@ -119,6 +126,10 @@ export interface LooterGameActions {
 
 export interface LooterGameStateContextType {
   state: LooterGameState;
+  inventory: LooterItem[];
+  storage: LooterItem[];
+  bags: BagItem[];
+  cursePercent: number;
   worldItems: WorldItem[];
   isFortressStorageOpen: boolean;
   fortressStorageMode: StorageAccessMode;
@@ -129,6 +140,7 @@ export interface LooterGameStateContextType {
   showMinigame: WorldItem | null;
   isLooterGameMode: boolean;
   isChallengeActive: boolean;
+  isItemDragging: boolean;
   globalSettings: any;
   isMoving: boolean;
   isSyncing: boolean;
@@ -155,5 +167,5 @@ export function useLooterActions() {
 export function useLooterGame() {
   const state = useLooterState();
   const actions = useLooterActions();
-  return { ...state, ...actions };
+  return { ...state, ...state.state, ...actions };
 }

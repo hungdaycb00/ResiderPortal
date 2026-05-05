@@ -7,6 +7,7 @@ export interface LooterItem {
   id: string;
   name: string;
   icon: string;
+  type?: 'item' | 'bag' | 'portal' | 'grid_expander';
   rarity: string;
   tier: number;
   price: number;
@@ -23,6 +24,10 @@ export interface LooterItem {
   shape?: (number | boolean)[][];
   floatX?: number;
   floatY?: number;
+  stagingX?: number;
+  stagingY?: number;
+  currentLat?: number;
+  currentLng?: number;
 }
 
 export interface GridExpander {

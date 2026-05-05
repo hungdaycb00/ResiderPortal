@@ -14,11 +14,11 @@ export function useGeolocation() {
   const [position, setPosition] = useState<[number, number] | null>(() => {
     const lastPos = localStorage.getItem('alin_last_position');
     if (lastPos) {
-      try {
-        const parsed = JSON.parse(lastPos);
-        if (Array.isArray(parsed) && parsed.length >= 2) return parsed;
-      } catch (e) {}
-    }
+        try {
+          const parsed = JSON.parse(lastPos);
+          if (Array.isArray(parsed) && parsed.length >= 2) return [Number(parsed[0]), Number(parsed[1])];
+        } catch (e) {}
+      }
     return defaultPosition;
   });
   const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(() => {

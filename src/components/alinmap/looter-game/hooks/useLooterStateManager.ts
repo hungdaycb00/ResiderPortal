@@ -6,7 +6,7 @@ import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
 import type { LooterChunkCacheEntry, LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
 
-const LOOT_RENDER_LIMIT = 3;
+const LOOT_RENDER_LIMIT = 5;
 
 interface UseLooterStateManagerProps {
   deviceId: string | null;
@@ -46,7 +46,7 @@ export function useLooterStateManager({
   const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number }) => {
     if (!deviceId) return;
     try {
-      const radius = 3;
+      const radius = 4;
       const now = Date.now();
       const cacheTtlMs = forceActive ? 0 : 90_000;
       const maxCacheEntries = 80;
@@ -155,6 +155,25 @@ export function useLooterStateManager({
         items = [...portalItems, ...normalItems];
       }
       setWorldItems(items);
+
+      if (normalItems.length < 2) {
+        try {
+          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
+          if (fallback.success) {
+            const fallbackItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
+            const merged = new Map<string, WorldItem>();
+            for (const item of [...portalItems, ...normalItems, ...fallbackItems]) {
+              if (!item?.spawnId) continue;
+              if (consumedSpawnIdsRef.current.has(item.spawnId)) continue;
+              if ((item as any)?.item?.type === 'portal' && merged.has(item.spawnId)) continue;
+              merged.set(item.spawnId, item);
+            }
+            setWorldItems(Array.from(merged.values()));
+          }
+        } catch (fallbackErr) {
+          console.warn('[LooterGame] world-items fallback failed:', fallbackErr);
+        }
+      }
     } catch (err) {
       console.error('[LooterGame] loadWorldItems error:', err);
     }
@@ -236,7 +255,7 @@ export function useLooterStateManager({
         setTimeout(() => loadWorldItems(true), 500);
       } else {
         setIsChallengeActive(false);
-        notify(data?.error || 'Khong the bat dau thu thach', 'error');
+        notify(data?.error || 'Không thể bắt đầu thử thách', 'error');
       }
     } catch (err) {
       console.error('[LooterGame] setWorldTier error:', err);

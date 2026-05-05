@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS } from '../LooterGameContext';
+import { isItemFullyInsideBag } from '../utils/looterHelpers';
 import { calculateCurseGain, rollCurse } from '../engine/curses';
 import { generateBot } from '../engine/entities';
 import { calcTotalStats } from '../engine/combat';
@@ -48,7 +49,7 @@ export function useLooterMovement({
       const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
 
       if ((state.worldTier ?? -1) === -1 && distToFortress > FORTRESS_INTERACTION_METERS) {
-        if (!isStep) notify('Ban can bat dau thu thach moi de ra khoi!', 'info');
+        if (!isStep) notify('Bạn cần bắt đầu thử thách mới để ra khỏi khu vực này!', 'info');
         return { curseTrigger: false, encounter: null };
       }
 
@@ -59,20 +60,7 @@ export function useLooterMovement({
         const activeBag = state.bags?.[0];
         itemsToDrop = (state.inventory || []).filter(item => {
           if (item.gridX < 0 || item.gridY < 0) return true;
-          if (!activeBag) return true;
-
-          const bagX = activeBag.gridX ?? 0;
-          const bagY = activeBag.gridY ?? 0;
-          const bagW = activeBag.width ?? 5;
-          const bagH = activeBag.height ?? 5;
-          const itemW = item.gridW ?? 1;
-          const itemH = item.gridH ?? 1;
-          return (
-            item.gridX < bagX ||
-            item.gridY < bagY ||
-            item.gridX + itemW > bagX + bagW ||
-            item.gridY + itemH > bagY + bagH
-          );
+          return !isItemFullyInsideBag(item, activeBag);
         });
       }
 
@@ -161,7 +149,7 @@ export function useLooterMovement({
         } else if (!deviceId) {
           await saveInventory(cleanedInventory);
         }
-        notify(`Da nem ${itemsToDrop.length} vat pham ra Map`, 'info');
+        notify(`Đã ném ${itemsToDrop.length} vật phẩm ra biển`, 'info');
       }
 
       if (distToFortress > FORTRESS_INTERACTION_METERS) {
@@ -200,7 +188,7 @@ export function useLooterMovement({
           storage: Array.isArray(data.state?.storage) ? data.state.storage : prev.storage,
         }));
         setIsChallengeActive(false);
-        notify('Da quay ve Thanh tri', 'success');
+        notify('Đã quay về thành trì', 'success');
       }
     } catch (err) {
       console.error('[LooterGame] returnToFortress error:', err);

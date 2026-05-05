@@ -44,7 +44,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         src={normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`}
                         alt="Avatar"
                         className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
-                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`; }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`; }}
                     />
                 </div>
                 <div className="flex-1 min-w-0 pt-1">

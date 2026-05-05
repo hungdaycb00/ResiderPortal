@@ -75,6 +75,7 @@ export function useLooterInventory({
       width: bagW,
       height: bagH,
       shape: bagShape,
+      rotated: false,
       gridX: currentBag.gridX,
       gridY: currentBag.gridY
     };

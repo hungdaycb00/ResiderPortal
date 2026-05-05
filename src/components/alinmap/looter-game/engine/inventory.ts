@@ -47,7 +47,7 @@ function buildBagOccupancy(bags) {
 function validateInventoryWithBags(items, bags) {
   // Validate that all placed items sit on bag cells
   const bagOcc = buildBagOccupancy(bags);
-  const itemOcc = buildItemOccupancy(items);
+  const itemOcc = buildItemOccupancy(items, null);
 
   for (const item of items) {
     if (item.gridX < 0 || item.gridY < 0) continue;

@@ -11,9 +11,12 @@ function rollCurse(cursePercent) {
 function calculateCurseGain(type, distanceMeters, activeCurses = {}) {
   const settings = getSettings();
   const distPerCurse = settings.distancePerCurseMeters || 250;
+  const curses = (activeCurses && typeof activeCurses === 'object' && !Array.isArray(activeCurses)
+    ? activeCurses
+    : {}) as Record<string, number>;
   
   // Apply Curse Mult (5% increase each stack)
-  const curseMult = 1 + (activeCurses.curse_gain || 0) * 0.05;
+  const curseMult = 1 + (curses.curse_gain || 0) * 0.05;
 
   if (type === 'move') {
     // Tăng 1% mỗi distPerCurse mét. Tối đa 15% mỗi lần di chuyển

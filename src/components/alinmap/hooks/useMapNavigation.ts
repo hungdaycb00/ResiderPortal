@@ -12,7 +12,7 @@ interface UseMapNavigationParams {
   user?: any;
 }
 
-export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'backpack';
+export type MainTab = 'discover' | 'friends' | 'profile' | 'notifications' | 'backpack' | 'creator';
 
 export function useMapNavigation({
   initialMainTab, myObfPos, ws, onTabChange, handleRefresh, requireAuth, user,
@@ -153,7 +153,7 @@ export function useMapNavigation({
   return {
     panX, panY, scale, selfDragX, selfDragY,
     isSheetExpanded, setIsSheetExpanded,
-    isDesktop, mainTab, setMainTab,
+    isDesktop, mainTab, setMainTab: (tab: string) => setMainTab(tab as MainTab),
     activeTab, setActiveTab,
     mapMode, setMapMode,
     selectedUser, setSelectedUser,

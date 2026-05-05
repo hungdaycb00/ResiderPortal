@@ -15,7 +15,7 @@ function canPlaceBotItem(placedItems, item, x, y, bag) {
   
   const occupied = new Set();
   for (const placed of placedItems) {
-    if (!isPlacedCombatItem(placed)) continue;
+    if (!isPlacedCombatItem(placed, bag)) continue;
     const pW = toFiniteNumber(placed.gridW, 1);
     const pH = toFiniteNumber(placed.gridH, 1);
     const pShape = placed.shape;

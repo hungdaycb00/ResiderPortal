@@ -5,6 +5,7 @@ import { useLooterState, useLooterActions } from './looter-game/LooterGameContex
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
+    looterState?: any;
     boatTargetPin: { lat: number; lng: number } | null;
     boatOffsetX: MotionValue<number>;
     boatOffsetY: MotionValue<number>;

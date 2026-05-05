@@ -27,10 +27,12 @@ interface MapCanvasProps {
     myUserId: string | null;
     user: any;
     myDisplayName: string;
+    myAvatarUrl: string;
     myStatus: string;
     isVisibleOnMap: boolean;
     isConnecting: boolean;
     isDesktop: boolean;
+    friends?: any[];
     currentProvince: string | null;
     galleryActive: boolean;
     galleryTitle: string;
@@ -55,6 +57,7 @@ interface MapCanvasProps {
     handleWheel: (e: React.WheelEvent) => void;
     mapMode: 'grid' | 'satellite';
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
+    isLooterGameMode?: boolean;
     isLooterLoading?: boolean;
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;

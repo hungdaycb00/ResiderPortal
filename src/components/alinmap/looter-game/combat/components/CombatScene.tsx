@@ -1,8 +1,8 @@
 import React from 'react';
 import { Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Encounter } from '../LooterGameContext';
-import type { LooterItem } from '../backpack/types';
+import type { Encounter } from '../../LooterGameContext';
+import type { LooterItem } from '../../backpack/types';
 
 interface CombatSceneProps {
     encounter: Encounter;

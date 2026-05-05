@@ -124,6 +124,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [centerBoatHandler, setCenterBoatHandler] = useState<((yOffset?: number) => void) | null>(null);
   const [centerCombatHandler, setCenterCombatHandler] = useState<((yOffset?: number) => void) | null>(null);
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
+  const [isItemDragging, setIsItemDragging] = useState(false);
 
   const API_URL = useMemo(() => getLooterServerUrl(), []);
   const saveTimerRef = useRef<any>(null);
@@ -212,9 +213,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     centerOnCombat: (yOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset); },
     setCenterCombatHandler,
     setIsChallengeActive,
+    setIsItemDragging,
     
     initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
-    loadState: (opts) => runInQueue(() => stateManager.loadState(), opts),
+    loadState: () => runInQueue(() => stateManager.loadState()),
     moveBoat: (lat, lng, isStep, stepDist) => runInQueue(() => movement.moveBoat(lat, lng, isStep, stepDist)),
     // Pickup và penalty chạy song song — không block bởi heartbeat loadState
     pickupItem: (spawnId, directItem, currentLat, currentLng) => inventory.pickupItem(spawnId, directItem, currentLat, currentLng),
@@ -239,9 +241,13 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     saveStorage: (st) => {
       setState(prev => ({ ...prev, storage: st }));
       if (storageTimerRef.current) clearTimeout(storageTimerRef.current);
-      storageTimerRef.current = setTimeout(() => {
-        runInQueue(() => inventory.saveStorage(st));
-      }, 500);
+      return new Promise<void>((resolve) => {
+        storageTimerRef.current = setTimeout(() => {
+          runInQueue(() => inventory.saveStorage(st))
+            .then(() => resolve())
+            .catch(() => resolve());
+        }, 500);
+      });
     },
     saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
     equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),
@@ -261,22 +267,27 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     stateManager, inventory, movement, runInQueue, openBackpack, showNotification,
     centerBoatHandler, centerCombatHandler, setCenterBoatHandler, setCenterCombatHandler,
     setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
-    setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen,
+    setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen, setIsItemDragging,
     notify, clearPregeneratedFruit, deviceId, API_URL
   ]);
 
   const stateValue: LooterGameStateContextType = useMemo(() => ({
     state,
+    inventory: state.inventory,
+    storage: state.storage,
+    bags: state.bags,
+    cursePercent: state.cursePercent,
     worldItems,
     encounter: ui.encounter, combatResult: ui.combatResult,
     showCurseModal: ui.showCurseModal, showMinigame: ui.showMinigame,
     isLooterGameMode: ui.isLooterGameMode,
     isChallengeActive: ui.isChallengeActive,
+    isItemDragging,
     isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,
     isIntegratedStorageOpen: ui.isIntegratedStorageOpen,
     globalSettings, isMoving: movement.isMoving, isSyncing,
     pregeneratedMinigames
-  }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing, pregeneratedMinigames]);
+  }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing, pregeneratedMinigames, isItemDragging]);
 
   // 4. Effects
   

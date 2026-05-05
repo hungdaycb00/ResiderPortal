@@ -63,9 +63,6 @@ const MapControls: React.FC<MapControlsProps> = ({
             centerOnCombat(yOffset);
         } else {
             centerOnBoat(yOffset);
-            if (state.currentLat != null && state.currentLng != null) {
-                handleCenterTo(state.currentLat, state.currentLng, yOffset);
-            }
         }
     };
 

@@ -7,10 +7,11 @@ export type DocMode = 'offline' | 'multiplayer';
 export interface CreatorViewProps {
   user: any;
   showNotification: (msg: string, type: 'success' | 'error' | 'info') => void;
-  onPublishSuccess: () => void;
-  onPlayGame: (game: any) => void;
+  onPublishSuccess?: () => void;
+  onPlayGame?: (game: any) => void;
   cloudflareUrl: string;
-  triggerAuth: (callback: () => void) => void;
+  triggerAuth?: (callback: () => void) => void;
+  externalApi?: any;
   externalOpenList?: boolean;
   onOpenListChange?: (open: boolean) => void;
 }

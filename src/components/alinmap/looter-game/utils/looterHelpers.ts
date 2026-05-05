@@ -5,7 +5,7 @@ import { MAX_GRID_W, MAX_GRID_H } from '../backpack/constants';
 
 const { PORTAL_SPACING_METERS, PORTAL_SEARCH_RADIUS } = GAME_CONFIG;
 const CHUNK_SIZE_METERS = 1000;
-const MAX_VISIBLE_PORTALS = 1;
+const MAX_VISIBLE_PORTALS = 2;
 
 export const chunkKey = (chunkX: number, chunkY: number) => `${chunkX}:${chunkY}`;
 
@@ -173,4 +173,30 @@ export const findEmptySlotFor = (
   }
   
   return null;
+};
+
+export const isItemFullyInsideBag = (item: LooterItem, bag?: BagItem | null) => {
+  if (!bag) return false;
+  if (item.gridX < 0 || item.gridY < 0) return false;
+
+  const itemWidth = item.gridW || 1;
+  const itemHeight = item.gridH || 1;
+  const itemShape = item.shape;
+
+  for (let row = 0; row < itemHeight; row += 1) {
+    for (let col = 0; col < itemWidth; col += 1) {
+      if (itemShape && itemShape[row] && !itemShape[row][col]) continue;
+
+      const bagX = item.gridX + col - bag.gridX;
+      const bagY = item.gridY + row - bag.gridY;
+      if (bagX < 0 || bagY < 0 || bagX >= bag.width || bagY >= bag.height) {
+        return false;
+      }
+      if (!bag.shape?.[bagY]?.[bagX]) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 };

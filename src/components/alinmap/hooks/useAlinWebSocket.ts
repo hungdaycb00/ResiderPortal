@@ -433,6 +433,7 @@ export function useAlinWebSocket({
     ws,
     isConnecting,
     wsStatus,
+    isVisibleOnMap: isVisibleOnMapRef.current,
     myUserId,
     addLog,
     nearbyUsers,

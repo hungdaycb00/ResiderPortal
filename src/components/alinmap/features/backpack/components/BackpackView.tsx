@@ -5,6 +5,7 @@ import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { getBagBonuses, MAX_GRID_W, MAX_GRID_H, InventoryGrid } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
+import { isItemFullyInsideBag } from '../../../looter-game/utils/looterHelpers';
 
 const BAG_SLOT_RARITY: Record<string, string> = {
   common: 'border-sky-500/40 bg-sky-950/20 text-sky-200',
@@ -26,7 +27,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     state, saveInventory, equipBag, dropItems,
     isIntegratedStorageOpen,
     fortressStorageMode,
-    storeItems, encounter, isMoving
+    storeItems, encounter, isMoving, setIsItemDragging
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -43,29 +44,10 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     saveInventory(newItems);
   }, [saveInventory]);
 
-  const isItemInsideBag = useCallback((item: LooterItem, bag: BagItem) => {
-    const w = item.gridW || 1;
-    const h = item.gridH || 1;
-    const shape = item.shape;
-
-    for (let r = 0; r < h; r++) {
-      for (let c = 0; c < w; c++) {
-        if (!shape || shape[r][c]) {
-          const bx = item.gridX + c - bag.gridX;
-          const by = item.gridY + r - bag.gridY;
-          if (bx < 0 || by < 0 || bx >= bag.width || by >= bag.height || !bag.shape[by][bx]) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }, []);
-
   const totalStats = useMemo(() => {
     if (!activeBag) return { hp: 0, weight: 0, energyMax: 0, regen: 0 };
 
-    return state.inventory.filter((item) => item.gridX >= 0 && isItemInsideBag(item, activeBag)).reduce(
+    return state.inventory.filter((item) => item.gridX >= 0 && isItemFullyInsideBag(item, activeBag)).reduce(
       (acc, item) => ({
         hp: acc.hp + (item.hpBonus || 0),
         weight: acc.weight + (item.weight || 0),
@@ -74,7 +56,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
       }),
       { hp: bagStats.hp, weight: bagStats.weight, energyMax: bagStats.energyMax, regen: bagStats.regen }
     );
-  }, [state.inventory, activeBag, bagStats, isItemInsideBag]);
+  }, [state.inventory, activeBag, bagStats]);
 
   const dynamicGridH = useMemo(() => {
     const headerHeight = 48;
@@ -96,22 +78,12 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
   useEffect(() => {
     if (state.currentLat === null || state.currentLng === null) return;
 
-    const hasMoved = state.currentLat !== lastPosRef.current.lat || state.currentLng !== lastPosRef.current.lng;
-
-    if (hasMoved && activeBag) {
-      const itemsOutside = state.inventory.filter(item =>
-        item.gridX >= 0 && !isItemInsideBag(item, activeBag)
-      );
-
-      if (itemsOutside.length > 0) {
-        console.log(`[Looter] Boat moved, dropping ${itemsOutside.length} items outside bag`);
-        const uids = itemsOutside.map(i => i.uid);
-        dropItems(uids, state.currentLat, state.currentLng);
-      }
-    }
-
     lastPosRef.current = { lat: state.currentLat, lng: state.currentLng };
-  }, [state.currentLat, state.currentLng, state.inventory, activeBag, dropItems, isItemInsideBag]);
+  }, [state.currentLat, state.currentLng]);
+
+  useEffect(() => {
+    setIsItemDragging?.(!!draggingItem);
+  }, [draggingItem, setIsItemDragging]);
 
   useEffect(() => {
     if (!draggingItem || (draggingItem as any).type !== 'bag') {
@@ -173,9 +145,27 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             <Swords className="h-3.5 w-3.5 text-orange-500" />
             <span className="text-[12px] font-black">{totalStats.weight}</span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => (window as any).collapseLooterTab?.()}
+            className="p-2 text-white/40 hover:text-white transition-colors"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="sticky top-0 z-[145] px-4 py-3 bg-[#040911]/95 backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/40">Balo active</p>
+            <p className="text-[13px] font-black text-white/90 truncate">{activeBag?.name || 'Chưa có balo'}</p>
+          </div>
           <div
             id="header-bag-slot"
-            className={`h-10 w-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg ${(draggingItem as any)?.type === 'bag'
+            className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center transition-all shadow-lg ${(draggingItem as any)?.type === 'bag'
               ? isHoveringBagSlot
                 ? 'scale-125 border-yellow-400 bg-yellow-400/20 ring-4 ring-yellow-400/20 shadow-[0_0_20px_rgba(250,204,21,0.4)]'
                 : 'scale-110 border-cyan-400 bg-cyan-400/10 animate-pulse shadow-[0_0_15px_rgba(34,211,238,0.3)]'
@@ -194,15 +184,6 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           >
             <span className="text-2xl leading-none">{activeBag?.icon || '🎒'}</span>
           </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => (window as any).collapseLooterTab?.()}
-            className="p-2 text-white/40 hover:text-white transition-colors"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
         </div>
       </div>
 

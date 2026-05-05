@@ -7,6 +7,7 @@ import PostCard from '../../profile/components/PostCard';
 interface SocialViewProps {
     myUserId: string | null;
     myObfPos: { lat: number; lng: number } | null;
+    friends: any[];
     nearbyUsers: any[];
     setSelectedUser: (user: any) => void;
     radius: number;
@@ -23,8 +24,8 @@ interface SocialViewProps {
     setIsCreatingPost: (v: boolean) => void;
     postTitle: string;
     setPostTitle: (v: string) => void;
-    postPrivacy: string;
-    setPostPrivacy: (v: string) => void;
+    postPrivacy: 'public' | 'friends' | 'private';
+    setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;
     isSavingPost: boolean;
     handleCreatePost: (files: File[]) => void;
     handleUpdatePostPrivacy: (postId: string, privacy: string) => void;

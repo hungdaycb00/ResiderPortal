@@ -19,8 +19,9 @@ export function useCombatCamera(
 
   useEffect(() => {
     // Nếu bắt đầu một trận đấu mới
-    if (encounter && encounter.spawnId !== lastEncounterUid.current) {
-      lastEncounterUid.current = encounter.spawnId;
+    const encounterKey = encounter.spawnId || encounter.id;
+    if (encounter && encounterKey !== lastEncounterUid.current) {
+      lastEncounterUid.current = encounterKey;
       
       // Delay nhẹ 300ms để đợi UI Combat mở ra rồi mới trượt camera cho mượt
       const timer = setTimeout(() => {

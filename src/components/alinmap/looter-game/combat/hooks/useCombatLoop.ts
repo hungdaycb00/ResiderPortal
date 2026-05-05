@@ -29,7 +29,7 @@ export function useCombatLoop({
 
     const combatLogRef = useRef<any[]>([]);
     const currentIdxRef = useRef(0);
-    const frameRef = useRef<number>();
+    const frameRef = useRef<number | null>(null);
 
     const actionProgressARef = useRef(0);
     const actionProgressBRef = useRef(0);
@@ -214,7 +214,7 @@ export function useCombatLoop({
     };
 
     const skipCombat = () => {
-        if (frameRef.current) cancelAnimationFrame(frameRef.current);
+        if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
         if (pendingResult) {
             setHpA(pendingResult.finalHpA ?? pendingResult.finalHp ?? 0);
             setHpB(pendingResult.finalHpB ?? (pendingResult.result === 'win' ? 0 : 10));
@@ -224,7 +224,7 @@ export function useCombatLoop({
 
     useEffect(() => {
         return () => {
-            if (frameRef.current) cancelAnimationFrame(frameRef.current);
+            if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
         };
     }, []);
 

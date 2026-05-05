@@ -1,8 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { CombatResult } from '../LooterGameContext';
-import type { LooterItem } from '../backpack/types';
+import type { CombatResult } from '../../LooterGameContext';
+import type { LooterItem } from '../../backpack/types';
 
 interface FleeConfirmOverlayProps {
     show: boolean;

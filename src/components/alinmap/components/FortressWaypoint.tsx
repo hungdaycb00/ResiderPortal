@@ -15,7 +15,7 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
     const { state: looterState } = useLooterState();
     const [isVisible, setIsVisible] = useState(false);
     const [waypointStyle, setWaypointStyle] = useState({ left: 0, top: 0, rotate: 0 });
-    const rafRef = useRef<number>();
+    const rafRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (!looterState?.fortressLat || !looterState?.fortressLng || !myObfPos) {
@@ -79,7 +79,7 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
 
         rafRef.current = requestAnimationFrame(updatePosition);
         return () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
         };
     }, [looterState?.fortressLat, looterState?.fortressLng, myObfPos, panX, panY, scale, isVisible]);
 
