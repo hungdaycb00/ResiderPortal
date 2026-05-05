@@ -5,8 +5,24 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  const stylesheetVersion = Date.now().toString(36);
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: 'version-stylesheet-assets',
+        transformIndexHtml(html) {
+          return html.replace(/<link\b[^>]*>/g, (tag) => {
+            if (!/\brel=["']stylesheet["']/.test(tag)) return tag;
+            return tag.replace(
+              /\bhref=["'](\/assets\/[^"']+\.css)["']/,
+              `href="$1?css_v=${stylesheetVersion}"`,
+            );
+          });
+        },
+      },
+    ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
