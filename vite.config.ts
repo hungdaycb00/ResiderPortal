@@ -1,9 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import fs from 'fs/promises';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
-import type {Plugin} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
@@ -33,8 +31,7 @@ export default defineConfig(({mode}) => {
           manualChunks(id) {
             const normalizedId = id.split(path.sep).join('/');
             if (!normalizedId.includes('node_modules')) {
-              if (normalizedId.includes('/src/components/alinmap/looter-game/')) return 'feature-looter';
-              if (normalizedId.includes('/src/components/alinmap/')) return 'feature-alinmap';
+              if (normalizedId.includes('/src/components/alinmap/') || normalizedId.includes('/src/components/AlinMap')) return 'feature-map';
               if (normalizedId.includes('/src/components/creator/')) return 'feature-creator';
               if (normalizedId.includes('/src/components/tabs/')) return 'feature-tabs';
               if (normalizedId.includes('/src/components/')) return 'app-components';
