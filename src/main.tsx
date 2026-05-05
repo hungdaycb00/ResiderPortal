@@ -4,6 +4,16 @@ import {BrowserRouter} from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && event.reason.message.includes('Failed to fetch dynamically imported module')) {
+      event.preventDefault();
+      console.warn('[Auto-Recovery] Lazy load thất bại (phiên bản cũ), đang ép tải lại...');
+      window.location.reload();
+    }
+  });
+}
+
 if (typeof window !== 'undefined' && 'ontouchstart' in window) {
   let lastTouchEnd = 0;
   document.addEventListener(

@@ -4,8 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Alin.city</title>
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          const url = e.target.src || e.target.href;
+          if (url && url.includes('/assets/')) {
+            console.warn('[Auto-Recovery] Phát hiện asset cũ hoặc lỗi kết nối, đang ép tải lại trang...');
+            if (!sessionStorage.getItem('reloaded_once_asset')) {
+              sessionStorage.setItem('reloaded_once_asset', 'true');
+              window.location.reload(true);
+            }
+          }
+        }
+      }, true);
+    </script>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*.trycloudflare.com https://static.cloudflareinsights.com https://api.alin.city https://*.alin.city https://alin.city; frame-src 'self' data: blob: https://*.trycloudflare.com https://*.alin.city https://alin.city; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.trycloudflare.com wss://*.trycloudflare.com http://localhost:* ws://localhost:* wss://localhost:* https://ipapi.co https://api.alin.city wss://api.alin.city wss://alin-social.alin.city https://*.alin.city wss://*.alin.city https://alin.city wss://alin.city https://www.alin.city wss://www.alin.city https://nominatim.openstreetmap.org https://api.open-meteo.com; img-src 'self' data: blob: https://* http://localhost:*;">
-    <script type="module" crossorigin src="/assets/app-BSjTqufL.js"></script>
+    <script type="module" crossorigin src="/assets/app-BdEuO2s6.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-react-B905YyMg.js">
     <link rel="modulepreload" crossorigin href="/assets/app-services-Bh9V3Mm2.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-motion-CCyGiS-J.js">
