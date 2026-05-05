@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLooterGame } from './looter-game/LooterGameContext';
 import { RefreshCw, Filter, LocateFixed, X, Copy, Check, ChevronDown, ChevronUp, Waves, Navigation, Home, Cloud } from 'lucide-react';
 import { motion, AnimatePresence, MotionValue } from 'framer-motion';
+import { LocateBoatButton } from './LocateBoatButton';
 
 interface MapControlsProps {
     isConnecting: boolean;
@@ -50,21 +51,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     
     const [copyToast, setCopyToast] = useState(false);
 
-    const handleLocateBoat = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
 
-        const backpack = document.getElementById('looter-backpack-container');
-        const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-        const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
-        const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
-
-        if (encounter) {
-            centerOnCombat(yOffset);
-        } else {
-            centerOnBoat(yOffset);
-        }
-    };
 
     const handleCopyLocation = () => {
         if (!myObfPos) return;
@@ -81,18 +68,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4' : 'opacity-100 translate-x-0'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 {/* Sync Indicator */}
 
-                {isLooterGameMode && (
-                    <button
-                        type="button"
-                        data-map-interactive="true"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={handleLocateBoat}
-                        className="w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-cyan-500/60 bg-[#0a1526]/85 text-cyan-300 shadow-[0_0_24px_rgba(8,145,178,0.35)] backdrop-blur-xl flex items-center justify-center active:scale-95 transition-all hover:bg-[#0f213a] hover:border-cyan-300"
-                        title="Định vị thuyền"
-                    >
-                        <LocateFixed className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                )}
+                <LocateBoatButton />
 
                 {!isLooterGameMode && (
                     <>

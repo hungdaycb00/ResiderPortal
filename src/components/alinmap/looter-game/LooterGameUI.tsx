@@ -30,27 +30,12 @@ const LooterGameUI: React.FC = () => {
         isChallengeActive,
         isLooterGameMode,
     } = useLooterState();
-    const { setWorldTier, centerOnBoat, centerOnCombat } = useLooterActions();
+    const { setWorldTier } = useLooterActions();
 
 
     if (!isLooterGameMode) return null;
 
-    const handleLocateBoat = () => {
-        let yOffset = 0;
-        if (!isDesktop) {
-            const backpack = document.getElementById('looter-backpack-container');
-            const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-            if (backpackTop < window.innerHeight) {
-                yOffset = (window.innerHeight / 2) - (backpackTop / 2);
-            }
-        }
 
-        if (encounter) {
-            centerOnCombat(yOffset);
-        } else {
-            centerOnBoat(yOffset);
-        }
-    };
 
     return (
         <>

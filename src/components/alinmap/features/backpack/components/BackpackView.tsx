@@ -27,7 +27,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
     state, saveInventory, saveBags, equipBag, dropItems,
     isIntegratedStorageOpen,
     fortressStorageMode,
-    storeItems, encounter, isMoving, setIsItemDragging
+    storeItems, encounter, isMoving, setIsItemDragging, sellItems
   } = useLooterGame();
   const [isHoveringBagSlot, setIsHoveringBagSlot] = useState(false);
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
@@ -231,6 +231,21 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             }}
             onDropOutside={(item, e) => {
               if (e) {
+                // Check Global Sell Zone
+                const sellZone = document.getElementById('global-sell-zone');
+                if (sellZone) {
+                  const sRect = sellZone.getBoundingClientRect();
+                  if (
+                    e.clientX >= sRect.left - 10 &&
+                    e.clientX <= sRect.right + 10 &&
+                    e.clientY >= sRect.top - 10 &&
+                    e.clientY <= sRect.bottom + 10
+                  ) {
+                    if (sellItems) sellItems([item.uid]);
+                    return;
+                  }
+                }
+
                 const bagSlot = document.getElementById('header-bag-slot');
                 if (bagSlot) {
                   const rect = bagSlot.getBoundingClientRect();

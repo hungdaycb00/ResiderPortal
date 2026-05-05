@@ -22,6 +22,7 @@ interface UseLooterStateManagerProps {
   isChallengeActive: boolean;
   chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
   consumedSpawnIdsRef: React.MutableRefObject<Set<string>>;
+  saveInventory?: (inventory: LooterItem[]) => Promise<boolean>;
 }
 
 export function useLooterStateManager({
@@ -37,7 +38,8 @@ export function useLooterStateManager({
   saveBags,
   syncState,
   chunkCacheRef,
-  consumedSpawnIdsRef
+  consumedSpawnIdsRef,
+  saveInventory
 }: UseLooterStateManagerProps) {
   const chunkBackoffUntilRef = useRef(0);
   const chunkRequestRef = useRef<Promise<any> | null>(null);
@@ -314,6 +316,10 @@ export function useLooterStateManager({
 
           const nextState = { ...prev, inventory: newInventory, currentHp: hp };
           syncState(nextState);
+          // Actual server save for inventory to prevent lost items from coming back
+          if (saveInventory && result.winner === 'B') {
+              saveInventory(newInventory);
+          }
           return nextState;
       });
 

@@ -188,7 +188,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const stateManager = useLooterStateManager({
     deviceId, apiUrl: API_URL, state, setState, setWorldItems,
     setIsChallengeActive, setGlobalSettings, notify, isChallengeActive: ui.isChallengeActive,
-    saveBags, syncState, chunkCacheRef, consumedSpawnIdsRef
+    saveBags, syncState, saveInventory, chunkCacheRef, consumedSpawnIdsRef
   });
 
   const inventory = useLooterInventory({

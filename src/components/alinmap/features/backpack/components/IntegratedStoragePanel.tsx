@@ -162,16 +162,7 @@ export default function IntegratedStoragePanel() {
     }
   }, [isReturning, openFortressStorage, returnToFortress]);
 
-  // Check if item was dropped on sell zone
-  const checkSellZoneDrop = useCallback((item: LooterItem, e?: { clientX: number; clientY: number }) => {
-    if (!e || !sellZoneRef.current) return false;
-    const rect = sellZoneRef.current.getBoundingClientRect();
-    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-      sellItems([item.uid]);
-      return true;
-    }
-    return false;
-  }, [sellItems]);
+
 
   if (!isIntegratedStorageOpen) return null;
 
@@ -247,10 +238,21 @@ export default function IntegratedStoragePanel() {
                 }}
                 onDropOutside={(item, e) => {
                   if (isTransporting) return;
-                  // Check sell zone first
-                  if (checkSellZoneDrop(item, e)) return;
-
+                  
                   if (e) {
+                    const sellZone = document.getElementById('global-sell-zone');
+                    if (sellZone) {
+                      const sRect = sellZone.getBoundingClientRect();
+                      if (
+                        e.clientX >= sRect.left - 10 &&
+                        e.clientX <= sRect.right + 10 &&
+                        e.clientY >= sRect.top - 10 &&
+                        e.clientY <= sRect.bottom + 10
+                      ) {
+                        sellItems([item.uid]);
+                        return;
+                      }
+                    }
                     const backpack = document.getElementById('looter-backpack-container');
                     if (backpack) {
                       const rect = backpack.getBoundingClientRect();
@@ -271,25 +273,7 @@ export default function IntegratedStoragePanel() {
               />
             </div>
 
-            {/* Sell Drop Zone - Dưới grid để dễ kéo thả trên mobile */}
-            <div className="flex justify-center pb-3">
-              <div
-                ref={sellZoneRef}
-                onDragOver={(e) => { e.preventDefault(); setSellZoneHover(true); }}
-                onDragLeave={() => setSellZoneHover(false)}
-                onDrop={() => setSellZoneHover(false)}
-                className={`flex items-center gap-2 rounded-xl border-2 border-dashed px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-                  isItemDragging
-                    ? sellZoneHover
-                      ? 'border-yellow-400 bg-yellow-500/30 text-yellow-300 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
-                      : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400 animate-pulse'
-                    : 'border-white/10 bg-white/5 text-white/30'
-                }`}
-              >
-                <DollarSign className="h-5 w-5" />
-                Kéo item vào đây để bán
-              </div>
-            </div>
+
           </div>
           </div>
         </motion.div>
