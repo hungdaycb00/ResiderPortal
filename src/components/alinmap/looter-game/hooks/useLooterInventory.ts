@@ -237,7 +237,7 @@ export function useLooterInventory({
         // Lưu ý: setWorldItems(prev => ...) là cách duy nhất để lấy 'prev' mới nhất nếu không dùng Ref.
         // Tuy nhiên, vì ta muốn dùng item đó NGAY LẬP TỨC để update inventory, ta nên tìm nó trước.
         setWorldItems(prev => {
-            pickedWorldItem = prev.find(i => i.spawnId === spawnId);
+            pickedWorldItem = prev.find((i: any) => i && i.spawnId === spawnId);
             return prev;
         });
     } else {
@@ -269,9 +269,9 @@ export function useLooterInventory({
 
       consumedSpawnIdsRef.current.add(spawnId);
       for (const entry of chunkCacheRef.current.values()) {
-        entry.items = entry.items.filter(i => i.spawnId !== spawnId);
+        entry.items = entry.items.filter((i: any) => i && i.spawnId !== spawnId);
       }
-      setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+      setWorldItems(prev => prev.filter((i: any) => i && i.spawnId !== spawnId));
 
       if (Array.isArray(result.inventory)) {
         setState(prev => ({
@@ -329,9 +329,9 @@ export function useLooterInventory({
     if (pickedWorldItem) {
         consumedSpawnIdsRef.current.add(spawnId);
         for (const entry of chunkCacheRef.current.values()) {
-          entry.items = entry.items.filter(i => i.spawnId !== spawnId);
+          entry.items = entry.items.filter((i: any) => i && i.spawnId !== spawnId);
         }
-        setWorldItems(prev => prev.filter(i => i.spawnId !== spawnId));
+        setWorldItems(prev => prev.filter((i: any) => i && i.spawnId !== spawnId));
         processPickup(pickedWorldItem);
     } else {
         // Fallback nếu vẫn chưa tìm thấy (do race condition của setWorldItems)
@@ -361,7 +361,7 @@ export function useLooterInventory({
       });
 
       if (Array.isArray(result.items) && result.items.length > 0) {
-        const droppedItems = result.items as WorldItem[];
+        const droppedItems = (result.items as WorldItem[]).filter((item: any): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId);
         const now = Date.now();
         for (const item of droppedItems) {
           if (item.chunkX == null || item.chunkY == null) continue;
@@ -380,7 +380,7 @@ export function useLooterInventory({
             });
           }
         }
-        setWorldItems(wItems => [...wItems.filter(i => !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
+        setWorldItems(wItems => [...wItems.filter((i: any) => i && !droppedItems.some(item => item.spawnId === i.spawnId)), ...droppedItems]);
       }
     } catch (err) {
       console.error('[LooterGame] drop item error:', err);

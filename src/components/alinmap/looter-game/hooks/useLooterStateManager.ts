@@ -142,6 +142,7 @@ export function useLooterStateManager({
       const curLng = centerLng ?? state.fortressLng ?? 0;
       const normalItems = chunkKeys
         .flatMap(key => cache.get(key)?.items || [])
+        .filter((item): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId)
         .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal')
         .sort((a, b) => {
           const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
@@ -160,10 +161,12 @@ export function useLooterStateManager({
         try {
           const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId);
           if (fallback.success) {
-            const fallbackItems: WorldItem[] = Array.isArray(fallback.items) ? fallback.items : [];
-            const merged = new Map<string, WorldItem>();
-            for (const item of [...portalItems, ...normalItems, ...fallbackItems]) {
-              if (!item?.spawnId) continue;
+              const fallbackItems: WorldItem[] = Array.isArray(fallback.items)
+                ? fallback.items.filter((item: any): item is WorldItem => !!item && typeof item === 'object' && !!item.spawnId)
+                : [];
+              const merged = new Map<string, WorldItem>();
+              for (const item of [...portalItems, ...normalItems, ...fallbackItems]) {
+                if (!item?.spawnId) continue;
               if (consumedSpawnIdsRef.current.has(item.spawnId)) continue;
               if ((item as any)?.item?.type === 'portal' && merged.has(item.spawnId)) continue;
               merged.set(item.spawnId, item);
