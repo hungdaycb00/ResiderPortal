@@ -1,4 +1,7 @@
 import {lazy, StrictMode, Suspense} from 'react';
+
+// Build version identifier — changing this forces new asset hashes
+export const BUILD_VERSION = '2026.05.05.1';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter} from 'react-router-dom';
 import App from './App.tsx';
@@ -45,4 +48,4 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 );
-// Cache buster: 2026-05-05
+window.__BUILD_VERSION__ = BUILD_VERSION;
