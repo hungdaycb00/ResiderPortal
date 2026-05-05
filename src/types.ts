@@ -9,6 +9,7 @@ export interface User {
 declare global {
   interface Window {
     google?: any;
+    __BUILD_VERSION__?: string;
     aistudio?: {
       hasSelectedApiKey: () => Promise<boolean>;
       openSelectKey: () => Promise<void>;
