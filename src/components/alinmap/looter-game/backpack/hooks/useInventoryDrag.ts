@@ -237,11 +237,8 @@ export function useInventoryDrag({
     let finalGx = gx;
     let finalGy = gy;
 
-    // Only items fully inside the active bag stay in inventory after placement.
-    if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
-      finalGx = -1;
-      finalGy = -1;
-    }
+    // Items nằm ngoài bag active vẫn được giữ trên grid.
+    // Chỉ bị vứt ra biển khi thuyền di chuyển (moveBoat xử lý).
 
     const newItems = items.map((i) => 
       i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i

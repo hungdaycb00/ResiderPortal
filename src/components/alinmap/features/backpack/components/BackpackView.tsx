@@ -292,7 +292,7 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
           style={{
             position: 'fixed',
             left: Math.max(10, Math.min(window.innerWidth - 230, popupPos.x - 100)),
-            top: Math.max(70, popupPos.y + 20),
+            top: popupPos.y,
             zIndex: 9999,
           }}
         />,

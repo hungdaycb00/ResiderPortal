@@ -4,8 +4,6 @@ import { Database, X, Package, Home, Truck, DollarSign } from 'lucide-react';
 import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { InventoryGrid, MAX_GRID_W } from '../../../looter-game/backpack';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
-import ItemPopup from '../../../looter-game/backpack/components/ItemPopup';
-import { createPortal } from 'react-dom';
 
 const STORAGE_GRID_W = MAX_GRID_W;
 const STORAGE_GRID_H = 24;
@@ -84,8 +82,7 @@ export default function IntegratedStoragePanel() {
     sellItems,
     returnToFortress,
   } = useLooterGame();
-  const [selectedItem, setSelectedItem] = useState<LooterItem | null>(null);
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+
   const [isReturning, setIsReturning] = useState(false);
   const [isTransporting, setIsTransporting] = useState(false);
   const [transportProgress, setTransportProgress] = useState(0);
@@ -217,24 +214,6 @@ export default function IntegratedStoragePanel() {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Sell Drop Zone */}
-              <div
-                ref={sellZoneRef}
-                onDragOver={(e) => { e.preventDefault(); setSellZoneHover(true); }}
-                onDragLeave={() => setSellZoneHover(false)}
-                onDrop={() => setSellZoneHover(false)}
-                className={`flex items-center gap-1 rounded-lg border-2 border-dashed px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                  isItemDragging
-                    ? sellZoneHover
-                      ? 'border-yellow-400 bg-yellow-500/30 text-yellow-300 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
-                      : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400 animate-pulse'
-                    : 'border-white/10 bg-white/5 text-white/30'
-                }`}
-              >
-                <DollarSign className="h-4 w-4" />
-                Bán
-              </div>
-
               <div className="hidden items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold text-white/40 md:flex">
                 <Package className="h-3 w-3" />
                 {storageItems.length} VẬT PHẨM
@@ -264,13 +243,7 @@ export default function IntegratedStoragePanel() {
                 onItemLayoutChange={(newItems) => activeSave(newItems)}
                 onItemDoubleClick={(item) => {
                   if (isTransporting) return;
-                  setSelectedItem(null);
                   storeItems([item.uid], 'retrieve', fortressStorageMode);
-                }}
-                onItemClick={(item, pos) => {
-                  if (isTransporting) return;
-                  setSelectedItem(item);
-                  setPopupPos(pos);
                 }}
                 onDropOutside={(item, e) => {
                   if (isTransporting) return;
@@ -296,6 +269,26 @@ export default function IntegratedStoragePanel() {
                 }}
                 cellSize={cellSize}
               />
+            </div>
+
+            {/* Sell Drop Zone - Dưới grid để dễ kéo thả trên mobile */}
+            <div className="flex justify-center pb-3">
+              <div
+                ref={sellZoneRef}
+                onDragOver={(e) => { e.preventDefault(); setSellZoneHover(true); }}
+                onDragLeave={() => setSellZoneHover(false)}
+                onDrop={() => setSellZoneHover(false)}
+                className={`flex items-center gap-2 rounded-xl border-2 border-dashed px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                  isItemDragging
+                    ? sellZoneHover
+                      ? 'border-yellow-400 bg-yellow-500/30 text-yellow-300 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
+                      : 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400 animate-pulse'
+                    : 'border-white/10 bg-white/5 text-white/30'
+                }`}
+              >
+                <DollarSign className="h-5 w-5" />
+                Kéo item vào đây để bán
+              </div>
             </div>
           </div>
           </div>
@@ -363,21 +356,6 @@ export default function IntegratedStoragePanel() {
           </motion.div>
         )}
 
-
-        {/* Item Info Popup */}
-        {selectedItem && createPortal(
-          <ItemPopup
-            item={selectedItem}
-            onClose={() => setSelectedItem(null)}
-            style={{
-              position: 'fixed',
-              left: Math.max(10, Math.min(window.innerWidth - 230, popupPos.x - 100)),
-              top: Math.max(70, popupPos.y + 20),
-              zIndex: 9999,
-            }}
-          />,
-          document.body
-        )}
       </AnimatePresence>
     </>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LooterItem } from '../types';
 import { RARITY_COLORS, BAG_DEFAULTS } from '../constants';
@@ -10,6 +10,37 @@ interface ItemPopupProps {
 }
 
 const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [adjustedStyle, setAdjustedStyle] = useState<React.CSSProperties>(style || {});
+
+  useEffect(() => {
+    if (!item || !popupRef.current) return;
+    const el = popupRef.current;
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 8;
+
+    let newLeft = typeof style?.left === 'number' ? style.left : rect.left;
+    let newTop = typeof style?.top === 'number' ? style.top : rect.top;
+
+    // Clamp right
+    if (newLeft + rect.width > vw - margin) {
+      newLeft = vw - rect.width - margin;
+    }
+    // Clamp left
+    if (newLeft < margin) newLeft = margin;
+
+    // Clamp bottom
+    if (newTop + rect.height > vh - margin) {
+      newTop = vh - rect.height - margin;
+    }
+    // Clamp top
+    if (newTop < margin) newTop = margin;
+
+    setAdjustedStyle({ ...style, left: newLeft, top: newTop });
+  }, [item, style]);
+
   if (!item) return null;
 
   const bagDef = BAG_DEFAULTS[item.id] || null;
@@ -33,11 +64,12 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
         }}
       />
       <motion.div
+        ref={popupRef}
         initial={{ opacity: 0, scale: 0.9, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 10 }}
-        className="absolute z-[101] min-w-[200px] bg-[#0a1421] border border-white/20 shadow-2xl p-4 pointer-events-auto"
-        style={style}
+        className="absolute z-[101] min-w-[200px] max-w-[260px] bg-[#0a1421] border border-white/20 shadow-2xl p-4 pointer-events-auto"
+        style={adjustedStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-3">
