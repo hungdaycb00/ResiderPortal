@@ -183,6 +183,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 <motion.div style={{ x: panX, y: panY }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
                                     <MapGrid mapMode={mapMode} />
+                                    <BillboardTransformProbes />
 
                                     {myObfPos && (
                                         <>
@@ -282,6 +283,70 @@ const GuestNode = () => (
         </div>
     </div>
 );
+
+const BillboardTransformProbes = () => {
+    const probes = [
+        { id: 'A', label: 'flat', x: -260, y: -80, transform: 'none' },
+        { id: 'B', label: 'x90', x: -160, y: -80, transform: 'rotateX(90deg)' },
+        { id: 'C', label: 'x-90', x: -60, y: -80, transform: 'rotateX(-90deg)' },
+        { id: 'D', label: 'counter', x: 40, y: -80, transform: 'rotateX(var(--alin-map-counter-tilt-deg))' },
+        { id: 'E', label: 'x90 z180', x: 140, y: -80, transform: 'rotateX(90deg) rotateZ(180deg)' },
+        { id: 'F', label: 'y90', x: 240, y: -80, transform: 'rotateY(90deg)' },
+    ];
+
+    React.useEffect(() => {
+        const root = document.documentElement;
+        console.table({
+            mapTilt: getComputedStyle(root).getPropertyValue('--alin-map-tilt-deg'),
+            counterTilt: getComputedStyle(root).getPropertyValue('--alin-map-counter-tilt-deg'),
+            standDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-stand-deg'),
+            yawDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-yaw-deg'),
+        });
+    }, []);
+
+    return (
+        <>
+            {probes.map((probe) => (
+                <div
+                    key={probe.id}
+                    className="absolute z-[999] pointer-events-auto select-none"
+                    style={{
+                        left: `calc(50% + ${probe.x}px)`,
+                        top: `calc(50% + ${probe.y}px)`,
+                        width: 72,
+                        height: 92,
+                        marginLeft: -36,
+                        marginTop: -92,
+                        transformStyle: 'preserve-3d',
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        console.info(`[AlinMap probe] ${probe.id}: ${probe.label}`, probe.transform);
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            transform: probe.transform,
+                            transformOrigin: 'center bottom',
+                            transformStyle: 'preserve-3d',
+                            backfaceVisibility: 'visible',
+                        }}
+                    >
+                        <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border-2 border-amber-300 bg-slate-950/95 text-center shadow-[0_0_24px_rgba(251,191,36,0.55)]">
+                            <div className="bg-amber-300 px-1 py-1 text-[10px] font-black text-slate-950">{probe.id}</div>
+                            <div className="flex flex-1 items-center justify-center bg-cyan-500/20 text-3xl font-black text-white">
+                                {probe.id}
+                            </div>
+                            <div className="bg-slate-900 px-1 py-1 text-[8px] font-bold uppercase tracking-wide text-cyan-100">{probe.label}</div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </>
+    );
+};
 
 const LoadingSpinner = () => (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
