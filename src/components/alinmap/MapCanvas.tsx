@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
-import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
 import LooterEntities from './LooterEntities';
@@ -219,7 +219,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                             ) : (
                                                 <GuestNode />
                                             )}
-                                            <BillboardTransformProbes />
+                                            <BillboardTransformProbes
+                                                tiltAngle={tiltAngle}
+                                                cameraRotateXDeg={cameraRotateXDeg}
+                                                cameraRotateYDeg={cameraRotateYDeg}
+                                            />
 
                                             {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
 
@@ -299,15 +303,26 @@ const GuestNode = () => (
     </div>
 );
 
-const BillboardTransformProbes = () => {
+const BillboardTransformProbes = ({
+    tiltAngle,
+    cameraRotateXDeg,
+    cameraRotateYDeg,
+}: {
+    tiltAngle: MotionValue<number>;
+    cameraRotateXDeg: number;
+    cameraRotateYDeg: number;
+}) => {
     type ProbeId = 'A' | 'D';
     type ProbeState = { x: number; y: number; yaw: number; pitch: number; z: number };
 
     const [selectedProbe, setSelectedProbe] = React.useState<ProbeId>('A');
+    const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
     const [probeState, setProbeState] = React.useState<Record<ProbeId, ProbeState>>({
         A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
-        D: { x: 24, y: -110, yaw: -45, pitch: 75, z: 40 },
+        D: { x: 24, y: -110, yaw: 0, pitch: 0, z: 40 },
     });
+
+    useMotionValueEvent(tiltAngle, 'change', setTiltValue);
 
     React.useEffect(() => {
         const root = document.documentElement;
@@ -472,10 +487,10 @@ const BillboardTransformProbes = () => {
             })}
             {renderProbe({
                 id: 'D',
-                label: 'upright counter',
+                label: 'billboard upright',
                 x: probeState.D.x,
                 y: probeState.D.y,
-                transform: `translateZ(${probeState.D.z}px) rotateX(${probeState.D.pitch}deg) rotateY(${probeState.D.yaw}deg)`,
+                transform: `translateZ(${probeState.D.z}px) rotateX(${-(tiltValue + cameraRotateXDeg) + probeState.D.pitch}deg) rotateY(${-cameraRotateYDeg + probeState.D.yaw}deg)`,
             })}
 
             {staticRefs.map(renderProbe)}
