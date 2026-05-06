@@ -238,12 +238,6 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
             {/* Tab Toggle */}
             <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
                 <button
-                    onClick={() => setActiveTab('info')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-                >
-                    Friends
-                </button>
-                <button
                     onClick={() => {
                         if (requireAuth && !requireAuth('xem bai viet cua ban')) return;
                         setActiveTab('posts');
@@ -252,6 +246,12 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                     Posts
+                </button>
+                <button
+                    onClick={() => setActiveTab('info')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                    Friends
                 </button>
                 <button
                     onClick={() => {
@@ -265,14 +265,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 </button>
             </div>
 
-            {activeTab === 'info' ? (
-                <ProfileInfoTab
-                    myUserId={myUserId} games={games} ws={ws}
-                    user={user} externalApi={externalApi}
-                    requireAuth={requireAuth} friends={friends}
-                    setSelectedUser={setSelectedUser}
-                />
-            ) : activeTab === 'posts' ? (
+            {activeTab === 'posts' ? (
                 <div className="pb-8">
                     {userPosts.length > 0 ? (
                         <div className="space-y-0">
@@ -305,6 +298,13 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                         </div>
                     )}
                 </div>
+            ) : activeTab === 'info' ? (
+                <ProfileInfoTab
+                    myUserId={myUserId} games={games} ws={ws}
+                    user={user} externalApi={externalApi}
+                    requireAuth={requireAuth} friends={friends}
+                    setSelectedUser={setSelectedUser}
+                />
             ) : (
                 <div className="pb-8">
                     {userPosts.length > 0 ? (

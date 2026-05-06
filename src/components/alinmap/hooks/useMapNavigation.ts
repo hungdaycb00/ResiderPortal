@@ -139,7 +139,7 @@ export function useMapNavigation({
     if (isItemDragging) return;
 
     setSelectedUser(null);
-    if (tabId === 'profile') setActiveTab('info');
+    if (tabId === 'profile') setActiveTab('posts');
 
     if (mainTab === tabId) {
       setIsSheetExpanded((prev) => !prev);

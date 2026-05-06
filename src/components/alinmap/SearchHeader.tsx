@@ -33,7 +33,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   showDesktopResults, setShowDesktopResults, isSearchingDesktop, desktopSearchResults,
   setSelectedUser, setActiveTab, weatherData, currentProvince, myObfPos, onWeatherClick
 }) => {
-  const shouldHideSearch = isLooterGameMode || ['profile', 'creator', 'backpack'].includes(mainTab);
+  const shouldHideSearch = isLooterGameMode || ['creator', 'backpack'].includes(mainTab);
 
   return (
     <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${shouldHideSearch ? 'hidden' : ''}`}>
