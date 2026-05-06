@@ -8,7 +8,13 @@ import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameCon
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 type LatLng = { lat: number; lng: number };
-const SCENE_WORLD_SCALE = 0.03;
+const MAP_COORD_SCENE_SCALE = 0.34;
+const BILLBOARD_STATUS_DISTANCE_FACTOR = 5.5;
+const BILLBOARD_GALLERY_DISTANCE_FACTOR = 4.2;
+const AVATAR_PLANE_SIZE = 6.5;
+const AVATAR_RING_RADIUS = 4.4;
+const MARKER_PLANE_SIZE: [number, number] = [8.5, 2.9];
+const LABEL_PLANE_SIZE: [number, number] = [10.5, 3.2];
 
 export interface AlinMapThreeSceneProps {
     position: [number, number] | null;
@@ -52,9 +58,11 @@ export interface AlinMapThreeSceneProps {
 }
 
 const worldToScene = (origin: LatLng, target: LatLng) => ({
-    x: (target.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * SCENE_WORLD_SCALE,
-    z: -(target.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * SCENE_WORLD_SCALE,
+    x: (target.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE,
+    z: -(target.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE,
 });
+
+const pxToScene = (px: number) => px * MAP_COORD_SCENE_SCALE;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -222,10 +230,10 @@ function CameraRig({
     const { camera } = useThree();
 
     useFrame(() => {
-        const zoom = clamp(scale.get() || 1, 0.02, 8);
-        const depthFit = perspectivePx * 1.05;
-        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 8, 220, 8000);
-        const height = distance * (0.42 + cameraHeightPct / 300);
+        const zoom = clamp(scale.get() || 1, 0.08, 8);
+        const depthFit = perspectivePx * 0.56;
+        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 5, 95, 9000);
+        const height = distance * (0.22 + cameraHeightPct / 620);
 
         camera.position.set(0, height, distance);
         camera.lookAt(0, 0, 0);
@@ -280,7 +288,7 @@ function BillboardLabel({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0, 0.1]} renderOrder={50}>
-                <planeGeometry args={[72, 24]} />
+                <planeGeometry args={LABEL_PLANE_SIZE} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>
@@ -318,11 +326,11 @@ function AvatarBillboard({
         <group position={position} onClick={onClick} renderOrder={10}>
             <Billboard follow>
                 <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
-                    <planeGeometry args={[56, 56]} />
+                    <planeGeometry args={[AVATAR_PLANE_SIZE, AVATAR_PLANE_SIZE]} />
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
                 </mesh>
                 <mesh position={[0, 0.08, -0.02]}>
-                    <circleGeometry args={[30, 48]} />
+                    <circleGeometry args={[AVATAR_RING_RADIUS, 48]} />
                     <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} />
                 </mesh>
                 {status ? (
@@ -331,31 +339,31 @@ function AvatarBillboard({
                         center
                         transform
                         sprite
-                        distanceFactor={8}
+                        distanceFactor={BILLBOARD_STATUS_DISTANCE_FACTOR}
                         occlude={false}
                     >
-                        <div className="rounded-full border border-white/10 bg-slate-950/85 px-2 py-1 text-[10px] font-bold text-slate-100 shadow-lg backdrop-blur-md">
-                            <span className="block max-w-[160px] truncate">{status}</span>
+                        <div className="rounded-full border border-white/10 bg-slate-950/85 px-2 py-0.5 text-[9px] font-bold text-slate-100 shadow-lg backdrop-blur-md">
+                            <span className="block max-w-[120px] truncate">{status}</span>
                         </div>
                     </Html>
                 ) : null}
                 {showGallery ? (
                     <Html
-                        position={[0, -2.15, 0]}
+                        position={[0, -1.75, 0]}
                         center
                         transform
                         sprite
-                        distanceFactor={8}
+                        distanceFactor={BILLBOARD_GALLERY_DISTANCE_FACTOR}
                         occlude={false}
                     >
-                        <div className="w-[260px] overflow-hidden rounded-xl border border-amber-300/30 bg-slate-950/90 shadow-2xl shadow-amber-500/20 backdrop-blur-md">
+                        <div className="w-[180px] overflow-hidden rounded-lg border border-amber-300/30 bg-slate-950/90 shadow-2xl shadow-amber-500/20 backdrop-blur-md">
                             <div className="border-b border-white/10 bg-slate-900/80 px-2 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-amber-100">
                                 {galleryTitle || 'Gallery'}
                             </div>
-                            <div className="flex h-24 items-center justify-center bg-cyan-500/10">
-                                <div className="text-4xl">🖼️</div>
+                            <div className="flex h-[50px] items-center justify-center bg-cyan-500/10">
+                                <div className="text-2xl">🖼️</div>
                             </div>
-                            <div className="px-2 py-1 text-[9px] text-slate-300">
+                            <div className="px-2 py-1 text-[8px] text-slate-300">
                                 {galleryImages?.[0] ? 'Preview available' : 'No gallery preview'}
                             </div>
                         </div>
@@ -386,7 +394,7 @@ function MarkerBillboard({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0.45, 0.08]} renderOrder={30}>
-                <planeGeometry args={[58, 20]} />
+                <planeGeometry args={MARKER_PLANE_SIZE} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>
@@ -472,7 +480,7 @@ function SceneContent({
         const liftZ = panY.get();
         const tilt = tiltAngle.get();
 
-        sceneRef.current.position.set(liftX * SCENE_WORLD_SCALE, 0, liftZ * SCENE_WORLD_SCALE);
+        sceneRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
         sceneRef.current.rotation.set(
             THREE.MathUtils.degToRad(tilt + cameraRotateXDeg),
             THREE.MathUtils.degToRad(cameraRotateYDeg),
@@ -484,8 +492,13 @@ function SceneContent({
 
     const origin = { lat: position[0], lng: position[1] };
     const selfPos = worldToScene(origin, origin);
-    const selfLift = (selfDragX.get() || 0) * SCENE_WORLD_SCALE;
-    const selfDepth = (selfDragY.get() || 0) * SCENE_WORLD_SCALE;
+    const selfLift = pxToScene(selfDragX.get() || 0);
+    const selfDepth = pxToScene(selfDragY.get() || 0);
+    const searchMarkerScene = searchMarkerPos ? worldToScene(origin, searchMarkerPos) : null;
+    const fortressScene = looterStateObj?.fortressLat && looterStateObj?.fortressLng
+        ? worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng })
+        : null;
+    const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
 
     return (
         <group ref={sceneRef}>
@@ -518,7 +531,7 @@ function SceneContent({
 
             {currentProvince ? (
                 <MarkerBillboard
-                    position={[selfPos.x + 180 * SCENE_WORLD_SCALE, 0.5, selfPos.z - 180 * SCENE_WORLD_SCALE]}
+                    position={[selfPos.x + pxToScene(180), 0.5, selfPos.z - pxToScene(180)]}
                     icon="Province"
                     label={currentProvince}
                     accent="#0ea5e9"
@@ -527,11 +540,7 @@ function SceneContent({
 
             {searchMarkerPos ? (
                 <MarkerBillboard
-                    position={[
-                        (searchMarkerPos.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                        0.4,
-                        -(searchMarkerPos.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                    ]}
+                    position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
                     icon="Pin"
                     label="Search"
                     accent="#fb7185"
@@ -555,11 +564,7 @@ function SceneContent({
 
             {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
                 <MarkerBillboard
-                    position={[
-                        (looterStateObj.fortressLng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                        0.55,
-                        -(looterStateObj.fortressLat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                    ]}
+                    position={[fortressScene!.x, 0.55, fortressScene!.z]}
                     icon="🏰"
                     label="Thành trì"
                     accent="#f59e0b"
@@ -568,11 +573,7 @@ function SceneContent({
 
             {!encounter && boatTargetPin ? (
                 <MarkerBillboard
-                    position={[
-                        (boatTargetPin.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                        0.32,
-                        -(boatTargetPin.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-                    ]}
+                    position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
                     icon="📍"
                     label="Target"
                     accent="#22c55e"
@@ -581,7 +582,7 @@ function SceneContent({
 
             {encounter ? (
                 <MarkerBillboard
-                    position={[180 * SCENE_WORLD_SCALE, 0.7, -220 * SCENE_WORLD_SCALE]}
+                    position={[pxToScene(180), 0.7, pxToScene(-220)]}
                     icon="🚢"
                     label="Enemy"
                     accent="#ef4444"
@@ -604,7 +605,7 @@ function SceneContent({
             })}
 
             <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
-                <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.32em] text-cyan-200 shadow-lg backdrop-blur-md">
+                <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
                     {mapMode} / {currentProvince || 'Global'}
                 </div>
             </Html>
@@ -631,7 +632,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
                 powerPreference: 'high-performance',
                 preserveDrawingBuffer: false,
             }}
-            camera={{ fov: 38, near: 1, far: 50000, position: [0, 4200, 6800] }}
+            camera={{ fov: 46, near: 0.5, far: 120000, position: [0, 1600, 2200] }}
             onCreated={({ gl }) => {
                 gl.setClearColor('#071018', 1);
                 gl.outputColorSpace = THREE.SRGBColorSpace;
