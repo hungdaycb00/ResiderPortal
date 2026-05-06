@@ -85,7 +85,7 @@
   }
 
   .alin-map-upright-sprite {
-    transform: translateZ(var(--alin-map-billboard-lift-px, 0px)) rotateX(var(--alin-map-billboard-pitch-deg, 0deg)) rotateY(var(--alin-map-billboard-yaw-deg, 0deg));
+    transform: translateZ(var(--alin-map-billboard-lift-px, 40px)) rotateX(var(--alin-map-billboard-pitch-deg, 24deg)) rotateY(var(--alin-map-billboard-yaw-deg, 0deg));
     transform-origin: center bottom;
     transform-style: preserve-3d;
     backface-visibility: visible;
@@ -100,11 +100,11 @@
   background-color: #13151a;
   color-scheme: dark;
   touch-action: manipulation;
-    --alin-map-tilt-deg: 0deg;
-    --alin-map-counter-tilt-deg: 0deg;
-    --alin-map-billboard-pitch-deg: 0deg;
+    --alin-map-tilt-deg: 60deg;
+    --alin-map-counter-tilt-deg: -60deg;
+    --alin-map-billboard-pitch-deg: 24deg;
     --alin-map-billboard-yaw-deg: 0deg;
-    --alin-map-billboard-lift-px: 0px;
+    --alin-map-billboard-lift-px: 40px;
     --alin-map-world-rotate-deg: 0deg;
     --alin-map-camera-rotate-x-deg: 0deg;
     --alin-map-camera-rotate-y-deg: 0deg;
