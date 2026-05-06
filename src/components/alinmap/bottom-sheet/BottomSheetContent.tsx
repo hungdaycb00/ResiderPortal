@@ -83,6 +83,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     user,
     userGames,
     userPosts,
+    feedPosts,
     ws,
     logout,
 }) => {
@@ -180,7 +181,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         setIsVisibleOnMap={setIsVisibleOnMap}
                                         requestLocation={requestLocation}
                                         ws={ws}
-                                        userPosts={userPosts}
+                                        feedPosts={feedPosts}
                                         isCreatingPost={isCreatingPost}
                                         setIsCreatingPost={setIsCreatingPost}
                                         postTitle={postTitle}

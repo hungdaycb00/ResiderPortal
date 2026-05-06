@@ -137,6 +137,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         myUserId: resolvedMyUserId,
         user,
         selectedUser: nav.selectedUser,
+        viewerLocation: geo.myObfPos,
         showNotification,
         setGalleryActive: wsCtx.setGalleryActive,
         setGalleryTitle: wsCtx.setGalleryTitle,
@@ -295,15 +296,11 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 filterAgeMin={13}
                 filterAgeMax={99}
                 searchTag={searchTag}
-                radius={nav.radius}
-                scale={nav.scale}
                 zoomIn={nav.zoomIn}
                 zoomOut={nav.zoomOut}
-                ws={wsCtx.ws}
                 mapMode={nav.mapMode}
                 setIsSidebarOpen={() => {}}
                 setFriendLocInput={setFriendIdInput}
-                setMyObfPos={geo.setMyObfPos}
                 setSearchMarkerPos={setSearchMarkerPos}
                 setFilterDistance={() => {}}
                 setFilterAgeMin={() => {}}
@@ -312,13 +309,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 handleRefresh={handleRefresh}
                 handleCenter={nav.handleCenter}
                 handleCenterTo={nav.handleCenterTo}
-                handleUpdateRadius={nav.handleUpdateRadius}
                 setMapMode={nav.setMapMode}
-                onOpenTierSelector={() => setIsTierSelectorOpen(true)}
                 isWidgetExpanded={isWeatherWidgetExpanded}
                 setIsWidgetExpanded={setIsWeatherWidgetExpanded}
                 isSheetExpanded={nav.isSheetExpanded}
-                isDesktop={nav.isDesktop}
             />
 
             <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
@@ -326,7 +320,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             <BottomSheet
                 isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
                 activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                games={games} userGames={posts.userGames} userPosts={posts.userPosts} myUserId={resolvedMyUserId}
+                games={games} userGames={posts.userGames} userPosts={posts.userPosts} feedPosts={posts.feedPosts} myUserId={resolvedMyUserId}
                 myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
                 searchTag={searchTag}
                 isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
@@ -334,6 +328,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 postIsStarred={posts.postIsStarred}
                 isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
                 radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
+                fetchFeedPosts={posts.fetchFeedPosts}
                 showNotification={showNotification}
                                 ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
                 onLocateUser={(lat, lng) => {

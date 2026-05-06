@@ -24,6 +24,7 @@ export interface BottomSheetProps {
     games: any[];
     userGames: any[];
     userPosts: any[];
+    feedPosts: any[];
     myUserId: string | null;
     myDisplayName: string;
     myObfPos: { lat: number; lng: number } | null;
@@ -63,6 +64,7 @@ export interface BottomSheetProps {
     handleUpdatePostPrivacy: (postId: string, privacy: string) => void;
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
+    fetchFeedPosts: () => void;
     cloudflareUrl?: string;
     triggerAuth?: (callback: () => void) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;

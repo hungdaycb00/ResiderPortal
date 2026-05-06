@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
+import {
+  buildMapMoveFromPan,
+  buildMapMovePayload,
+  buildPositionKey,
+  buildWsUrl,
+  createJoinPayload,
+  getReconnectDelay,
+  normalizeNearbyUsers,
+  parseWsMessage,
+} from './alinWebSocketUtils';
 
 interface UseAlinWebSocketParams {
   position: [number, number] | null;
@@ -127,58 +136,22 @@ export function useAlinWebSocket({
     setDebugLog(prev => [...prev.slice(-15), `${new Date().toLocaleTimeString()} ${msg}`]);
   }, []);
 
-  const buildPositionKey = useCallback((pos: [number, number] | null | undefined) => {
-    if (!Array.isArray(pos) || pos.length < 2) return '';
-    return `${pos[0].toFixed(6)}:${pos[1].toFixed(6)}`;
-  }, []);
-
-  const getWsUrl = useCallback(() => {
-    const override = (import.meta.env.VITE_ALIN_SOCIAL_WS_URL as string | undefined)?.trim();
-    if (override) {
-      const normalized = override.replace(/\/$/, '');
-      if (normalized.startsWith('http://')) return normalized.replace('http://', 'ws://');
-      if (normalized.startsWith('https://')) return normalized.replace('https://', 'wss://');
-      return normalized;
-    }
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const hostname = window.location.hostname;
-    const isLocalHost =
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname.endsWith('.local');
-
-    if (isLocalHost) {
-      const localHost = hostname === '::1' ? 'localhost' : hostname;
-      return `${protocol}//${localHost}:2096`;
-    }
-
-    return 'wss://alin-social.alin.city';
-  }, []);
-
   const sendJoinPayload = useCallback((socket: WebSocket) => {
     const currentPosition = positionRef.current;
     if (!Array.isArray(currentPosition) || currentPosition.length < 2) return false;
 
     const currentUser = userRef.current;
-    const joinType = currentUser ? 'USER_JOIN' : 'OBSERVER_JOIN';
     const deviceId = externalApiRef.current.getDeviceId();
 
-    socket.send(JSON.stringify({
-      type: joinType,
-      payload: {
-        deviceId,
-        userId: currentUser?.uid || undefined,
-        lat: currentPosition[0],
-        lng: currentPosition[1],
-        radiusKm: radiusRef.current,
-        status: myStatusRef.current,
-        visible: currentUser ? isVisibleOnMapRef.current : false,
-        avatar_url: currentUser?.photoURL || '',
-        province: currentProvinceRef.current || '',
-      },
-    }));
+    socket.send(JSON.stringify(createJoinPayload({
+      currentUser,
+      currentPosition,
+      radius: radiusRef.current,
+      status: myStatusRef.current,
+      visible: isVisibleOnMapRef.current,
+      province: currentProvinceRef.current || '',
+      deviceId,
+    })));
 
     lastPositionKeyRef.current = buildPositionKey(currentPosition);
     pendingJoinRef.current = false;
@@ -193,7 +166,7 @@ export function useAlinWebSocket({
       return;
     }
 
-    const wsUrl = getWsUrl();
+    const wsUrl = buildWsUrl();
     if (!wsUrl) {
       setWsStatus('DISABLED');
       return;
@@ -244,11 +217,15 @@ export function useAlinWebSocket({
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const data = parseWsMessage(event.data);
+      if (!data?.type) {
+        addLog('Ignored malformed WebSocket message');
+        return;
+      }
       addLog(`Received: ${data.type}`);
 
       if (data.type === 'JOIN_SUCCESS') {
-        const p = data.payload;
+        const p = data.payload || {};
         joinCompletedRef.current = true;
         addLog(`My obf pos: ${p.lat?.toFixed(4)}, ${p.lng?.toFixed(4)} (user: ${p.username})`);
 
@@ -275,17 +252,16 @@ export function useAlinWebSocket({
           setGalleryActive(p.gallery.active || false);
         }
 
-        socket.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: p.lat, lng: p.lng, zoom: 13 } }));
-        addLog('Sent MAP_MOVE scan');
+        if (p.lat != null && p.lng != null) {
+          socket.send(JSON.stringify(buildMapMovePayload(p.lat, p.lng)));
+          addLog('Sent MAP_MOVE scan');
+        }
 
         const latestPosition = positionRef.current;
         const latestPositionKey = buildPositionKey(latestPosition);
         if (latestPositionKey && latestPositionKey !== lastPositionKeyRef.current && Array.isArray(latestPosition) && latestPosition.length >= 2) {
           lastPositionKeyRef.current = latestPositionKey;
-          socket.send(JSON.stringify({
-            type: 'MAP_MOVE',
-            payload: { lat: latestPosition[0], lng: latestPosition[1], zoom: 13 },
-          }));
+          socket.send(JSON.stringify(buildMapMovePayload(latestPosition[0], latestPosition[1])));
           addLog(`Updated GPS after join: ${latestPosition[0].toFixed(4)}, ${latestPosition[1].toFixed(4)}`);
         }
       }
@@ -294,17 +270,11 @@ export function useAlinWebSocket({
         const currentMyUserId = myUserIdRef.current;
         const currentSearchTag = searchTagRef.current;
         const currentSelectedUser = selectedUserRef.current;
-        const users = data.payload.map((u: any) => ({ ...u, isSelf: u.id === currentMyUserId }));
-        let filtered = users.filter((u: any) => !u.isSelf);
-
-        if (currentSearchTag?.trim()) {
-          const tag = currentSearchTag.toLowerCase().replace('#', '');
-          filtered = filtered.filter((u: any) =>
-            (u.gallery?.title && u.gallery.title.toLowerCase().includes(tag)) ||
-            (u.username && u.username.toLowerCase().includes(tag)) ||
-            (u.status && u.status.toLowerCase().includes(tag))
-          );
-        }
+        const { users, filtered } = normalizeNearbyUsers({
+          payload: data.payload,
+          currentMyUserId,
+          currentSearchTag,
+        });
 
         setNearbyUsers(filtered);
         if (currentSelectedUser && !currentSelectedUser.isSelf) {
@@ -333,9 +303,7 @@ export function useAlinWebSocket({
       }
 
       const attempt = reconnectAttemptsRef.current;
-      const baseDelay = 2000;
-      const maxDelay = 30000;
-      const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt)) + Math.random() * 2000;
+      const delay = getReconnectDelay(attempt);
       reconnectAttemptsRef.current += 1;
 
       addLog(`Disconnected, retrying in ${(delay / 1000).toFixed(1)}s...`);
@@ -359,7 +327,7 @@ export function useAlinWebSocket({
 
       setWsStatus('ERROR');
     };
-  }, [addLog, getWsUrl, sendJoinPayload]);
+  }, [addLog, sendJoinPayload]);
 
   const connectWSRef = useRef(connectWS);
   useEffect(() => {
@@ -424,9 +392,13 @@ export function useAlinWebSocket({
   const handleRefresh = useCallback(() => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
       setIsConnecting(true);
-      const scanLng = myObfPos.lng + (-(panX?.get?.() ?? 0) / MAP_PLANE_SCALE / DEGREES_TO_PX);
-      const scanLat = myObfPos.lat + ((panY?.get?.() ?? 0) / (planeYScale?.get?.() ?? MAP_PLANE_Y_SCALE) / DEGREES_TO_PX);
-      ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
+      const scan = buildMapMoveFromPan({
+        myObfPos,
+        panX: panX?.get?.() ?? 0,
+        panY: panY?.get?.() ?? 0,
+        planeYScale: planeYScale?.get?.() ?? 1,
+      });
+      ws.current.send(JSON.stringify(buildMapMovePayload(scan.lat, scan.lng)));
       setTimeout(() => setIsConnecting(false), 1000);
     }
   }, [myObfPos, panX, panY, planeYScale]);

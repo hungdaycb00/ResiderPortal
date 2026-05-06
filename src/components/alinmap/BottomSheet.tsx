@@ -12,6 +12,7 @@ export type { BottomSheetProps } from './bottom-sheet/types';
 const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const {
         fetchUserPosts,
+        fetchFeedPosts,
         isDesktop,
         isSheetExpanded,
         mainTab,
@@ -52,12 +53,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     }, [setIsSheetExpanded]);
 
     React.useEffect(() => {
-        if (selectedUser || mainTab !== 'friends' || socialSubTab !== 'posts') return;
+        if (selectedUser || mainTab !== 'friends' || socialSubTab !== 'posts') {
+            lastSocialFeedRequestRef.current = '';
+            return;
+        }
         const requestKey = `${mainTab}:${socialSubTab}`;
         if (lastSocialFeedRequestRef.current === requestKey) return;
         lastSocialFeedRequestRef.current = requestKey;
-        fetchUserPosts('feed');
-    }, [fetchUserPosts, mainTab, socialSubTab, selectedUser]);
+        fetchFeedPosts();
+    }, [fetchFeedPosts, mainTab, socialSubTab, selectedUser]);
 
     const handleEnterWorld = React.useCallback(() => {
         setIsSheetExpanded(false);

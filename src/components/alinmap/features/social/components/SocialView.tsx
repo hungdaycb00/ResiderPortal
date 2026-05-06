@@ -17,7 +17,7 @@ interface SocialViewProps {
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
     ws: React.MutableRefObject<WebSocket | null>;
-    userPosts: any[];
+    feedPosts: any[];
     isCreatingPost: boolean;
     setIsCreatingPost: (v: boolean) => void;
     postTitle: string;
@@ -47,7 +47,7 @@ const SocialView: React.FC<SocialViewProps> = ({
     myUserId, myObfPos, nearbyUsers,
     setSelectedUser, radius, handleUpdateRadius,
     isVisibleOnMap, setIsVisibleOnMap, requireAuth, requestLocation, ws,
-    userPosts, isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
+    feedPosts, isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
     postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
     isSavingPost, handleCreatePost,
     handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts,
@@ -58,7 +58,7 @@ const SocialView: React.FC<SocialViewProps> = ({
 
     React.useEffect(() => {
         setVisiblePostCount(INITIAL_POST_LIMIT);
-    }, [socialSubTab, userPosts]);
+    }, [socialSubTab, feedPosts]);
 
     React.useEffect(() => {
         setVisibleNearbyCount(INITIAL_NEARBY_LIMIT);
@@ -73,8 +73,8 @@ const SocialView: React.FC<SocialViewProps> = ({
     }), [nearbyUsers, myObfPos, radius]);
 
     const visiblePosts = React.useMemo(() => (
-        userPosts.slice(0, visiblePostCount)
-    ), [userPosts, visiblePostCount]);
+        feedPosts.slice(0, visiblePostCount)
+    ), [feedPosts, visiblePostCount]);
 
     const visibleNearbyUsers = React.useMemo(() => (
         nearbyUsersInRange.slice(0, visibleNearbyCount)
@@ -101,13 +101,13 @@ const SocialView: React.FC<SocialViewProps> = ({
                                 handleCreatePost={handleCreatePost}
                             />
                         </div>
-                        {userPosts.length > 0 ? (
+                        {feedPosts.length > 0 ? (
                             <div className="space-y-0">
                                 {visiblePosts.map((post) => (
                                     <PostCard
                                         key={post.id}
                                         post={post}
-                                        isSelf={post.user_id === myUserId}
+                                        isSelf={post.author?.id === myUserId || post.user_id === myUserId}
                                         onStar={handleStarPost}
                                         onDelete={handleDeletePost}
                                         onUpdatePrivacy={handleUpdatePostPrivacy}
@@ -116,7 +116,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                                         requireAuth={requireAuth}
                                     />
                                 ))}
-                                {visiblePostCount < userPosts.length && (
+                                {visiblePostCount < feedPosts.length && (
                                     <button
                                         type="button"
                                         onClick={() => setVisiblePostCount((count) => count + POST_BATCH_SIZE)}
