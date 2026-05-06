@@ -225,6 +225,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                             ) : (
                                                 <GuestNode />
                                             )}
+                                            {myObfPos && (
+                                                <User3DBeacon />
+                                            )}
                                             <BillboardTransformProbes
                                                 tiltAngle={tiltAngle}
                                                 cameraRotateXDeg={cameraRotateXDeg}
@@ -305,6 +308,29 @@ const GuestNode = () => (
             <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
                 <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
             </div>
+        </div>
+    </div>
+);
+
+const User3DBeacon = () => (
+    <div
+        className="absolute z-[120] pointer-events-none select-none alin-map-billboard"
+        style={{
+            top: '50%',
+            left: '50%',
+            marginLeft: '-12px',
+            marginTop: '-36px',
+        }}
+    >
+        <div className="relative h-12 w-6 [transform-style:preserve-3d]">
+            <div className="absolute inset-x-1 top-0 h-12 rounded-md border border-cyan-300/60 bg-cyan-400/20 shadow-[0_0_24px_rgba(34,211,238,0.35)] [transform:translateZ(10px)]" />
+            <div className="absolute inset-x-0 top-0 h-12 rounded-md border border-cyan-200/40 bg-gradient-to-b from-cyan-200/20 to-slate-950/70 [transform:rotateY(90deg)_translateZ(8px)]" />
+            <div className="absolute inset-x-0 top-0 h-12 rounded-md border border-cyan-100/30 bg-gradient-to-b from-white/25 to-cyan-500/5 [transform:rotateY(-90deg)_translateZ(8px)]" />
+            <div className="absolute left-1/2 top-0 h-12 w-1 -translate-x-1/2 bg-cyan-200/80 shadow-[0_0_18px_rgba(34,211,238,0.8)] [transform:translateZ(18px)]" />
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full border border-cyan-300/50 bg-slate-950/85 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.35)]">
+                You
+            </div>
+            <div className="absolute -bottom-2 left-1/2 h-2 w-16 -translate-x-1/2 rounded-full bg-cyan-500/30 blur-md" />
         </div>
     </div>
 );
