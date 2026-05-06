@@ -81,7 +81,7 @@
     transform: rotateZ(var(--alin-map-billboard-yaw-deg)) rotateX(var(--alin-map-billboard-stand-deg)) scale(var(--alin-map-node-counter-scale));
     transform-origin: center bottom;
     transform-style: preserve-3d;
-    backface-visibility: hidden;
+    backface-visibility: visible;
   }
 
   .alin-map-ground-shadow {
@@ -95,7 +95,7 @@
   touch-action: manipulation;
   --alin-map-tilt-deg: 60deg;
   --alin-map-counter-tilt-deg: -60deg;
-  --alin-map-billboard-stand-deg: -90deg;
+  --alin-map-billboard-stand-deg: 90deg;
   --alin-map-billboard-yaw-deg: 0deg;
   --alin-map-plane-scale: 1.32;
   --alin-map-node-counter-scale: 1;

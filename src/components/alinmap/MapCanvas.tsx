@@ -164,7 +164,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             z: cameraZ,
                             '--alin-map-tilt-deg': tiltDeg,
                             '--alin-map-counter-tilt-deg': counterTiltDeg,
-                            '--alin-map-billboard-stand-deg': '-90deg',
+                            '--alin-map-billboard-stand-deg': '90deg',
                             '--alin-map-billboard-yaw-deg': '0deg',
                             '--alin-map-node-counter-scale': nodeCounterScale,
                         } as any}
