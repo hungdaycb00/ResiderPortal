@@ -57,13 +57,18 @@
   }
 
   .alin-map-scene {
-    perspective: clamp(850px, 125vw, 1400px);
+    perspective: var(--alin-map-perspective-px, clamp(850px, 125vw, 1400px));
     perspective-origin: 50% 42%;
   }
 
+  .alin-map-camera-layer,
   .alin-map-pan-layer,
   .alin-map-tilt-plane {
     transform-style: preserve-3d;
+  }
+
+  .alin-map-camera-layer {
+    will-change: transform;
   }
 
   .alin-map-tilt-plane {
@@ -73,7 +78,7 @@
   }
 
   .alin-map-billboard {
-    transform: rotateX(var(--alin-map-counter-tilt-deg)) translateZ(48px);
+    transform: rotateX(var(--alin-map-counter-tilt-deg)) translateZ(48px) scale(var(--alin-map-node-counter-scale));
     transform-origin: center bottom;
     transform-style: preserve-3d;
   }
@@ -90,6 +95,8 @@
   --alin-map-tilt-deg: 60deg;
   --alin-map-counter-tilt-deg: -60deg;
   --alin-map-plane-scale: 1.32;
+  --alin-map-node-counter-scale: 1;
+  --alin-map-perspective-px: 960px;
 }
 
 html,

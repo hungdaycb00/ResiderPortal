@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { Encounter } from '../LooterGameContext';
+import { CAMERA_Z_DEFAULT, CAMERA_Z_NEAR } from '../../constants';
 
 export function useCombatCamera(
   encounter: Encounter | null,
   centerOnCombat: (yOffset?: number) => void,
   centerOnBoat: () => void,
-  scale?: any,
+  setCameraZ?: (z: number) => void,
   setMainTab?: (tab: any) => void,
   setIsSheetExpanded?: (v: boolean) => void
 ) {
@@ -15,7 +16,7 @@ export function useCombatCamera(
     if (!encounter) {
       if (lastEncounterUid.current) {
         lastEncounterUid.current = null;
-        if (scale && (scale.get?.() ?? 1) !== 1) scale.set(1);
+        setCameraZ?.(CAMERA_Z_DEFAULT);
         centerOnBoat();
       }
       return;
@@ -33,10 +34,10 @@ export function useCombatCamera(
       const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
       const yOffset = !isDesktop ? window.innerHeight * 0.25 : 0;
 
-      if (scale && (scale.get?.() ?? 1) !== 1.5) scale.set(1.5);
+      setCameraZ?.(CAMERA_Z_NEAR);
       centerOnCombat(yOffset);
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [encounter, centerOnCombat, centerOnBoat, scale, setMainTab, setIsSheetExpanded]);
+  }, [encounter, centerOnCombat, centerOnBoat, setCameraZ, setMainTab, setIsSheetExpanded]);
 }

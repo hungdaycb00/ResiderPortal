@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
-import { motion, MotionValue } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
 import LooterEntities from './LooterEntities';
@@ -43,6 +43,10 @@ interface MapCanvasProps {
     filterAgeMax: number;
     searchMarkerPos: { lat: number; lng: number } | null;
     scale: MotionValue<number>;
+    cameraZ: MotionValue<number>;
+    tiltAngle: MotionValue<number>;
+    planeYScale: MotionValue<number>;
+    perspectivePx: number;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     selfDragX: MotionValue<number>;
@@ -63,6 +67,7 @@ interface MapCanvasProps {
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
     setIsTierSelectorOpen?: (v: boolean) => void;
+    setCameraZ: (z: number) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
@@ -70,7 +75,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myStatus,
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
-        scale, panX, panY, selfDragX, selfDragY, ws,
+        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
@@ -88,12 +93,15 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
-        myObfPos, scale, panX, panY,
+        myObfPos, scale, planeYScale, panX, panY,
         setMainTab, setIsSheetExpanded, showNotification,
         setIsTierSelectorOpen
     });
 
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
+    const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
+    const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
+    const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
 
     // Sync Boat Center Handler to Context
     useEffect(() => {
@@ -130,7 +138,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         looterState.encounter, 
         looterBoat.centerOnCombat, 
         looterBoat.centerOnBoat,
-        scale,
+        props.setCameraZ,
         setMainTab,
         setIsSheetExpanded
     );
@@ -146,8 +154,19 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
             {/* Map Canvas Layer */}
             {position && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none alin-map-scene">
-                    <motion.div style={{ scale }} className="w-full h-full flex items-center justify-center">
+                <div
+                    className="absolute inset-0 overflow-hidden pointer-events-none alin-map-scene"
+                    style={{ '--alin-map-perspective-px': `${perspectivePx}px` } as React.CSSProperties}
+                >
+                    <motion.div
+                        style={{
+                            z: cameraZ,
+                            '--alin-map-tilt-deg': tiltDeg,
+                            '--alin-map-counter-tilt-deg': counterTiltDeg,
+                            '--alin-map-node-counter-scale': nodeCounterScale,
+                        } as any}
+                        className="w-full h-full flex items-center justify-center alin-map-camera-layer"
+                    >
                         <motion.div
                             style={{ x: panX, y: panY, touchAction: 'none' }}
                             className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0 alin-map-pan-layer"
@@ -158,7 +177,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             onClickCapture={handleMapClickCapture}
                         >
                             <div className="absolute inset-0 flex items-center justify-center alin-map-tilt-plane">
-                                <MapTiles panX={panX} panY={panY} scale={scale} myObfPos={myObfPos} mode={mapMode} />
+                                <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
                                 <MapGrid mapMode={mapMode} />
 
                                 {myObfPos && (
@@ -171,7 +190,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                                 myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
                                                 user={user} myUserId={myUserId} galleryActive={galleryActive}
                                                 galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                                scale={scale} selfDragX={selfDragX} selfDragY={selfDragY}
+                                                scale={scale} planeYScale={planeYScale} selfDragX={selfDragX} selfDragY={selfDragY}
                                                 panX={panX} panY={panY}
                                                 boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
                                                 ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
@@ -233,6 +252,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         panX={panX} 
                         panY={panY} 
                         scale={scale} 
+                        planeYScale={planeYScale}
                     />
                 </>
             )}

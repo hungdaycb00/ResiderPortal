@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
 
 interface MapTilesProps {
   panX: MotionValue<number>;
   panY: MotionValue<number>;
   scale: MotionValue<number>;
+  planeYScale: MotionValue<number>;
   myObfPos: { lat: number; lng: number } | null;
   mode: 'grid' | 'satellite';
 }
@@ -20,7 +21,7 @@ function project(lat: number, lng: number, zoom: number) {
   return { x, y };
 }
 
-const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }) => {
+const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myObfPos, mode }) => {
   const [zLevel, setZLevel] = useState(14);
   const [tileOffset, setTileOffset] = useState({ x: 0, y: 0 });
   const zLevelRef = useRef(zLevel);
@@ -35,7 +36,7 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     const tileWidthPx = TILE_SIZE * ratio;
 
     const currentPanX = (panX?.get?.() ?? 0) / MAP_PLANE_SCALE;
-    const currentPanY = (panY?.get?.() ?? 0) / MAP_PLANE_Y_SCALE;
+    const currentPanY = (panY?.get?.() ?? 0) / planeYScale.get();
     const nextTileOffset = {
       x: -Math.floor(currentPanX / tileWidthPx),
       y: -Math.floor(currentPanY / tileWidthPx),
@@ -67,6 +68,7 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     const unsubscribeX = panX.on('change', scheduleViewportCommit);
     const unsubscribeY = panY.on('change', scheduleViewportCommit);
     const unsubscribeScale = scale.on('change', scheduleViewportCommit);
+    const unsubscribePlaneYScale = planeYScale.on('change', scheduleViewportCommit);
 
     scheduleViewportCommit();
 
@@ -78,8 +80,9 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
       unsubscribeX();
       unsubscribeY();
       unsubscribeScale();
+      unsubscribePlaneYScale();
     };
-  }, [panX, panY, scale]);
+  }, [panX, panY, scale, planeYScale]);
 
   if (!myObfPos) return null;
 

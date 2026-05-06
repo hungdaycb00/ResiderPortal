@@ -2,16 +2,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, MotionValue } from 'framer-motion';
 import { Home, ArrowUp } from 'lucide-react';
 import { useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 interface FortressWaypointProps {
     myObfPos: { lat: number; lng: number } | null;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     scale: MotionValue<number>;
+    planeYScale: MotionValue<number>;
 }
 
-const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, panY, scale }) => {
+const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, panY, scale, planeYScale }) => {
     const { state: looterState } = useLooterState();
     const [isVisible, setIsVisible] = useState(false);
     const [waypointStyle, setWaypointStyle] = useState({ left: 0, top: 0, rotate: 0 });
@@ -38,7 +39,7 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
             const cy = window.innerHeight / 2;
 
             const screenX = cx + (dx * MAP_PLANE_SCALE + currentPanX) * currentScale;
-            const screenY = cy + (dy * MAP_PLANE_Y_SCALE + currentPanY) * currentScale;
+            const screenY = cy + (dy * planeYScale.get() + currentPanY) * currentScale;
 
             const margin = 20; // Khoảng cách từ mép màn hình (đã giảm từ 45)
             const minX = margin;
@@ -81,7 +82,7 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({ myObfPos, panX, pan
         return () => {
             if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
         };
-    }, [looterState?.fortressLat, looterState?.fortressLng, myObfPos, panX, panY, scale, isVisible]);
+    }, [looterState?.fortressLat, looterState?.fortressLng, myObfPos, panX, panY, scale, planeYScale, isVisible]);
 
     if (!isVisible) return null;
 

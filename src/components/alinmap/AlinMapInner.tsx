@@ -8,7 +8,7 @@ import MapCanvas from './MapCanvas';
 import MapControls from './MapControls';
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
-import { AlinMapProps, DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './constants';
+import { AlinMapProps, DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
 import { ProfileProvider } from './features/profile/context/ProfileContext';
 import { usePosts } from './features/profile/hooks/usePosts';
 import { SocialProvider } from './features/social/context/SocialContext';
@@ -125,10 +125,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const handleRefresh = useCallback(() => {
         if (wsCtx.ws.current && wsCtx.ws.current.readyState === WebSocket.OPEN && geo.myObfPos) {
             const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
-            const scanLat = geo.myObfPos.lat + (nav.panY.get() / MAP_PLANE_Y_SCALE / DEGREES_TO_PX);
+            const scanLat = geo.myObfPos.lat + (nav.panY.get() / nav.planeYScale.get() / DEGREES_TO_PX);
             wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
         }
-    }, [wsCtx.ws, geo.myObfPos, nav.panX, nav.panY]);
+    }, [wsCtx.ws, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
 
     // --- Posts CRUD ---
     const posts = usePosts({
@@ -268,7 +268,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                 galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
                 filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
-                scale={nav.scale} panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
+                scale={nav.scale} cameraZ={nav.cameraZ} tiltAngle={nav.tiltAngle} planeYScale={nav.planeYScale} perspectivePx={nav.perspectivePx}
+                panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
                 requestLocation={geo.requestLocation} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
                 setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
                 mapMode={nav.mapMode}
@@ -278,6 +279,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 setMainTab={nav.setMainTab}
                 showNotification={showNotification}
                 setIsTierSelectorOpen={setIsTierSelectorOpen}
+                setCameraZ={nav.setCameraZ}
             />
 
             <MapControls
@@ -293,6 +295,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 searchTag={searchTag}
                 radius={nav.radius}
                 scale={nav.scale}
+                zoomIn={nav.zoomIn}
+                zoomOut={nav.zoomOut}
                 ws={wsCtx.ws}
                 mapMode={nav.mapMode}
                 setIsSidebarOpen={() => {}}
@@ -332,7 +336,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                                 ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
                 onLocateUser={(lat, lng) => {
                     nav.handleCenterTo(lat, lng);
-                    nav.scale.set(2);
+                    nav.setVisualScale(2);
                 }}
                 externalApi={externalApi} onOpenChat={onOpenChat}
                 handleUpdateRadius={nav.handleUpdateRadius}

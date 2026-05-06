@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useMotionValue, animate } from 'framer-motion';
+import { useMotionValue, animate, useTransform } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
+import {
+  CAMERA_Z_DEFAULT,
+  CAMERA_Z_FAR,
+  CAMERA_Z_NEAR,
+  DEGREES_TO_PX,
+  MAP_PLANE_SCALE,
+  clamp,
+  getPerspectivePx,
+  getCameraZForVisualScale,
+  getPlaneYScaleFromTilt,
+  getTiltAngleFromCameraZ,
+  getVisualScaleFromCameraZ,
+} from '../constants';
 
 interface UseMapNavigationParams {
   initialMainTab: string;
@@ -25,12 +37,13 @@ export function useMapNavigation({
 
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
-  const scale = useMotionValue(1);
+  const cameraZ = useMotionValue(CAMERA_Z_DEFAULT);
   const selfDragX = useMotionValue(0);
   const selfDragY = useMotionValue(0);
 
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' && window.innerWidth >= 768);
+  const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 720);
   const [mainTab, setMainTab] = useState<MainTab>((initialMainTab as MainTab) === 'creator' ? 'discover' : (initialMainTab as MainTab) || 'discover');
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
   const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
@@ -38,8 +51,16 @@ export function useMapNavigation({
   const [isLooterLoading, setIsSeaLoading] = useState(false);
   const [radius, setRadius] = useState(50);
 
+  const perspectivePx = getPerspectivePx(viewportHeight);
+  const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
+  const tiltAngle = useTransform(cameraZ, getTiltAngleFromCameraZ);
+  const planeYScale = useTransform(tiltAngle, getPlaneYScaleFromTilt);
+
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+      setViewportHeight(window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -70,17 +91,32 @@ export function useMapNavigation({
   }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const currentScale = scale?.get?.() ?? 1;
-    const newScale = Math.min(Math.max(0.02, currentScale + delta * currentScale), 5);
-    animate(scale, newScale, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
-  }, [scale]);
+    const currentZ = cameraZ.get();
+    const nextZ = clamp(currentZ + (e.deltaY > 0 ? -140 : 140), CAMERA_Z_FAR, CAMERA_Z_NEAR);
+    animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+  }, [cameraZ]);
+
+  const setCameraZ = useCallback((z: number) => {
+    animate(cameraZ, clamp(z, CAMERA_Z_FAR, CAMERA_Z_NEAR), { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+  }, [cameraZ]);
+
+  const zoomIn = useCallback(() => {
+    setCameraZ(cameraZ.get() + 180);
+  }, [cameraZ, setCameraZ]);
+
+  const zoomOut = useCallback(() => {
+    setCameraZ(cameraZ.get() - 180);
+  }, [cameraZ, setCameraZ]);
+
+  const setVisualScale = useCallback((visualScale: number) => {
+    setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
+  }, [perspectivePx, setCameraZ]);
 
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
     animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
-    animate(scale, 1, { duration: 0.8, ease: "easeInOut" });
-  }, [panX, panY, scale]);
+    animate(cameraZ, CAMERA_Z_DEFAULT, { duration: 0.8, ease: "easeInOut" });
+  }, [panX, panY, cameraZ]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
     if (!myObfPos) return;
@@ -88,8 +124,8 @@ export function useMapNavigation({
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
     animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 1.5, ease: "easeInOut" });
     // Reverse yOffsetPx sign: subtract to push the boat UP on screen when sheet is open
-    animate(panY, -pxY * MAP_PLANE_Y_SCALE - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
-  }, [myObfPos, panX, panY]);
+    animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
+  }, [myObfPos, panX, panY, planeYScale]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {
     setRadius(newRadius);
@@ -151,7 +187,7 @@ export function useMapNavigation({
   }, [mainTab, myObfPos, looterStateObj, isItemDragging, requireAuth, user, onTabChange, setIsLooterGameMode, initGame, loadWorldItems, handleCenterTo]);
 
   return {
-    panX, panY, scale, selfDragX, selfDragY,
+    panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
     isSheetExpanded, setIsSheetExpanded,
     isDesktop, mainTab, setMainTab: (tab: string) => setMainTab(tab as MainTab),
     activeTab, setActiveTab,
@@ -160,6 +196,7 @@ export function useMapNavigation({
     radius, setRadius,
     isLooterLoading, setIsSeaLoading,
     handleWheel, handleCenter, handleCenterTo,
+    setCameraZ, setVisualScale, zoomIn, zoomOut,
     handleUpdateRadius, handleTabClick,
   };
 }

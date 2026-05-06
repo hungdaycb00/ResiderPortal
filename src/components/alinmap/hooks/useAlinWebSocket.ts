@@ -15,6 +15,7 @@ interface UseAlinWebSocketParams {
   currentProvince: string | null;
   panX: MotionValue<number>;
   panY: MotionValue<number>;
+  planeYScale?: MotionValue<number>;
   fetchNotifications: () => void;
   onStatusSync?: (status: string) => void;
 }
@@ -32,6 +33,7 @@ export function useAlinWebSocket({
   currentProvince,
   panX,
   panY,
+  planeYScale,
   fetchNotifications,
   onStatusSync,
 }: UseAlinWebSocketParams) {
@@ -423,11 +425,11 @@ export function useAlinWebSocket({
     if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
       setIsConnecting(true);
       const scanLng = myObfPos.lng + (-(panX?.get?.() ?? 0) / MAP_PLANE_SCALE / DEGREES_TO_PX);
-      const scanLat = myObfPos.lat + ((panY?.get?.() ?? 0) / MAP_PLANE_Y_SCALE / DEGREES_TO_PX);
+      const scanLat = myObfPos.lat + ((panY?.get?.() ?? 0) / (planeYScale?.get?.() ?? MAP_PLANE_Y_SCALE) / DEGREES_TO_PX);
       ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
       setTimeout(() => setIsConnecting(false), 1000);
     }
-  }, [myObfPos, panX, panY]);
+  }, [myObfPos, panX, panY, planeYScale]);
 
   return React.useMemo(() => ({
     ws,

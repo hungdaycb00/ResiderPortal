@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { Diamond } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { DEGREES_TO_PX, SpatialNodeProps } from './constants';
+import { motion, useTransform } from 'framer-motion';
+import { DEGREES_TO_PX, FEATURED_BILLBOARD_FAR_SCALE, LIKE_THRESHOLD_FOR_SCALE, SpatialNodeProps } from './constants';
 
-const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(-60deg) translateZ(44px)`;
+const billboardTransform = (_: unknown, generated: string) =>
+    `${generated} rotateX(var(--alin-map-counter-tilt-deg)) translateZ(44px) scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
 
 const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
     const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
+    const likeCount = Number(user?.gallery?.likeCount ?? user?.gallery?.likes ?? user?.likeCount ?? user?.likes_count ?? 0);
+    const isFeaturedBillboard = !!user?.gallery?.active && likeCount >= LIKE_THRESHOLD_FOR_SCALE;
+    const featuredScale = useTransform(mapScale, (v) => {
+        if (!isFeaturedBillboard) return 1;
+        const t = Math.min(Math.max((1 - (v || 1)) / 0.75, 0), 1);
+        return 1 + (FEATURED_BILLBOARD_FAR_SCALE - 1) * t;
+    });
     const [hoverScale, setHoverScale] = useState(1.1);
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
     const animationTiming = React.useRef({
@@ -33,8 +41,9 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             style={{
                 left: `calc(50% + ${dx}px)`,
                 top: `calc(50% + ${dy}px)`,
-                transformOrigin: 'center bottom'
-            }}
+                transformOrigin: 'center bottom',
+                '--alin-map-featured-scale': featuredScale,
+            } as any}
             transformTemplate={billboardTransform}
             animate={{
                 y: [0, -5, 0],

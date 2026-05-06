@@ -2,9 +2,9 @@ import React from 'react';
 import { Diamond } from 'lucide-react';
 import { motion, MotionValue, useTransform } from 'framer-motion';
 import { normalizeImageUrl } from '../../services/externalApi';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from './constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
 
-const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(-60deg) translateZ(52px)`;
+const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(var(--alin-map-counter-tilt-deg)) translateZ(52px) scale(var(--alin-map-node-counter-scale))`;
 
 interface SelfNodeProps {
     isLooterGameMode: boolean;
@@ -19,6 +19,7 @@ interface SelfNodeProps {
     galleryTitle: string;
     galleryImages: string[];
     scale: MotionValue<number>;
+    planeYScale: MotionValue<number>;
     selfDragX: MotionValue<number>;
     selfDragY: MotionValue<number>;
     panX: MotionValue<number>;
@@ -38,7 +39,7 @@ interface SelfNodeProps {
 const SelfNode: React.FC<SelfNodeProps> = ({
     isLooterGameMode, myObfPos, myDisplayName, myStatus, isVisibleOnMap, isDesktop,
     user, myUserId, galleryActive, galleryTitle, galleryImages,
-    scale, selfDragX, selfDragY, panX, panY, boatOffsetX, boatOffsetY,
+    scale, planeYScale, selfDragX, selfDragY, panX, panY, boatOffsetX, boatOffsetY,
     ws, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, setMainTab, addLog, looterState,
 }) => {
     const avatarUrl = normalizeImageUrl(user?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || myDisplayName)}&background=1a1d24&color=3b82f6&size=150&bold=true`;
@@ -98,7 +99,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                 if (ws.current && ws.current.readyState === WebSocket.OPEN && myObfPos) {
                     const currentScale = scale?.get?.() || 1;
                     const deltaLng = (info.offset.x / currentScale / MAP_PLANE_SCALE) / DEGREES_TO_PX;
-                    const deltaLat = (-info.offset.y / currentScale / MAP_PLANE_Y_SCALE) / DEGREES_TO_PX;
+                    const deltaLat = (-info.offset.y / currentScale / planeYScale.get()) / DEGREES_TO_PX;
                     const newLat = myObfPos.lat + deltaLat;
                     const newLng = myObfPos.lng + deltaLng;
                     ws.current.send(JSON.stringify({

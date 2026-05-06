@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { animate, useMotionValue, MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, MAP_PLANE_Y_SCALE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
@@ -9,6 +9,7 @@ interface UseSeaBoatParams {
     isLooterGameMode: boolean;
     myObfPos: { lat: number; lng: number } | null;
     scale: MotionValue<number>;
+    planeYScale: MotionValue<number>;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     setMainTab?: (tab: string) => void;
@@ -20,7 +21,7 @@ interface UseSeaBoatParams {
 const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
-    isLooterGameMode, myObfPos, scale, panX, panY,
+    isLooterGameMode, myObfPos, scale, planeYScale, panX, panY,
     setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
@@ -50,7 +51,7 @@ export function useLooterBoat({
         stopAllAnimations, animateBoatTo, syncBoatPosition,
         centerOnBoat, centerOnCombat, stopPanFollow
     } = useBoatAnimation({
-        myObfPos, panX, panY,
+        myObfPos, panX, panY, planeYScale,
         currentLat: state?.currentLat ?? null,
         currentLng: state?.currentLng ?? null,
         encounter,
@@ -179,11 +180,11 @@ export function useLooterBoat({
         const offsetX = clientX - window.innerWidth / 2;
         const offsetY = clientY - window.innerHeight / 2;
         const mapX = (offsetX / currentScale - (panX?.get?.() ?? 0)) / MAP_PLANE_SCALE;
-        const mapY = (offsetY / currentScale - (panY?.get?.() ?? 0)) / MAP_PLANE_Y_SCALE;
+        const mapY = (offsetY / currentScale - (panY?.get?.() ?? 0)) / planeYScale.get();
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
         executeMoveToExact(lat, lng);
-    }, [isLooterGameMode, myObfPos, scale, panX, panY, executeMoveToExact]);
+    }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;

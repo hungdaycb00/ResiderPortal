@@ -17,6 +17,8 @@ interface MapControlsProps {
     searchTag: string;
     radius: number;
     scale: MotionValue<number>;
+    zoomIn: () => void;
+    zoomOut: () => void;
     ws: React.MutableRefObject<WebSocket | null>;
     mapMode: 'grid' | 'satellite';
     setIsSidebarOpen: (v: boolean) => void;
@@ -41,7 +43,7 @@ interface MapControlsProps {
 
 const MapControls: React.FC<MapControlsProps> = ({
     isConnecting, isSidebarOpen, weatherData, currentProvince, myObfPos, friendLocInput,
-    filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, ws, mapMode,
+    filterDistance, filterAgeMin, filterAgeMax, searchTag, radius, scale, zoomIn, zoomOut, ws, mapMode,
     setIsSidebarOpen, setFriendLocInput, setMyObfPos, setSearchMarkerPos,
     setFilterDistance, setFilterAgeMin, setFilterAgeMax, setSearchTag,
     handleRefresh, handleCenter, handleCenterTo, handleUpdateRadius, setMapMode,
@@ -99,14 +101,14 @@ const MapControls: React.FC<MapControlsProps> = ({
                             <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
                         </button>
                         <button
-                            onClick={() => scale.set(Math.min((scale?.get?.() ?? 1) + 0.3, 3))}
+                            onClick={zoomIn}
                             className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center border-b border-white/30 md:border-gray-200 transition-colors"
                             title="Zoom In"
                         >
                             <span className="flex items-center justify-center text-lg md:text-2xl font-black h-full w-full">＋</span>
                         </button>
                         <button
-                            onClick={() => scale.set(Math.max((scale?.get?.() ?? 1) - 0.3, 0.4))}
+                            onClick={zoomOut}
                             className="w-8 h-8 md:w-[42px] md:h-11 text-gray-700 md:text-gray-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
                             title="Zoom Out"
                         >

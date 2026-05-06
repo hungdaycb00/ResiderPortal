@@ -3,7 +3,8 @@ import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-mot
 import { DEGREES_TO_PX } from './constants';
 import { sanitizeWorldItems, useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
-const billboardTransform = (_: any, generated: string) => `${generated} rotateX(-60deg) translateZ(46px)`;
+const billboardTransform = (_: any, generated: string) =>
+    `${generated} rotateX(var(--alin-map-counter-tilt-deg)) translateZ(46px) scale(var(--alin-map-node-counter-scale))`;
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
