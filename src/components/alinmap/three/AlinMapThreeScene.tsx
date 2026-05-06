@@ -3,6 +3,7 @@ import { Html, Billboard } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
+import { normalizeImageUrl } from '../../../services/externalApi';
 import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameContext';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
@@ -75,6 +76,21 @@ const colorFromString = (value: string) => {
     return `hsl(${hue} 70% 48%)`;
 };
 
+const isRenderableImageUrl = (value?: string | null) => {
+    if (!value) return false;
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    if (trimmed === '...' || trimmed === 'undefined' || trimmed === 'null') return false;
+    if (/^\.\.\.+$/.test(trimmed)) return false;
+    if (trimmed.includes('...')) return false;
+    return true;
+};
+
+const resolveRenderableImageUrl = (value?: string | null) => {
+    if (!isRenderableImageUrl(value)) return '';
+    return normalizeImageUrl(value);
+};
+
 const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
     const size = 256;
     const canvas = document.createElement('canvas');
@@ -110,7 +126,8 @@ const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
         ctx.fillText(initialsForName(name), size / 2, size / 2 + 4);
     };
 
-    if (!imageUrl) {
+    const resolvedImageUrl = resolveRenderableImageUrl(imageUrl);
+    if (!resolvedImageUrl) {
         drawFallback();
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -148,7 +165,7 @@ const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
         texture.needsUpdate = true;
     };
     img.onerror = drawFallback;
-    img.src = imageUrl;
+    img.src = resolvedImageUrl;
 
     drawFallback();
     return texture;
