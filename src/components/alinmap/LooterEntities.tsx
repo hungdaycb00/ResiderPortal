@@ -4,7 +4,7 @@ import { DEGREES_TO_PX } from './constants';
 import { sanitizeWorldItems, useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
 const billboardTransform = (_: any, generated: string) =>
-    `${generated} translateZ(46px) rotateX(var(--alin-map-counter-tilt-deg)) scale(var(--alin-map-node-counter-scale))`;
+    `${generated} translateZ(46px) rotateX(var(--alin-map-billboard-tilt-deg)) scale(var(--alin-map-node-counter-scale))`;
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };

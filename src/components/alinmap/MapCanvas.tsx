@@ -101,6 +101,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
     const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
     const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
+    const billboardTiltDeg = useTransform(tiltAngle, (v) => `${90 - v}deg`);
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
 
     // Sync Boat Center Handler to Context
@@ -164,6 +165,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             z: cameraZ,
                             '--alin-map-tilt-deg': tiltDeg,
                             '--alin-map-counter-tilt-deg': counterTiltDeg,
+                            '--alin-map-billboard-tilt-deg': billboardTiltDeg,
                             '--alin-map-node-counter-scale': nodeCounterScale,
                         } as any}
                         className="w-full h-full flex items-center justify-center alin-map-camera-layer"

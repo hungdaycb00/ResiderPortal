@@ -78,7 +78,7 @@
   }
 
   .alin-map-billboard {
-    transform: translateZ(48px) rotateX(var(--alin-map-counter-tilt-deg)) scale(var(--alin-map-node-counter-scale));
+    transform: translateZ(48px) rotateX(var(--alin-map-billboard-tilt-deg)) scale(var(--alin-map-node-counter-scale));
     transform-origin: center bottom;
     transform-style: preserve-3d;
     backface-visibility: hidden;
@@ -95,6 +95,7 @@
   touch-action: manipulation;
   --alin-map-tilt-deg: 60deg;
   --alin-map-counter-tilt-deg: -60deg;
+  --alin-map-billboard-tilt-deg: 30deg;
   --alin-map-plane-scale: 1.32;
   --alin-map-node-counter-scale: 1;
   --alin-map-perspective-px: 960px;
