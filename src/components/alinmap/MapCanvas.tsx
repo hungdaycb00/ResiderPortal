@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
-import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
 import LooterEntities from './LooterEntities';
@@ -18,6 +18,7 @@ import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
+import { CAMERA_Z_DEFAULT, CAMERA_Z_FAR, CAMERA_Z_NEAR } from './constants';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -238,6 +239,14 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                 </div>
             )}
 
+            {position && (
+                <CameraLabPanel
+                    cameraZ={cameraZ}
+                    tiltAngle={tiltAngle}
+                    setCameraZ={props.setCameraZ}
+                />
+            )}
+
             {/* Looter Game Overlays */}
             {isLooterGameMode && (
                 <>
@@ -262,6 +271,101 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
             {/* Connection Status */}
             {isConnecting && <MapConnectionStatus />}
+        </div>
+    );
+};
+
+const CameraLabPanel = ({
+    cameraZ,
+    tiltAngle,
+    setCameraZ,
+}: {
+    cameraZ: MotionValue<number>;
+    tiltAngle: MotionValue<number>;
+    setCameraZ: (z: number) => void;
+}) => {
+    const [zValue, setZValue] = React.useState(() => cameraZ.get());
+    const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
+
+    useMotionValueEvent(cameraZ, 'change', setZValue);
+    useMotionValueEvent(tiltAngle, 'change', setTiltValue);
+
+    return (
+        <div
+            className="absolute right-2 top-20 z-[380] w-[320px] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Camera Lab</div>
+                    <div className="text-[9px] text-slate-300">Kéo depth để đổi góc nhìn. Tilt đổi theo cameraZ.</div>
+                </div>
+                <button
+                    type="button"
+                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+                    onClick={() => setCameraZ(CAMERA_Z_DEFAULT)}
+                >
+                    Reset
+                </button>
+            </div>
+
+            <div className="mt-3 space-y-3">
+                <div>
+                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
+                        <span>Camera Z</span>
+                        <span className="tabular-nums text-cyan-100">{Math.round(zValue)}</span>
+                    </div>
+                    <input
+                        type="range"
+                        min={CAMERA_Z_FAR}
+                        max={CAMERA_Z_NEAR}
+                        step={1}
+                        value={zValue}
+                        onChange={(e) => setCameraZ(Number(e.target.value))}
+                        className="w-full accent-cyan-400"
+                    />
+                    <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
+                        <span>Far</span>
+                        <span>Near</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                    <button
+                        type="button"
+                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+                        onClick={() => setCameraZ(CAMERA_Z_FAR)}
+                    >
+                        Far
+                    </button>
+                    <button
+                        type="button"
+                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+                        onClick={() => setCameraZ(0)}
+                    >
+                        Default
+                    </button>
+                    <button
+                        type="button"
+                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+                        onClick={() => setCameraZ(CAMERA_Z_NEAR)}
+                    >
+                        Near
+                    </button>
+                </div>
+
+                <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[10px] text-slate-300">
+                    <div className="flex items-center justify-between">
+                        <span>Current tilt</span>
+                        <span className="font-black text-amber-100 tabular-nums">{tiltValue.toFixed(1)}deg</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                        <span>Camera model</span>
+                        <span className="font-black text-cyan-100 tabular-nums">FOV 75deg</span>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
