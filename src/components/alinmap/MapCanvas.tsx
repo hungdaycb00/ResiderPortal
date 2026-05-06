@@ -7,6 +7,7 @@ import LooterEntities from './LooterEntities';
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
+import AlinMapThreeScene from './three/AlinMapThreeScene';
 
 // Sub-components
 import { LooterBackground, MapGrid } from './components/LooterBackground';
@@ -82,7 +83,7 @@ interface MapCanvasProps {
 
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const {
-        position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myStatus,
+        position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myAvatarUrl, myStatus,
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
@@ -170,99 +171,59 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
             {/* Map Canvas Layer */}
             {position && (
                 <div
-                    className="absolute inset-0 overflow-hidden pointer-events-none alin-map-scene"
+                    className="absolute inset-0 overflow-hidden pointer-events-auto alin-map-scene"
                     style={{
                         '--alin-map-perspective-px': `${perspectivePx}px`,
                         '--alin-map-perspective-origin-y': `${cameraHeightPct}%`,
                     } as React.CSSProperties}
+                    onPointerDown={handleMapPointerDown}
+                    onPointerMove={handleMapPointerMove}
+                    onPointerUp={handleMapPointerUp}
+                    onPointerCancel={handleMapPointerCancel}
+                    onClickCapture={handleMapClickCapture}
                 >
-                    <motion.div
-                        style={{
-                            z: cameraZ,
-                            '--alin-map-tilt-deg': tiltDeg,
-                            '--alin-map-counter-tilt-deg': counterTiltDeg,
-                            '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
-                            '--alin-map-camera-rotate-x-deg': `${cameraRotateXDeg}deg`,
-                            '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                            '--alin-map-billboard-pitch-deg': billboardPitchDeg,
-                            '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
-                            '--alin-map-billboard-lift-px': `${BILLBOARD_UPRIGHT_LIFT_PX}px`,
-                            '--alin-map-node-counter-scale': nodeCounterScale,
-                        } as any}
-                        className="w-full h-full flex items-center justify-center alin-map-camera-layer"
-                    >
-                        <motion.div
-                            style={{ touchAction: 'none' }}
-                            className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0 alin-map-pan-layer"
-                            onPointerDown={handleMapPointerDown}
-                            onPointerMove={handleMapPointerMove}
-                            onPointerUp={handleMapPointerUp}
-                            onPointerCancel={handleMapPointerCancel}
-                            onClickCapture={handleMapClickCapture}
-                        >
-                            <div className="absolute inset-0 flex items-center justify-center alin-map-tilt-plane">
-                                <motion.div style={{ x: panX, y: panY }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
-                                    <MapGrid mapMode={mapMode} />
-
-                                    {myObfPos && (
-                                        <>
-                                            {currentProvince && <MapBoundary currentProvince={currentProvince} />}
-                                            
-                                            {(user || isLooterGameMode) ? (
-                                                <SelfNode
-                                                    isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
-                                                    myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
-                                                    user={user} myUserId={myUserId} galleryActive={galleryActive}
-                                                    galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                                    scale={scale} planeYScale={planeYScale} selfDragX={selfDragX} selfDragY={selfDragY}
-                                                    panX={panX} panY={panY}
-                                                    boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                                    ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
-                                                    setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                                    setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
-                                                />
-                                            ) : (
-                                                <GuestNode />
-                                            )}
-                                            {myObfPos && (
-                                                <User3DBeacon />
-                                            )}
-                                            <BillboardTransformProbes
-                                                tiltAngle={tiltAngle}
-                                                cameraRotateXDeg={cameraRotateXDeg}
-                                                cameraRotateYDeg={cameraRotateYDeg}
-                                            />
-
-                                            {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
-
-                                            {isLooterGameMode && (
-                                                <LooterEntities
-                                                    myObfPos={myObfPos} looterState={looterStateObj}
-                                                    boatTargetPin={looterBoat.boatTargetPin}
-                                                    boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                                    executeMoveToExact={looterBoat.executeMoveToExact}
-                                                    stopBoat={looterBoat.stopBoat}
-                                                />
-                                            )}
-
-                                            <UserLayer 
-                                                nearbyUsers={nearbyUsers} myUserId={myUserId} user={user}
-                                                myObfPos={myObfPos} searchTag={searchTag} filterDistance={filterDistance}
-                                                filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
-                                                isLooterGameMode={!!isLooterGameMode} scale={scale}
-                                                setSelectedUser={setSelectedUser} setContextMenu={setContextMenu}
-                                            />
-                                        </>
-                                    )}
-                                </motion.div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+                    <AlinMapThreeScene
+                        position={position}
+                        nearbyUsers={nearbyUsers}
+                        myUserId={myUserId}
+                        user={user}
+                        myDisplayName={myDisplayName}
+                        myAvatarUrl={myAvatarUrl}
+                        myStatus={myStatus}
+                        isVisibleOnMap={isVisibleOnMap}
+                        isConnecting={isConnecting}
+                        isDesktop={isDesktop}
+                        currentProvince={currentProvince}
+                        galleryActive={galleryActive}
+                        galleryTitle={galleryTitle}
+                        galleryImages={galleryImages}
+                        searchTag={searchTag}
+                        filterDistance={filterDistance}
+                        filterAgeMin={filterAgeMin}
+                        filterAgeMax={filterAgeMax}
+                        searchMarkerPos={searchMarkerPos}
+                        scale={scale}
+                        cameraZ={cameraZ}
+                        tiltAngle={tiltAngle}
+                        planeYScale={planeYScale}
+                        perspectivePx={perspectivePx}
+                        cameraHeightPct={cameraHeightPct}
+                        cameraRotateDeg={cameraRotateDeg}
+                        cameraRotateXDeg={cameraRotateXDeg}
+                        cameraRotateYDeg={cameraRotateYDeg}
+                        panX={panX}
+                        panY={panY}
+                        selfDragX={selfDragX}
+                        selfDragY={selfDragY}
+                        mapMode={mapMode}
+                        isLooterGameMode={isLooterGameMode}
+                        boatTargetPin={looterBoat.boatTargetPin}
+                        onSelectUser={setSelectedUser}
+                        onSelectSelf={setSelectedUser}
+                    />
 
                     {/* Global Synchronizing Spinner */}
                     {!myObfPos && <LoadingSpinner />}
-                    
                 </div>
             )}
 
