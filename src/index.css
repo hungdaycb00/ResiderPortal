@@ -78,7 +78,14 @@
   }
 
   .alin-map-billboard {
-    transform: rotateZ(var(--alin-map-billboard-yaw-deg)) rotateX(var(--alin-map-billboard-stand-deg)) scale(var(--alin-map-node-counter-scale));
+    transform: scale(var(--alin-map-node-counter-scale));
+    transform-origin: center bottom;
+    transform-style: preserve-3d;
+    backface-visibility: visible;
+  }
+
+  .alin-map-upright-sprite {
+    transform: rotateZ(var(--alin-map-billboard-yaw-deg)) rotateX(var(--alin-map-billboard-stand-deg));
     transform-origin: center bottom;
     transform-style: preserve-3d;
     backface-visibility: visible;

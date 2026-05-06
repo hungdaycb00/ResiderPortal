@@ -4,7 +4,7 @@ import { motion, MotionValue, useTransform } from 'framer-motion';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
 
-const billboardTransform = (_: unknown, generated: string) => `${generated} rotateZ(var(--alin-map-billboard-yaw-deg)) rotateX(var(--alin-map-billboard-stand-deg)) scale(var(--alin-map-node-counter-scale))`;
+const billboardTransform = (_: unknown, generated: string) => `${generated} scale(var(--alin-map-node-counter-scale))`;
 
 interface SelfNodeProps {
     isLooterGameMode: boolean;
@@ -66,6 +66,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                     transformTemplate={billboardTransform}
                     onDoubleClick={(e) => e.stopPropagation()}
                 >
+                <div className="relative w-full h-full alin-map-upright-sprite">
                 <motion.div
                     className="w-full h-full"
                     animate={{ y: [-2, 2, -2], rotateZ: [-2, 2, -2] }}
@@ -82,6 +83,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         </motion.span>
                     </div>
                 )}
+                </div>
             </motion.div>
         );
     }
@@ -140,6 +142,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
             whileHover={{ scale: 'var(--self-hover-scale, 1.1)' as any }}
             whileTap={{ scale: 0.95 }}
         >
+            <div className="relative w-full h-full alin-map-upright-sprite">
             <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping shadow-[0_0_20px_rgba(34,211,238,0.4)]" />
             <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden bg-[#1a1d24] relative z-10 transition-all shadow-[0_0_25px_rgba(34,211,238,0.6)] ${isVisibleOnMap ? 'border-cyan-400' : 'border-emerald-500 opacity-60'}`}>
                 <img
@@ -198,6 +201,7 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         <span className="text-[10px] font-bold text-gray-400">#{(galleryImages?.[0] || '').slice(-4).toUpperCase()}</span>
                     </div>
                 )}
+            </div>
             </div>
         </motion.div>
     );

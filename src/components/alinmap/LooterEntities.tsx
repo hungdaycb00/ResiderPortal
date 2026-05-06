@@ -4,7 +4,7 @@ import { DEGREES_TO_PX } from './constants';
 import { sanitizeWorldItems, useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 
 const billboardTransform = (_: any, generated: string) =>
-    `${generated} rotateZ(var(--alin-map-billboard-yaw-deg)) rotateX(var(--alin-map-billboard-stand-deg)) scale(var(--alin-map-node-counter-scale))`;
+    `${generated} scale(var(--alin-map-node-counter-scale))`;
 
 interface LooterEntitiesProps {
     myObfPos: { lat: number; lng: number };
@@ -92,7 +92,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 }
             }}
         >
-            <div className="relative group flex flex-col items-center pointer-events-none">
+            <div className="relative group flex flex-col items-center pointer-events-none alin-map-upright-sprite">
                 {/* Glow Effect when in range */}
                 <motion.div
                     style={{
@@ -169,7 +169,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
                 left: `calc(50% + ${(fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
         >
-            <div className="relative flex flex-col items-center group">
+            <div className="relative flex flex-col items-center group alin-map-upright-sprite">
                 <span className="absolute top-full mt-0.5 rounded-full border border-amber-300/40 bg-black/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-100 shadow-lg backdrop-blur-sm">
                     Thành trì
                 </span>
@@ -201,7 +201,7 @@ const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any
                     rotateZ: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }
                 }}
             >
-                <div className="w-full h-full flex flex-col items-center justify-center">
+                <div className="w-full h-full flex flex-col items-center justify-center alin-map-upright-sprite">
                     <span className="text-4xl drop-shadow-2xl scale-x-[-1]">🚢</span>
                 </div>
             </motion.div>

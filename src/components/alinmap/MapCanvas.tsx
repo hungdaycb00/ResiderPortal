@@ -268,15 +268,17 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 // Internal sub-components for cleaner structure
 const GuestNode = () => (
     <div className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none alin-map-billboard" style={{ top: '50%', left: '50%' }}>
-        <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
-        <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
-            <UserRound className="w-6 h-6 text-slate-200" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-800 border border-slate-500 flex items-center justify-center">
-                <Eye className="w-3 h-3 text-cyan-300" />
+        <div className="relative w-12 h-12 alin-map-upright-sprite">
+            <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
+            <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
+                <UserRound className="w-6 h-6 text-slate-200" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-800 border border-slate-500 flex items-center justify-center">
+                    <Eye className="w-3 h-3 text-cyan-300" />
+                </div>
             </div>
-        </div>
-        <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
-            <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
+            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
+                <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
+            </div>
         </div>
     </div>
 );
