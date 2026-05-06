@@ -58,7 +58,7 @@
 
   .alin-map-scene {
     perspective: var(--alin-map-perspective-px, clamp(850px, 125vw, 1400px));
-    perspective-origin: 50% 42%;
+    perspective-origin: 50% var(--alin-map-perspective-origin-y, 42%);
   }
 
   .alin-map-camera-layer,
@@ -72,7 +72,7 @@
   }
 
   .alin-map-tilt-plane {
-    transform: rotateX(var(--alin-map-tilt-deg)) scale(var(--alin-map-plane-scale));
+    transform: rotateZ(var(--alin-map-world-rotate-deg, 0deg)) rotateX(var(--alin-map-tilt-deg)) scale(var(--alin-map-plane-scale));
     transform-origin: center center;
     will-change: transform;
   }
@@ -100,14 +100,16 @@
   background-color: #13151a;
   color-scheme: dark;
   touch-action: manipulation;
-  --alin-map-tilt-deg: 60deg;
-  --alin-map-counter-tilt-deg: -60deg;
-  --alin-map-billboard-stand-deg: 90deg;
-  --alin-map-billboard-yaw-deg: 0deg;
-  --alin-map-plane-scale: 1.32;
-  --alin-map-node-counter-scale: 1;
-  --alin-map-perspective-px: 960px;
-}
+    --alin-map-tilt-deg: 60deg;
+    --alin-map-counter-tilt-deg: -60deg;
+    --alin-map-billboard-stand-deg: 90deg;
+    --alin-map-billboard-yaw-deg: 0deg;
+    --alin-map-world-rotate-deg: 0deg;
+    --alin-map-perspective-origin-y: 42%;
+    --alin-map-plane-scale: 1.32;
+    --alin-map-node-counter-scale: 1;
+    --alin-map-perspective-px: 960px;
+  }
 
 html,
 body,

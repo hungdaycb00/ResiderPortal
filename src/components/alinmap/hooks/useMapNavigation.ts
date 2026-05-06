@@ -5,6 +5,12 @@ import {
   CAMERA_Z_DEFAULT,
   CAMERA_Z_FAR,
   CAMERA_Z_NEAR,
+  CAMERA_HEIGHT_DEFAULT_PCT,
+  CAMERA_HEIGHT_MIN_PCT,
+  CAMERA_HEIGHT_MAX_PCT,
+  CAMERA_ROTATE_DEFAULT_DEG,
+  CAMERA_ROTATE_MIN_DEG,
+  CAMERA_ROTATE_MAX_DEG,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   clamp,
@@ -50,6 +56,8 @@ export function useMapNavigation({
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isLooterLoading, setIsSeaLoading] = useState(false);
   const [radius, setRadius] = useState(50);
+  const [cameraHeightPct, setCameraHeightPct] = useState(CAMERA_HEIGHT_DEFAULT_PCT);
+  const [cameraRotateDeg, setCameraRotateDeg] = useState(CAMERA_ROTATE_DEFAULT_DEG);
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
@@ -188,6 +196,7 @@ export function useMapNavigation({
 
   return {
     panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
+    cameraHeightPct, cameraRotateDeg,
     isSheetExpanded, setIsSheetExpanded,
     isDesktop, mainTab, setMainTab: (tab: string) => setMainTab(tab as MainTab),
     activeTab, setActiveTab,
@@ -197,6 +206,8 @@ export function useMapNavigation({
     isLooterLoading, setIsSeaLoading,
     handleWheel, handleCenter, handleCenterTo,
     setCameraZ, setVisualScale, zoomIn, zoomOut,
+    setCameraHeightPct: (v: number) => setCameraHeightPct(clamp(v, CAMERA_HEIGHT_MIN_PCT, CAMERA_HEIGHT_MAX_PCT)),
+    setCameraRotateDeg: (v: number) => setCameraRotateDeg(clamp(v, CAMERA_ROTATE_MIN_DEG, CAMERA_ROTATE_MAX_DEG)),
     handleUpdateRadius, handleTabClick,
   };
 }

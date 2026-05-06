@@ -18,7 +18,17 @@ import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import { CAMERA_Z_DEFAULT, CAMERA_Z_FAR, CAMERA_Z_NEAR } from './constants';
+import {
+    CAMERA_HEIGHT_DEFAULT_PCT,
+    CAMERA_HEIGHT_MAX_PCT,
+    CAMERA_HEIGHT_MIN_PCT,
+    CAMERA_ROTATE_DEFAULT_DEG,
+    CAMERA_ROTATE_MAX_DEG,
+    CAMERA_ROTATE_MIN_DEG,
+    CAMERA_Z_DEFAULT,
+    CAMERA_Z_FAR,
+    CAMERA_Z_NEAR,
+} from './constants';
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -48,6 +58,8 @@ interface MapCanvasProps {
     tiltAngle: MotionValue<number>;
     planeYScale: MotionValue<number>;
     perspectivePx: number;
+    cameraHeightPct: number;
+    cameraRotateDeg: number;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     selfDragX: MotionValue<number>;
@@ -69,6 +81,8 @@ interface MapCanvasProps {
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
     setIsTierSelectorOpen?: (v: boolean) => void;
     setCameraZ: (z: number) => void;
+    setCameraHeightPct: (v: number) => void;
+    setCameraRotateDeg: (v: number) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
@@ -76,7 +90,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myStatus,
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
-        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, panX, panY, selfDragX, selfDragY, ws,
+        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
@@ -158,13 +172,17 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
             {position && (
                 <div
                     className="absolute inset-0 overflow-hidden pointer-events-none alin-map-scene"
-                    style={{ '--alin-map-perspective-px': `${perspectivePx}px` } as React.CSSProperties}
+                    style={{
+                        '--alin-map-perspective-px': `${perspectivePx}px`,
+                        '--alin-map-perspective-origin-y': `${cameraHeightPct}%`,
+                    } as React.CSSProperties}
                 >
                     <motion.div
                         style={{
                             z: cameraZ,
                             '--alin-map-tilt-deg': tiltDeg,
                             '--alin-map-counter-tilt-deg': counterTiltDeg,
+                            '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
                             '--alin-map-billboard-stand-deg': '90deg',
                             '--alin-map-billboard-yaw-deg': '0deg',
                             '--alin-map-node-counter-scale': nodeCounterScale,
@@ -243,6 +261,10 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                 <CameraLabPanel
                     cameraZ={cameraZ}
                     tiltAngle={tiltAngle}
+                    cameraHeightPct={cameraHeightPct}
+                    cameraRotateDeg={cameraRotateDeg}
+                    setCameraHeightPct={props.setCameraHeightPct}
+                    setCameraRotateDeg={props.setCameraRotateDeg}
                     setCameraZ={props.setCameraZ}
                 />
             )}
@@ -278,17 +300,30 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 const CameraLabPanel = ({
     cameraZ,
     tiltAngle,
+    cameraHeightPct,
+    cameraRotateDeg,
     setCameraZ,
+    setCameraHeightPct,
+    setCameraRotateDeg,
 }: {
     cameraZ: MotionValue<number>;
     tiltAngle: MotionValue<number>;
+    cameraHeightPct: number;
+    cameraRotateDeg: number;
     setCameraZ: (z: number) => void;
+    setCameraHeightPct: (v: number) => void;
+    setCameraRotateDeg: (v: number) => void;
 }) => {
     const [zValue, setZValue] = React.useState(() => cameraZ.get());
     const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
+    const [heightValue, setHeightValue] = React.useState(cameraHeightPct);
+    const [rotateValue, setRotateValue] = React.useState(cameraRotateDeg);
 
     useMotionValueEvent(cameraZ, 'change', setZValue);
     useMotionValueEvent(tiltAngle, 'change', setTiltValue);
+
+    React.useEffect(() => setHeightValue(cameraHeightPct), [cameraHeightPct]);
+    React.useEffect(() => setRotateValue(cameraRotateDeg), [cameraRotateDeg]);
 
     return (
         <div
@@ -355,6 +390,46 @@ const CameraLabPanel = ({
                     </button>
                 </div>
 
+                <div>
+                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
+                        <span>Camera Height</span>
+                        <span className="tabular-nums text-cyan-100">{heightValue}%</span>
+                    </div>
+                    <input
+                        type="range"
+                        min={CAMERA_HEIGHT_MIN_PCT}
+                        max={CAMERA_HEIGHT_MAX_PCT}
+                        step={1}
+                        value={heightValue}
+                        onChange={(e) => {
+                            const next = Number(e.target.value);
+                            setHeightValue(next);
+                            setCameraHeightPct(next);
+                        }}
+                        className="w-full accent-cyan-400"
+                    />
+                </div>
+
+                <div>
+                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
+                        <span>Rotate Z</span>
+                        <span className="tabular-nums text-cyan-100">{rotateValue}deg</span>
+                    </div>
+                    <input
+                        type="range"
+                        min={CAMERA_ROTATE_MIN_DEG}
+                        max={CAMERA_ROTATE_MAX_DEG}
+                        step={1}
+                        value={rotateValue}
+                        onChange={(e) => {
+                            const next = Number(e.target.value);
+                            setRotateValue(next);
+                            setCameraRotateDeg(next);
+                        }}
+                        className="w-full accent-cyan-400"
+                    />
+                </div>
+
                 <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[10px] text-slate-300">
                     <div className="flex items-center justify-between">
                         <span>Current tilt</span>
@@ -365,6 +440,20 @@ const CameraLabPanel = ({
                         <span className="font-black text-cyan-100 tabular-nums">FOV 75deg</span>
                     </div>
                 </div>
+
+                <button
+                    type="button"
+                    className="w-full rounded-md border border-amber-300/30 bg-amber-400/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+                    onClick={() => {
+                        setCameraZ(CAMERA_Z_DEFAULT);
+                        setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
+                        setCameraRotateDeg(CAMERA_ROTATE_DEFAULT_DEG);
+                        setHeightValue(CAMERA_HEIGHT_DEFAULT_PCT);
+                        setRotateValue(CAMERA_ROTATE_DEFAULT_DEG);
+                    }}
+                >
+                    Reset All
+                </button>
             </div>
         </div>
     );

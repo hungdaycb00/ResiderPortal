@@ -247,6 +247,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
                     filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
                     scale={nav.scale} cameraZ={nav.cameraZ} tiltAngle={nav.tiltAngle} planeYScale={nav.planeYScale} perspectivePx={nav.perspectivePx}
+                    cameraHeightPct={nav.cameraHeightPct} cameraRotateDeg={nav.cameraRotateDeg}
                     panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
                     requestLocation={geo.requestLocation} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
                     setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
@@ -258,6 +259,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     showNotification={showNotification}
                     setIsTierSelectorOpen={setIsTierSelectorOpen}
                     setCameraZ={nav.setCameraZ}
+                    setCameraHeightPct={nav.setCameraHeightPct}
+                    setCameraRotateDeg={nav.setCameraRotateDeg}
                 />
             </div>
 
