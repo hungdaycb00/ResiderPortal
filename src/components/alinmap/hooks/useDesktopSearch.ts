@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { getBaseUrl } from '../../../services/externalApi';
+import { EMPTY_SEARCH_RESULTS, fetchAlinSearch, type AlinSearchResults } from '../search';
 
 export function useDesktopSearch(searchTag: string, isDesktop: boolean) {
-  const API_BASE = getBaseUrl();
-  const [desktopSearchResults, setDesktopSearchResults] = useState<{ posts: any[], users: any[] }>({ posts: [], users: [] });
+  const [desktopSearchResults, setDesktopSearchResults] = useState<AlinSearchResults>(EMPTY_SEARCH_RESULTS);
   const [isSearchingDesktop, setIsSearchingDesktop] = useState(false);
   const [showDesktopResults, setShowDesktopResults] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!searchTag || searchTag.trim().length < 2 || !isDesktop) {
-      setDesktopSearchResults({ posts: [], users: [] });
+      setDesktopSearchResults(EMPTY_SEARCH_RESULTS);
       setShowDesktopResults(false);
       return;
     }
@@ -19,11 +18,7 @@ export function useDesktopSearch(searchTag: string, isDesktop: boolean) {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(async () => {
       try {
-        const resp = await fetch(`${API_BASE}/api/looterrch?q=${encodeURIComponent(searchTag.trim())}`);
-        const data = await resp.json();
-        if (data.success) {
-          setDesktopSearchResults({ posts: data.posts, users: data.users });
-        }
+        setDesktopSearchResults(await fetchAlinSearch(searchTag.trim()));
       } catch (err) { console.error('[Desktop Search]', err); }
       setIsSearchingDesktop(false);
     }, 300);

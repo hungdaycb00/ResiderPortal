@@ -1,6 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Edit, ChevronRight, User, Gamepad2 } from 'lucide-react';
-import { normalizeImageUrl, getBaseUrl } from '../../services/externalApi';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronRight, Gamepad2, Hash, Search } from 'lucide-react';
+import { normalizeImageUrl } from '../../services/externalApi';
+import {
+    EMPTY_SEARCH_RESULTS,
+    fetchAlinSearch,
+    normalizeSearchGame,
+    normalizeSearchPostAuthor,
+    normalizeSearchUser,
+    type AlinSearchResults,
+} from './search';
 
 interface SheetSearchResultsProps {
     searchTag: string;
@@ -8,19 +16,29 @@ interface SheetSearchResultsProps {
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setIsSheetExpanded: (v: boolean) => void;
+    setSearchTag: (v: string) => void;
     handlePlayGame?: (game: any) => void;
 }
 
 const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
-    searchTag, nearbyUsers, setSelectedUser, setActiveTab, setIsSheetExpanded, handlePlayGame,
+    searchTag,
+    nearbyUsers,
+    setSelectedUser,
+    setActiveTab,
+    setIsSheetExpanded,
+    setSearchTag,
+    handlePlayGame,
 }) => {
-    const [searchResults, setSearchResults] = useState<{ posts: any[], users: any[], games?: any[] }>({ posts: [], users: [], games: [] });
+    const [searchResults, setSearchResults] = useState<AlinSearchResults>(EMPTY_SEARCH_RESULTS);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const nearbyUsersRef = useRef(nearbyUsers);
-    const API_BASE = getBaseUrl();
     const normalizedSearchTag = searchTag.trim().toLowerCase();
+    const hasResults = searchResults.users.length > 0
+        || searchResults.posts.length > 0
+        || searchResults.games.length > 0
+        || searchResults.tags.length > 0;
 
     useEffect(() => {
         nearbyUsersRef.current = nearbyUsers;
@@ -28,42 +46,73 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
 
     useEffect(() => {
         if (!normalizedSearchTag || normalizedSearchTag.length < 2) {
-            setSearchResults({ posts: [], users: [], games: [] });
+            setSearchResults(EMPTY_SEARCH_RESULTS);
             setShowSearchResults(false);
             return;
         }
+
         const controller = new AbortController();
         setIsSearching(true);
         setShowSearchResults(true);
+
         if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         searchTimerRef.current = setTimeout(async () => {
             try {
-                const resp = await fetch(`${API_BASE}/api/looterrch?q=${encodeURIComponent(normalizedSearchTag)}`, { signal: controller.signal });
-                const data = await resp.json();
-                if (data.success) {
-                    // Merge nearby users matching tag
-                    const localUserMatches = nearbyUsersRef.current.filter(u =>
+                const remoteResults = await fetchAlinSearch(normalizedSearchTag, controller.signal);
+                const localUserMatches = nearbyUsersRef.current
+                    .filter(u =>
                         (u.username || '').toLowerCase().includes(normalizedSearchTag) ||
-                        (u.status || '').toLowerCase().includes(normalizedSearchTag)
-                    ).slice(0, 10).map(u => ({ id: u.id, displayName: u.username, avatar: u.avatar_url, status: u.status || '' }));
+                        (u.status || '').toLowerCase().includes(normalizedSearchTag) ||
+                        (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase().includes(normalizedSearchTag)
+                    )
+                    .slice(0, 10)
+                    .map(u => ({ id: u.id, displayName: u.username, username: u.username, avatar: u.avatar_url, status: u.status || '', tags: u.tags || [] }));
 
-                    const allUsers = [...data.users];
-                    localUserMatches.forEach(lu => {
-                        if (!allUsers.find((u: any) => u.id === lu.id)) allUsers.push(lu);
-                    });
+                const allUsers = [...remoteResults.users];
+                localUserMatches.forEach(localUser => {
+                    if (!allUsers.find((u: any) => u.id === localUser.id)) allUsers.push(localUser);
+                });
 
-                    setSearchResults({ posts: (data.posts || []).slice(0, 10), users: allUsers.slice(0, 10), games: (data.games || []).slice(0, 10) });
-                }
+                setSearchResults({
+                    posts: remoteResults.posts,
+                    users: allUsers,
+                    games: remoteResults.games,
+                    tags: remoteResults.tags,
+                });
             } catch (err) {
                 if (!controller.signal.aborted) console.error('[Search]', err);
             }
             if (!controller.signal.aborted) setIsSearching(false);
         }, 300);
+
         return () => {
             controller.abort();
             if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         };
-    }, [API_BASE, normalizedSearchTag]);
+    }, [normalizedSearchTag]);
+
+    const openUserResult = (rawUser: any) => {
+        const nearbyUser = nearbyUsers.find((u) => u.id === rawUser.id);
+        setSelectedUser(nearbyUser || normalizeSearchUser(rawUser));
+        setActiveTab('posts');
+        setIsSheetExpanded(true);
+        setShowSearchResults(false);
+    };
+
+    const openPostResult = (post: any) => {
+        const author = normalizeSearchPostAuthor(post);
+        const nearbyUser = nearbyUsers.find((u) => u.id === author.id);
+        setSelectedUser(nearbyUser || author);
+        setActiveTab('posts');
+        setIsSheetExpanded(true);
+        setShowSearchResults(false);
+    };
+
+    const openGameResult = (game: any) => {
+        handlePlayGame?.(normalizeSearchGame(game));
+        setShowSearchResults(false);
+        setSearchTag('');
+    };
 
     if (!showSearchResults || searchTag.trim().length < 2) return null;
 
@@ -72,18 +121,17 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
             {isSearching && (
                 <div className="flex items-center justify-center gap-2 py-4">
                     <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-xs text-gray-400 font-medium">Đang tìm kiếm...</span>
+                    <span className="text-xs text-gray-400 font-medium">Searching...</span>
                 </div>
             )}
 
-            {!isSearching && searchResults.users.length === 0 && searchResults.posts.length === 0 && (!searchResults.games || searchResults.games.length === 0) && (
+            {!isSearching && !hasResults && (
                 <div className="text-center py-6">
                     <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">Không tìm thấy kết quả cho "{searchTag}"</p>
+                    <p className="text-sm text-gray-400">No results for "{searchTag}"</p>
                 </div>
             )}
 
-            {/* Users Results */}
             {searchResults.users.length > 0 && (
                 <div className="mb-4">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Users</p>
@@ -91,63 +139,49 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                         {searchResults.users.map((u: any) => (
                             <button
                                 key={u.id}
-                                onClick={() => {
-                                    const mapUser = nearbyUsers.find(nu => nu.id === u.id);
-                                    if (mapUser) {
-                                        setSelectedUser(mapUser);
-                                        setIsSheetExpanded(true);
-                                    }
-                                    setShowSearchResults(false);
-                                }}
-                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                onClick={() => openUserResult(u)}
+                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 <img
-                                    src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`}
+                                    src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'U')}&background=3b82f6&color=fff&size=80`}
                                     loading="lazy"
                                     decoding="async"
                                     className="w-9 h-9 rounded-full object-cover bg-gray-100 shrink-0"
                                     alt=""
-                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || 'U')}&background=3b82f6&color=fff&size=80`; }}
+                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'U')}&background=3b82f6&color=fff&size=80`; }}
                                 />
-                                <div className="flex-1 min-w-0 text-left">
-                                    <p className="text-[13px] font-bold text-gray-900 truncate">{u.displayName}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-bold text-gray-900 truncate">{u.displayName || u.username}</p>
                                     {u.status && <p className="text-[11px] text-gray-500 truncate">{u.status}</p>}
                                 </div>
-                                <User className="w-4 h-4 text-gray-300 shrink-0" />
+                                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                             </button>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* Posts Results */}
             {searchResults.posts.length > 0 && (
-                <div>
+                <div className="mb-4">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Posts</p>
                     <div className="space-y-1">
                         {searchResults.posts.map((p: any) => (
                             <button
                                 key={p.id}
-                                onClick={() => {
-                                    if (p.author?.id) {
-                                        const mapUser = nearbyUsers.find(nu => nu.id === p.author.id);
-                                        if (mapUser) { setSelectedUser(mapUser); setActiveTab('posts'); }
-                                    }
-                                    setShowSearchResults(false);
-                                }}
-                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                onClick={() => openPostResult(p)}
+                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 {p.images && p.images.length > 0 ? (
                                     <img src={normalizeImageUrl(p.images[0])} loading="lazy" decoding="async" className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                                        <Edit className="w-4 h-4 text-blue-400" />
+                                        <Search className="w-4 h-4 text-blue-400" />
                                     </div>
                                 )}
-                                <div className="flex-1 min-w-0 text-left">
+                                <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-gray-900 truncate">{p.title}</p>
                                     <p className="text-[11px] text-gray-500 truncate">
-                                        {p.author?.name || 'User'} • {p.likeCount || 0} ❤️
+                                        {p.author?.name || p.author?.username || 'User'} - {p.likeCount || 0} likes
                                     </p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -157,31 +191,50 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                 </div>
             )}
 
-            {/* Games Results */}
-            {searchResults.games && searchResults.games.length > 0 && (
-                <div>
+            {searchResults.games.length > 0 && (
+                <div className="mb-4">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Games</p>
                     <div className="space-y-1">
                         {searchResults.games.map((g: any) => (
                             <button
                                 key={g.id}
-                                onClick={() => { if (handlePlayGame) handlePlayGame(g); }}
-                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                                onClick={() => openGameResult(g)}
+                                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
-                                {g.thumbnail ? (
-                                    <img src={normalizeImageUrl(g.thumbnail)} loading="lazy" decoding="async" className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
+                                {g.thumbnail || g.image ? (
+                                    <img src={normalizeImageUrl(g.thumbnail || g.image)} loading="lazy" decoding="async" className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0" alt="" />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
                                         <Gamepad2 className="w-4 h-4 text-emerald-500" />
                                     </div>
                                 )}
-                                <div className="flex-1 min-w-0 text-left">
-                                    <p className="text-[13px] font-bold text-gray-900 truncate">{g.title}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-bold text-gray-900 truncate">{g.title || g.name}</p>
                                     <p className="text-[11px] text-gray-500 truncate">
-                                        {g.category || 'Game'} • {g.playCount || 0} plays
+                                        {g.category || 'Game'} - {g.playCount || g.downloads || 0} plays
                                     </p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {searchResults.tags.length > 0 && (
+                <div className="mb-4">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Tags</p>
+                    <div className="flex flex-wrap gap-2">
+                        {searchResults.tags.map((item) => (
+                            <button
+                                key={item.tag}
+                                type="button"
+                                onClick={() => setSearchTag(item.tag)}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-colors active:scale-[0.98]"
+                            >
+                                <Hash className="w-3 h-3" />
+                                {item.tag.replace(/^#/, '')}
+                                {item.count ? <span className="text-[10px] text-blue-400">{item.count}</span> : null}
                             </button>
                         ))}
                     </div>

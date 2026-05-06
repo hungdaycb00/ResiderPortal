@@ -112,6 +112,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                             setSelectedUser={setSelectedUser}
                             setActiveTab={setActiveTab}
                             setIsSheetExpanded={setIsSheetExpanded}
+                            setSearchTag={setSearchTag}
                             handlePlayGame={handlePlayGame}
                         />
                     )}

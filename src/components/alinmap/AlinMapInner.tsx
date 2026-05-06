@@ -252,6 +252,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 desktopSearchResults={search.desktopSearchResults}
                 setSelectedUser={nav.setSelectedUser}
                 setActiveTab={nav.setActiveTab}
+                handlePlayGame={handlePlayGame}
                 weatherData={geo.weatherData}
                 currentProvince={geo.currentProvince}
                 myObfPos={geo.myObfPos}
