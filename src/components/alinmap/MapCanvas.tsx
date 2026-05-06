@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
-import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
 import LooterEntities from './LooterEntities';
@@ -18,17 +18,7 @@ import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import {
-    CAMERA_HEIGHT_DEFAULT_PCT,
-    CAMERA_HEIGHT_MAX_PCT,
-    CAMERA_HEIGHT_MIN_PCT,
-    CAMERA_ROTATE_DEFAULT_DEG,
-    CAMERA_ROTATE_MAX_DEG,
-    CAMERA_ROTATE_MIN_DEG,
-    CAMERA_Z_DEFAULT,
-    CAMERA_Z_FAR,
-    CAMERA_Z_NEAR,
-} from './constants';
+
 
 interface MapCanvasProps {
     position: [number, number] | null;
@@ -257,18 +247,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                 </div>
             )}
 
-            {position && (
-                <CameraLabPanel
-                    cameraZ={cameraZ}
-                    tiltAngle={tiltAngle}
-                    cameraHeightPct={cameraHeightPct}
-                    cameraRotateDeg={cameraRotateDeg}
-                    setCameraHeightPct={props.setCameraHeightPct}
-                    setCameraRotateDeg={props.setCameraRotateDeg}
-                    setCameraZ={props.setCameraZ}
-                />
-            )}
-
             {/* Looter Game Overlays */}
             {isLooterGameMode && (
                 <>
@@ -293,168 +271,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
             {/* Connection Status */}
             {isConnecting && <MapConnectionStatus />}
-        </div>
-    );
-};
-
-const CameraLabPanel = ({
-    cameraZ,
-    tiltAngle,
-    cameraHeightPct,
-    cameraRotateDeg,
-    setCameraZ,
-    setCameraHeightPct,
-    setCameraRotateDeg,
-}: {
-    cameraZ: MotionValue<number>;
-    tiltAngle: MotionValue<number>;
-    cameraHeightPct: number;
-    cameraRotateDeg: number;
-    setCameraZ: (z: number) => void;
-    setCameraHeightPct: (v: number) => void;
-    setCameraRotateDeg: (v: number) => void;
-}) => {
-    const [zValue, setZValue] = React.useState(() => cameraZ.get());
-    const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
-    const [heightValue, setHeightValue] = React.useState(cameraHeightPct);
-    const [rotateValue, setRotateValue] = React.useState(cameraRotateDeg);
-
-    useMotionValueEvent(cameraZ, 'change', setZValue);
-    useMotionValueEvent(tiltAngle, 'change', setTiltValue);
-
-    React.useEffect(() => setHeightValue(cameraHeightPct), [cameraHeightPct]);
-    React.useEffect(() => setRotateValue(cameraRotateDeg), [cameraRotateDeg]);
-
-    return (
-        <div
-            className="absolute right-2 top-20 z-[380] w-[320px] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-        >
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Camera Lab</div>
-                    <div className="text-[9px] text-slate-300">Kéo depth để đổi góc nhìn. Tilt đổi theo cameraZ.</div>
-                </div>
-                <button
-                    type="button"
-                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-                    onClick={() => setCameraZ(CAMERA_Z_DEFAULT)}
-                >
-                    Reset
-                </button>
-            </div>
-
-            <div className="mt-3 space-y-3">
-                <div>
-                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
-                        <span>Camera Z</span>
-                        <span className="tabular-nums text-cyan-100">{Math.round(zValue)}</span>
-                    </div>
-                    <input
-                        type="range"
-                        min={CAMERA_Z_FAR}
-                        max={CAMERA_Z_NEAR}
-                        step={1}
-                        value={zValue}
-                        onChange={(e) => setCameraZ(Number(e.target.value))}
-                        className="w-full accent-cyan-400"
-                    />
-                    <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
-                        <span>Far</span>
-                        <span>Near</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                    <button
-                        type="button"
-                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-                        onClick={() => setCameraZ(CAMERA_Z_FAR)}
-                    >
-                        Far
-                    </button>
-                    <button
-                        type="button"
-                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-                        onClick={() => setCameraZ(0)}
-                    >
-                        Default
-                    </button>
-                    <button
-                        type="button"
-                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-                        onClick={() => setCameraZ(CAMERA_Z_NEAR)}
-                    >
-                        Near
-                    </button>
-                </div>
-
-                <div>
-                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
-                        <span>Camera Height</span>
-                        <span className="tabular-nums text-cyan-100">{heightValue}%</span>
-                    </div>
-                    <input
-                        type="range"
-                        min={CAMERA_HEIGHT_MIN_PCT}
-                        max={CAMERA_HEIGHT_MAX_PCT}
-                        step={1}
-                        value={heightValue}
-                        onChange={(e) => {
-                            const next = Number(e.target.value);
-                            setHeightValue(next);
-                            setCameraHeightPct(next);
-                        }}
-                        className="w-full accent-cyan-400"
-                    />
-                </div>
-
-                <div>
-                    <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
-                        <span>Rotate Z</span>
-                        <span className="tabular-nums text-cyan-100">{rotateValue}deg</span>
-                    </div>
-                    <input
-                        type="range"
-                        min={CAMERA_ROTATE_MIN_DEG}
-                        max={CAMERA_ROTATE_MAX_DEG}
-                        step={1}
-                        value={rotateValue}
-                        onChange={(e) => {
-                            const next = Number(e.target.value);
-                            setRotateValue(next);
-                            setCameraRotateDeg(next);
-                        }}
-                        className="w-full accent-cyan-400"
-                    />
-                </div>
-
-                <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[10px] text-slate-300">
-                    <div className="flex items-center justify-between">
-                        <span>Current tilt</span>
-                        <span className="font-black text-amber-100 tabular-nums">{tiltValue.toFixed(1)}deg</span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between">
-                        <span>Camera model</span>
-                        <span className="font-black text-cyan-100 tabular-nums">FOV 75deg</span>
-                    </div>
-                </div>
-
-                <button
-                    type="button"
-                    className="w-full rounded-md border border-amber-300/30 bg-amber-400/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
-                    onClick={() => {
-                        setCameraZ(CAMERA_Z_DEFAULT);
-                        setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
-                        setCameraRotateDeg(CAMERA_ROTATE_DEFAULT_DEG);
-                        setHeightValue(CAMERA_HEIGHT_DEFAULT_PCT);
-                        setRotateValue(CAMERA_ROTATE_DEFAULT_DEG);
-                    }}
-                >
-                    Reset All
-                </button>
-            </div>
         </div>
     );
 };
@@ -671,3 +487,4 @@ const LoadingSpinner = () => (
 );
 
 export default React.memo(MapCanvas);
+
