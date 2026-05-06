@@ -183,7 +183,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 <motion.div style={{ x: panX, y: panY }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
                                     <MapGrid mapMode={mapMode} />
-                                    <BillboardTransformProbes />
 
                                     {myObfPos && (
                                         <>
@@ -205,6 +204,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                             ) : (
                                                 <GuestNode />
                                             )}
+                                            <BillboardTransformProbes />
 
                                             {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
 
@@ -286,12 +286,12 @@ const GuestNode = () => (
 
 const BillboardTransformProbes = () => {
     const probes = [
-        { id: 'A', label: 'flat', x: -260, y: -80, transform: 'none' },
-        { id: 'B', label: 'x90', x: -160, y: -80, transform: 'rotateX(90deg)' },
-        { id: 'C', label: 'x-90', x: -60, y: -80, transform: 'rotateX(-90deg)' },
-        { id: 'D', label: 'counter', x: 40, y: -80, transform: 'rotateX(var(--alin-map-counter-tilt-deg))' },
-        { id: 'E', label: 'x90 z180', x: 140, y: -80, transform: 'rotateX(90deg) rotateZ(180deg)' },
-        { id: 'F', label: 'y90', x: 240, y: -80, transform: 'rotateY(90deg)' },
+        { id: 'A', label: 'flat', x: -120, y: -110, transform: 'none' },
+        { id: 'B', label: 'x90', x: -72, y: -110, transform: 'rotateX(90deg)' },
+        { id: 'C', label: 'x-90', x: -24, y: -110, transform: 'rotateX(-90deg)' },
+        { id: 'D', label: 'counter', x: 24, y: -110, transform: 'rotateX(var(--alin-map-counter-tilt-deg))' },
+        { id: 'E', label: 'x90 z180', x: 72, y: -110, transform: 'rotateX(90deg) rotateZ(180deg)' },
+        { id: 'F', label: 'y90', x: 120, y: -110, transform: 'rotateY(90deg)' },
     ];
 
     React.useEffect(() => {
