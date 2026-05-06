@@ -8,7 +8,23 @@ import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
-import { CAMERA_HEIGHT_DEFAULT_PCT, CAMERA_HEIGHT_MAX_PCT, CAMERA_HEIGHT_MIN_PCT, CAMERA_ROTATE_DEFAULT_DEG, CAMERA_ROTATE_MAX_DEG, CAMERA_ROTATE_MIN_DEG, CAMERA_Z_DEFAULT, CAMERA_Z_FAR, CAMERA_Z_NEAR } from './constants';
+import {
+  CAMERA_HEIGHT_DEFAULT_PCT,
+  CAMERA_HEIGHT_MAX_PCT,
+  CAMERA_HEIGHT_MIN_PCT,
+  CAMERA_ROTATE_DEFAULT_DEG,
+  CAMERA_ROTATE_MAX_DEG,
+  CAMERA_ROTATE_MIN_DEG,
+  CAMERA_ROTATE_X_DEFAULT_DEG,
+  CAMERA_ROTATE_X_MAX_DEG,
+  CAMERA_ROTATE_X_MIN_DEG,
+  CAMERA_ROTATE_Y_DEFAULT_DEG,
+  CAMERA_ROTATE_Y_MAX_DEG,
+  CAMERA_ROTATE_Y_MIN_DEG,
+  CAMERA_Z_DEFAULT,
+  CAMERA_Z_FAR,
+  CAMERA_Z_NEAR,
+} from './constants';
 import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useLooterActions } from './looter-game/LooterGameContext';
@@ -21,9 +37,13 @@ type CameraLabState = {
   tiltAngle: MotionValue<number>;
   cameraHeightPct: number;
   cameraRotateDeg: number;
+  cameraRotateXDeg: number;
+  cameraRotateYDeg: number;
   setCameraZ: (z: number) => void;
   setCameraHeightPct: (v: number) => void;
   setCameraRotateDeg: (v: number) => void;
+  setCameraRotateXDeg: (v: number) => void;
+  setCameraRotateYDeg: (v: number) => void;
 };
 
 interface AlinMapUiOverlayProps {
@@ -345,7 +365,7 @@ const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Camera Lab</div>
-          <div className="text-[9px] text-slate-300">Kéo depth, height và rotate để chỉnh camera map.</div>
+          <div className="text-[9px] text-slate-300">Kéo depth, height và rotate X/Y/Z để chỉnh camera map.</div>
         </div>
         <button
           type="button"
@@ -354,6 +374,8 @@ const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
             camera.setCameraZ(CAMERA_Z_DEFAULT);
             camera.setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
             camera.setCameraRotateDeg(CAMERA_ROTATE_DEFAULT_DEG);
+            camera.setCameraRotateXDeg(CAMERA_ROTATE_X_DEFAULT_DEG);
+            camera.setCameraRotateYDeg(CAMERA_ROTATE_Y_DEFAULT_DEG);
           }}
         >
           Reset
@@ -413,6 +435,38 @@ const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
               setRotateValue(next);
               camera.setCameraRotateDeg(next);
             }}
+            className="w-full accent-cyan-400"
+          />
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
+            <span>Rotate X</span>
+            <span className="tabular-nums text-cyan-100">{camera.cameraRotateXDeg}deg</span>
+          </div>
+          <input
+            type="range"
+            min={CAMERA_ROTATE_X_MIN_DEG}
+            max={CAMERA_ROTATE_X_MAX_DEG}
+            step={1}
+            value={camera.cameraRotateXDeg}
+            onChange={(e) => camera.setCameraRotateXDeg(Number(e.target.value))}
+            className="w-full accent-cyan-400"
+          />
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
+            <span>Rotate Y</span>
+            <span className="tabular-nums text-cyan-100">{camera.cameraRotateYDeg}deg</span>
+          </div>
+          <input
+            type="range"
+            min={CAMERA_ROTATE_Y_MIN_DEG}
+            max={CAMERA_ROTATE_Y_MAX_DEG}
+            step={1}
+            value={camera.cameraRotateYDeg}
+            onChange={(e) => camera.setCameraRotateYDeg(Number(e.target.value))}
             className="w-full accent-cyan-400"
           />
         </div>

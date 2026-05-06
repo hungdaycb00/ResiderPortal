@@ -50,6 +50,8 @@ interface MapCanvasProps {
     perspectivePx: number;
     cameraHeightPct: number;
     cameraRotateDeg: number;
+    cameraRotateXDeg: number;
+    cameraRotateYDeg: number;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     selfDragX: MotionValue<number>;
@@ -73,6 +75,8 @@ interface MapCanvasProps {
     setCameraZ: (z: number) => void;
     setCameraHeightPct: (v: number) => void;
     setCameraRotateDeg: (v: number) => void;
+    setCameraRotateXDeg: (v: number) => void;
+    setCameraRotateYDeg: (v: number) => void;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
@@ -80,7 +84,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myStatus,
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
-        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, panX, panY, selfDragX, selfDragY, ws,
+        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
@@ -173,6 +177,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             '--alin-map-tilt-deg': tiltDeg,
                             '--alin-map-counter-tilt-deg': counterTiltDeg,
                             '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
+                            '--alin-map-camera-rotate-x-deg': `${cameraRotateXDeg}deg`,
+                            '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
                             '--alin-map-billboard-stand-deg': '90deg',
                             '--alin-map-billboard-yaw-deg': '0deg',
                             '--alin-map-node-counter-scale': nodeCounterScale,

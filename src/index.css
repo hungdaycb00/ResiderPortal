@@ -72,7 +72,7 @@
   }
 
   .alin-map-tilt-plane {
-    transform: rotateZ(var(--alin-map-world-rotate-deg, 0deg)) rotateX(var(--alin-map-tilt-deg)) scale(var(--alin-map-plane-scale));
+    transform: rotateZ(var(--alin-map-world-rotate-deg, 0deg)) rotateY(var(--alin-map-camera-rotate-y-deg, 0deg)) rotateX(calc(var(--alin-map-tilt-deg) + var(--alin-map-camera-rotate-x-deg, 0deg))) scale(var(--alin-map-plane-scale));
     transform-origin: center center;
     will-change: transform;
   }
@@ -105,6 +105,8 @@
     --alin-map-billboard-stand-deg: 90deg;
     --alin-map-billboard-yaw-deg: 0deg;
     --alin-map-world-rotate-deg: 0deg;
+    --alin-map-camera-rotate-x-deg: 0deg;
+    --alin-map-camera-rotate-y-deg: 0deg;
     --alin-map-perspective-origin-y: 42%;
     --alin-map-plane-scale: 1.32;
     --alin-map-node-counter-scale: 1;
