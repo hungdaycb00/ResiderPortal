@@ -250,6 +250,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 setShowDesktopResults={search.setShowDesktopResults}
                 isSearchingDesktop={search.isSearchingDesktop}
                 desktopSearchResults={search.desktopSearchResults}
+                nearbyUsers={wsCtx.nearbyUsers}
                 setSelectedUser={nav.setSelectedUser}
                 setActiveTab={nav.setActiveTab}
                 handlePlayGame={handlePlayGame}

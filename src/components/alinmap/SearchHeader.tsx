@@ -1,12 +1,13 @@
 import React from 'react';
 import { ChevronRight, Gamepad2, Hash, Navigation, Search } from 'lucide-react';
 import { normalizeImageUrl } from '../../services/externalApi';
+import { type AlinSearchResults } from './search';
 import {
-  normalizeSearchGame,
-  normalizeSearchPostAuthor,
-  normalizeSearchUser,
-  type AlinSearchResults,
-} from './search';
+  openSearchGameResult,
+  openSearchPostResult,
+  openSearchTagResult,
+  openSearchUserResult,
+} from './searchActions';
 
 interface SearchHeaderProps {
   searchTag: string;
@@ -23,6 +24,7 @@ interface SearchHeaderProps {
   setShowDesktopResults: (v: boolean) => void;
   isSearchingDesktop: boolean;
   desktopSearchResults: AlinSearchResults;
+  nearbyUsers?: any[];
   setSelectedUser: (u: any) => void;
   setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
   handlePlayGame?: (game: any) => void;
@@ -47,6 +49,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   setShowDesktopResults,
   isSearchingDesktop,
   desktopSearchResults,
+  nearbyUsers = [],
   setSelectedUser,
   setActiveTab,
   handlePlayGame,
@@ -61,24 +64,14 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
     || desktopSearchResults.games.length > 0
     || desktopSearchResults.tags.length > 0;
 
-  const openUserResult = (rawUser: any) => {
-    setSelectedUser(normalizeSearchUser(rawUser));
-    setActiveTab('posts');
-    setIsSheetExpanded(true);
-    setShowDesktopResults(false);
-  };
-
-  const openPostResult = (post: any) => {
-    setSelectedUser(normalizeSearchPostAuthor(post));
-    setActiveTab('posts');
-    setIsSheetExpanded(true);
-    setShowDesktopResults(false);
-  };
-
-  const openGameResult = (game: any) => {
-    handlePlayGame?.(normalizeSearchGame(game));
-    setShowDesktopResults(false);
-    setSearchTag('');
+  const actions = {
+    nearbyUsers,
+    setSelectedUser,
+    setActiveTab,
+    setIsSheetExpanded,
+    closeResults: () => setShowDesktopResults(false),
+    setSearchTag,
+    handlePlayGame,
   };
 
   return (
@@ -161,7 +154,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                     <div className="mb-4">
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Users</p>
                       {desktopSearchResults.users.map((u: any) => (
-                        <button key={u.id} type="button" onClick={() => openUserResult(u)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
+                          <button key={u.id} type="button" onClick={() => openSearchUserResult(actions, u)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
                           <img src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'U')}&background=3b82f6&color=fff`} loading="lazy" decoding="async" className="w-10 h-10 rounded-full object-cover border border-gray-100" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-gray-900 truncate">{u.displayName || u.username}</p>
@@ -177,7 +170,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                     <div className="mb-4">
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Posts</p>
                       {desktopSearchResults.posts.map((p: any) => (
-                        <button key={p.id} type="button" onClick={() => openPostResult(p)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
+                          <button key={p.id} type="button" onClick={() => openSearchPostResult(actions, p)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                             {p.images?.[0] ? <img src={normalizeImageUrl(p.images[0])} loading="lazy" decoding="async" className="w-full h-full object-cover" /> : <Search className="w-4 h-4 text-blue-400" />}
                           </div>
@@ -195,7 +188,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                     <div className="mb-4">
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-2">Games</p>
                       {desktopSearchResults.games.map((g: any) => (
-                        <button key={g.id} type="button" onClick={() => openGameResult(g)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
+                          <button key={g.id} type="button" onClick={() => openSearchGameResult(actions, g)} className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group text-left">
                           <div className="w-10 h-10 rounded-lg bg-emerald-50 overflow-hidden shrink-0 flex items-center justify-center">
                             {g.thumbnail || g.image ? <img src={normalizeImageUrl(g.thumbnail || g.image)} loading="lazy" decoding="async" className="w-full h-full object-cover" /> : <Gamepad2 className="w-5 h-5 text-emerald-500" />}
                           </div>
@@ -218,7 +211,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
                             key={item.tag}
                             type="button"
                             onClick={() => {
-                              setSearchTag(item.tag);
+                              openSearchTagResult(actions, item.tag);
                               setShowDesktopResults(true);
                             }}
                             className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-colors hover:bg-blue-100"

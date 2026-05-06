@@ -4,11 +4,14 @@ import { normalizeImageUrl } from '../../services/externalApi';
 import {
     EMPTY_SEARCH_RESULTS,
     fetchAlinSearch,
-    normalizeSearchGame,
-    normalizeSearchPostAuthor,
-    normalizeSearchUser,
     type AlinSearchResults,
 } from './search';
+import {
+    openSearchGameResult,
+    openSearchPostResult,
+    openSearchTagResult,
+    openSearchUserResult,
+} from './searchActions';
 
 interface SheetSearchResultsProps {
     searchTag: string;
@@ -91,27 +94,14 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
         };
     }, [normalizedSearchTag]);
 
-    const openUserResult = (rawUser: any) => {
-        const nearbyUser = nearbyUsers.find((u) => u.id === rawUser.id);
-        setSelectedUser(nearbyUser || normalizeSearchUser(rawUser));
-        setActiveTab('posts');
-        setIsSheetExpanded(true);
-        setShowSearchResults(false);
-    };
-
-    const openPostResult = (post: any) => {
-        const author = normalizeSearchPostAuthor(post);
-        const nearbyUser = nearbyUsers.find((u) => u.id === author.id);
-        setSelectedUser(nearbyUser || author);
-        setActiveTab('posts');
-        setIsSheetExpanded(true);
-        setShowSearchResults(false);
-    };
-
-    const openGameResult = (game: any) => {
-        handlePlayGame?.(normalizeSearchGame(game));
-        setShowSearchResults(false);
-        setSearchTag('');
+    const actions = {
+        nearbyUsers,
+        setSelectedUser,
+        setActiveTab,
+        setIsSheetExpanded,
+        closeResults: () => setShowSearchResults(false),
+        setSearchTag,
+        handlePlayGame,
     };
 
     if (!showSearchResults || searchTag.trim().length < 2) return null;
@@ -139,7 +129,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                         {searchResults.users.map((u: any) => (
                             <button
                                 key={u.id}
-                                onClick={() => openUserResult(u)}
+                                onClick={() => openSearchUserResult(actions, u)}
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 <img
@@ -168,7 +158,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                         {searchResults.posts.map((p: any) => (
                             <button
                                 key={p.id}
-                                onClick={() => openPostResult(p)}
+                                onClick={() => openSearchPostResult(actions, p)}
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 {p.images && p.images.length > 0 ? (
@@ -198,7 +188,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                         {searchResults.games.map((g: any) => (
                             <button
                                 key={g.id}
-                                onClick={() => openGameResult(g)}
+                                onClick={() => openSearchGameResult(actions, g)}
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 {g.thumbnail || g.image ? (
@@ -229,7 +219,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                             <button
                                 key={item.tag}
                                 type="button"
-                                onClick={() => setSearchTag(item.tag)}
+                                onClick={() => openSearchTagResult(actions, item.tag)}
                                 className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-colors active:scale-[0.98]"
                             >
                                 <Hash className="w-3 h-3" />
