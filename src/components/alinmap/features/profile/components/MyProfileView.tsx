@@ -1,8 +1,10 @@
 import React from 'react';
-import { Edit, Bookmark, LogIn, LogOut, Plus, X } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
-import PostCard from './PostCard';
+import ProfilePresenceSection from './ProfilePresenceSection';
+import ProfilePostsSection from './ProfilePostsSection';
+import ProfileTabs from './ProfileTabs';
 import { useProfile } from '../context/ProfileContext';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
 
@@ -17,8 +19,6 @@ interface MyProfileViewProps {
     activeTab: 'info' | 'posts' | 'saved';
     setActiveTab: (tab: 'info' | 'posts' | 'saved') => void;
     setMyDisplayName: (v: string) => void;
-    radius: number;
-    handleUpdateRadius: (v: number) => void;
     games: any[];
     userPosts: any[];
     ws: React.MutableRefObject<WebSocket | null>;
@@ -46,7 +46,6 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         myUserId, myDisplayName, myAvatarUrl, currentProvince,
         activeTab, setActiveTab,
         setMyDisplayName,
-        radius, handleUpdateRadius,
         games, userPosts,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleStarPost, handleDeletePost, handleUpdatePostPrivacy, fetchUserPosts, externalApi,
@@ -64,9 +63,9 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         statusInput, setStatusInput
     } = useProfile();
 
+    const [visibleSavedPostCount, setVisibleSavedPostCount] = React.useState(INITIAL_SAVED_POST_LIMIT);
     const [isAddingTag, setIsAddingTag] = React.useState(false);
     const [tagInput, setTagInput] = React.useState('');
-    const [visibleSavedPostCount, setVisibleSavedPostCount] = React.useState(INITIAL_SAVED_POST_LIMIT);
 
     React.useEffect(() => {
         setVisibleSavedPostCount(INITIAL_SAVED_POST_LIMIT);
@@ -130,14 +129,6 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         .filter(w => w.startsWith('#'))
         .map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')), [myStatus]);
 
-    const visibleSavedPosts = React.useMemo(() => (
-        userPosts.slice(0, visibleSavedPostCount)
-    ), [userPosts, visibleSavedPostCount]);
-    const visibleOwnPosts = visibleSavedPosts;
-    const archivedVisibleSavedPosts = React.useMemo(() => (
-        visibleSavedPosts.map((post) => ({ ...post, isArchivedState: true }))
-    ), [visibleSavedPosts]);
-
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi });
 
     return (
@@ -174,130 +165,46 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 requireAuth={requireAuth}
             />
 
-            {/* Status & Tags moved from Info Tab */}
-            <div className="px-1 mt-2">
-                {isEditingStatus ? (
-                    <div className="bg-gray-100/80 p-3 rounded-xl border border-gray-200 shadow-inner">
-                        <div className="flex gap-2">
-                            <input
-                                autoFocus type="text" value={statusInput}
-                                onChange={(e) => setStatusInput(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') void saveStatus(); }}
-                                placeholder="Update your status..."
-                                className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 w-full outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                            />
-                            <button onClick={() => { void saveStatus(); }} className="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="group/status inline-flex items-center gap-2 cursor-pointer mb-2" onClick={() => {
-                        if (requireAuth && !requireAuth('cap nhat trang thai')) return;
-                        setStatusInput(myStatus);
-                        setIsEditingStatus(true);
-                    }}>
-                        <p className="text-gray-500 text-[13px] truncate">{myStatus || "Tap to add status..."}</p>
-                        <Edit className="w-3.5 h-3.5 text-gray-400 opacity-40 group-hover/status:opacity-100 transition-opacity" />
-                    </div>
-                )}
+            <ProfilePresenceSection
+                myStatus={myStatus}
+                statusInput={statusInput}
+                setStatusInput={setStatusInput}
+                isEditingStatus={isEditingStatus}
+                setIsEditingStatus={setIsEditingStatus}
+                isAddingTag={isAddingTag}
+                setIsAddingTag={setIsAddingTag}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                parsedTags={parsedTags}
+                onSaveStatus={saveStatus}
+                onAddTag={addTag}
+                onRemoveTag={removeTag}
+                requireAuth={requireAuth}
+            />
 
-                <div className="flex flex-wrap gap-1.5 mt-2 mb-4 items-center">
-                    {parsedTags.map((tag) => (
-                        <span key={tag} className="group/tag relative text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100 flex items-center gap-1 transition-all hover:bg-blue-100">
-                            {tag.toUpperCase()}
-                            <button onClick={() => { void removeTag(tag.replace('#', '')); }} className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-red-500">
-                                <X className="w-2.5 h-2.5" />
-                            </button>
-                        </span>
-                    ))}
-
-                    {isAddingTag ? (
-                        <div className="flex items-center gap-1 bg-white border border-blue-300 rounded-full px-2 py-0.5 shadow-sm animate-in fade-in zoom-in duration-200">
-                            <span className="text-blue-500 text-[10px] font-bold">#</span>
-                            <input
-                                autoFocus type="text" value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && tagInput.trim()) void addTag(tagInput);
-                                    else if (e.key === 'Escape') setIsAddingTag(false);
-                                }}
-                                onBlur={() => { if (!tagInput.trim()) setIsAddingTag(false); }}
-                                className="w-16 bg-transparent border-none outline-none text-[10px] font-bold text-gray-900 placeholder:text-gray-300"
-                                placeholder="tag..."
-                            />
-                        </div>
-                    ) : (
-                        <button onClick={() => setIsAddingTag(true)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-400 flex items-center justify-center transition-all active:scale-90 border border-gray-200" title="Thêm tag">
-                            <Plus className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Tab Toggle */}
-            <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
-                <button
-                    onClick={() => {
-                        if (requireAuth && !requireAuth('xem bai viet cua ban')) return;
-                        setActiveTab('posts');
-                        fetchUserPosts('me');
-                    }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'posts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-                >
-                    Posts
-                </button>
-                <button
-                    onClick={() => setActiveTab('info')}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-                >
-                    Friends
-                </button>
-                <button
-                    onClick={() => {
-                        if (requireAuth && !requireAuth('xem bai viet da luu')) return;
-                        setActiveTab('saved');
-                        fetchUserPosts('saved');
-                    }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'saved' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-                >
-                    Saved
-                </button>
-            </div>
+            <ProfileTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                requireAuth={requireAuth}
+                fetchUserPosts={fetchUserPosts}
+            />
 
             {activeTab === 'posts' ? (
-                <div className="pb-8">
-                    {userPosts.length > 0 ? (
-                        <div className="space-y-0">
-                            {visibleOwnPosts.map((post) => (
-                                <PostCard
-                                    key={post.id} post={post} isSelf={true}
-                                    onStar={handleStarPost} onDelete={handleDeletePost}
-                                    onUpdatePrivacy={handleUpdatePostPrivacy}
-                                    externalApi={externalApi} fetchUserPosts={fetchUserPosts}
-                                    requireAuth={requireAuth}
-                                />
-                            ))}
-                            {visibleSavedPostCount < userPosts.length && (
-                                <button
-                                    type="button"
-                                    onClick={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
-                                    className="w-full mt-2 rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
-                                >
-                                    Show more posts
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                <Edit className="w-8 h-8 text-gray-200" />
-                            </div>
-                            <p className="text-gray-400 text-sm">No posts yet</p>
-                            <p className="text-[11px] text-gray-400 mt-1">Create a post from Social to show it here.</p>
-                        </div>
-                    )}
-                </div>
+                <ProfilePostsSection
+                    posts={userPosts}
+                    visibleCount={visibleSavedPostCount}
+                    onShowMore={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
+                    showMoreLabel="Show more posts"
+                    emptyTitle="No posts yet"
+                    emptyDescription="Create a post from Social to show it here."
+                    emptyType="posts"
+                    onStar={handleStarPost}
+                    onDelete={handleDeletePost}
+                    onUpdatePrivacy={handleUpdatePostPrivacy}
+                    externalApi={externalApi}
+                    fetchUserPosts={fetchUserPosts}
+                    requireAuth={requireAuth}
+                />
             ) : activeTab === 'info' ? (
                 <ProfileInfoTab
                     myUserId={myUserId} games={games} ws={ws}
@@ -306,37 +213,20 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     setSelectedUser={setSelectedUser}
                 />
             ) : (
-                <div className="pb-8">
-                    {userPosts.length > 0 ? (
-                        <div className="space-y-0">
-                            {archivedVisibleSavedPosts.map((post) => (
-                                <PostCard
-                                    key={post.id} post={post} isSelf={true}
-                                    onStar={handleStarPost} onDelete={handleDeletePost}
-                                    externalApi={externalApi} fetchUserPosts={fetchUserPosts}
-                                    requireAuth={requireAuth}
-                                />
-                            ))}
-                            {visibleSavedPostCount < userPosts.length && (
-                                <button
-                                    type="button"
-                                    onClick={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
-                                    className="w-full mt-2 rounded-xl border border-gray-200 bg-white py-3 text-xs font-bold text-gray-600 active:scale-[0.99]"
-                                >
-                                    Show more saved posts
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                <Bookmark className="w-8 h-8 text-gray-200" />
-                            </div>
-                            <p className="text-gray-400 text-sm">No saved posts</p>
-                            <p className="text-[11px] text-gray-400 mt-1">Bookmark posts to see them here.</p>
-                        </div>
-                    )}
-                </div>
+                <ProfilePostsSection
+                    posts={userPosts}
+                    visibleCount={visibleSavedPostCount}
+                    onShowMore={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
+                    showMoreLabel="Show more saved posts"
+                    emptyTitle="No saved posts"
+                    emptyDescription="Bookmark posts to see them here."
+                    emptyType="saved"
+                    onStar={handleStarPost}
+                    onDelete={handleDeletePost}
+                    externalApi={externalApi}
+                    fetchUserPosts={fetchUserPosts}
+                    requireAuth={requireAuth}
+                />
             )}
         </div>
     );
