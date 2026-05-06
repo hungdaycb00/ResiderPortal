@@ -8,7 +8,7 @@ import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameCon
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 type LatLng = { lat: number; lng: number };
-const SCENE_WORLD_SCALE = 0.02;
+const SCENE_WORLD_SCALE = 0.03;
 
 export interface AlinMapThreeSceneProps {
     position: [number, number] | null;
@@ -222,10 +222,10 @@ function CameraRig({
     const { camera } = useThree();
 
     useFrame(() => {
-        const zoom = clamp(scale.get() || 1, 0.35, 4);
-        const depthFit = perspectivePx * 2.35;
-        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 8, 650, 12000);
-        const height = distance * (0.52 + cameraHeightPct / 320);
+        const zoom = clamp(scale.get() || 1, 0.02, 8);
+        const depthFit = perspectivePx * 1.05;
+        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 8, 220, 8000);
+        const height = distance * (0.42 + cameraHeightPct / 300);
 
         camera.position.set(0, height, distance);
         camera.lookAt(0, 0, 0);
@@ -280,7 +280,7 @@ function BillboardLabel({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0, 0.1]} renderOrder={50}>
-                <planeGeometry args={[44, 14]} />
+                <planeGeometry args={[72, 24]} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>
@@ -318,11 +318,11 @@ function AvatarBillboard({
         <group position={position} onClick={onClick} renderOrder={10}>
             <Billboard follow>
                 <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
-                    <planeGeometry args={[28, 28]} />
+                    <planeGeometry args={[56, 56]} />
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
                 </mesh>
                 <mesh position={[0, 0.08, -0.02]}>
-                    <circleGeometry args={[18, 48]} />
+                    <circleGeometry args={[30, 48]} />
                     <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} />
                 </mesh>
                 {status ? (
@@ -386,7 +386,7 @@ function MarkerBillboard({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0.45, 0.08]} renderOrder={30}>
-                <planeGeometry args={[34, 11]} />
+                <planeGeometry args={[58, 20]} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>

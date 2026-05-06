@@ -345,6 +345,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
 };
 
 const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [zValue, setZValue] = useState(() => camera.cameraZ.get());
   const [tiltValue, setTiltValue] = useState(() => camera.tiltAngle.get());
   const [heightValue, setHeightValue] = useState(camera.cameraHeightPct);
@@ -358,7 +359,7 @@ const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
 
   return (
     <div
-      className="absolute right-2 top-20 z-[380] w-[320px] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md"
+      className={`absolute right-2 top-20 z-[380] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/90 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md ${isCollapsed ? 'w-[160px] p-2' : 'w-[320px] p-3'}`}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
@@ -367,22 +368,31 @@ const CameraLabPanel = ({ camera }: { camera: CameraLabState }) => {
           <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Camera Lab</div>
           <div className="text-[9px] text-slate-300">Kéo depth, height và rotate X/Y/Z để chỉnh camera map.</div>
         </div>
-        <button
-          type="button"
-          className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-          onClick={() => {
-            camera.setCameraZ(CAMERA_Z_DEFAULT);
-            camera.setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
-            camera.setCameraRotateDeg(CAMERA_ROTATE_DEFAULT_DEG);
-            camera.setCameraRotateXDeg(CAMERA_ROTATE_X_DEFAULT_DEG);
-            camera.setCameraRotateYDeg(CAMERA_ROTATE_Y_DEFAULT_DEG);
-          }}
-        >
-          Reset
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+            onClick={() => {
+              camera.setCameraZ(CAMERA_Z_DEFAULT);
+              camera.setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
+              camera.setCameraRotateDeg(CAMERA_ROTATE_DEFAULT_DEG);
+              camera.setCameraRotateXDeg(CAMERA_ROTATE_X_DEFAULT_DEG);
+              camera.setCameraRotateYDeg(CAMERA_ROTATE_Y_DEFAULT_DEG);
+            }}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+            onClick={() => setIsCollapsed((prev) => !prev)}
+          >
+            {isCollapsed ? 'Mở' : 'Thu gọn'}
+          </button>
+        </div>
       </div>
 
-      <div className="mt-3 space-y-3">
+      <div className={isCollapsed ? 'mt-3 hidden space-y-3' : 'mt-3 space-y-3'}>
         <div>
           <div className="mb-1 flex items-center justify-between text-[10px] font-bold text-slate-300">
             <span>Camera Z</span>

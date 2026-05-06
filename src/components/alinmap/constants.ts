@@ -9,7 +9,7 @@ export const MAP_PLANE_SCALE = 1.32;
 export const MAP_PLANE_Y_SCALE = MAP_PLANE_SCALE * Math.cos((MAP_TILT_DEGREES * Math.PI) / 180);
 
 export const CAMERA_FOV_DEGREES = 75;
-export const CAMERA_Z_FAR = -1200;
+export const CAMERA_Z_FAR = -100000;
 export const CAMERA_Z_DEFAULT = 0;
 export const CAMERA_Z_NEAR = 260;
 export const CAMERA_HEIGHT_DEFAULT_PCT = 42;
@@ -48,12 +48,12 @@ export const getPerspectivePx = (viewportHeight: number) => {
 
 export const getVisualScaleFromCameraZ = (cameraZ: number, perspectivePx: number) => {
     const safePerspective = Math.max(perspectivePx || 0, 320);
-    return clamp(safePerspective / Math.max(1, safePerspective - cameraZ), 0.2, 4);
+    return clamp(safePerspective / Math.max(1, safePerspective - cameraZ), 0.02, 8);
 };
 
 export const getCameraZForVisualScale = (visualScale: number, perspectivePx: number) => {
     const safePerspective = Math.max(perspectivePx || 0, 320);
-    const safeScale = clamp(visualScale, 0.2, 4);
+    const safeScale = clamp(visualScale, 0.02, 8);
     return clamp(safePerspective - safePerspective / safeScale, CAMERA_Z_FAR, CAMERA_Z_NEAR);
 };
 

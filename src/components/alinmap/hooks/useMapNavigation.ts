@@ -108,12 +108,12 @@ export function useMapNavigation({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
-    const nextZ = clamp(currentZ + (e.deltaY > 0 ? -140 : 140), CAMERA_Z_FAR, CAMERA_Z_NEAR);
+    const nextZ = Math.min(CAMERA_Z_NEAR, currentZ + (e.deltaY > 0 ? -180 : 180));
     animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
   const setCameraZ = useCallback((z: number) => {
-    animate(cameraZ, clamp(z, CAMERA_Z_FAR, CAMERA_Z_NEAR), { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+    animate(cameraZ, Math.min(CAMERA_Z_NEAR, z), { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
   const zoomIn = useCallback(() => {
