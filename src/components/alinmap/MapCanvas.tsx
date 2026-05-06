@@ -285,14 +285,14 @@ const GuestNode = () => (
 );
 
 const BillboardTransformProbes = () => {
-    const probes = [
-        { id: 'A', label: 'flat', x: -120, y: -110, transform: 'none' },
-        { id: 'B', label: 'x90', x: -72, y: -110, transform: 'rotateX(90deg)' },
-        { id: 'C', label: 'x-90', x: -24, y: -110, transform: 'rotateX(-90deg)' },
-        { id: 'D', label: 'counter', x: 24, y: -110, transform: 'rotateX(var(--alin-map-counter-tilt-deg))' },
-        { id: 'E', label: 'x90 z180', x: 72, y: -110, transform: 'rotateX(90deg) rotateZ(180deg)' },
-        { id: 'F', label: 'y90', x: 120, y: -110, transform: 'rotateY(90deg)' },
-    ];
+    type ProbeId = 'A' | 'D';
+    type ProbeState = { x: number; y: number; yaw: number; pitch: number; z: number };
+
+    const [selectedProbe, setSelectedProbe] = React.useState<ProbeId>('A');
+    const [probeState, setProbeState] = React.useState<Record<ProbeId, ProbeState>>({
+        A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
+        D: { x: 24, y: -110, yaw: -45, pitch: 75, z: 40 },
+    });
 
     React.useEffect(() => {
         const root = document.documentElement;
@@ -304,46 +304,166 @@ const BillboardTransformProbes = () => {
         });
     }, []);
 
+    const nudge = (patch: Partial<ProbeState>) => {
+        setProbeState((prev) => ({
+            ...prev,
+            [selectedProbe]: {
+                ...prev[selectedProbe],
+                ...patch,
+            },
+        }));
+    };
+
+    const selectedState = probeState[selectedProbe];
+
+    const staticRefs = [
+        { id: 'B', label: 'flat ref', x: -72, y: -110, transform: 'translateZ(0px) rotateX(0deg) rotateY(0deg)' },
+        { id: 'C', label: 'x90 ref', x: -24, y: -110, transform: 'translateZ(40px) rotateX(90deg) rotateY(0deg)' },
+        { id: 'E', label: 'y90 ref', x: 72, y: -110, transform: 'translateZ(40px) rotateY(90deg)' },
+        { id: 'F', label: 'x90 y-90', x: 120, y: -110, transform: 'translateZ(40px) rotateX(90deg) rotateY(-90deg)' },
+    ];
+
+    const renderProbe = (probe: { id: string; label: string; x: number; y: number; transform: string }) => (
+        <div
+            key={probe.id}
+            className="absolute z-[999] pointer-events-auto select-none"
+            style={{
+                left: `calc(50% + ${probe.x}px)`,
+                top: `calc(50% + ${probe.y}px)`,
+                width: 78,
+                height: 108,
+                marginLeft: -39,
+                marginTop: -108,
+                transformStyle: 'preserve-3d',
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                if (probe.id === 'A' || probe.id === 'D') {
+                    setSelectedProbe(probe.id);
+                }
+                console.info(`[AlinMap probe] ${probe.id}: ${probe.label}`, probe.transform);
+            }}
+        >
+            <div
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    transform: probe.transform,
+                    transformOrigin: 'center bottom',
+                    transformStyle: 'preserve-3d',
+                    backfaceVisibility: 'visible',
+                }}
+            >
+                <div className={`flex h-full w-full flex-col overflow-hidden rounded-xl border-2 text-center shadow-[0_0_24px_rgba(251,191,36,0.55)] ${selectedProbe === probe.id ? 'border-cyan-300 bg-slate-950/98' : 'border-amber-300 bg-slate-950/95'}`}>
+                    <div className="bg-amber-300 px-1 py-1 text-[10px] font-black text-slate-950">{probe.id}</div>
+                    <div className="flex flex-1 items-center justify-center bg-cyan-500/20 text-3xl font-black text-white">
+                        {probe.id}
+                    </div>
+                    <div className="bg-slate-900 px-1 py-1 text-[8px] font-bold uppercase tracking-wide text-cyan-100">{probe.label}</div>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <>
-            {probes.map((probe) => (
-                <div
-                    key={probe.id}
-                    className="absolute z-[999] pointer-events-auto select-none"
-                    style={{
-                        left: `calc(50% + ${probe.x}px)`,
-                        top: `calc(50% + ${probe.y}px)`,
-                        width: 72,
-                        height: 92,
-                        marginLeft: -36,
-                        marginTop: -92,
-                        transformStyle: 'preserve-3d',
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        console.info(`[AlinMap probe] ${probe.id}: ${probe.label}`, probe.transform);
-                    }}
-                >
-                    <div
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            transform: probe.transform,
-                            transformOrigin: 'center bottom',
-                            transformStyle: 'preserve-3d',
-                            backfaceVisibility: 'visible',
-                        }}
-                    >
-                        <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border-2 border-amber-300 bg-slate-950/95 text-center shadow-[0_0_24px_rgba(251,191,36,0.55)]">
-                            <div className="bg-amber-300 px-1 py-1 text-[10px] font-black text-slate-950">{probe.id}</div>
-                            <div className="flex flex-1 items-center justify-center bg-cyan-500/20 text-3xl font-black text-white">
-                                {probe.id}
-                            </div>
-                            <div className="bg-slate-900 px-1 py-1 text-[8px] font-bold uppercase tracking-wide text-cyan-100">{probe.label}</div>
-                        </div>
+            <div
+                className="absolute z-[1000] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/85 p-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md"
+                style={{
+                    left: 'calc(50% - 180px)',
+                    top: 'calc(50% + 56px)',
+                    minWidth: 360,
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                    <div>
+                        <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Billboard Lab</div>
+                        <div className="text-[9px] text-slate-300">Chọn A hoặc D, rồi nắn góc/điểm neo ngay tại map.</div>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black text-amber-200">
+                        Selected {selectedProbe}
                     </div>
                 </div>
-            ))}
+
+                <div className="grid grid-cols-4 gap-1.5">
+                    {([
+                        { label: 'X-', onClick: () => nudge({ x: selectedState.x - 8 }) },
+                        { label: 'X+', onClick: () => nudge({ x: selectedState.x + 8 }) },
+                        { label: 'Y-', onClick: () => nudge({ y: selectedState.y - 8 }) },
+                        { label: 'Y+', onClick: () => nudge({ y: selectedState.y + 8 }) },
+                        { label: 'Yaw-', onClick: () => nudge({ yaw: selectedState.yaw - 5 }) },
+                        { label: 'Yaw+', onClick: () => nudge({ yaw: selectedState.yaw + 5 }) },
+                        { label: 'Pitch-', onClick: () => nudge({ pitch: selectedState.pitch - 5 }) },
+                        { label: 'Pitch+', onClick: () => nudge({ pitch: selectedState.pitch + 5 }) },
+                    ]).map((btn) => (
+                        <button
+                            key={btn.label}
+                            type="button"
+                            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                btn.onClick();
+                            }}
+                        >
+                            {btn.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mt-2 flex items-center gap-1.5">
+                    {(['A', 'D'] as ProbeId[]).map((probeId) => (
+                        <button
+                            key={probeId}
+                            type="button"
+                            className={`rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide ${selectedProbe === probeId ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100' : 'border-white/10 bg-white/5 text-white/80'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProbe(probeId);
+                            }}
+                        >
+                            Probe {probeId}
+                        </button>
+                    ))}
+                    <button
+                        type="button"
+                        className="rounded-md border border-amber-300/30 bg-amber-400/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-100"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setProbeState((prev) => ({
+                                A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
+                                D: { x: 24, y: -110, yaw: -45, pitch: 75, z: 40 },
+                            }));
+                        }}
+                    >
+                        Reset
+                    </button>
+                </div>
+
+                <div className="mt-2 rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-slate-300">
+                    A: x={probeState.A.x}, y={probeState.A.y}, yaw={probeState.A.yaw}, pitch={probeState.A.pitch}, z={probeState.A.z}
+                    <br />
+                    D: x={probeState.D.x}, y={probeState.D.y}, yaw={probeState.D.yaw}, pitch={probeState.D.pitch}, z={probeState.D.z}
+                </div>
+            </div>
+
+            {renderProbe({
+                id: 'A',
+                label: 'upright y45',
+                x: probeState.A.x,
+                y: probeState.A.y,
+                transform: `translateZ(${probeState.A.z}px) rotateX(${probeState.A.pitch}deg) rotateY(${probeState.A.yaw}deg)`,
+            })}
+            {renderProbe({
+                id: 'D',
+                label: 'upright counter',
+                x: probeState.D.x,
+                y: probeState.D.y,
+                transform: `translateZ(${probeState.D.z}px) rotateX(${probeState.D.pitch}deg) rotateY(${probeState.D.yaw}deg)`,
+            })}
+
+            {staticRefs.map(renderProbe)}
         </>
     );
 };
