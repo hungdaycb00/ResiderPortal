@@ -341,7 +341,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                         left: `calc(50% + ${(boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
                     }}
                 >
-                    <span className="text-3xl animate-bounce drop-shadow-md">📍</span>
+                    <span className="text-3xl animate-bounce drop-shadow-md alin-map-upright-sprite">📍</span>
                 </div>
             )}
 

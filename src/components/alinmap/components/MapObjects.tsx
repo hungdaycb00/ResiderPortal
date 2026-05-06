@@ -9,8 +9,10 @@ export const MapBoundary: React.FC<{
     currentProvince: string;
 }> = ({ currentProvince }) => (
     <div className="absolute w-[2000px] h-[2000px] border-[5px] border-gray-500/20 rounded-full flex items-center justify-center pointer-events-none" style={{ left: 'calc(50% - 1000px)', top: 'calc(50% - 1000px)' }}>
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm alin-map-billboard alin-map-upright-sprite">
-            {currentProvince} BOUNDARY
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 alin-map-billboard">
+            <div className="px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-full text-gray-500 text-xs font-black tracking-widest uppercase backdrop-blur-sm alin-map-upright-sprite">
+                {currentProvince} BOUNDARY
+            </div>
         </div>
     </div>
 );

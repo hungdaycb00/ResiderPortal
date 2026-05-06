@@ -18,6 +18,7 @@ import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
+import { BILLBOARD_UPRIGHT_LIFT_PX, BILLBOARD_UPRIGHT_PITCH_DEGREES } from './constants';
 
 
 interface MapCanvasProps {
@@ -110,6 +111,10 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
     const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
     const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
+    const billboardPitchDeg = useTransform(
+        tiltAngle,
+        (v) => `${-(v + cameraRotateXDeg) + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
+    );
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
 
     // Sync Boat Center Handler to Context
@@ -179,8 +184,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
                             '--alin-map-camera-rotate-x-deg': `${cameraRotateXDeg}deg`,
                             '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                            '--alin-map-billboard-stand-deg': '90deg',
-                            '--alin-map-billboard-yaw-deg': '0deg',
+                            '--alin-map-billboard-pitch-deg': billboardPitchDeg,
+                            '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
+                            '--alin-map-billboard-lift-px': `${BILLBOARD_UPRIGHT_LIFT_PX}px`,
                             '--alin-map-node-counter-scale': nodeCounterScale,
                         } as any}
                         className="w-full h-full flex items-center justify-center alin-map-camera-layer"
@@ -315,11 +321,11 @@ const BillboardTransformProbes = ({
     type ProbeId = 'A' | 'D';
     type ProbeState = { x: number; y: number; yaw: number; pitch: number; z: number };
 
-    const [selectedProbe, setSelectedProbe] = React.useState<ProbeId>('A');
+    const [selectedProbe, setSelectedProbe] = React.useState<ProbeId>('D');
     const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
     const [probeState, setProbeState] = React.useState<Record<ProbeId, ProbeState>>({
         A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
-        D: { x: 24, y: -110, yaw: 0, pitch: 0, z: 40 },
+        D: { x: 24, y: -110, yaw: 0, pitch: BILLBOARD_UPRIGHT_PITCH_DEGREES, z: BILLBOARD_UPRIGHT_LIFT_PX },
     });
 
     useMotionValueEvent(tiltAngle, 'change', setTiltValue);
@@ -329,7 +335,7 @@ const BillboardTransformProbes = ({
         console.table({
             mapTilt: getComputedStyle(root).getPropertyValue('--alin-map-tilt-deg'),
             counterTilt: getComputedStyle(root).getPropertyValue('--alin-map-counter-tilt-deg'),
-            standDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-stand-deg'),
+            pitchDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-pitch-deg'),
             yawDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-yaw-deg'),
         });
     }, []);
@@ -463,7 +469,7 @@ const BillboardTransformProbes = ({
                             e.stopPropagation();
                             setProbeState((prev) => ({
                                 A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
-                                D: { x: 24, y: -110, yaw: -45, pitch: 75, z: 40 },
+                                D: { x: 24, y: -110, yaw: 0, pitch: BILLBOARD_UPRIGHT_PITCH_DEGREES, z: BILLBOARD_UPRIGHT_LIFT_PX },
                             }));
                         }}
                     >
