@@ -1,6 +1,6 @@
 import React from 'react';
 import { RefreshCw, Waves, LocateFixed } from 'lucide-react';
-import { LocateBoatButton } from './LocateBoatButton';
+import { LocateBoatButton } from './looter-game/components/LocateBoatButton';
 
 interface MapControlsQuickActionsProps {
     isConnecting: boolean;

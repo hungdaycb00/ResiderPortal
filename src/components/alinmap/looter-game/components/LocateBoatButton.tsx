@@ -1,6 +1,6 @@
 import React from 'react';
 import { LocateFixed } from 'lucide-react';
-import { useLooterGame } from './looter-game/LooterGameContext';
+import { useLooterGame } from '../LooterGameContext';
 
 export const LocateBoatButton: React.FC = () => {
     const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();

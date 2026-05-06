@@ -14,12 +14,16 @@ interface UseMapInteractionsProps {
     encounter: any;
     isInteractionLocked?: boolean;
     setIsTierSelectorOpen?: (v: boolean) => void;
+    planeYScale?: MotionValue<number>;
+    cameraZ?: MotionValue<number>;
+    setCameraZ?: (z: number) => void;
 }
 
 export function useMapInteractions({
     panX, panY, scale,
     isLooterGameMode, looterStateObj, isChallengeActive,
-    myObfPos, looterBoat, encounter, isInteractionLocked = false, setIsTierSelectorOpen
+    myObfPos, looterBoat, encounter, isInteractionLocked = false, setIsTierSelectorOpen,
+    planeYScale, cameraZ, setCameraZ
 }: UseMapInteractionsProps) {
 
     const mapDragRef = useRef<{
@@ -41,6 +45,10 @@ export function useMapInteractions({
         moved: false,
         suppressClick: false,
     });
+
+    const activePointersRef = useRef<Map<number, { x: number, y: number }>>(new Map());
+    const initialPinchDistRef = useRef<number | null>(null);
+    const initialCameraZRef = useRef<number | null>(null);
 
     const handleMapPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
@@ -66,6 +74,15 @@ export function useMapInteractions({
             suppressClick: false,
         };
         
+        activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activePointersRef.current.size === 2) {
+            const pts = Array.from(activePointersRef.current.values());
+            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            initialPinchDistRef.current = dist;
+            initialCameraZRef.current = cameraZ?.get() ?? 0;
+            dragState.moved = true; // Prevent click if pinching
+        }
+
         if (encounter) {
             // Trong lúc combat, chỉ cập nhật trạng thái drag (để pan bản đồ) chứ KHÔNG gọi handlePointerDown để di chuyển thuyền
             try {
@@ -91,19 +108,45 @@ export function useMapInteractions({
             e.preventDefault();
             return;
         }
+
+        if (activePointersRef.current.has(e.pointerId)) {
+            activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        if (activePointersRef.current.size === 2 && initialPinchDistRef.current != null && initialCameraZRef.current != null) {
+            const pts = Array.from(activePointersRef.current.values());
+            const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            const scaleDiff = currentDist / initialPinchDistRef.current;
+            
+            // Adjust zoom sensitivity based on need
+            // Moving fingers apart (scaleDiff > 1) -> zoom in (larger cameraZ)
+            // Moving fingers together (scaleDiff < 1) -> zoom out (smaller cameraZ)
+            const zoomDelta = (scaleDiff - 1) * 800; 
+            if (setCameraZ) {
+                setCameraZ(initialCameraZRef.current + zoomDelta);
+            }
+            dragState.moved = true;
+            e.preventDefault();
+            return; // Skip panning while pinching
+        }
+
         if (!dragState.active || dragState.pointerId !== e.pointerId) return;
 
         const currentScale = scale?.get?.() ?? 1;
+        const currentPlaneYScale = planeYScale?.get?.() || 0.66;
+        const mapPlaneScale = 1.32; // MAP_PLANE_SCALE from constants
+        
         const deltaX = (e.clientX - dragState.startX) / currentScale;
         const deltaY = (e.clientY - dragState.startY) / currentScale;
         if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
             dragState.moved = true;
         }
 
-        panX.set(dragState.startPanX + deltaX);
-        panY.set(dragState.startPanY + deltaY);
+        // Áp dụng scale ngược để map di chuyển chuẩn theo tay người dùng (x2 tốc độ cho Y, x0.75 cho X)
+        panX.set(dragState.startPanX + deltaX / mapPlaneScale);
+        panY.set(dragState.startPanY + deltaY / currentPlaneYScale);
         e.preventDefault();
-    }, [panX, panY, scale, encounter, isInteractionLocked]);
+    }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked]);
 
     const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
@@ -114,6 +157,13 @@ export function useMapInteractions({
             e.stopPropagation();
             return;
         }
+        
+        activePointersRef.current.delete(e.pointerId);
+        if (activePointersRef.current.size < 2) {
+            initialPinchDistRef.current = null;
+            initialCameraZRef.current = null;
+        }
+
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
 
         if (dragState.active && dragState.pointerId === e.pointerId) {
@@ -155,6 +205,13 @@ export function useMapInteractions({
             looterBoat.handlePointerCancel();
             return;
         }
+        
+        activePointersRef.current.delete(e.pointerId);
+        if (activePointersRef.current.size < 2) {
+            initialPinchDistRef.current = null;
+            initialCameraZRef.current = null;
+        }
+
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
             try {

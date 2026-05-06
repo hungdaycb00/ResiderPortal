@@ -94,26 +94,6 @@ const MapControlsWeatherWidget: React.FC<MapControlsWeatherWidgetProps> = ({
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="bg-gray-100 rounded-lg py-1.5 px-2 flex flex-col gap-1.5 w-full mt-2">
-                            {weatherData && (
-                                <div className="flex items-center gap-2 pb-1.5 border-b border-gray-200">
-                                    <div className="flex-1 flex flex-col items-center gap-0.5 py-1">
-                                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Temp</p>
-                                        <p className="text-[13px] font-black text-gray-800">{weatherData.temp}°C</p>
-                                    </div>
-                                    {weatherData.feelsLike != null && (
-                                        <div className="flex-1 flex flex-col items-center gap-0.5 py-1 border-x border-gray-200">
-                                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Feels</p>
-                                            <p className="text-[13px] font-black text-orange-600">{weatherData.feelsLike}°C</p>
-                                        </div>
-                                    )}
-                                    {weatherData.humidity != null && (
-                                        <div className="flex-1 flex flex-col items-center gap-0.5 py-1">
-                                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Humid</p>
-                                            <p className="text-[13px] font-black text-blue-600">{weatherData.humidity}%</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                             <div className="relative">
                                 <div className="flex items-center justify-between">
                                     <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Location</p>
@@ -153,37 +133,21 @@ const MapControlsWeatherWidget: React.FC<MapControlsWeatherWidgetProps> = ({
                                     onChange={e => setFriendLocInput(e.target.value)}
                                     className="text-[10px] w-full bg-white border border-gray-200 rounded px-1.5 py-1 outline-none font-mono text-gray-800"
                                 />
-                                <div className="flex gap-1 w-full">
-                                    <button
-                                        onClick={() => {
-                                            if (!friendLocInput) return;
-                                            const parts = friendLocInput.split(',');
-                                            const locLat = parseFloat(parts[0]);
-                                            const locLng = parseFloat(parts[1]);
-                                            if (!Number.isNaN(locLat) && !Number.isNaN(locLng)) {
-                                                handleCenterTo(locLat, locLng);
-                                            }
-                                        }}
-                                        className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
-                                    >
-                                        Move
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (!friendLocInput) return;
-                                            const parts = friendLocInput.split(',');
-                                            const locLat = parseFloat(parts[0]);
-                                            const locLng = parseFloat(parts[1]);
-                                            if (!Number.isNaN(locLat) && !Number.isNaN(locLng)) {
-                                                setSearchMarkerPos({ lat: locLat, lng: locLng });
-                                                handleCenterTo(locLat, locLng);
-                                            }
-                                        }}
-                                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-[9px] font-bold py-1 px-1 rounded transition-colors whitespace-nowrap"
-                                    >
-                                        Search
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (!friendLocInput) return;
+                                        const parts = friendLocInput.split(',');
+                                        const locLat = parseFloat(parts[0]);
+                                        const locLng = parseFloat(parts[1]);
+                                        if (!Number.isNaN(locLat) && !Number.isNaN(locLng)) {
+                                            setSearchMarkerPos({ lat: locLat, lng: locLng });
+                                            handleCenterTo(locLat, locLng);
+                                        }
+                                    }}
+                                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 text-[10px] font-bold py-1.5 px-1 rounded transition-colors whitespace-nowrap"
+                                >
+                                    Search
+                                </button>
                             </div>
                         </div>
                     </motion.div>

@@ -107,8 +107,8 @@ const SelfNode: React.FC<SelfNodeProps> = ({
                         payload: { lat: newLat, lng: newLng, zoom: 13 }
                     }));
                     setMyObfPos({ lat: newLat, lng: newLng });
-                    panX.set((panX?.get?.() ?? 0) + info.offset.x / currentScale);
-                    panY.set((panY?.get?.() ?? 0) + info.offset.y / currentScale);
+                    panX.set((panX?.get?.() ?? 0) + (info.offset.x / currentScale) / MAP_PLANE_SCALE);
+                    panY.set((panY?.get?.() ?? 0) + (info.offset.y / currentScale) / planeYScale.get());
                     selfDragX.set(0);
                     selfDragY.set(0);
                     addLog(`🚀 Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);

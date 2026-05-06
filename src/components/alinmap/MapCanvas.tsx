@@ -130,7 +130,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         looterStateObj, isChallengeActive: !!isChallengeActive,
         myObfPos, looterBoat, encounter: looterState.encounter,
         isInteractionLocked: isMapInteractionLocked,
-        setIsTierSelectorOpen
+        setIsTierSelectorOpen,
+        planeYScale
     });
     
     // Auto-focus camera on combat center
@@ -168,7 +169,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         className="w-full h-full flex items-center justify-center alin-map-camera-layer"
                     >
                         <motion.div
-                            style={{ x: panX, y: panY, touchAction: 'none' }}
+                            style={{ touchAction: 'none' }}
                             className="absolute w-[10000px] h-[10000px] cursor-grab active:cursor-grabbing pointer-events-auto flex items-center justify-center border border-blue-500/10 bg-black/0 alin-map-pan-layer"
                             onPointerDown={handleMapPointerDown}
                             onPointerMove={handleMapPointerMove}
@@ -177,51 +178,53 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             onClickCapture={handleMapClickCapture}
                         >
                             <div className="absolute inset-0 flex items-center justify-center alin-map-tilt-plane">
-                                <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
-                                <MapGrid mapMode={mapMode} />
+                                <motion.div style={{ x: panX, y: panY }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <MapTiles panX={panX} panY={panY} scale={scale} planeYScale={planeYScale} myObfPos={myObfPos} mode={mapMode} />
+                                    <MapGrid mapMode={mapMode} />
 
-                                {myObfPos && (
-                                    <>
-                                        {currentProvince && <MapBoundary currentProvince={currentProvince} />}
-                                        
-                                        {(user || isLooterGameMode) ? (
-                                            <SelfNode
-                                                isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
-                                                myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
-                                                user={user} myUserId={myUserId} galleryActive={galleryActive}
-                                                galleryTitle={galleryTitle} galleryImages={galleryImages}
-                                                scale={scale} planeYScale={planeYScale} selfDragX={selfDragX} selfDragY={selfDragY}
-                                                panX={panX} panY={panY}
-                                                boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                                ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
-                                                setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
-                                                setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
+                                    {myObfPos && (
+                                        <>
+                                            {currentProvince && <MapBoundary currentProvince={currentProvince} />}
+                                            
+                                            {(user || isLooterGameMode) ? (
+                                                <SelfNode
+                                                    isLooterGameMode={!!isLooterGameMode} myObfPos={myObfPos} myDisplayName={myDisplayName}
+                                                    myStatus={myStatus} isVisibleOnMap={isVisibleOnMap} isDesktop={isDesktop}
+                                                    user={user} myUserId={myUserId} galleryActive={galleryActive}
+                                                    galleryTitle={galleryTitle} galleryImages={galleryImages}
+                                                    scale={scale} planeYScale={planeYScale} selfDragX={selfDragX} selfDragY={selfDragY}
+                                                    panX={panX} panY={panY}
+                                                    boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                                    ws={ws} setSelectedUser={setSelectedUser} setActiveTab={setActiveTab}
+                                                    setIsSheetExpanded={setIsSheetExpanded} setMyObfPos={setMyObfPos}
+                                                    setMainTab={setMainTab} addLog={addLog} looterState={looterStateObj}
+                                                />
+                                            ) : (
+                                                <GuestNode />
+                                            )}
+
+                                            {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
+
+                                            {isLooterGameMode && (
+                                                <LooterEntities
+                                                    myObfPos={myObfPos} looterState={looterStateObj}
+                                                    boatTargetPin={looterBoat.boatTargetPin}
+                                                    boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
+                                                    executeMoveToExact={looterBoat.executeMoveToExact}
+                                                    stopBoat={looterBoat.stopBoat}
+                                                />
+                                            )}
+
+                                            <UserLayer 
+                                                nearbyUsers={nearbyUsers} myUserId={myUserId} user={user}
+                                                myObfPos={myObfPos} searchTag={searchTag} filterDistance={filterDistance}
+                                                filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
+                                                isLooterGameMode={!!isLooterGameMode} scale={scale}
+                                                setSelectedUser={setSelectedUser} setContextMenu={setContextMenu}
                                             />
-                                        ) : (
-                                            <GuestNode />
-                                        )}
-
-                                        {searchMarkerPos && <SearchMarkerPin pos={searchMarkerPos} myObfPos={myObfPos} />}
-
-                                        {isLooterGameMode && (
-                                            <LooterEntities
-                                                myObfPos={myObfPos} looterState={looterStateObj}
-                                                boatTargetPin={looterBoat.boatTargetPin}
-                                                boatOffsetX={looterBoat.boatOffsetX} boatOffsetY={looterBoat.boatOffsetY}
-                                                executeMoveToExact={looterBoat.executeMoveToExact}
-                                                stopBoat={looterBoat.stopBoat}
-                                            />
-                                        )}
-
-                                        <UserLayer 
-                                            nearbyUsers={nearbyUsers} myUserId={myUserId} user={user}
-                                            myObfPos={myObfPos} searchTag={searchTag} filterDistance={filterDistance}
-                                            filterAgeMin={filterAgeMin} filterAgeMax={filterAgeMax}
-                                            isLooterGameMode={!!isLooterGameMode} scale={scale}
-                                            setSelectedUser={setSelectedUser} setContextMenu={setContextMenu}
-                                        />
-                                    </>
-                                )}
+                                        </>
+                                    )}
+                                </motion.div>
                             </div>
                         </motion.div>
                     </motion.div>
