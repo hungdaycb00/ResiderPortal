@@ -234,181 +234,187 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             onOpenChat={onOpenChat}
             selectedUser={nav.selectedUser}
         >
-        <div className="fixed inset-0 z-[100] bg-[#13151a] flex flex-col select-none">
-            {/* Header / Search Bar */}
-            <SearchHeader
-                searchTag={searchTag}
-                setSearchTag={setSearchTag}
-                isDesktop={nav.isDesktop}
-                isSheetExpanded={nav.isSheetExpanded}
-                setIsSheetExpanded={nav.setIsSheetExpanded}
-                isLooterGameMode={isLooterGameMode}
-                mainTab={nav.mainTab}
-                myAvatarUrl={wsCtx.myAvatarUrl}
-                myDisplayName={wsCtx.myDisplayName}
-                handleTabClick={nav.handleTabClick}
-                showDesktopResults={search.showDesktopResults}
-                setShowDesktopResults={search.setShowDesktopResults}
-                isSearchingDesktop={search.isSearchingDesktop}
-                desktopSearchResults={search.desktopSearchResults}
-                nearbyUsers={wsCtx.nearbyUsers}
-                setSelectedUser={nav.setSelectedUser}
-                setActiveTab={nav.setActiveTab}
-                handlePlayGame={handlePlayGame}
-                weatherData={geo.weatherData}
-                currentProvince={geo.currentProvince}
-                myObfPos={geo.myObfPos}
-                onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
-            />
-
-            <MapCanvas
-                position={geo.position} isConsentOpen={geo.isConsentOpen}
-                nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                myUserId={resolvedMyUserId} user={user}
-                myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
-                myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isConnecting={wsCtx.isConnecting}
-                isDesktop={nav.isDesktop}
-                currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
-                galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
-                filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
-                scale={nav.scale} cameraZ={nav.cameraZ} tiltAngle={nav.tiltAngle} planeYScale={nav.planeYScale} perspectivePx={nav.perspectivePx}
-                panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
-                requestLocation={geo.requestLocation} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
-                setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
-                mapMode={nav.mapMode}
-                setContextMenu={setContextMenu}
-                isLooterGameMode={isLooterGameMode}
-                isLooterLoading={nav.isLooterLoading}
-                setMainTab={nav.setMainTab}
-                showNotification={showNotification}
-                setIsTierSelectorOpen={setIsTierSelectorOpen}
-                setCameraZ={nav.setCameraZ}
-            />
-
-            <MapControls
-                isConnecting={wsCtx.isConnecting}
-                isSidebarOpen={false}
-                weatherData={geo.weatherData}
-                currentProvince={geo.currentProvince}
-                myObfPos={geo.myObfPos}
-                friendLocInput={friendIdInput}
-                filterDistance={50}
-                filterAgeMin={13}
-                filterAgeMax={99}
-                searchTag={searchTag}
-                zoomIn={nav.zoomIn}
-                zoomOut={nav.zoomOut}
-                mapMode={nav.mapMode}
-                setIsSidebarOpen={() => {}}
-                setFriendLocInput={setFriendIdInput}
-                setSearchMarkerPos={setSearchMarkerPos}
-                setFilterDistance={() => {}}
-                setFilterAgeMin={() => {}}
-                setFilterAgeMax={() => {}}
-                setSearchTag={setSearchTag}
-                handleRefresh={handleRefresh}
-                handleCenter={nav.handleCenter}
-                handleCenterTo={nav.handleCenterTo}
-                setMapMode={nav.setMapMode}
-                isWidgetExpanded={isWeatherWidgetExpanded}
-                setIsWidgetExpanded={setIsWeatherWidgetExpanded}
-                isSheetExpanded={nav.isSheetExpanded}
-            />
-
-            <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
-
-            <BottomSheet
-                isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
-                activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                games={games} userGames={posts.userGames} userPosts={posts.userPosts} feedPosts={posts.feedPosts} myUserId={resolvedMyUserId}
-                myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
-                searchTag={searchTag}
-                isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
-                postPrivacy={posts.postPrivacy}
-                postIsStarred={posts.postIsStarred}
-                isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
-                radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
-                fetchFeedPosts={posts.fetchFeedPosts}
-                showNotification={showNotification}
-                                ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
-                onLocateUser={(lat, lng) => {
-                    nav.handleCenterTo(lat, lng);
-                    nav.setVisualScale(2);
-                }}
-                externalApi={externalApi} onOpenChat={onOpenChat}
-                handleUpdateRadius={nav.handleUpdateRadius}
-                setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
-                setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
-                setMyDisplayName={wsCtx.setMyDisplayName}
-                myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
-                setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
-                setPostPrivacy={posts.setPostPrivacy}
-                setPostIsStarred={posts.setPostIsStarred}
-                handleCreatePost={posts.handleCreatePost}
-                handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
-                handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
-                handlePlayGame={handlePlayGame}
-                cloudflareUrl={cloudflareUrl}
-                triggerAuth={triggerAuth}
-                requireAuth={requireAuth}
-                logout={logout}
-                externalOpenList={externalOpenList}
-                onOpenListChange={onOpenListChange}
-                onPublishSuccess={handleRefresh}
-                requestLocation={geo.requestLocation}
-            />
-
-            {/* Context Menu Overlay */}
-            {contextMenu && (
-                <ContextMenu
-                    contextMenu={contextMenu}
+        <div className="fixed inset-0 z-[100] isolate overflow-hidden bg-[#13151a] select-none">
+            <div className="absolute inset-0 z-0">
+                <MapCanvas
+                    position={geo.position} isConsentOpen={geo.isConsentOpen}
+                    nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                    myUserId={resolvedMyUserId} user={user}
+                    myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
+                    myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isConnecting={wsCtx.isConnecting}
+                    isDesktop={nav.isDesktop}
+                    currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
+                    galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
+                    filterAgeMin={13} filterAgeMax={99} searchMarkerPos={searchMarkerPos}
+                    scale={nav.scale} cameraZ={nav.cameraZ} tiltAngle={nav.tiltAngle} planeYScale={nav.planeYScale} perspectivePx={nav.perspectivePx}
+                    panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
+                    requestLocation={geo.requestLocation} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
+                    setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
+                    mapMode={nav.mapMode}
                     setContextMenu={setContextMenu}
-                    setMyObfPos={geo.setMyObfPos}
-                    panX={nav.panX}
-                    panY={nav.panY}
-                    ws={wsCtx.ws}
+                    isLooterGameMode={isLooterGameMode}
+                    isLooterLoading={nav.isLooterLoading}
+                    setMainTab={nav.setMainTab}
+                    showNotification={showNotification}
+                    setIsTierSelectorOpen={setIsTierSelectorOpen}
+                    setCameraZ={nav.setCameraZ}
+                />
+            </div>
+
+            <div className="absolute inset-0 z-[300]">
+                {/* Header / Search Bar */}
+                <SearchHeader
+                    searchTag={searchTag}
+                    setSearchTag={setSearchTag}
+                    isDesktop={nav.isDesktop}
+                    isSheetExpanded={nav.isSheetExpanded}
+                    setIsSheetExpanded={nav.setIsSheetExpanded}
+                    isLooterGameMode={isLooterGameMode}
+                    mainTab={nav.mainTab}
+                    myAvatarUrl={wsCtx.myAvatarUrl}
+                    myDisplayName={wsCtx.myDisplayName}
+                    handleTabClick={nav.handleTabClick}
+                    showDesktopResults={search.showDesktopResults}
+                    setShowDesktopResults={search.setShowDesktopResults}
+                    isSearchingDesktop={search.isSearchingDesktop}
+                    desktopSearchResults={search.desktopSearchResults}
+                    nearbyUsers={wsCtx.nearbyUsers}
                     setSelectedUser={nav.setSelectedUser}
+                    setActiveTab={nav.setActiveTab}
+                    handlePlayGame={handlePlayGame}
+                    weatherData={geo.weatherData}
+                    currentProvince={geo.currentProvince}
+                    myObfPos={geo.myObfPos}
+                    onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
                 />
-            )}
 
-            {pickupRewardItem && (
-                <PickupRewardModal
-                    item={pickupRewardItem}
-                    onDiscard={() => { void handleDiscardPickupItem(); }}
-                    onOpenBackpack={handleOpenBackpackFromPickup}
+                <MapControls
+                    isConnecting={wsCtx.isConnecting}
+                    isSidebarOpen={false}
+                    weatherData={geo.weatherData}
+                    currentProvince={geo.currentProvince}
+                    myObfPos={geo.myObfPos}
+                    friendLocInput={friendIdInput}
+                    filterDistance={50}
+                    filterAgeMin={13}
+                    filterAgeMax={99}
+                    searchTag={searchTag}
+                    zoomIn={nav.zoomIn}
+                    zoomOut={nav.zoomOut}
+                    mapMode={nav.mapMode}
+                    setIsSidebarOpen={() => {}}
+                    setFriendLocInput={setFriendIdInput}
+                    setSearchMarkerPos={setSearchMarkerPos}
+                    setFilterDistance={() => {}}
+                    setFilterAgeMin={() => {}}
+                    setFilterAgeMax={() => {}}
+                    setSearchTag={setSearchTag}
+                    handleRefresh={handleRefresh}
+                    handleCenter={nav.handleCenter}
+                    handleCenterTo={nav.handleCenterTo}
+                    setMapMode={nav.setMapMode}
+                    isWidgetExpanded={isWeatherWidgetExpanded}
+                    setIsWidgetExpanded={setIsWeatherWidgetExpanded}
+                    isSheetExpanded={nav.isSheetExpanded}
                 />
-            )}
 
-            <TierSelectionOverlay
-                isOpen={isTierSelectorOpen}
-                onClose={() => setIsTierSelectorOpen(false)}
-                currentGold={looterStateObj.looterGold}
-                onSelectTier={async (tier) => {
-                    console.log(`[AlinMap] onSelectTier selected: ${tier}`);
-                    try {
-                        if (typeof looterActions.setWorldTier === 'function') {
-                            setIsTierSelectorOpen(false);
-                            setIsLooterGameMode(true);
-                            // Run in background so UI feels instant
-                            looterActions.setWorldTier(tier).catch(err => {
-                                console.error('[AlinMap] Background setWorldTier error:', err);
-                            });
-                        } else {
-                            console.error('[AlinMap] setWorldTier is not a function in looterActions');
+                <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
+
+                <BottomSheet
+                    isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
+                    activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                    games={games} userGames={posts.userGames} userPosts={posts.userPosts} feedPosts={posts.feedPosts} myUserId={resolvedMyUserId}
+                    myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
+                    searchTag={searchTag}
+                    isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
+                    postPrivacy={posts.postPrivacy}
+                    postIsStarred={posts.postIsStarred}
+                    isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
+                    radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
+                    fetchFeedPosts={posts.fetchFeedPosts}
+                    showNotification={showNotification}
+                                    ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
+                    onLocateUser={(lat, lng) => {
+                        nav.handleCenterTo(lat, lng);
+                        nav.setVisualScale(2);
+                    }}
+                    externalApi={externalApi} onOpenChat={onOpenChat}
+                    handleUpdateRadius={nav.handleUpdateRadius}
+                    setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
+                    setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
+                    setMyDisplayName={wsCtx.setMyDisplayName}
+                    myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
+                    setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
+                    setPostPrivacy={posts.setPostPrivacy}
+                    setPostIsStarred={posts.setPostIsStarred}
+                    handleCreatePost={posts.handleCreatePost}
+                    handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
+                    handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
+                    handlePlayGame={handlePlayGame}
+                    cloudflareUrl={cloudflareUrl}
+                    triggerAuth={triggerAuth}
+                    requireAuth={requireAuth}
+                    logout={logout}
+                    externalOpenList={externalOpenList}
+                    onOpenListChange={onOpenListChange}
+                    onPublishSuccess={handleRefresh}
+                    requestLocation={geo.requestLocation}
+                />
+            </div>
+
+            <div className="absolute inset-0 z-[450]">
+                {/* Context Menu Overlay */}
+                {contextMenu && (
+                    <ContextMenu
+                        contextMenu={contextMenu}
+                        setContextMenu={setContextMenu}
+                        setMyObfPos={geo.setMyObfPos}
+                        panX={nav.panX}
+                        panY={nav.panY}
+                        ws={wsCtx.ws}
+                        setSelectedUser={nav.setSelectedUser}
+                    />
+                )}
+
+                {pickupRewardItem && (
+                    <PickupRewardModal
+                        item={pickupRewardItem}
+                        onDiscard={() => { void handleDiscardPickupItem(); }}
+                        onOpenBackpack={handleOpenBackpackFromPickup}
+                    />
+                )}
+
+                <TierSelectionOverlay
+                    isOpen={isTierSelectorOpen}
+                    onClose={() => setIsTierSelectorOpen(false)}
+                    currentGold={looterStateObj.looterGold}
+                    onSelectTier={async (tier) => {
+                        console.log(`[AlinMap] onSelectTier selected: ${tier}`);
+                        try {
+                            if (typeof looterActions.setWorldTier === 'function') {
+                                setIsTierSelectorOpen(false);
+                                setIsLooterGameMode(true);
+                                // Run in background so UI feels instant
+                                looterActions.setWorldTier(tier).catch(err => {
+                                    console.error('[AlinMap] Background setWorldTier error:', err);
+                                });
+                            } else {
+                                console.error('[AlinMap] setWorldTier is not a function in looterActions');
+                            }
+                            
+                            // Check if nav methods exist before calling
+                            if (nav && typeof nav.handleCenterTo === 'function') {
+                                console.log(`[AlinMap] Centering map to fortress...`);
+                                nav.handleCenterTo(looterStateObj.fortressLat || 0, looterStateObj.fortressLng || 0);
+                            } else {
+                                console.warn(`[AlinMap] nav.handleCenterTo is not available`, nav);
+                            }
+                        } catch (err) {
+                            console.error(`[AlinMap] onSelectTier error:`, err);
                         }
-                        
-                        // Check if nav methods exist before calling
-                        if (nav && typeof nav.handleCenterTo === 'function') {
-                            console.log(`[AlinMap] Centering map to fortress...`);
-                            nav.handleCenterTo(looterStateObj.fortressLat || 0, looterStateObj.fortressLng || 0);
-                        } else {
-                            console.warn(`[AlinMap] nav.handleCenterTo is not available`, nav);
-                        }
-                    } catch (err) {
-                        console.error(`[AlinMap] onSelectTier error:`, err);
-                    }
-                }}
-            />
+                    }}
+                />
+            </div>
         </div>
         </SocialProvider>
         </ProfileProvider>

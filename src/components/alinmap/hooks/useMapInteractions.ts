@@ -80,7 +80,7 @@ export function useMapInteractions({
             const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
             initialPinchDistRef.current = dist;
             initialCameraZRef.current = cameraZ?.get() ?? 0;
-            dragState.moved = true; // Prevent click if pinching
+            mapDragRef.current.moved = true; // Prevent click if pinching
         }
 
         if (encounter) {
