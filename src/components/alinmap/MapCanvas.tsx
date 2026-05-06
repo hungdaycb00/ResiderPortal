@@ -111,10 +111,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
     const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
     const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
-    const billboardPitchDeg = useTransform(
-        tiltAngle,
-        (v) => `${-(v + cameraRotateXDeg) + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
-    );
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
 
     // Sync Boat Center Handler to Context
@@ -184,9 +180,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
                             '--alin-map-camera-rotate-x-deg': `${cameraRotateXDeg}deg`,
                             '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                            '--alin-map-billboard-pitch-deg': billboardPitchDeg,
-                            '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
-                            '--alin-map-billboard-lift-px': `${BILLBOARD_UPRIGHT_LIFT_PX}px`,
+                            '--alin-map-billboard-pitch-deg': '0deg',
+                            '--alin-map-billboard-yaw-deg': '0deg',
+                            '--alin-map-billboard-lift-px': '0px',
                             '--alin-map-node-counter-scale': nodeCounterScale,
                         } as any}
                         className="w-full h-full flex items-center justify-center alin-map-camera-layer"
