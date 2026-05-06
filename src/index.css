@@ -78,9 +78,10 @@
   }
 
   .alin-map-billboard {
-    transform: rotateX(var(--alin-map-counter-tilt-deg)) translateZ(48px) scale(var(--alin-map-node-counter-scale));
+    transform: translateZ(48px) rotateX(var(--alin-map-counter-tilt-deg)) scale(var(--alin-map-node-counter-scale));
     transform-origin: center bottom;
     transform-style: preserve-3d;
+    backface-visibility: hidden;
   }
 
   .alin-map-ground-shadow {

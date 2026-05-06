@@ -4,7 +4,7 @@ import { motion, MotionValue, useTransform } from 'framer-motion';
 import { normalizeImageUrl } from '../../services/externalApi';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
 
-const billboardTransform = (_: unknown, generated: string) => `${generated} rotateX(var(--alin-map-counter-tilt-deg)) translateZ(52px) scale(var(--alin-map-node-counter-scale))`;
+const billboardTransform = (_: unknown, generated: string) => `${generated} translateZ(52px) rotateX(var(--alin-map-counter-tilt-deg)) scale(var(--alin-map-node-counter-scale))`;
 
 interface SelfNodeProps {
     isLooterGameMode: boolean;

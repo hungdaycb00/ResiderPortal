@@ -5,7 +5,7 @@ import { motion, useTransform } from 'framer-motion';
 import { DEGREES_TO_PX, FEATURED_BILLBOARD_FAR_SCALE, LIKE_THRESHOLD_FOR_SCALE, SpatialNodeProps } from './constants';
 
 const billboardTransform = (_: unknown, generated: string) =>
-    `${generated} rotateX(var(--alin-map-counter-tilt-deg)) translateZ(44px) scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
+    `${generated} translateZ(44px) rotateX(var(--alin-map-counter-tilt-deg)) scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
 
 const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu }) => {
     const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
