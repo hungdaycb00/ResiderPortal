@@ -263,111 +263,103 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
             <div className="absolute inset-0 z-[300] pointer-events-none">
                 {/* Header / Search Bar */}
-                <div className="pointer-events-auto relative z-[420]">
-                    <SearchHeader
-                        searchTag={searchTag}
-                        setSearchTag={setSearchTag}
-                        isDesktop={nav.isDesktop}
-                        isSheetExpanded={nav.isSheetExpanded}
-                        setIsSheetExpanded={nav.setIsSheetExpanded}
-                        isLooterGameMode={isLooterGameMode}
-                        mainTab={nav.mainTab}
-                        myAvatarUrl={wsCtx.myAvatarUrl}
-                        myDisplayName={wsCtx.myDisplayName}
-                        handleTabClick={nav.handleTabClick}
-                        showDesktopResults={search.showDesktopResults}
-                        setShowDesktopResults={search.setShowDesktopResults}
-                        isSearchingDesktop={search.isSearchingDesktop}
-                        desktopSearchResults={search.desktopSearchResults}
-                        nearbyUsers={wsCtx.nearbyUsers}
-                        setSelectedUser={nav.setSelectedUser}
-                        setActiveTab={nav.setActiveTab}
-                        handlePlayGame={handlePlayGame}
-                        weatherData={geo.weatherData}
-                        currentProvince={geo.currentProvince}
-                        myObfPos={geo.myObfPos}
-                        onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
-                    />
-                </div>
+                <SearchHeader
+                    searchTag={searchTag}
+                    setSearchTag={setSearchTag}
+                    isDesktop={nav.isDesktop}
+                    isSheetExpanded={nav.isSheetExpanded}
+                    setIsSheetExpanded={nav.setIsSheetExpanded}
+                    isLooterGameMode={isLooterGameMode}
+                    mainTab={nav.mainTab}
+                    myAvatarUrl={wsCtx.myAvatarUrl}
+                    myDisplayName={wsCtx.myDisplayName}
+                    handleTabClick={nav.handleTabClick}
+                    showDesktopResults={search.showDesktopResults}
+                    setShowDesktopResults={search.setShowDesktopResults}
+                    isSearchingDesktop={search.isSearchingDesktop}
+                    desktopSearchResults={search.desktopSearchResults}
+                    nearbyUsers={wsCtx.nearbyUsers}
+                    setSelectedUser={nav.setSelectedUser}
+                    setActiveTab={nav.setActiveTab}
+                    handlePlayGame={handlePlayGame}
+                    weatherData={geo.weatherData}
+                    currentProvince={geo.currentProvince}
+                    myObfPos={geo.myObfPos}
+                    onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
+                />
 
-                <div className="pointer-events-auto relative z-[410]">
-                    <MapControls
-                        isConnecting={wsCtx.isConnecting}
-                        isSidebarOpen={false}
-                        weatherData={geo.weatherData}
-                        currentProvince={geo.currentProvince}
-                        myObfPos={geo.myObfPos}
-                        friendLocInput={friendIdInput}
-                        filterDistance={50}
-                        filterAgeMin={13}
-                        filterAgeMax={99}
-                        searchTag={searchTag}
-                        zoomIn={nav.zoomIn}
-                        zoomOut={nav.zoomOut}
-                        mapMode={nav.mapMode}
-                        setIsSidebarOpen={() => {}}
-                        setFriendLocInput={setFriendIdInput}
-                        setSearchMarkerPos={setSearchMarkerPos}
-                        setFilterDistance={() => {}}
-                        setFilterAgeMin={() => {}}
-                        setFilterAgeMax={() => {}}
-                        setSearchTag={setSearchTag}
-                        handleRefresh={handleRefresh}
-                        handleCenter={nav.handleCenter}
-                        handleCenterTo={nav.handleCenterTo}
-                        setMapMode={nav.setMapMode}
-                        isWidgetExpanded={isWeatherWidgetExpanded}
-                        setIsWidgetExpanded={setIsWeatherWidgetExpanded}
-                        isSheetExpanded={nav.isSheetExpanded}
-                    />
-                </div>
+                <MapControls
+                    isConnecting={wsCtx.isConnecting}
+                    isSidebarOpen={false}
+                    weatherData={geo.weatherData}
+                    currentProvince={geo.currentProvince}
+                    myObfPos={geo.myObfPos}
+                    friendLocInput={friendIdInput}
+                    filterDistance={50}
+                    filterAgeMin={13}
+                    filterAgeMax={99}
+                    searchTag={searchTag}
+                    zoomIn={nav.zoomIn}
+                    zoomOut={nav.zoomOut}
+                    mapMode={nav.mapMode}
+                    setIsSidebarOpen={() => {}}
+                    setFriendLocInput={setFriendIdInput}
+                    setSearchMarkerPos={setSearchMarkerPos}
+                    setFilterDistance={() => {}}
+                    setFilterAgeMin={() => {}}
+                    setFilterAgeMax={() => {}}
+                    setSearchTag={setSearchTag}
+                    handleRefresh={handleRefresh}
+                    handleCenter={nav.handleCenter}
+                    handleCenterTo={nav.handleCenterTo}
+                    setMapMode={nav.setMapMode}
+                    isWidgetExpanded={isWeatherWidgetExpanded}
+                    setIsWidgetExpanded={setIsWeatherWidgetExpanded}
+                    isSheetExpanded={nav.isSheetExpanded}
+                />
 
-                <div className="pointer-events-auto relative z-[400]">
-                    <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
-                </div>
+                <NavigationBar mainTab={nav.mainTab} selectedUser={nav.selectedUser} isDesktop={nav.isDesktop} handleTabClick={nav.handleTabClick} user={user} isSheetExpanded={nav.isSheetExpanded} />
 
-                <div className="pointer-events-auto relative z-[390]">
-                    <BottomSheet
-                        isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
-                        activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                        games={games} userGames={posts.userGames} userPosts={posts.userPosts} feedPosts={posts.feedPosts} myUserId={resolvedMyUserId}
-                        myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
-                        searchTag={searchTag}
-                        isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
-                        postPrivacy={posts.postPrivacy}
-                        postIsStarred={posts.postIsStarred}
-                        isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
-                        radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
-                        fetchFeedPosts={posts.fetchFeedPosts}
-                        showNotification={showNotification}
-                                        ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
-                        onLocateUser={(lat, lng) => {
-                            nav.handleCenterTo(lat, lng);
-                            nav.setVisualScale(2);
-                        }}
-                        externalApi={externalApi} onOpenChat={onOpenChat}
-                        handleUpdateRadius={nav.handleUpdateRadius}
-                        setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
-                        setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
-                        setMyDisplayName={wsCtx.setMyDisplayName}
-                        myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
-                        setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
-                        setPostPrivacy={posts.setPostPrivacy}
-                        setPostIsStarred={posts.setPostIsStarred}
-                        handleCreatePost={posts.handleCreatePost}
-                        handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
-                        handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
-                        handlePlayGame={handlePlayGame}
-                        cloudflareUrl={cloudflareUrl}
-                        triggerAuth={triggerAuth}
-                        requireAuth={requireAuth}
-                        logout={logout}
-                        externalOpenList={externalOpenList}
-                        onOpenListChange={onOpenListChange}
-                        onPublishSuccess={handleRefresh}
-                        requestLocation={geo.requestLocation}
-                    />
-                </div>
+                <BottomSheet
+                    isDesktop={nav.isDesktop} isSheetExpanded={nav.isSheetExpanded} selectedUser={nav.selectedUser}
+                    activeTab={nav.activeTab} mainTab={nav.mainTab} nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                    games={games} userGames={posts.userGames} userPosts={posts.userPosts} feedPosts={posts.feedPosts} myUserId={resolvedMyUserId}
+                    myDisplayName={wsCtx.myDisplayName} myObfPos={geo.myObfPos} user={user}
+                    searchTag={searchTag}
+                    isCreatingPost={posts.isCreatingPost} postTitle={posts.postTitle}
+                    postPrivacy={posts.postPrivacy}
+                    postIsStarred={posts.postIsStarred}
+                    isSavingPost={posts.isSavingPost} galleryActive={wsCtx.galleryActive} currentProvince={geo.currentProvince}
+                    radius={nav.radius} fetchUserPosts={posts.fetchUserPosts}
+                    fetchFeedPosts={posts.fetchFeedPosts}
+                    showNotification={showNotification}
+                                    ws={wsCtx.ws} panX={nav.panX} panY={nav.panY} 
+                    onLocateUser={(lat, lng) => {
+                        nav.handleCenterTo(lat, lng);
+                        nav.setVisualScale(2);
+                    }}
+                    externalApi={externalApi} onOpenChat={onOpenChat}
+                    handleUpdateRadius={nav.handleUpdateRadius}
+                    setIsSheetExpanded={nav.setIsSheetExpanded} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
+                    setMainTab={nav.setMainTab} setSearchTag={setSearchTag}
+                    setMyDisplayName={wsCtx.setMyDisplayName}
+                    myAvatarUrl={wsCtx.myAvatarUrl} setMyAvatarUrl={wsCtx.setMyAvatarUrl}
+                    setIsCreatingPost={posts.setIsCreatingPost} setPostTitle={posts.setPostTitle}
+                    setPostPrivacy={posts.setPostPrivacy}
+                    setPostIsStarred={posts.setPostIsStarred}
+                    handleCreatePost={posts.handleCreatePost}
+                    handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
+                    handleStarPost={posts.handleStarPost} handleDeletePost={posts.handleDeletePost}
+                    handlePlayGame={handlePlayGame}
+                    cloudflareUrl={cloudflareUrl}
+                    triggerAuth={triggerAuth}
+                    requireAuth={requireAuth}
+                    logout={logout}
+                    externalOpenList={externalOpenList}
+                    onOpenListChange={onOpenListChange}
+                    onPublishSuccess={handleRefresh}
+                    requestLocation={geo.requestLocation}
+                />
             </div>
 
             <div className="absolute inset-0 z-[450] pointer-events-none">
