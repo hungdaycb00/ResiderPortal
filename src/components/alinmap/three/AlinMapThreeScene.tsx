@@ -8,6 +8,7 @@ import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameCon
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 type LatLng = { lat: number; lng: number };
+const SCENE_WORLD_SCALE = 0.02;
 
 export interface AlinMapThreeSceneProps {
     position: [number, number] | null;
@@ -51,8 +52,8 @@ export interface AlinMapThreeSceneProps {
 }
 
 const worldToScene = (origin: LatLng, target: LatLng) => ({
-    x: (target.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE,
-    z: -(target.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE,
+    x: (target.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * SCENE_WORLD_SCALE,
+    z: -(target.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * SCENE_WORLD_SCALE,
 });
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -222,8 +223,9 @@ function CameraRig({
 
     useFrame(() => {
         const zoom = clamp(scale.get() || 1, 0.35, 4);
-        const distance = clamp((perspectivePx * 1.9 / zoom) - (cameraZ.get() || 0) * 4, 1800, 18000);
-        const height = distance * (0.42 + cameraHeightPct / 220);
+        const depthFit = perspectivePx * 2.35;
+        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 8, 650, 12000);
+        const height = distance * (0.52 + cameraHeightPct / 320);
 
         camera.position.set(0, height, distance);
         camera.lookAt(0, 0, 0);
@@ -237,7 +239,7 @@ function Ground({ mapMode }: { mapMode: 'grid' | 'satellite' }) {
     return (
         <group>
             <mesh rotation-x={-Math.PI / 2} position={[0, -1, 0]} receiveShadow>
-                <planeGeometry args={[60000, 60000, 1, 1]} />
+                <planeGeometry args={[12000, 12000, 1, 1]} />
                 <meshStandardMaterial
                     color={mapMode === 'satellite' ? '#02203a' : '#09141f'}
                     metalness={0.08}
@@ -245,9 +247,9 @@ function Ground({ mapMode }: { mapMode: 'grid' | 'satellite' }) {
                     fog
                 />
             </mesh>
-            <gridHelper args={[60000, 240, '#164158', '#0f2436']} position={[0, -0.98, 0]} />
+            <gridHelper args={[12000, 120, '#164158', '#0f2436']} position={[0, -0.98, 0]} />
             <mesh rotation-x={-Math.PI / 2} position={[0, -0.96, 0]}>
-                <planeGeometry args={[60000, 60000]} />
+                <planeGeometry args={[12000, 12000]} />
                 <meshBasicMaterial
                     color={mapMode === 'satellite' ? '#0d3b66' : '#050b12'}
                     transparent
@@ -278,7 +280,7 @@ function BillboardLabel({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0, 0.1]} renderOrder={50}>
-                <planeGeometry args={[4.2, 1.4]} />
+                <planeGeometry args={[44, 14]} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>
@@ -316,11 +318,11 @@ function AvatarBillboard({
         <group position={position} onClick={onClick} renderOrder={10}>
             <Billboard follow>
                 <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
-                    <planeGeometry args={[1.6, 1.6]} />
+                    <planeGeometry args={[28, 28]} />
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
                 </mesh>
                 <mesh position={[0, 0.08, -0.02]}>
-                    <circleGeometry args={[1.1, 48]} />
+                    <circleGeometry args={[18, 48]} />
                     <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} />
                 </mesh>
                 {status ? (
@@ -384,7 +386,7 @@ function MarkerBillboard({
     return (
         <Billboard follow lockX lockY lockZ position={position}>
             <mesh position={[0, 0.45, 0.08]} renderOrder={30}>
-                <planeGeometry args={[2.2, 0.72]} />
+                <planeGeometry args={[34, 11]} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </Billboard>
@@ -470,7 +472,7 @@ function SceneContent({
         const liftZ = panY.get();
         const tilt = tiltAngle.get();
 
-        sceneRef.current.position.set(liftX, 0, liftZ);
+        sceneRef.current.position.set(liftX * SCENE_WORLD_SCALE, 0, liftZ * SCENE_WORLD_SCALE);
         sceneRef.current.rotation.set(
             THREE.MathUtils.degToRad(tilt + cameraRotateXDeg),
             THREE.MathUtils.degToRad(cameraRotateYDeg),
@@ -482,8 +484,8 @@ function SceneContent({
 
     const origin = { lat: position[0], lng: position[1] };
     const selfPos = worldToScene(origin, origin);
-    const selfLift = (selfDragX.get() || 0) * 0.02;
-    const selfDepth = (selfDragY.get() || 0) * 0.02;
+    const selfLift = (selfDragX.get() || 0) * SCENE_WORLD_SCALE;
+    const selfDepth = (selfDragY.get() || 0) * SCENE_WORLD_SCALE;
 
     return (
         <group ref={sceneRef}>
@@ -516,7 +518,7 @@ function SceneContent({
 
             {currentProvince ? (
                 <MarkerBillboard
-                    position={[selfPos.x + 180, 0.5, selfPos.z - 180]}
+                    position={[selfPos.x + 180 * SCENE_WORLD_SCALE, 0.5, selfPos.z - 180 * SCENE_WORLD_SCALE]}
                     icon="Province"
                     label={currentProvince}
                     accent="#0ea5e9"
@@ -579,7 +581,7 @@ function SceneContent({
 
             {encounter ? (
                 <MarkerBillboard
-                    position={[180, 0.7, -220]}
+                    position={[180 * SCENE_WORLD_SCALE, 0.7, -220 * SCENE_WORLD_SCALE]}
                     icon="🚢"
                     label="Enemy"
                     accent="#ef4444"
