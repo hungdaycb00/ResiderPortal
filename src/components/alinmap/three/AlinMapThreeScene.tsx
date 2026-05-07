@@ -11,6 +11,9 @@ import CameraRig from './CameraRig';
 import Ground from './Ground';
 import AvatarBillboard from './AvatarBillboard';
 import MarkerBillboard from './MarkerBillboard';
+import ProceduralBoat from './models/ProceduralBoat';
+import ProceduralFortress from './models/ProceduralFortress';
+import LootSprite from './models/LootSprite';
 
 // Utils
 import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, type LatLng } from './sceneUtils';
@@ -175,24 +178,28 @@ function SceneContent({
                 </group>
 
                 {/* Self avatar */}
-                <AvatarBillboard
-                    name={myDisplayName || user?.displayName || 'Me'}
-                    avatarUrl={myAvatarUrl || user?.photoURL}
-                    position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
-                    status={myStatus}
-                    isVisibleOnMap={isVisibleOnMap}
-                    isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
-                    onClick={() => onSelectSelf?.({
-                        id: user?.uid || myUserId || 'self',
-                        username: myDisplayName,
-                        lat: origin.lat,
-                        lng: origin.lng,
-                        isSelf: true,
-                    })}
-                    showGallery={galleryActive}
-                    galleryTitle={galleryTitle}
-                    galleryImages={galleryImages}
-                />
+                {isLooterGameMode ? (
+                    <ProceduralBoat position={[selfPos.x + selfLift, 0, selfPos.z + selfDepth]} />
+                ) : (
+                    <AvatarBillboard
+                        name={myDisplayName || user?.displayName || 'Me'}
+                        avatarUrl={myAvatarUrl || user?.photoURL}
+                        position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
+                        status={myStatus}
+                        isVisibleOnMap={isVisibleOnMap}
+                        isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
+                        onClick={() => onSelectSelf?.({
+                            id: user?.uid || myUserId || 'self',
+                            username: myDisplayName,
+                            lat: origin.lat,
+                            lng: origin.lng,
+                            isSelf: true,
+                        })}
+                        showGallery={galleryActive}
+                        galleryTitle={galleryTitle}
+                        galleryImages={galleryImages}
+                    />
+                )}
 
                 {/* Province marker */}
                 {currentProvince ? (
@@ -236,46 +243,38 @@ function SceneContent({
 
                 {/* Fortress */}
                 {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-                    <MarkerBillboard
-                        position={[fortressScene!.x, 0.55, fortressScene!.z]}
-                        icon="🏰"
-                        label="Thành trì"
-                        accent="#f59e0b"
-                    />
+                    <ProceduralFortress position={[fortressScene!.x, 0.55, fortressScene!.z]} />
                 ) : null}
 
                 {/* Boat target */}
                 {!encounter && boatTargetPin ? (
-                    <MarkerBillboard
+                    <LootSprite
                         position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
-                        icon="📍"
-                        label="Target"
-                        accent="#22c55e"
+                        type="target"
                     />
                 ) : null}
 
                 {/* Enemy */}
                 {encounter ? (
-                    <MarkerBillboard
+                    <LootSprite
                         position={[pxToScene(180), 0.7, pxToScene(-220)]}
-                        icon="🚢"
-                        label="Enemy"
-                        accent="#ef4444"
+                        type="enemy"
+                        scale={1.5}
                     />
                 ) : null}
 
                 {/* World loot items */}
                 {!encounter && safeWorldItems.slice(0, isLooterGameMode ? 24 : 60).map((item: any) => {
                     const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
-                    const icon = item?.item?.icon || '💎';
+                    const isPortal = item?.item?.type === 'portal';
                     const title = item?.item?.name || 'Loot';
                     return (
-                        <MarkerBillboard
+                        <LootSprite
                             key={item.spawnId}
                             position={[pos.x, 0.3, pos.z]}
-                            icon={icon}
-                            label={title}
-                            accent={item?.item?.type === 'portal' ? '#a78bfa' : '#22d3ee'}
+                            type={isPortal ? 'portal' : 'gem'}
+                            title={title}
+                            accent={isPortal ? '#a78bfa' : '#22d3ee'}
                         />
                     );
                 })}

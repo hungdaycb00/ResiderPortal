@@ -37,27 +37,18 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
     const lastPickupTimeRef = React.useRef<number>(0);
 
     return (
-        <motion.div
+        <div
             data-looter-entity="true"
             data-map-interactive="true"
-            className={`absolute flex flex-col items-center cursor-pointer z-[95] transition-transform hover:scale-125 alin-map-billboard ${isPortal ? 'w-14 h-14 -ml-7 -mt-7' : 'w-10 h-10 -ml-5 -mt-5'}`}
+            className={`absolute flex flex-col items-center cursor-pointer z-[95] ${isPortal ? 'w-16 h-16 -ml-8 -mt-8' : 'w-12 h-12 -ml-6 -mt-6'}`}
             style={{
                 top: `calc(50% + ${-(item.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                 left: `calc(50% + ${(item.lng - myObfPos.lng) * DEGREES_TO_PX}px)`,
                 transformOrigin: 'center bottom'
             }}
-            transformTemplate={billboardTransform}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1, y: reduceMotion && !isPortal ? 0 : [-2, 2, -2] }}
-            transition={{ 
-                scale: { type: "spring", stiffness: 260, damping: 20 },
-                opacity: { duration: 0.5 },
-                y: { duration: isPortal ? 3.2 : 2.5, repeat: reduceMotion && !isPortal ? 0 : Infinity, ease: 'easeInOut', delay: animationDelayRef.current }
-            }}
             onClick={(e) => {
                 e.stopPropagation();
 
-                // Cooldown Check (giảm xuống 300ms để tránh kẹt nhặt liên tục)
                 const now = Date.now();
                 if (now - lastPickupTimeRef.current < 300) return;
                 lastPickupTimeRef.current = now;
@@ -67,7 +58,6 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                 const oy = boatOffsetY?.get?.() ?? 0;
                 const currentLat = myObfPos.lat - oy / DEGREES_TO_PX;
                 const currentLng = myObfPos.lng + ox / DEGREES_TO_PX;
-                // ClickTolerance bằng đúng InteractionRadius để đảm bảo độ chuẩn xác < 250m
                 const clickTolerance = interactionRadius;
 
                 if (isPortal) {
@@ -91,44 +81,7 @@ const LooterItemEntity = React.memo(({ item, myObfPos, boatOffsetX, boatOffsetY,
                     }
                 }
             }}
-        >
-            <div className="relative group flex flex-col items-center pointer-events-none alin-map-upright-sprite">
-                {/* Glow Effect when in range */}
-                <motion.div
-                    style={{
-                        opacity: useTransform(distMetersTransform, (d) => d <= interactionRadius ? 1 : 0),
-                        scale: useTransform(distMetersTransform, (d) => d <= interactionRadius ? [1, 1.2, 1] : 1)
-                    }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                    className="absolute inset-0 -m-4 bg-cyan-400/30 blur-2xl rounded-full z-[-1]"
-                />
-                <motion.div
-                    style={{
-                        boxShadow: useTransform(distMetersTransform, (d) => 
-                            d <= interactionRadius 
-                            ? `0 0 20px 2px rgba(34, 211, 238, 0.4)` 
-                            : `0 0 0px 0px rgba(0,0,0,0)`
-                        )
-                    }}
-                    className="relative flex items-center justify-center rounded-full transition-all duration-300"
-                >
-                    <span className={`${isPortal ? 'text-4xl' : 'text-2xl'} drop-shadow-md group-hover:animate-bounce`}>
-                        {item.item?.icon || '💎'}
-                    </span>
-                </motion.div>
-                <div className="mt-0 flex flex-col items-center pointer-events-none">
-                    <span className="text-[7px] font-black uppercase tracking-tighter leading-none text-cyan-200 whitespace-nowrap drop-shadow-md">{item.item?.name}</span>
-                    <motion.span 
-                        style={{
-                            color: useTransform(distMetersTransform, (d) => d <= interactionRadius ? '#22d3ee' : '#ffffff')
-                        }}
-                        className="text-[6px] font-bold tabular-nums drop-shadow-md"
-                    >
-                        {distText}
-                    </motion.span>
-                </div>
-            </div>
-        </motion.div>
+        />
     );
 });
 
@@ -163,51 +116,16 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
             }}
             onPointerDown={(e) => {}}
             onPointerUp={(e) => {}}
-            className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90] alin-map-billboard"
+            className="absolute w-24 h-24 -ml-12 -mt-12 flex items-center justify-center pointer-events-auto cursor-pointer z-[90]"
             style={{
                 top: `calc(50% + ${-(fortressLat - myObfPos.lat) * DEGREES_TO_PX}px)`,
                 left: `calc(50% + ${(fortressLng - myObfPos.lng) * DEGREES_TO_PX}px)`
             }}
-        >
-            <div className="relative flex flex-col items-center group alin-map-upright-sprite">
-                <span className="absolute top-full mt-0.5 rounded-full border border-amber-300/40 bg-black/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-100 shadow-lg backdrop-blur-sm">
-                    Thành trì
-                </span>
-                <span className="text-6xl drop-shadow-lg">🏝️</span>
-            </div>
-        </div>
+        />
     );
 });
 
-const CombatEnemyBoat = React.memo(({ encounter, boatOffsetX, boatOffsetY }: any) => {
-    const enemyX = useTransform(boatOffsetX, (v: number) => v + 120);
-    const enemyY = boatOffsetY;
-
-    return (
-        <motion.div
-            className="absolute w-16 h-16 -ml-8 -mt-8 pointer-events-none z-[200] select-none alin-map-billboard"
-            style={{ top: '50%', left: '50%', x: enemyX, y: enemyY, transformOrigin: 'center bottom' }}
-            transformTemplate={billboardTransform}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-        >
-             <motion.div
-                className="w-full h-full"
-                initial={{ y: 60 }}
-                animate={{ y: [60, 0, -2, 2, -2], rotateZ: [0, 0, 2, -2, 2] }}
-                transition={{ 
-                    y: { duration: 1.2, ease: "easeOut" },
-                    rotateZ: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }
-                }}
-            >
-                <div className="w-full h-full flex flex-col items-center justify-center alin-map-upright-sprite">
-                    <span className="text-4xl drop-shadow-2xl scale-x-[-1]">🚢</span>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-});
+const CombatEnemyBoat = React.memo(() => null);
 
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact, stopBoat
@@ -332,18 +250,7 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
                 />
             )}
 
-            {/* Target Pin - ẩn khi combat */}
-            {!encounter && boatTargetPin && (
-                <div
-                    className="absolute w-12 h-12 -ml-6 -mt-12 flex items-center justify-center pointer-events-none z-[85] alin-map-billboard"
-                    style={{
-                        top: `calc(50% + ${-(boatTargetPin.lat - myObfPos.lat) * DEGREES_TO_PX}px)`,
-                        left: `calc(50% + ${(boatTargetPin.lng - myObfPos.lng) * DEGREES_TO_PX}px)`
-                    }}
-                >
-                    <span className="text-3xl animate-bounce drop-shadow-md alin-map-upright-sprite">📍</span>
-                </div>
-            )}
+            {/* Target Pin (invisible hitboxes if any are needed, but it's pointer-events-none) */}
 
             {/* Enemy Boat - chỉ hiện khi combat */}
             {encounter && (
