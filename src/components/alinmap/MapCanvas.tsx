@@ -218,6 +218,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         mapMode={mapMode}
                         isLooterGameMode={isLooterGameMode}
                         boatTargetPin={looterBoat.boatTargetPin}
+                        selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={setSelectedUser}
                     />

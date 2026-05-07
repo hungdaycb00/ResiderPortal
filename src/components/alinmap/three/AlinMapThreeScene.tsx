@@ -1,21 +1,21 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
-import { Html, Billboard, Text } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
-import { normalizeImageUrl } from '../../../services/externalApi';
 import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import { MAP_PLANE_SCALE } from '../constants';
 
-type LatLng = { lat: number; lng: number };
-const MAP_COORD_SCENE_SCALE = 0.34;
-const BILLBOARD_STATUS_DISTANCE_FACTOR = 5.5;
-const BILLBOARD_GALLERY_DISTANCE_FACTOR = 4.2;
-const AVATAR_PLANE_SIZE = 6.5;
-const AVATAR_RING_RADIUS = 4.4;
-const MARKER_PLANE_SIZE: [number, number] = [8.5, 2.9];
-const LABEL_PLANE_SIZE: [number, number] = [10.5, 3.2];
+// Sub-components
+import CameraRig from './CameraRig';
+import Ground from './Ground';
+import AvatarBillboard from './AvatarBillboard';
+import MarkerBillboard from './MarkerBillboard';
 
+// Utils
+import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, type LatLng } from './sceneUtils';
+
+// ─── Public Types ─────────────────────────────────────────────────────────────
 export interface AlinMapThreeSceneProps {
     position: [number, number] | null;
     nearbyUsers: any[];
@@ -52,374 +52,13 @@ export interface AlinMapThreeSceneProps {
     mapMode: 'grid' | 'satellite';
     isLooterGameMode?: boolean;
     boatTargetPin?: LatLng | null;
+    selectedUser?: any;
     onSelectUser?: (user: any) => void;
     onSelectSelf?: (user: any) => void;
     onRequestMove?: (lat: number, lng: number) => void;
 }
 
-const worldToScene = (origin: LatLng, target: LatLng) => ({
-    x: (target.lng - origin.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE,
-    z: -(target.lat - origin.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE,
-});
-
-const pxToScene = (px: number) => px * MAP_COORD_SCENE_SCALE;
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const initialsForName = (name: string) => {
-    const cleaned = (name || 'U')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? '')
-        .join('');
-    return cleaned || 'U';
-};
-
-const colorFromString = (value: string) => {
-    let hash = 0;
-    for (let i = 0; i < value.length; i += 1) {
-        hash = (hash * 31 + value.charCodeAt(i)) | 0;
-    }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 70% 48%)`;
-};
-
-const isRenderableImageUrl = (value?: string | null) => {
-    if (!value) return false;
-    const trimmed = value.trim();
-    if (!trimmed) return false;
-    if (trimmed === '...' || trimmed === 'undefined' || trimmed === 'null') return false;
-    if (/^\.\.\.+$/.test(trimmed)) return false;
-    if (trimmed.includes('...')) return false;
-    return true;
-};
-
-const resolveRenderableImageUrl = (value?: string | null) => {
-    if (!isRenderableImageUrl(value)) return '';
-    return normalizeImageUrl(value);
-};
-
-const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
-    const size = 128;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        return new THREE.CanvasTexture(canvas);
-    }
-
-    const bg = colorFromString(name || imageUrl || 'alin');
-    const drawFallback = () => {
-        const gradient = ctx.createLinearGradient(0, 0, size, size);
-        gradient.addColorStop(0, bg);
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.42, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fill();
-        ctx.restore();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 92px Inter, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.35)';
-        ctx.shadowBlur = 18;
-        ctx.fillText(initialsForName(name), size / 2, size / 2 + 4);
-    };
-
-    const seed = encodeURIComponent(name || 'alin');
-    const randomSpriteUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${seed}`;
-    const finalImageUrl = resolveRenderableImageUrl(imageUrl) || randomSpriteUrl;
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 8;
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-        ctx.clearRect(0, 0, size, size);
-        const gradient = ctx.createLinearGradient(0, 0, size, size);
-        gradient.addColorStop(0, bg);
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(img, 0, 0, size, size);
-        ctx.restore();
-
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-        ctx.stroke();
-
-        texture.needsUpdate = true;
-    };
-    img.onerror = drawFallback;
-    img.src = finalImageUrl;
-
-    drawFallback();
-    return texture;
-};
-
-const makeBadgeTexture = (title: string, subtitle?: string, accent = '#22d3ee') => {
-    const width = 512;
-    const height = 168;
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        return new THREE.CanvasTexture(canvas);
-    }
-
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, 'rgba(2, 6, 23, 0.95)');
-    gradient.addColorStop(1, accent);
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(0, 0, width, 20);
-
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '900 42px Inter, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 8;
-    ctx.fillText(title, width / 2, height * 0.42);
-
-    if (subtitle) {
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '800 22px Inter, system-ui, sans-serif';
-        ctx.fillText(subtitle, width / 2, height * 0.72);
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 8;
-    return texture;
-};
-
-function CameraRig({
-    scale,
-    cameraZ,
-    cameraHeightPct,
-    perspectivePx,
-}: Pick<AlinMapThreeSceneProps, 'scale' | 'cameraZ' | 'cameraHeightPct' | 'perspectivePx'>) {
-    const { camera } = useThree();
-
-    useFrame((state, delta) => {
-        const zoom = clamp(scale.get() || 1, 0.08, 8);
-        const depthFit = perspectivePx * 0.56;
-        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 5, 95, 9000);
-        const height = distance * (0.22 + cameraHeightPct / 620);
-
-        const targetPos = new THREE.Vector3(0, height, distance);
-        camera.position.lerp(targetPos, Math.min(1, delta * 12));
-        camera.lookAt(0, 0, 0);
-        camera.updateProjectionMatrix();
-    });
-
-    return null;
-}
-
-function Ground({ mapMode }: { mapMode: 'grid' | 'satellite' }) {
-    return (
-        <group>
-            <mesh rotation-x={-Math.PI / 2} position={[0, -1, 0]} receiveShadow>
-                <planeGeometry args={[12000, 12000, 1, 1]} />
-                <meshStandardMaterial
-                    color={mapMode === 'satellite' ? '#02203a' : '#09141f'}
-                    metalness={0.08}
-                    roughness={1}
-                    fog
-                />
-            </mesh>
-            <gridHelper args={[12000, 120, '#164158', '#0f2436']} position={[0, -0.98, 0]} />
-            <mesh rotation-x={-Math.PI / 2} position={[0, -0.96, 0]}>
-                <planeGeometry args={[12000, 12000]} />
-                <meshBasicMaterial
-                    color={mapMode === 'satellite' ? '#0d3b66' : '#050b12'}
-                    transparent
-                    opacity={0.18}
-                />
-            </mesh>
-        </group>
-    );
-}
-
-function BillboardLabel({
-    title,
-    subtitle,
-    accent,
-    position,
-}: {
-    title: string;
-    subtitle?: string;
-    accent?: string;
-    position: [number, number, number];
-}) {
-    const texture = useMemo(() => makeBadgeTexture(title, subtitle, accent), [title, subtitle, accent]);
-
-    useEffect(() => () => {
-        texture.dispose();
-    }, [texture]);
-
-    return (
-        <Billboard follow lockX lockY lockZ position={position}>
-            <mesh position={[0, 0, 0.1]} renderOrder={50}>
-                <planeGeometry args={LABEL_PLANE_SIZE} />
-                <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
-            </mesh>
-        </Billboard>
-    );
-}
-
-function GalleryImage({ url, title }: { url?: string; title?: string }) {
-    const texture = useMemo(() => {
-        if (!url) return null;
-        const normalized = resolveRenderableImageUrl(url);
-        if (!normalized) return null;
-        const loader = new THREE.TextureLoader();
-        return loader.load(normalized);
-    }, [url]);
-
-    return (
-        <group position={[0, 5.2, 0]}>
-            <mesh position={[0, 0, 0.05]} renderOrder={30}>
-                <planeGeometry args={[8, 4.5]} />
-                {texture ? (
-                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
-                ) : (
-                    <meshBasicMaterial color="#0f172a" transparent depthTest={false} depthWrite={false} />
-                )}
-            </mesh>
-            <mesh position={[0, 0, 0.02]} renderOrder={29}>
-                <planeGeometry args={[8.4, 4.9]} />
-                <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} depthTest={false} depthWrite={false} />
-            </mesh>
-            <Text
-                position={[0, 2.7, 0.1]}
-                fontSize={0.6}
-                color="#fef3c7"
-                anchorX="center"
-                anchorY="middle"
-                outlineWidth={0.05}
-                outlineColor="#000000"
-                depthTest={false}
-                renderOrder={31}
-            >
-                {title || 'GALLERY'}
-            </Text>
-        </group>
-    );
-}
-
-function AvatarBillboard({
-    name,
-    avatarUrl,
-    position,
-    status,
-    isVisibleOnMap,
-    onClick,
-    showGallery,
-    galleryTitle,
-    galleryImages,
-}: {
-    name: string;
-    avatarUrl?: string | null;
-    position: [number, number, number];
-    status?: string;
-    isVisibleOnMap: boolean;
-    onClick?: () => void;
-    showGallery?: boolean;
-    galleryTitle?: string;
-    galleryImages?: string[];
-}) {
-    const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
-
-    useEffect(() => () => {
-        texture.dispose();
-    }, [texture]);
-
-    return (
-        <group position={position} onClick={onClick} renderOrder={10}>
-            <Billboard follow>
-                <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
-                    <planeGeometry args={[AVATAR_PLANE_SIZE, AVATAR_PLANE_SIZE]} />
-                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
-                </mesh>
-                <mesh position={[0, 0.08, -0.02]}>
-                    <circleGeometry args={[AVATAR_RING_RADIUS, 48]} />
-                    <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} depthTest={false} depthWrite={false} />
-                </mesh>
-                {status ? (
-                    <Text
-                        position={[0, -2.0, 0]}
-                        fontSize={0.7}
-                        color="white"
-                        anchorX="center"
-                        anchorY="middle"
-                        outlineWidth={0.06}
-                        outlineColor="#000000"
-                        maxWidth={10}
-                        textAlign="center"
-                        depthTest={false}
-                    >
-                        {status}
-                    </Text>
-                ) : null}
-                {showGallery ? (
-                    <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
-                ) : null}
-            </Billboard>
-        </group>
-    );
-}
-
-function MarkerBillboard({
-    position,
-    icon,
-    label,
-    accent = '#22d3ee',
-}: {
-    position: [number, number, number];
-    icon: string;
-    label: string;
-    accent?: string;
-}) {
-    const texture = useMemo(() => makeBadgeTexture(icon, label, accent), [icon, label, accent]);
-
-    useEffect(() => () => {
-        texture.dispose();
-    }, [texture]);
-
-    return (
-        <Billboard follow lockX lockY lockZ position={position}>
-            <mesh position={[0, 0.45, 0.08]} renderOrder={30}>
-                <planeGeometry args={MARKER_PLANE_SIZE} />
-                <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
-            </mesh>
-        </Billboard>
-    );
-}
-
+// ─── Scene Content ────────────────────────────────────────────────────────────
 function SceneContent({
     position,
     nearbyUsers,
@@ -454,9 +93,9 @@ function SceneContent({
     mapMode,
     isLooterGameMode,
     boatTargetPin,
+    selectedUser,
     onSelectUser,
     onSelectSelf,
-    onRequestMove,
 }: AlinMapThreeSceneProps) {
     const sceneRef = useRef<THREE.Group>(null);
     const { scene } = useThree();
@@ -509,7 +148,7 @@ function SceneContent({
 
     if (!position) return null;
 
-    const origin = { lat: position[0], lng: position[1] };
+    const origin: LatLng = { lat: position[0], lng: position[1] };
     const selfPos = worldToScene(origin, origin);
     const selfLift = pxToScene(selfDragX.get() || 0);
     const selfDepth = pxToScene(selfDragY.get() || 0);
@@ -523,6 +162,7 @@ function SceneContent({
         <group ref={sceneRef}>
             <Ground mapMode={mapMode} />
 
+            {/* Radius pulse ring */}
             <group position={[0, 0.08, 0]}>
                 <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
                     <circleGeometry args={[1200, 64]} />
@@ -530,12 +170,14 @@ function SceneContent({
                 </mesh>
             </group>
 
-            <AvatarBillboard
+            {/* Self avatar */}
+                <AvatarBillboard
                 name={myDisplayName || user?.displayName || 'Me'}
                 avatarUrl={myAvatarUrl || user?.photoURL}
                 position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
                 status={myStatus}
                 isVisibleOnMap={isVisibleOnMap}
+                isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
                 onClick={() => onSelectSelf?.({
                     id: user?.uid || myUserId || 'self',
                     username: myDisplayName,
@@ -548,6 +190,7 @@ function SceneContent({
                 galleryImages={galleryImages}
             />
 
+            {/* Province marker */}
             {currentProvince ? (
                 <MarkerBillboard
                     position={[selfPos.x + pxToScene(180), 0.5, selfPos.z - pxToScene(180)]}
@@ -557,6 +200,7 @@ function SceneContent({
                 />
             ) : null}
 
+            {/* Search marker */}
             {searchMarkerPos ? (
                 <MarkerBillboard
                     position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
@@ -566,6 +210,7 @@ function SceneContent({
                 />
             ) : null}
 
+            {/* Nearby users */}
             {filteredUsers.map((u) => {
                 const pos = worldToScene(origin, u);
                 return (
@@ -576,6 +221,7 @@ function SceneContent({
                         position={[pos.x, 0.22, pos.z]}
                         status={u.status}
                         isVisibleOnMap
+                        isSelected={selectedUser?.id === u.id}
                         onClick={() => onSelectUser?.(u)}
                         showGallery={u.gallery?.active}
                         galleryTitle={u.gallery?.title}
@@ -584,6 +230,7 @@ function SceneContent({
                 );
             })}
 
+            {/* Fortress */}
             {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
                 <MarkerBillboard
                     position={[fortressScene!.x, 0.55, fortressScene!.z]}
@@ -593,6 +240,7 @@ function SceneContent({
                 />
             ) : null}
 
+            {/* Boat target */}
             {!encounter && boatTargetPin ? (
                 <MarkerBillboard
                     position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
@@ -602,6 +250,7 @@ function SceneContent({
                 />
             ) : null}
 
+            {/* Enemy */}
             {encounter ? (
                 <MarkerBillboard
                     position={[pxToScene(180), 0.7, pxToScene(-220)]}
@@ -611,6 +260,7 @@ function SceneContent({
                 />
             ) : null}
 
+            {/* World loot items */}
             {!encounter && safeWorldItems.slice(0, isLooterGameMode ? 24 : 60).map((item: any) => {
                 const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
                 const icon = item?.item?.icon || '💎';
@@ -626,6 +276,7 @@ function SceneContent({
                 );
             })}
 
+            {/* Mode label */}
             <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
                 <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
                     {mapMode} / {currentProvince || 'Global'}
@@ -642,6 +293,7 @@ function SceneContent({
     );
 }
 
+// ─── Canvas Entry Point ───────────────────────────────────────────────────────
 const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
     return (
         <Canvas

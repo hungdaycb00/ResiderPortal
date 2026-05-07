@@ -138,9 +138,9 @@ export function useMapInteractions({
             dragState.moved = true;
         }
 
-        // Áp dụng scale ngược để map di chuyển chuẩn theo tay người dùng (x2 tốc độ cho Y, x0.75 cho X)
-        panX.set(dragState.startPanX + deltaX / mapPlaneScale);
-        panY.set(dragState.startPanY + deltaY / currentPlaneYScale);
+        // Áp dụng scale ngược để map di chuyển chuẩn theo tay người dùng
+        panX.set(dragState.startPanX - deltaX / mapPlaneScale);
+        panY.set(dragState.startPanY - deltaY / currentPlaneYScale);
         e.preventDefault();
     }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked]);
 
