@@ -53,8 +53,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     onLocateUser,
     onOpenListChange,
     onPublishSuccess,
-    panX,
-    panY,
     postPrivacy,
     postIsStarred,
     postTitle,
@@ -274,4 +272,4 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     );
 };
 
-export default BottomSheetContent;
+export default React.memo(BottomSheetContent);

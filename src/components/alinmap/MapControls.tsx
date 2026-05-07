@@ -110,4 +110,4 @@ const MapControls: React.FC<MapControlsProps> = ({
     );
 };
 
-export default MapControls;
+export default React.memo(MapControls);
