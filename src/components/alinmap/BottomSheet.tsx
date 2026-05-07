@@ -90,7 +90,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     },
                 }}
                 initial="collapsed"
-                animate={isSheetExpanded || selectedUser ? 'full' : 'collapsed'}
+                animate={isSheetExpanded ? 'full' : 'collapsed'}
                 transition={{ type: 'spring', stiffness: 400, damping: 40 }}
                 drag={isDesktop || isItemDragging || mainTab === 'backpack' ? false : 'y'}
                 dragConstraints={{ top: 0, bottom: 0 }}
