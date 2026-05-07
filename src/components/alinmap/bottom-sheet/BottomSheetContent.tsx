@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import BackpackView from '../features/backpack/components/BackpackView';
 import CreatorTabView from '../features/creator/components/CreatorTabView';
 import DiscoverView from '../features/explore/components/DiscoverView';

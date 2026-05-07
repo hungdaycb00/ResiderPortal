@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import type { LooterItem } from '../LooterGameContext';
 
 interface PickupRewardModalProps {
@@ -47,4 +47,4 @@ const PickupRewardModal: React.FC<PickupRewardModalProps> = ({
     </div>
 );
 
-export default PickupRewardModal;
+export default React.memo(PickupRewardModal);
