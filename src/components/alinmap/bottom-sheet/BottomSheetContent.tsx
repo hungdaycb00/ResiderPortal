@@ -121,7 +121,12 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                     {selectedUser ? (
                         <SelectedUserView
                             selectedUser={selectedUser}
-                            setSelectedUser={setSelectedUser}
+                            setSelectedUser={(u) => {
+                                setSelectedUser(u);
+                                if (!u) {
+                                    setIsSheetExpanded(false);
+                                }
+                            }}
                             activeTab={activeTab as any}
                             setActiveTab={setActiveTab as any}
                             fetchUserPosts={fetchUserPosts}

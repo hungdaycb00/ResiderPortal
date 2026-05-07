@@ -29,9 +29,10 @@ const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser, s
                 </div>
                 <button
                     onClick={() => setSelectedUser(null)}
-                    className="shrink-0 p-2 -mr-2 -mt-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                    className="shrink-0 w-10 h-10 flex items-center justify-center -mr-2 -mt-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors relative z-10"
+                    aria-label="Đóng"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                 </button>
             </div>
         </div>
