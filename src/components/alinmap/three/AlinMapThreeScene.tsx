@@ -97,7 +97,8 @@ function SceneContent({
     onSelectUser,
     onSelectSelf,
 }: AlinMapThreeSceneProps) {
-    const sceneRef = useRef<THREE.Group>(null);
+    const tiltGroupRef = useRef<THREE.Group>(null);
+    const moveGroupRef = useRef<THREE.Group>(null);
     const { scene } = useThree();
     const looterState = useLooterState();
     const safeWorldItems = useMemo(() => sanitizeWorldItems(looterState.worldItems), [looterState.worldItems]);
@@ -133,13 +134,14 @@ function SceneContent({
     }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, isLooterGameMode]);
 
     useFrame(() => {
-        if (!sceneRef.current) return;
+        if (!tiltGroupRef.current || !moveGroupRef.current) return;
         const liftX = panX.get();
         const liftZ = panY.get();
         const tilt = tiltAngle.get();
 
-        sceneRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
-        sceneRef.current.rotation.set(
+        moveGroupRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
+        
+        tiltGroupRef.current.rotation.set(
             THREE.MathUtils.degToRad(tilt + cameraRotateXDeg),
             THREE.MathUtils.degToRad(cameraRotateYDeg),
             THREE.MathUtils.degToRad(cameraRotateDeg)
@@ -159,129 +161,132 @@ function SceneContent({
     const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
 
     return (
-        <group ref={sceneRef}>
-            <Ground mapMode={mapMode} />
+        <group ref={tiltGroupRef}>
+            <group ref={moveGroupRef}>
+                {/* 1. Nền bản đồ (Ground) */}
+                <Ground mapMode={mapMode} />
 
-            {/* Radius pulse ring */}
-            <group position={[0, 0.08, 0]}>
-                <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
-                    <circleGeometry args={[1200, 64]} />
-                    <meshBasicMaterial color="#22d3ee" transparent opacity={0.05} />
-                </mesh>
-            </group>
+                {/* Search Target Pin */}
+                <group position={[0, 0.08, 0]}>
+                    <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
+                        <circleGeometry args={[1200, 64]} />
+                        <meshBasicMaterial color="#22d3ee" transparent opacity={0.05} />
+                    </mesh>
+                </group>
 
-            {/* Self avatar */}
+                {/* Self avatar */}
                 <AvatarBillboard
-                name={myDisplayName || user?.displayName || 'Me'}
-                avatarUrl={myAvatarUrl || user?.photoURL}
-                position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
-                status={myStatus}
-                isVisibleOnMap={isVisibleOnMap}
-                isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
-                onClick={() => onSelectSelf?.({
-                    id: user?.uid || myUserId || 'self',
-                    username: myDisplayName,
-                    lat: origin.lat,
-                    lng: origin.lng,
-                    isSelf: true,
-                })}
-                showGallery={galleryActive}
-                galleryTitle={galleryTitle}
-                galleryImages={galleryImages}
-            />
-
-            {/* Province marker */}
-            {currentProvince ? (
-                <MarkerBillboard
-                    position={[selfPos.x + pxToScene(180), 0.5, selfPos.z - pxToScene(180)]}
-                    icon="Province"
-                    label={currentProvince}
-                    accent="#0ea5e9"
+                    name={myDisplayName || user?.displayName || 'Me'}
+                    avatarUrl={myAvatarUrl || user?.photoURL}
+                    position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
+                    status={myStatus}
+                    isVisibleOnMap={isVisibleOnMap}
+                    isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
+                    onClick={() => onSelectSelf?.({
+                        id: user?.uid || myUserId || 'self',
+                        username: myDisplayName,
+                        lat: origin.lat,
+                        lng: origin.lng,
+                        isSelf: true,
+                    })}
+                    showGallery={galleryActive}
+                    galleryTitle={galleryTitle}
+                    galleryImages={galleryImages}
                 />
-            ) : null}
 
-            {/* Search marker */}
-            {searchMarkerPos ? (
-                <MarkerBillboard
-                    position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
-                    icon="Pin"
-                    label="Search"
-                    accent="#fb7185"
-                />
-            ) : null}
-
-            {/* Nearby users */}
-            {filteredUsers.map((u) => {
-                const pos = worldToScene(origin, u);
-                return (
-                    <AvatarBillboard
-                        key={u.id}
-                        name={u.displayName || u.username || 'U'}
-                        avatarUrl={u.avatar_url}
-                        position={[pos.x, 0.22, pos.z]}
-                        status={u.status}
-                        isVisibleOnMap
-                        isSelected={selectedUser?.id === u.id}
-                        onClick={() => onSelectUser?.(u)}
-                        showGallery={u.gallery?.active}
-                        galleryTitle={u.gallery?.title}
-                        galleryImages={u.gallery?.images}
-                    />
-                );
-            })}
-
-            {/* Fortress */}
-            {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-                <MarkerBillboard
-                    position={[fortressScene!.x, 0.55, fortressScene!.z]}
-                    icon="🏰"
-                    label="Thành trì"
-                    accent="#f59e0b"
-                />
-            ) : null}
-
-            {/* Boat target */}
-            {!encounter && boatTargetPin ? (
-                <MarkerBillboard
-                    position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
-                    icon="📍"
-                    label="Target"
-                    accent="#22c55e"
-                />
-            ) : null}
-
-            {/* Enemy */}
-            {encounter ? (
-                <MarkerBillboard
-                    position={[pxToScene(180), 0.7, pxToScene(-220)]}
-                    icon="🚢"
-                    label="Enemy"
-                    accent="#ef4444"
-                />
-            ) : null}
-
-            {/* World loot items */}
-            {!encounter && safeWorldItems.slice(0, isLooterGameMode ? 24 : 60).map((item: any) => {
-                const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
-                const icon = item?.item?.icon || '💎';
-                const title = item?.item?.name || 'Loot';
-                return (
+                {/* Province marker */}
+                {currentProvince ? (
                     <MarkerBillboard
-                        key={item.spawnId}
-                        position={[pos.x, 0.3, pos.z]}
-                        icon={icon}
-                        label={title}
-                        accent={item?.item?.type === 'portal' ? '#a78bfa' : '#22d3ee'}
+                        position={[selfPos.x + pxToScene(180), 0.5, selfPos.z - pxToScene(180)]}
+                        icon="Province"
+                        label={currentProvince}
+                        accent="#0ea5e9"
                     />
-                );
-            })}
+                ) : null}
 
-            {/* Mode label */}
-            <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
-                <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
-                    {mapMode} / {currentProvince || 'Global'}
-                </div>
-            </Html>
+                {/* Search marker */}
+                {searchMarkerPos ? (
+                    <MarkerBillboard
+                        position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
+                        icon="Pin"
+                        label="Search"
+                        accent="#fb7185"
+                    />
+                ) : null}
+
+                {/* Nearby users */}
+                {filteredUsers.map((u) => {
+                    const pos = worldToScene(origin, u);
+                    return (
+                        <AvatarBillboard
+                            key={u.id}
+                            name={u.displayName || u.username || 'U'}
+                            avatarUrl={u.avatar_url}
+                            position={[pos.x, 0.22, pos.z]}
+                            status={u.status}
+                            isVisibleOnMap
+                            isSelected={selectedUser?.id === u.id}
+                            onClick={() => onSelectUser?.(u)}
+                            showGallery={u.gallery?.active}
+                            galleryTitle={u.gallery?.title}
+                            galleryImages={u.gallery?.images}
+                        />
+                    );
+                })}
+
+                {/* Fortress */}
+                {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
+                    <MarkerBillboard
+                        position={[fortressScene!.x, 0.55, fortressScene!.z]}
+                        icon="🏰"
+                        label="Thành trì"
+                        accent="#f59e0b"
+                    />
+                ) : null}
+
+                {/* Boat target */}
+                {!encounter && boatTargetPin ? (
+                    <MarkerBillboard
+                        position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
+                        icon="📍"
+                        label="Target"
+                        accent="#22c55e"
+                    />
+                ) : null}
+
+                {/* Enemy */}
+                {encounter ? (
+                    <MarkerBillboard
+                        position={[pxToScene(180), 0.7, pxToScene(-220)]}
+                        icon="🚢"
+                        label="Enemy"
+                        accent="#ef4444"
+                    />
+                ) : null}
+
+                {/* World loot items */}
+                {!encounter && safeWorldItems.slice(0, isLooterGameMode ? 24 : 60).map((item: any) => {
+                    const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
+                    const icon = item?.item?.icon || '💎';
+                    const title = item?.item?.name || 'Loot';
+                    return (
+                        <MarkerBillboard
+                            key={item.spawnId}
+                            position={[pos.x, 0.3, pos.z]}
+                            icon={icon}
+                            label={title}
+                            accent={item?.item?.type === 'portal' ? '#a78bfa' : '#22d3ee'}
+                        />
+                    );
+                })}
+
+                {/* Mode label */}
+                <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
+                    <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
+                        {mapMode} / {currentProvince || 'Global'}
+                    </div>
+                </Html>
+            </group>
 
             <CameraRig
                 scale={scale}
