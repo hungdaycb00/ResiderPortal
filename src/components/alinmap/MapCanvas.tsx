@@ -60,6 +60,7 @@ interface MapCanvasProps {
     selfDragY: MotionValue<number>;
     ws: React.MutableRefObject<WebSocket | null>;
     requestLocation: (forceInvisible?: boolean) => void;
+    selectedUser?: any;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts') => void;
     setIsSheetExpanded: (v: boolean) => void;
@@ -87,7 +88,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
-        requestLocation, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
+        requestLocation, selectedUser, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
     } = props;
