@@ -307,7 +307,7 @@ function GalleryImage({ url, title }: { url?: string; title?: string }) {
 
     return (
         <group position={[0, -3.8, 0]}>
-            <mesh position={[0, 0, 0]}>
+            <mesh position={[0, 0, 0.05]} renderOrder={30}>
                 <planeGeometry args={[8, 4.5]} />
                 {texture ? (
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
@@ -315,7 +315,7 @@ function GalleryImage({ url, title }: { url?: string; title?: string }) {
                     <meshBasicMaterial color="#0f172a" transparent depthTest={false} depthWrite={false} />
                 )}
             </mesh>
-            <mesh position={[0, 0, -0.01]}>
+            <mesh position={[0, 0, 0.02]} renderOrder={29}>
                 <planeGeometry args={[8.4, 4.9]} />
                 <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} depthTest={false} depthWrite={false} />
             </mesh>
@@ -328,6 +328,7 @@ function GalleryImage({ url, title }: { url?: string; title?: string }) {
                 outlineWidth={0.05}
                 outlineColor="#000000"
                 depthTest={false}
+                renderOrder={31}
             >
                 {title || 'GALLERY'}
             </Text>
@@ -581,6 +582,9 @@ function SceneContent({
                         status={u.status}
                         isVisibleOnMap
                         onClick={() => onSelectUser?.(u)}
+                        showGallery={u.gallery?.active}
+                        galleryTitle={u.gallery?.title}
+                        galleryImages={u.gallery?.images}
                     />
                 );
             })}

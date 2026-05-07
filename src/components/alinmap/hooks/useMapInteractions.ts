@@ -121,7 +121,7 @@ export function useMapInteractions({
             // Adjust zoom sensitivity based on need
             // Moving fingers apart (scaleDiff > 1) -> zoom in (larger cameraZ)
             // Moving fingers together (scaleDiff < 1) -> zoom out (smaller cameraZ)
-            const zoomDelta = (scaleDiff - 1) * 800; 
+            const zoomDelta = (scaleDiff - 1) * 250; 
             if (setCameraZ) {
                 setCameraZ(initialCameraZRef.current + zoomDelta);
             }
