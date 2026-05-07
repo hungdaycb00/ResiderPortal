@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useRef } from 'react';
-import { Html, Billboard } from '@react-three/drei';
+import { Html, Billboard, Text } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
@@ -101,7 +101,7 @@ const resolveRenderableImageUrl = (value?: string | null) => {
 };
 
 const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
-    const size = 256;
+    const size = 128;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -229,13 +229,14 @@ function CameraRig({
 }: Pick<AlinMapThreeSceneProps, 'scale' | 'cameraZ' | 'cameraHeightPct' | 'perspectivePx'>) {
     const { camera } = useThree();
 
-    useFrame(() => {
+    useFrame((state, delta) => {
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
         const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 5, 95, 9000);
         const height = distance * (0.22 + cameraHeightPct / 620);
 
-        camera.position.set(0, height, distance);
+        const targetPos = new THREE.Vector3(0, height, distance);
+        camera.position.lerp(targetPos, Math.min(1, delta * 12));
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
     });
@@ -295,6 +296,45 @@ function BillboardLabel({
     );
 }
 
+function GalleryImage({ url, title }: { url?: string; title?: string }) {
+    const texture = useMemo(() => {
+        if (!url) return null;
+        const normalized = resolveRenderableImageUrl(url);
+        if (!normalized) return null;
+        const loader = new THREE.TextureLoader();
+        return loader.load(normalized);
+    }, [url]);
+
+    return (
+        <group position={[0, -3.8, 0]}>
+            <mesh position={[0, 0, 0]}>
+                <planeGeometry args={[8, 4.5]} />
+                {texture ? (
+                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
+                ) : (
+                    <meshBasicMaterial color="#0f172a" transparent depthTest={false} depthWrite={false} />
+                )}
+            </mesh>
+            <mesh position={[0, 0, -0.01]}>
+                <planeGeometry args={[8.4, 4.9]} />
+                <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} depthTest={false} depthWrite={false} />
+            </mesh>
+            <Text
+                position={[0, 2.7, 0.1]}
+                fontSize={0.6}
+                color="#fef3c7"
+                anchorX="center"
+                anchorY="middle"
+                outlineWidth={0.05}
+                outlineColor="#000000"
+                depthTest={false}
+            >
+                {title || 'GALLERY'}
+            </Text>
+        </group>
+    );
+}
+
 function AvatarBillboard({
     name,
     avatarUrl,
@@ -331,43 +371,26 @@ function AvatarBillboard({
                 </mesh>
                 <mesh position={[0, 0.08, -0.02]}>
                     <circleGeometry args={[AVATAR_RING_RADIUS, 48]} />
-                    <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} />
+                    <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.2} depthTest={false} depthWrite={false} />
                 </mesh>
                 {status ? (
-                    <Html
-                        position={[0, -0.85, 0]}
-                        center
-                        transform
-                        sprite
-                        distanceFactor={BILLBOARD_STATUS_DISTANCE_FACTOR}
-                        occlude={false}
+                    <Text
+                        position={[0, -2.0, 0]}
+                        fontSize={0.7}
+                        color="white"
+                        anchorX="center"
+                        anchorY="middle"
+                        outlineWidth={0.06}
+                        outlineColor="#000000"
+                        maxWidth={10}
+                        textAlign="center"
+                        depthTest={false}
                     >
-                        <div className="rounded-full border border-white/10 bg-slate-950/85 px-2 py-0.5 text-[9px] font-bold text-slate-100 shadow-lg backdrop-blur-md">
-                            <span className="block max-w-[120px] truncate">{status}</span>
-                        </div>
-                    </Html>
+                        {status}
+                    </Text>
                 ) : null}
                 {showGallery ? (
-                    <Html
-                        position={[0, -1.75, 0]}
-                        center
-                        transform
-                        sprite
-                        distanceFactor={BILLBOARD_GALLERY_DISTANCE_FACTOR}
-                        occlude={false}
-                    >
-                        <div className="w-[180px] overflow-hidden rounded-lg border border-amber-300/30 bg-slate-950/90 shadow-2xl shadow-amber-500/20 backdrop-blur-md">
-                            <div className="border-b border-white/10 bg-slate-900/80 px-2 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-amber-100">
-                                {galleryTitle || 'Gallery'}
-                            </div>
-                            <div className="flex h-[50px] items-center justify-center bg-cyan-500/10">
-                                <div className="text-2xl">🖼️</div>
-                            </div>
-                            <div className="px-2 py-1 text-[8px] text-slate-300">
-                                {galleryImages?.[0] ? 'Preview available' : 'No gallery preview'}
-                            </div>
-                        </div>
-                    </Html>
+                    <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
                 ) : null}
             </Billboard>
         </group>

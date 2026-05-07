@@ -4,7 +4,7 @@ import { MotionValue } from 'framer-motion';
 // 1 degree of lat/lng ≈ 111km. We want 1km ≈ 100px on screen.
 // So 1 degree = 111 * 100 = 11100 pixels
 export const DEGREES_TO_PX = 11100;
-export const MAP_TILT_DEGREES = 60;
+export const MAP_TILT_DEGREES = 55;
 export const MAP_PLANE_SCALE = 1.32;
 export const MAP_PLANE_Y_SCALE = MAP_PLANE_SCALE * Math.cos((MAP_TILT_DEGREES * Math.PI) / 180);
 
@@ -24,7 +24,7 @@ export const CAMERA_ROTATE_X_MAX_DEG = 75;
 export const CAMERA_ROTATE_Y_DEFAULT_DEG = 0;
 export const CAMERA_ROTATE_Y_MIN_DEG = -180;
 export const CAMERA_ROTATE_Y_MAX_DEG = 180;
-export const BILLBOARD_UPRIGHT_PITCH_DEGREES = 70;
+export const BILLBOARD_UPRIGHT_PITCH_DEGREES = 55;
 export const BILLBOARD_UPRIGHT_LIFT_PX = 40;
 export const CAMERA_TILT_FAR_DEGREES = 64;
 export const CAMERA_TILT_NEAR_DEGREES = 42;
