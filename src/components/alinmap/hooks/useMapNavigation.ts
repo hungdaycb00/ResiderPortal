@@ -245,7 +245,7 @@ export function useMapNavigation({
     setIsIntegratedStorageOpen,
   ]);
 
-  return React.useMemo(() => ({
+  return {
     panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
     cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg,
     isSheetExpanded, setIsSheetExpanded,
@@ -262,11 +262,5 @@ export function useMapNavigation({
     setCameraRotateXDeg: (v: number) => setCameraRotateXDeg(clamp(v, CAMERA_ROTATE_X_MIN_DEG, CAMERA_ROTATE_X_MAX_DEG)),
     setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(clamp(v, CAMERA_ROTATE_Y_MIN_DEG, CAMERA_ROTATE_Y_MAX_DEG)),
     handleUpdateRadius, handleTabClick,
-  }), [
-    panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
-    cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg,
-    isSheetExpanded, isDesktop, mainTab, activeTab, mapMode, selectedUser,
-    radius, isLooterLoading, handleWheel, handleCenter, handleCenterTo,
-    setCameraZ, setVisualScale, zoomIn, zoomOut, handleUpdateRadius, handleTabClick
-  ]);
+  };
 }

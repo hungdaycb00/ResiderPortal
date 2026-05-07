@@ -181,7 +181,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         weatherData={geo.weatherData}
         currentProvince={currentProvince}
         myObfPos={myObfPos}
-        onWeatherClick={React.useCallback(() => setIsWeatherWidgetExpanded(true), [setIsWeatherWidgetExpanded])}
+        onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
       />
 
       <MapControls
@@ -255,10 +255,10 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         ws={wsCtx.ws}
         panX={nav.panX}
         panY={nav.panY}
-        onLocateUser={React.useCallback((lat, lng) => {
+        onLocateUser={(lat, lng) => {
           nav.handleCenterTo(lat, lng);
           nav.setVisualScale(2);
-        }, [nav])}
+        }}
         onOpenChat={onOpenChat}
         handleUpdateRadius={nav.handleUpdateRadius}
         setIsSheetExpanded={nav.setIsSheetExpanded}

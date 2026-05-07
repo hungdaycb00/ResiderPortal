@@ -167,4 +167,4 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     );
 };
 
-export default React.memo(BottomSheet);
+export default BottomSheet;

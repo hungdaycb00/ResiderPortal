@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import BackpackView from '../features/backpack/components/BackpackView';
 import CreatorTabView from '../features/creator/components/CreatorTabView';
 import DiscoverView from '../features/explore/components/DiscoverView';
@@ -53,6 +53,8 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     onLocateUser,
     onOpenListChange,
     onPublishSuccess,
+    panX,
+    panY,
     postPrivacy,
     postIsStarred,
     postTitle,
@@ -272,4 +274,4 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     );
 };
 
-export default React.memo(BottomSheetContent);
+export default BottomSheetContent;

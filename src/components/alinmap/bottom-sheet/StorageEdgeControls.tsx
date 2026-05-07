@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Database } from 'lucide-react';
 
 interface StorageEdgeControlsProps {
@@ -49,4 +49,4 @@ const StorageEdgeControls: React.FC<StorageEdgeControlsProps> = ({
     );
 };
 
-export default React.memo(StorageEdgeControls);
+export default StorageEdgeControls;

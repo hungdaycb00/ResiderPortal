@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 
 interface SheetHeaderProps {
@@ -67,4 +67,4 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
     </div>
 );
 
-export default React.memo(SheetHeader);
+export default SheetHeader;

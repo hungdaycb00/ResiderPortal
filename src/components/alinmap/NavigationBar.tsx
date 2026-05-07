@@ -109,4 +109,4 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, is
     );
 };
 
-export default React.memo(NavigationBar);
+export default NavigationBar;
