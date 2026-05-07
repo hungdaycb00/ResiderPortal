@@ -42,11 +42,11 @@ export default function AvatarBillboard({
             renderOrder={10}
         >
             <Billboard follow>
-                <mesh position={[0, 3.45, 0.02]} renderOrder={20}>
+                <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
                     <planeGeometry args={[AVATAR_PLANE_SIZE, AVATAR_PLANE_SIZE]} />
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
                 </mesh>
-                <mesh position={[0, 0.24, -0.02]}>
+                <mesh position={[0, 0.08, -0.02]}>
                     <circleGeometry args={[AVATAR_RING_RADIUS, 48]} />
                     <meshBasicMaterial
                         color={isVisibleOnMap ? '#22d3ee' : '#10b981'}
@@ -57,7 +57,7 @@ export default function AvatarBillboard({
                     />
                 </mesh>
                 {(isSelected || isHovered) && (
-                    <mesh position={[0, 0.24, -0.03]}>
+                    <mesh position={[0, 0.08, -0.03]}>
                         <circleGeometry args={[AVATAR_RING_RADIUS * 1.15, 48]} />
                         <meshBasicMaterial
                             color="#ffffff"
@@ -70,7 +70,7 @@ export default function AvatarBillboard({
                 )}
                 {status ? (
                     <Text
-                        position={[0, -6.0, 0]}
+                        position={[0, -3.5, 0]}
                         fontSize={2.1}
                         color="white"
                         anchorX="center"

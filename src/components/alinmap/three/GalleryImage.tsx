@@ -18,7 +18,7 @@ export default function GalleryImage({ url, title }: GalleryImageProps) {
     }, [url]);
 
     return (
-        <group position={[0, 15.6, 0]}>
+        <group position={[0, 11.5, 0]}>
             <mesh position={[0, 0, 0.05]} renderOrder={30}>
                 <planeGeometry args={[24, 13.5]} />
                 {texture ? (

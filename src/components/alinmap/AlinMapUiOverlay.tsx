@@ -227,6 +227,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isDesktop={isDesktop}
         isSheetExpanded={isSheetExpanded}
         selectedUser={selectedUser}
+        setSelectedUser={setSelectedUser}
         activeTab={nav.activeTab}
         mainTab={nav.mainTab}
         nearbyUsers={wsCtx.nearbyUsers}

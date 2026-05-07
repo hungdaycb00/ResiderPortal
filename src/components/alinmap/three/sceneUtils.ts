@@ -8,8 +8,8 @@ export type LatLng = { lat: number; lng: number };
 export const MAP_COORD_SCENE_SCALE = 0.34;
 export const BILLBOARD_STATUS_DISTANCE_FACTOR = 5.5;
 export const BILLBOARD_GALLERY_DISTANCE_FACTOR = 4.2;
-export const AVATAR_PLANE_SIZE = 19.5;
-export const AVATAR_RING_RADIUS = 13.2;
+export const AVATAR_PLANE_SIZE = 6.5;
+export const AVATAR_RING_RADIUS = 4.4;
 export const MARKER_PLANE_SIZE: [number, number] = [25.5, 8.7];
 export const LABEL_PLANE_SIZE: [number, number] = [31.5, 9.6];
 
