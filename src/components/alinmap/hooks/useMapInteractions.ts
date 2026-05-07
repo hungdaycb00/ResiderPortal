@@ -139,7 +139,7 @@ export function useMapInteractions({
         }
 
         // Áp dụng scale ngược để map di chuyển chuẩn theo tay người dùng
-        panX.set(dragState.startPanX - deltaX / mapPlaneScale);
+        panX.set(dragState.startPanX + deltaX / mapPlaneScale);
         panY.set(dragState.startPanY + deltaY / currentPlaneYScale);
         e.preventDefault();
     }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked]);
