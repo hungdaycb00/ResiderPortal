@@ -14,6 +14,7 @@ import MarkerBillboard from './MarkerBillboard';
 import ProceduralBoat from './models/ProceduralBoat';
 import ProceduralFortress from './models/ProceduralFortress';
 import LootSprite from './models/LootSprite';
+import DashedPath from './models/DashedPath';
 
 // Utils
 import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, type LatLng } from './sceneUtils';
@@ -102,6 +103,8 @@ function SceneContent({
 }: AlinMapThreeSceneProps) {
     const tiltGroupRef = useRef<THREE.Group>(null);
     const moveGroupRef = useRef<THREE.Group>(null);
+    // Track vị trí thuyền thực tế để render DashedPath chính xác
+    const boatPosRef = useRef<[number, number, number]>([0, 0, 0]);
     const { scene } = useThree();
     const looterState = useLooterState();
     const safeWorldItems = useMemo(() => sanitizeWorldItems(looterState.worldItems), [looterState.worldItems]);
@@ -149,6 +152,17 @@ function SceneContent({
             THREE.MathUtils.degToRad(cameraRotateYDeg),
             THREE.MathUtils.degToRad(cameraRotateDeg)
         );
+
+        // Cập nhật vị trí thuyền thực tế để DashedPath luôn bắt đúng điểm
+        if (position && isLooterGameMode) {
+            const origin2: LatLng = { lat: position[0], lng: position[1] };
+            const sp = worldToScene(origin2, origin2);
+            boatPosRef.current = [
+                sp.x + pxToScene(selfDragX.get() || 0),
+                8,
+                sp.z + pxToScene(selfDragY.get() || 0),
+            ];
+        }
     });
 
     if (!position) return null;
@@ -195,7 +209,7 @@ function SceneContent({
                             lng: origin.lng,
                             isSelf: true,
                         })}
-                        showGallery={galleryActive}
+                        showGallery={isSelected && galleryActive}
                         galleryTitle={galleryTitle}
                         galleryImages={galleryImages}
                     />
@@ -221,32 +235,42 @@ function SceneContent({
                     />
                 ) : null}
 
-                {/* Nearby users */}
+                {/* Nearby users - làm mờ khi ở looter game mode */}
                 {filteredUsers.map((u) => {
                     const pos = worldToScene(origin, u);
                     return (
                         <AvatarBillboard
                             key={u.id}
                             name={u.displayName || u.username || 'U'}
-                            avatarUrl={u.avatar_url}
+                            avatarUrl={isLooterGameMode ? null : u.avatar_url}
                             position={[pos.x, 0.22, pos.z]}
-                            status={u.status}
+                            status={isLooterGameMode ? undefined : u.status}
                             isVisibleOnMap
-                            isSelected={selectedUser?.id === u.id}
-                            onClick={() => onSelectUser?.(u)}
-                            showGallery={u.gallery?.active}
+                            isSelected={!isLooterGameMode && selectedUser?.id === u.id}
+                            onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
+                            showGallery={!isLooterGameMode && u.gallery?.active}
                             galleryTitle={u.gallery?.title}
                             galleryImages={u.gallery?.images}
+                            dimmed={isLooterGameMode}
                         />
                     );
                 })}
 
                 {/* Fortress */}
                 {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-                    <ProceduralFortress position={[fortressScene!.x, 0.55, fortressScene!.z]} />
+                    <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} />
                 ) : null}
 
-                {/* Boat target */}
+                {/* Đường nét đứt từ thuyền → target (chỉ khi có target và không combat) */}
+                {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (
+                    <DashedPath
+                        from={boatPosRef.current}
+                        to={[boatTargetScene.x, 5, boatTargetScene.z]}
+                        color="#22d3ee"
+                    />
+                ) : null}
+
+                {/* Boat target pin (chỉ còn circle, DashedPath đã vẽ target) */}
                 {!encounter && boatTargetPin ? (
                     <LootSprite
                         position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}

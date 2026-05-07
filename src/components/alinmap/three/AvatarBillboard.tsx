@@ -14,6 +14,8 @@ interface AvatarBillboardProps {
     galleryTitle?: string;
     galleryImages?: string[];
     isSelected?: boolean;
+    /** Khi ở looter mode, avatar bị làm mờ */
+    dimmed?: boolean;
 }
 
 export default function AvatarBillboard({
@@ -27,6 +29,7 @@ export default function AvatarBillboard({
     galleryTitle,
     galleryImages,
     isSelected,
+    dimmed = false,
 }: AvatarBillboardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
@@ -44,7 +47,7 @@ export default function AvatarBillboard({
             <Billboard follow>
                 <mesh position={[0, 1.15, 0.02]} renderOrder={20}>
                     <planeGeometry args={[AVATAR_PLANE_SIZE, AVATAR_PLANE_SIZE]} />
-                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
+                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
                 </mesh>
                 <mesh position={[0, 0.08, -0.02]}>
                     <circleGeometry args={[AVATAR_RING_RADIUS, 48]} />

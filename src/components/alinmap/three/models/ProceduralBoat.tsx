@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -8,14 +8,14 @@ interface ProceduralBoatProps {
     scale?: number;
 }
 
-export default function ProceduralBoat({ position, rotation = [0, 0, 0], scale = 1.5 }: ProceduralBoatProps) {
+export default function ProceduralBoat({ position, rotation = [0, 0, 0], scale = 80 }: ProceduralBoatProps) {
     const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (!groupRef.current) return;
         const t = state.clock.getElapsedTime();
-        // Bobbing on waves
-        groupRef.current.position.y = position[1] + Math.sin(t * 2.5) * 0.05 + 0.1;
+        // Bobbing on waves (đơn vị scene lớn: * scale)
+        groupRef.current.position.y = position[1] + Math.sin(t * 2.5) * 3 + 5;
         // Slight rocking
         groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.06;
         groupRef.current.rotation.x = Math.sin(t * 1.2) * 0.04;
@@ -52,6 +52,11 @@ export default function ProceduralBoat({ position, rotation = [0, 0, 0], scale =
             <mesh position={[0, 1.35, -0.05]} rotation={[0, Math.PI / 2, 0]}>
                 <planeGeometry args={[0.2, 0.15]} />
                 <meshStandardMaterial color="#38bdf8" side={THREE.DoubleSide} />
+            </mesh>
+            {/* Glow ring dưới thuyền */}
+            <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.5, 0.7, 32]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.35} depthWrite={false} />
             </mesh>
         </group>
     );

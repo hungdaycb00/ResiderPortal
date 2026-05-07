@@ -7,14 +7,14 @@ interface ProceduralFortressProps {
     scale?: number;
 }
 
-export default function ProceduralFortress({ position, scale = 1.8 }: ProceduralFortressProps) {
+export default function ProceduralFortress({ position, scale = 240 }: ProceduralFortressProps) {
     const groupRef = useRef<THREE.Group>(null);
     const floatRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (!floatRef.current) return;
         const t = state.clock.getElapsedTime();
-        // Hovering fortress magic effect
+        // Hovering fortress magic effect (đơn vị nhỏ vì đã scale to)
         floatRef.current.position.y = Math.sin(t * 1.5) * 0.1;
     });
 

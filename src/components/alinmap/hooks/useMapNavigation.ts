@@ -81,6 +81,13 @@ export function useMapNavigation({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Tự động mở bảng điều khiển khi có user được chọn
+  useEffect(() => {
+    if (selectedUser) {
+      setIsSheetExpanded(true);
+    }
+  }, [selectedUser]);
+
   const lastInitialTabRef = React.useRef(initialMainTab);
 
   useEffect(() => {
