@@ -3,7 +3,6 @@ import { Eye, UserRound } from 'lucide-react';
 import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import SelfNode from './SelfNode';
-import LooterEntities from './LooterEntities';
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
@@ -121,11 +120,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     // Sync Boat Center Handler to Context
     useEffect(() => {
-        const boatHandler = (yOffset?: number) => {
-            looterBoat.centerOnBoat(yOffset);
+        const boatHandler = (yOffset?: number, xOffset?: number) => {
+            looterBoat.centerOnBoat(yOffset, xOffset);
         };
-        const combatHandler = (yOffset?: number) => {
-            looterBoat.centerOnCombat(yOffset);
+        const combatHandler = (yOffset?: number, xOffset?: number) => {
+            looterBoat.centerOnCombat(yOffset, xOffset);
         };
         
         looterActions.setCenterBoatHandler(boatHandler);
@@ -147,7 +146,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         myObfPos, looterBoat, encounter: looterState.encounter,
         isInteractionLocked: isMapInteractionLocked,
         setIsTierSelectorOpen,
-        planeYScale
+        planeYScale,
+        cameraZ,
+        setCameraZ: props.setCameraZ
     });
     
     // Auto-focus camera on combat center
@@ -229,6 +230,10 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         mapMode={mapMode}
                         isLooterGameMode={isLooterGameMode}
                         boatTargetPin={looterBoat.boatTargetPin}
+                        boatOffsetX={looterBoat.boatOffsetX}
+                        boatOffsetY={looterBoat.boatOffsetY}
+                        onRequestMove={looterBoat.executeMoveToExact}
+                        onStopBoat={looterBoat.stopBoat}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={setSelectedUser}

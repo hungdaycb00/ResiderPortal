@@ -150,10 +150,13 @@ export default function App() {
   useEffect(() => {
     const currentBase = activeTab === 'home' ? '/games' : '/explore';
     let newPath = currentBase;
+    const slug = extractSlug(location.pathname);
     
     if (playingGame?.slug) {
       newPath = `${currentBase}/${playingGame.slug}`;
     }
+
+    if (slug === 'looter-game') return;
 
     if (location.pathname !== newPath && !playingGame?.gameUrl.includes('looter-game')) {
       // Note: Looter Game is handled inside AlinMap.tsx

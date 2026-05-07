@@ -3,11 +3,8 @@ export default function Ground({ mapMode }: { mapMode: 'grid' | 'satellite' }) {
         <group>
             <mesh rotation-x={-Math.PI / 2} position={[0, -1, 0]} receiveShadow>
                 <planeGeometry args={[12000, 12000, 1, 1]} />
-                <meshStandardMaterial
+                <meshBasicMaterial
                     color={mapMode === 'satellite' ? '#02203a' : '#09141f'}
-                    metalness={0.08}
-                    roughness={1}
-                    fog
                 />
             </mesh>
             <gridHelper args={[12000, 120, '#164158', '#0f2436']} position={[0, -0.98, 0]} />

@@ -177,7 +177,7 @@ export const makeBadgeTexture = (title: string, subtitle?: string, accent = '#22
     return texture;
 };
 
-export const makeLootSpriteTexture = (type: string, title?: string, accent = '#22d3ee'): THREE.CanvasTexture => {
+export const makeLootSpriteTexture = (type: string, title?: string, accent = '#22d3ee', icon?: string): THREE.CanvasTexture => {
     const size = 256;
     const canvas = document.createElement('canvas');
     canvas.width = size;
@@ -197,7 +197,33 @@ export const makeLootSpriteTexture = (type: string, title?: string, accent = '#2
     ctx.save();
     ctx.translate(cx, cy);
 
-    if (type === 'portal') {
+    const fallbackIconByType: Record<string, string> = {
+        boat: '\u26f5',
+        fortress: '\ud83c\udff0',
+        bag: '\ud83c\udf92',
+        chest: '\ud83d\udce6',
+        gem: '\ud83d\udc8e',
+        item: '\ud83d\udc8e',
+    };
+    const displayIcon = icon || fallbackIconByType[type];
+
+    if (displayIcon && type !== 'portal' && type !== 'enemy' && type !== 'target') {
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.72)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 64, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = `${accent}cc`;
+        ctx.stroke();
+        ctx.font = '900 112px Inter, "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.55)';
+        ctx.shadowBlur = 10;
+        ctx.fillText(displayIcon, 0, 8);
+    } else if (type === 'portal') {
         const pGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 60);
         pGrad.addColorStop(0, '#f3e8ff');
         pGrad.addColorStop(0.5, '#a855f7');
@@ -321,4 +347,3 @@ export const createTextCanvasTexture = (text: string, size = 128): THREE.CanvasT
     texture.anisotropy = 8;
     return texture;
 };
-

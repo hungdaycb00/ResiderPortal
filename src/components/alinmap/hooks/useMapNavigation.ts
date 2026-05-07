@@ -44,7 +44,16 @@ export function useMapNavigation({
 }: UseMapNavigationParams) {
   const looterState = useLooterState();
   const looterActions = useLooterActions();
-  const { setIsLooterGameMode, initGame, loadWorldItems } = looterActions;
+  const {
+    setIsLooterGameMode,
+    initGame,
+    loadWorldItems,
+    setEncounter,
+    setCombatResult,
+    setShowCurseModal,
+    setShowMinigame,
+    setIsIntegratedStorageOpen,
+  } = looterActions;
   const { isLooterGameMode, isItemDragging, state: looterStateObj } = looterState;
 
   const panX = useMotionValue(0);
@@ -66,6 +75,7 @@ export function useMapNavigation({
   const [cameraRotateDeg, setCameraRotateDeg] = useState(CAMERA_ROTATE_DEFAULT_DEG);
   const [cameraRotateXDeg, setCameraRotateXDeg] = useState(CAMERA_ROTATE_X_DEFAULT_DEG);
   const [cameraRotateYDeg, setCameraRotateYDeg] = useState(CAMERA_ROTATE_Y_DEFAULT_DEG);
+  const looterBootstrapRef = React.useRef(false);
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
@@ -108,10 +118,22 @@ export function useMapNavigation({
   }, [initialMainTab, isDesktop]);
 
   useEffect(() => {
-    if (mainTab === 'backpack' && looterStateObj.initialized && !isLooterGameMode) {
-      setIsLooterGameMode(true);
-    }
-  }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode]);
+    if (mainTab !== 'backpack') return;
+    if (!isLooterGameMode) setIsLooterGameMode(true);
+    if (looterStateObj.initialized || !myObfPos || looterBootstrapRef.current) return;
+
+    looterBootstrapRef.current = true;
+    setIsSeaLoading(true);
+    void (async () => {
+      try {
+        await initGame(myObfPos.lat, myObfPos.lng);
+        await loadWorldItems(true);
+      } finally {
+        setIsSeaLoading(false);
+        looterBootstrapRef.current = false;
+      }
+    })();
+  }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode, initGame, loadWorldItems, myObfPos]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
@@ -181,14 +203,6 @@ export function useMapNavigation({
       setIsLooterGameMode(true);
       setIsSheetExpanded(true);
 
-      const doLoad = async () => {
-        if (!looterStateObj.initialized && myObfPos) {
-          await initGame(myObfPos.lat, myObfPos.lng);
-        }
-        await loadWorldItems(true);
-      };
-      void doLoad();
-
       const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
       const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
       if (targetLat != null && targetLng != null) {
@@ -201,13 +215,35 @@ export function useMapNavigation({
         }, 120);
       }
     } else {
+      setShowMinigame(null);
+      setEncounter(null);
+      setCombatResult(null);
+      setShowCurseModal(false);
+      setIsIntegratedStorageOpen(false);
       setIsLooterGameMode(false);
       setMainTab(tabId as MainTab);
       setIsSheetExpanded(true);
     }
 
     onTabChange?.(tabId);
-  }, [mainTab, myObfPos, looterStateObj, isItemDragging, requireAuth, user, onTabChange, setIsLooterGameMode, initGame, loadWorldItems, handleCenterTo]);
+  }, [
+    mainTab,
+    myObfPos,
+    looterStateObj,
+    isItemDragging,
+    requireAuth,
+    user,
+    onTabChange,
+    setIsLooterGameMode,
+    initGame,
+    loadWorldItems,
+    handleCenterTo,
+    setShowMinigame,
+    setEncounter,
+    setCombatResult,
+    setShowCurseModal,
+    setIsIntegratedStorageOpen,
+  ]);
 
   return {
     panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,

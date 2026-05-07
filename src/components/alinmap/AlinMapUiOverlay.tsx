@@ -336,9 +336,11 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         />
       </div>
 
-      <CameraLabPanel
-        camera={camera}
-      />
+      {typeof window !== 'undefined' && window.localStorage.getItem('alinmap_camera_lab') === 'true' && (
+        <CameraLabPanel
+          camera={camera}
+        />
+      )}
     </div>,
     portalTarget
   );

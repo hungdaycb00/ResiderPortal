@@ -123,8 +123,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
-  const [centerBoatHandler, setCenterBoatHandler] = useState<((yOffset?: number) => void) | null>(null);
-  const [centerCombatHandler, setCenterCombatHandler] = useState<((yOffset?: number) => void) | null>(null);
+  const [centerBoatHandler, setCenterBoatHandler] = useState<((yOffset?: number, xOffset?: number) => void) | null>(null);
+  const [centerCombatHandler, setCenterCombatHandler] = useState<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
   const [isItemDragging, setIsItemDragging] = useState(false);
 
@@ -224,9 +224,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack,
     setOpenBackpackHandler,
-    centerOnBoat: (yOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset); },
+    centerOnBoat: (yOffset?: number, xOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset, xOffset); },
     setCenterBoatHandler,
-    centerOnCombat: (yOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset); },
+    centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset, xOffset); },
     setCenterCombatHandler,
     setIsChallengeActive,
     setIsItemDragging,

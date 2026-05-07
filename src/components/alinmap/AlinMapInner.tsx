@@ -156,7 +156,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             nav.setMainTab('backpack');
             nav.setIsSheetExpanded(true);
         }
-    }, []); // Run once on mount
+    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.setMainTab, nav.setIsSheetExpanded]);
 
     useEffect(() => {
         const subGame = extractExploreGame(location.pathname);
@@ -196,10 +196,24 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         if (!isLooterGameMode || nav.mainTab !== 'backpack' || !nav.isSheetExpanded) return;
         const timer = window.setTimeout(() => {
             const backpack = document.getElementById('looter-backpack-container');
-            const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-            const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
-            const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
-            looterActions.centerOnBoat(yOffset);
+            const rect = backpack?.getBoundingClientRect();
+            let xOffset = 0;
+            let yOffset = 0;
+            if (rect) {
+                const isDesktopSidePanel =
+                    window.innerWidth >= 768 &&
+                    rect.left < window.innerWidth * 0.35 &&
+                    rect.width < window.innerWidth * 0.8 &&
+                    rect.height > window.innerHeight * 0.55;
+                if (isDesktopSidePanel) {
+                    const visibleLeft = Math.min(Math.max(rect.right, 0), window.innerWidth);
+                    xOffset = (visibleLeft + window.innerWidth) / 2 - window.innerWidth / 2;
+                } else {
+                    const visibleMapHeight = Math.max(120, Math.min(rect.top, window.innerHeight));
+                    yOffset = window.innerHeight / 2 - visibleMapHeight / 2;
+                }
+            }
+            looterActions.centerOnBoat(yOffset, xOffset);
         }, 140);
         return () => window.clearTimeout(timer);
     }, [isLooterGameMode, nav.mainTab, nav.isSheetExpanded, looterActions.centerOnBoat]);

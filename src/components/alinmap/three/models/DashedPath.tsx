@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -36,6 +36,17 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
         return { geometry: geo, material: mat };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [from[0], from[2], to[0], to[2], color]);
+    const lineObject = useMemo(() => {
+        const line = new THREE.Line(geometry, material);
+        line.computeLineDistances();
+        line.renderOrder = 50;
+        return line;
+    }, [geometry, material]);
+
+    useEffect(() => () => {
+        geometry.dispose();
+        material.dispose();
+    }, [geometry, material]);
 
     // Animate dashOffset → hiệu ứng đường chạy về phía target
     useFrame((_state, delta) => {
@@ -48,7 +59,7 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
     return (
         <group>
             {/* Đường chính nét đứt */}
-            <line ref={lineRef} geometry={geometry} material={material} renderOrder={50} />
+            <primitive ref={lineRef} object={lineObject} />
 
             {/* Vòng tròn ngoài tại target */}
             <mesh position={[to[0], to[1] + 5, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={51}>

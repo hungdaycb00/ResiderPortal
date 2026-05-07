@@ -116,10 +116,10 @@ export interface LooterGameActions {
   toggleIntegratedStorage: (mode?: StorageAccessMode) => void;
   openBackpack: () => void;
   setOpenBackpackHandler: (h: (() => void) | null) => void;
-  centerOnBoat: (yOffset?: number) => void;
-  setCenterBoatHandler: (h: ((yOffset?: number) => void) | null) => void;
-  centerOnCombat: (yOffset?: number) => void;
-  setCenterCombatHandler: (h: ((yOffset?: number) => void) | null) => void;
+  centerOnBoat: (yOffset?: number, xOffset?: number) => void;
+  setCenterBoatHandler: (h: ((yOffset?: number, xOffset?: number) => void) | null) => void;
+  centerOnCombat: (yOffset?: number, xOffset?: number) => void;
+  setCenterCombatHandler: (h: ((yOffset?: number, xOffset?: number) => void) | null) => void;
   setIsChallengeActive: (v: boolean) => void;
   setIsItemDragging: (v: boolean) => void;
   initGame: (lat: number, lng: number) => Promise<void>;

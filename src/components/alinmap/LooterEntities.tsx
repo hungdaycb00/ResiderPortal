@@ -125,7 +125,7 @@ const FortressEntity = React.memo(({ fortressLat, fortressLng, myObfPos, boatOff
     );
 });
 
-const CombatEnemyBoat = React.memo(() => null);
+const CombatEnemyBoat = React.memo((_props: any) => null);
 
 const LooterEntities: React.FC<LooterEntitiesProps> = ({
     myObfPos, boatTargetPin, boatOffsetX, boatOffsetY, executeMoveToExact, stopBoat

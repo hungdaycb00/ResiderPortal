@@ -3,8 +3,8 @@ import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
-import { sanitizeWorldItems, useLooterState } from '../looter-game/LooterGameContext';
-import { MAP_PLANE_SCALE } from '../constants';
+import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 // Sub-components
 import CameraRig from './CameraRig';
@@ -56,10 +56,13 @@ export interface AlinMapThreeSceneProps {
     mapMode: 'grid' | 'satellite';
     isLooterGameMode?: boolean;
     boatTargetPin?: LatLng | null;
+    boatOffsetX?: MotionValue<number>;
+    boatOffsetY?: MotionValue<number>;
     selectedUser?: any;
     onSelectUser?: (user: any) => void;
     onSelectSelf?: (user: any) => void;
     onRequestMove?: (lat: number, lng: number) => void;
+    onStopBoat?: () => void;
 }
 
 // ─── Scene Content ────────────────────────────────────────────────────────────
@@ -72,6 +75,7 @@ function SceneContent({
     myAvatarUrl,
     myStatus,
     isVisibleOnMap,
+    isDesktop,
     currentProvince,
     galleryActive,
     galleryTitle,
@@ -97,9 +101,13 @@ function SceneContent({
     mapMode,
     isLooterGameMode,
     boatTargetPin,
+    boatOffsetX,
+    boatOffsetY,
     selectedUser,
     onSelectUser,
     onSelectSelf,
+    onRequestMove,
+    onStopBoat,
 }: AlinMapThreeSceneProps) {
     const tiltGroupRef = useRef<THREE.Group>(null);
     const moveGroupRef = useRef<THREE.Group>(null);
@@ -107,8 +115,13 @@ function SceneContent({
     const boatPosRef = useRef<[number, number, number]>([0, 0, 0]);
     const { scene } = useThree();
     const looterState = useLooterState();
-    const safeWorldItems = useMemo(() => sanitizeWorldItems(looterState.worldItems), [looterState.worldItems]);
+    const looterActions = useLooterActions();
+    const safeWorldItems = useMemo(
+        () => (isLooterGameMode ? sanitizeWorldItems(looterState.worldItems) : []),
+        [looterState.worldItems, isLooterGameMode]
+    );
     const { state: looterStateObj, encounter } = looterState;
+    const { openFortressStorage, setShowMinigame, pickupItem } = looterActions;
 
     useEffect(() => {
         scene.fog = new THREE.Fog('#08111b', 1800, 22000);
@@ -157,17 +170,17 @@ function SceneContent({
         if (position && isLooterGameMode) {
             const origin2: LatLng = { lat: position[0], lng: position[1] };
             const sp = worldToScene(origin2, origin2);
+            const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
+            const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
             boatPosRef.current = [
-                sp.x + pxToScene(selfDragX.get() || 0),
+                sp.x + pxToScene(visualBoatX),
                 8,
-                sp.z + pxToScene(selfDragY.get() || 0),
+                sp.z + pxToScene(visualBoatY),
             ];
         }
     });
 
-    if (!position) return null;
-
-    const origin: LatLng = { lat: position[0], lng: position[1] };
+    const origin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
     const selfPos = worldToScene(origin, origin);
     const selfLift = pxToScene(selfDragX.get() || 0);
     const selfDepth = pxToScene(selfDragY.get() || 0);
@@ -176,6 +189,138 @@ function SceneContent({
         ? worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng })
         : null;
     const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
+    const getCurrentBoatLatLng = React.useCallback((): LatLng => {
+        const offsetX = boatOffsetX?.get?.();
+        const offsetY = boatOffsetY?.get?.();
+        if (typeof offsetX === 'number' && typeof offsetY === 'number') {
+            return {
+                lat: origin.lat - offsetY / DEGREES_TO_PX,
+                lng: origin.lng + offsetX / DEGREES_TO_PX,
+            };
+        }
+        return {
+            lat: looterStateObj?.currentLat ?? origin.lat,
+            lng: looterStateObj?.currentLng ?? origin.lng,
+        };
+    }, [boatOffsetX, boatOffsetY, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
+
+    const distanceMeters = React.useCallback((a: LatLng, b: LatLng) => {
+        const cosLat = Math.cos((a.lat * Math.PI) / 180);
+        const dLat = b.lat - a.lat;
+        const dLng = (b.lng - a.lng) * cosLat;
+        return Math.sqrt(dLat * dLat + dLng * dLng) * 111000;
+    }, []);
+
+    const getWorldItemIcon = React.useCallback((worldItem: any) => {
+        if (worldItem?.item?.icon) return worldItem.item.icon;
+        if (worldItem?.item?.type === 'portal') return '\ud83c\udf00';
+        if (worldItem?.minigameType) return '\ud83d\udce6';
+        if (worldItem?.item?.type === 'bag') return '\ud83c\udf92';
+        return '\ud83d\udc8e';
+    }, []);
+
+    const getWorldItemType = React.useCallback((worldItem: any) => {
+        if (worldItem?.item?.type === 'portal') return 'portal';
+        if (worldItem?.minigameType) return 'chest';
+        if (worldItem?.item?.type === 'bag') return 'bag';
+        return 'item';
+    }, []);
+
+    const getWorldItemAccent = React.useCallback((worldItem: any) => {
+        const rarity = String(worldItem?.item?.rarity || '').toLowerCase();
+        if (worldItem?.item?.type === 'portal') return '#a78bfa';
+        if (rarity.includes('legend')) return '#f59e0b';
+        if (rarity.includes('rare')) return '#60a5fa';
+        if (rarity.includes('uncommon')) return '#34d399';
+        return '#22d3ee';
+    }, []);
+
+    const handleWorldItemClick = React.useCallback((worldItem: any) => {
+        if (!isLooterGameMode || !worldItem) return;
+        const boat = getCurrentBoatLatLng();
+        const dist = distanceMeters(boat, { lat: worldItem.lat, lng: worldItem.lng });
+        const interactionRadius = 250;
+        const isPortal = worldItem?.item?.type === 'portal';
+
+        if (dist > interactionRadius) {
+            onRequestMove?.(worldItem.lat, worldItem.lng);
+            return;
+        }
+
+        onStopBoat?.();
+        if (isPortal) {
+            openFortressStorage?.('portal');
+            return;
+        }
+
+        if (worldItem.minigameType) {
+            setShowMinigame?.({ ...worldItem, currentLat: boat.lat, currentLng: boat.lng });
+            return;
+        }
+
+        pickupItem?.(worldItem.spawnId, worldItem, boat.lat, boat.lng);
+    }, [
+        distanceMeters,
+        getCurrentBoatLatLng,
+        isLooterGameMode,
+        onRequestMove,
+        onStopBoat,
+        openFortressStorage,
+        pickupItem,
+        setShowMinigame,
+    ]);
+
+    const handleFortressClick = React.useCallback(() => {
+        if (!isLooterGameMode || !looterStateObj?.fortressLat || !looterStateObj?.fortressLng) return;
+        const target = { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng };
+        const boat = getCurrentBoatLatLng();
+        if (distanceMeters(boat, target) <= 250) {
+            onStopBoat?.();
+            openFortressStorage?.('fortress');
+        } else {
+            onRequestMove?.(target.lat, target.lng);
+        }
+    }, [
+        distanceMeters,
+        getCurrentBoatLatLng,
+        isLooterGameMode,
+        looterStateObj?.fortressLat,
+        looterStateObj?.fortressLng,
+        onRequestMove,
+        onStopBoat,
+        openFortressStorage,
+    ]);
+
+    const renderedWorldItems = useMemo(() => {
+        if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
+        const centerLat = looterStateObj?.currentLat ?? origin.lat;
+        const centerLng = looterStateObj?.currentLng ?? origin.lng;
+        const cullDeg = (isDesktop ? 5000 : 3200) / 111000;
+        const maxItems = isDesktop ? 42 : 24;
+
+        return safeWorldItems
+            .filter((item: any) => Math.abs(item.lat - centerLat) <= cullDeg && Math.abs(item.lng - centerLng) <= cullDeg)
+            .map((item: any) => {
+                const dLat = item.lat - centerLat;
+                const dLng = item.lng - centerLng;
+                const priority = item?.item?.type === 'portal' ? -1 : 0;
+                return { item, score: priority + dLat * dLat + dLng * dLng };
+            })
+            .sort((a, b) => a.score - b.score)
+            .slice(0, maxItems)
+            .map((entry) => entry.item);
+    }, [
+        encounter,
+        isDesktop,
+        isLooterGameMode,
+        looterStateObj?.currentLat,
+        looterStateObj?.currentLng,
+        origin.lat,
+        origin.lng,
+        safeWorldItems,
+    ]);
+
+    if (!position) return null;
 
     return (
         <group ref={tiltGroupRef}>
@@ -193,7 +338,11 @@ function SceneContent({
 
                 {/* Self avatar */}
                 {isLooterGameMode ? (
-                    <ProceduralBoat position={[selfPos.x + selfLift, 0, selfPos.z + selfDepth]} />
+                    <ProceduralBoat
+                        position={[selfPos.x, 0, selfPos.z]}
+                        offsetX={boatOffsetX}
+                        offsetY={boatOffsetY}
+                    />
                 ) : (() => {
                     const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
                     return (
@@ -260,8 +409,8 @@ function SceneContent({
                 })}
 
                 {/* Fortress */}
-                {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-                    <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} />
+                {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
+                    <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} onClick={handleFortressClick} />
                 ) : null}
 
                 {/* Đường nét đứt từ thuyền → target (chỉ khi có target và không combat) */}
@@ -274,7 +423,7 @@ function SceneContent({
                 ) : null}
 
                 {/* Boat target pin (chỉ còn circle, DashedPath đã vẽ target) */}
-                {!encounter && boatTargetPin ? (
+                {isLooterGameMode && !encounter && boatTargetPin ? (
                     <LootSprite
                         position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
                         type="target"
@@ -282,26 +431,31 @@ function SceneContent({
                 ) : null}
 
                 {/* Enemy */}
-                {encounter ? (
+                {isLooterGameMode && encounter ? (
                     <LootSprite
-                        position={[pxToScene(180), 0.7, pxToScene(-220)]}
+                        position={[
+                            boatPosRef.current[0] + pxToScene(180),
+                            0.7,
+                            boatPosRef.current[2] + pxToScene(-220)
+                        ]}
                         type="enemy"
                         scale={1.5}
                     />
                 ) : null}
 
                 {/* World loot items */}
-                {!encounter && safeWorldItems.slice(0, isLooterGameMode ? 24 : 60).map((item: any) => {
+                {renderedWorldItems.map((item: any) => {
                     const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
-                    const isPortal = item?.item?.type === 'portal';
                     const title = item?.item?.name || 'Loot';
                     return (
                         <LootSprite
                             key={item.spawnId}
                             position={[pos.x, 0.3, pos.z]}
-                            type={isPortal ? 'portal' : 'gem'}
+                            type={getWorldItemType(item)}
+                            icon={getWorldItemIcon(item)}
                             title={title}
-                            accent={isPortal ? '#a78bfa' : '#22d3ee'}
+                            accent={getWorldItemAccent(item)}
+                            onClick={() => handleWorldItemClick(item)}
                         />
                     );
                 })}
@@ -328,11 +482,11 @@ function SceneContent({
 const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
     return (
         <Canvas
-            dpr={[1, 2]}
+            dpr={props.isDesktop ? [1, 1.5] : [0.85, 1]}
             frameloop="always"
             shadows={false}
             gl={{
-                antialias: true,
+                antialias: props.isDesktop,
                 alpha: true,
                 powerPreference: 'high-performance',
                 preserveDrawingBuffer: false,
@@ -343,7 +497,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
                 gl.outputColorSpace = THREE.SRGBColorSpace;
                 gl.toneMapping = THREE.NoToneMapping;
                 gl.toneMappingExposure = 1;
-                gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, props.isDesktop ? 1.5 : 1));
             }}
         >
             <ambientLight intensity={1.4} />
