@@ -194,26 +194,29 @@ function SceneContent({
                 {/* Self avatar */}
                 {isLooterGameMode ? (
                     <ProceduralBoat position={[selfPos.x + selfLift, 0, selfPos.z + selfDepth]} />
-                ) : (
-                    <AvatarBillboard
-                        name={myDisplayName || user?.displayName || 'Me'}
-                        avatarUrl={myAvatarUrl || user?.photoURL}
-                        position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
-                        status={myStatus}
-                        isVisibleOnMap={isVisibleOnMap}
-                        isSelected={selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId}
-                        onClick={() => onSelectSelf?.({
-                            id: user?.uid || myUserId || 'self',
-                            username: myDisplayName,
-                            lat: origin.lat,
-                            lng: origin.lng,
-                            isSelf: true,
-                        })}
-                        showGallery={isSelected && galleryActive}
-                        galleryTitle={galleryTitle}
-                        galleryImages={galleryImages}
-                    />
-                )}
+                ) : (() => {
+                    const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
+                    return (
+                        <AvatarBillboard
+                            name={myDisplayName || user?.displayName || 'Me'}
+                            avatarUrl={myAvatarUrl || user?.photoURL}
+                            position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
+                            status={myStatus}
+                            isVisibleOnMap={isVisibleOnMap}
+                            isSelected={isSelfSelected}
+                            onClick={() => onSelectSelf?.({
+                                id: user?.uid || myUserId || 'self',
+                                username: myDisplayName,
+                                lat: origin.lat,
+                                lng: origin.lng,
+                                isSelf: true,
+                            })}
+                            showGallery={isSelfSelected && galleryActive}
+                            galleryTitle={galleryTitle}
+                            galleryImages={galleryImages}
+                        />
+                    );
+                })()}
 
                 {/* Province marker */}
                 {currentProvince ? (

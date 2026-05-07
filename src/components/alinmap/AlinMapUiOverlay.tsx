@@ -262,7 +262,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         onOpenChat={onOpenChat}
         handleUpdateRadius={nav.handleUpdateRadius}
         setIsSheetExpanded={nav.setIsSheetExpanded}
-        setSelectedUser={nav.setSelectedUser}
         setActiveTab={nav.setActiveTab}
         setMainTab={nav.setMainTab}
         setSearchTag={setSearchTag}

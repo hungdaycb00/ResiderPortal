@@ -291,3 +291,34 @@ export const makeLootSpriteTexture = (type: string, title?: string, accent = '#2
     return texture;
 };
 
+/**
+ * Tạo texture từ emoji/text bằng Canvas.
+ * Được dùng bởi LootSprite để hiển thị vật phẩm.
+ */
+export const createTextCanvasTexture = (text: string, size = 128): THREE.CanvasTexture => {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+        ctx.clearRect(0, 0, size, size);
+        ctx.font = `${size * 0.7}px Inter, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Vẽ shadow nhẹ để icon nổi bật hơn
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = size * 0.1;
+        ctx.shadowOffsetX = size * 0.05;
+        ctx.shadowOffsetY = size * 0.05;
+
+        ctx.fillText(text, size / 2, size / 2 + size * 0.05);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    return texture;
+};
+

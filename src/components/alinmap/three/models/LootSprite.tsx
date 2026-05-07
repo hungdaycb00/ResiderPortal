@@ -1,51 +1,49 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { Billboard } from '@react-three/drei';
-import { makeLootSpriteTexture } from '../sceneUtils';
-import { useFrame } from '@react-three/fiber';
+import { Billboard, useTexture } from '@react-three/drei';
+import { useMemo } from 'react';
 import * as THREE from 'three';
+import { createTextCanvasTexture } from '../sceneUtils';
 
 interface LootSpriteProps {
     position: [number, number, number];
-    type: string;
-    title?: string;
-    accent?: string;
+    emoji: string;
     scale?: number;
     onClick?: () => void;
 }
 
-export default function LootSprite({ position, type, title, accent = '#22d3ee', scale = 1, onClick }: LootSpriteProps) {
-    const texture = useMemo(() => makeLootSpriteTexture(type, title, accent), [type, title, accent]);
-    const groupRef = useRef<THREE.Group>(null);
-
-    useEffect(() => {
-        return () => {
-            texture.dispose();
-        };
-    }, [texture]);
-
-    useFrame((state) => {
-        if (!groupRef.current) return;
-        const t = state.clock.getElapsedTime();
-        // Hovering animation
-        if (type !== 'target') {
-            groupRef.current.position.y = position[1] + Math.sin(t * 3 + position[0]) * 0.15;
-        }
-    });
+/**
+ * Render Item/Loot dưới dạng Sprite 2D chất lượng cao.
+ * Kích thước chuẩn hóa là 25x25 scene units.
+ */
+export default function LootSprite({ position, emoji, scale = 1, onClick }: LootSpriteProps) {
+    // Tạo texture từ emoji bằng canvas (chất lượng cao hơn emoji text mesh)
+    const texture = useMemo(() => createTextCanvasTexture(emoji, 128), [emoji]);
 
     return (
-        <group position={position} ref={groupRef} onClick={(e) => {
-            if (onClick) {
+        <Billboard
+            position={position}
+            // scale 1:1 vì planeGeometry đã set kích thước chuẩn 25 units
+            scale={[scale, scale, 1]}
+            onClick={(e) => {
                 e.stopPropagation();
-                onClick();
-            }
-        }}>
-            <Billboard follow lockX lockY lockZ>
-                {/* Tăng scale để hình ảnh canvas hiện rõ */}
-                <mesh position={[0, 0.5, 0]} renderOrder={type === 'target' ? 25 : 30} scale={[2.5 * scale, 2.5 * scale, 1]}>
-                    <planeGeometry args={[10, 10]} />
-                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
-                </mesh>
-            </Billboard>
-        </group>
+                onClick?.();
+            }}
+        >
+            <mesh>
+                {/* 25 units là kích thước cơ sở để nhìn rõ từ Camera cao 1600 */}
+                <planeGeometry args={[25, 25]} />
+                <meshBasicMaterial 
+                    map={texture} 
+                    transparent={true} 
+                    alphaTest={0.1}
+                    side={THREE.DoubleSide}
+                />
+            </mesh>
+            
+            {/* Đổ bóng giả bên dưới item */}
+            <mesh position={[0, -12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[10, 16]} />
+                <meshBasicMaterial color="black" transparent opacity={0.2} />
+            </mesh>
+        </Billboard>
     );
 }
