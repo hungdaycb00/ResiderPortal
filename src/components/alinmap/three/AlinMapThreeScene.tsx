@@ -135,14 +135,9 @@ const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
         ctx.fillText(initialsForName(name), size / 2, size / 2 + 4);
     };
 
-    const resolvedImageUrl = resolveRenderableImageUrl(imageUrl);
-    if (!resolvedImageUrl) {
-        drawFallback();
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = 8;
-        return texture;
-    }
+    const seed = encodeURIComponent(name || 'alin');
+    const randomSpriteUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${seed}`;
+    const finalImageUrl = resolveRenderableImageUrl(imageUrl) || randomSpriteUrl;
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -174,7 +169,7 @@ const makeAvatarTexture = (name: string, imageUrl?: string | null) => {
         texture.needsUpdate = true;
     };
     img.onerror = drawFallback;
-    img.src = resolvedImageUrl;
+    img.src = finalImageUrl;
 
     drawFallback();
     return texture;
@@ -306,7 +301,7 @@ function GalleryImage({ url, title }: { url?: string; title?: string }) {
     }, [url]);
 
     return (
-        <group position={[0, -3.8, 0]}>
+        <group position={[0, 5.2, 0]}>
             <mesh position={[0, 0, 0.05]} renderOrder={30}>
                 <planeGeometry args={[8, 4.5]} />
                 {texture ? (

@@ -85,9 +85,7 @@ export function useMapInteractions({
 
         if (encounter) {
             // Trong lúc combat, chỉ cập nhật trạng thái drag (để pan bản đồ) chứ KHÔNG gọi handlePointerDown để di chuyển thuyền
-            try {
-                e.currentTarget.setPointerCapture(e.pointerId);
-            } catch {}
+            // Do not capture pointer, allow R3F to receive events
             e.preventDefault();
             return;
         }
@@ -96,9 +94,7 @@ export function useMapInteractions({
             looterBoat.stopPanFollow?.();
         }
 
-        try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-        } catch {}
+        // Do not capture pointer, allow R3F to receive events
         e.preventDefault();
     }, [isLooterGameMode, panX, panY, looterBoat, encounter, isInteractionLocked]);
 
@@ -168,9 +164,6 @@ export function useMapInteractions({
 
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
-            try {
-                e.currentTarget.releasePointerCapture(e.pointerId);
-            } catch {}
 
             if (dragState.moved) {
                 dragState.suppressClick = true;
@@ -214,9 +207,6 @@ export function useMapInteractions({
 
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
-            try {
-                e.currentTarget.releasePointerCapture(e.pointerId);
-            } catch {}
         }
         looterBoat.handlePointerCancel();
     }, [looterBoat, isInteractionLocked]);
