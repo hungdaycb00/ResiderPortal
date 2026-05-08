@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, BILLBOARD_VISIBLE_DISTANCE_KM } from '../constants';
 
 // Sub-components
 import CameraRig from './CameraRig';
@@ -147,6 +147,9 @@ function SceneContent({
             if (distKm > filterDistance) return false;
             const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
             if (age < filterAgeMin || age > filterAgeMax) return false;
+            
+            // Gán khoảng cách vào object để dùng cho logic billboard
+            u.distKm = distKm;
             return true;
         });
         return visible.slice(0, isLooterGameMode ? 40 : 90);
@@ -360,7 +363,7 @@ function SceneContent({
                                 lng: origin.lng,
                                 isSelf: true,
                             })}
-                            showGallery={isSelfSelected && galleryActive}
+                            showGallery={galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode))}
                             galleryTitle={galleryTitle}
                             galleryImages={galleryImages}
                         />
@@ -400,7 +403,7 @@ function SceneContent({
                             isVisibleOnMap
                             isSelected={!isLooterGameMode && selectedUser?.id === u.id}
                             onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
-                            showGallery={!isLooterGameMode && u.gallery?.active}
+                            showGallery={!isLooterGameMode && u.gallery?.active && (selectedUser?.id === u.id || (u.distKm != null && u.distKm <= BILLBOARD_VISIBLE_DISTANCE_KM))}
                             galleryTitle={u.gallery?.title}
                             galleryImages={u.gallery?.images}
                             dimmed={isLooterGameMode}

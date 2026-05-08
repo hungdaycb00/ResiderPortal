@@ -30,6 +30,8 @@ export const CAMERA_TILT_FAR_DEGREES = 64;
 export const CAMERA_TILT_NEAR_DEGREES = 42;
 export const LIKE_THRESHOLD_FOR_SCALE = 20;
 export const FEATURED_BILLBOARD_FAR_SCALE = 1.35;
+export const BILLBOARD_VISIBLE_DISTANCE_KM = 3.5;
+
 
 export const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
