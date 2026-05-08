@@ -128,6 +128,14 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
   const [isItemDragging, setIsItemDragging] = useState(false);
 
+  // Reset dragging state when game mode changes or unmounts
+  useEffect(() => {
+    if (!ui.isLooterGameMode) {
+      setIsItemDragging(false);
+    }
+  }, [ui.isLooterGameMode]);
+
+
   const API_URL = useMemo(() => getLooterServerUrl(), []);
   const saveTimerRef = useRef<any>(null);
   const storageTimerRef = useRef<any>(null);

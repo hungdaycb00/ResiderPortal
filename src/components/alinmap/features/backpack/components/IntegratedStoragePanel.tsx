@@ -268,8 +268,10 @@ export default function IntegratedStoragePanel() {
                   }
                   activeSave([...activeItems]); 
                 }}
+                onDragStateChange={setIsItemDragging}
                 cellSize={cellSize}
               />
+
             </div>
 
 

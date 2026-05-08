@@ -3,6 +3,10 @@ import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
 
+// Hằng số kích thước được đồng bộ với AvatarBillboard
+const ITEM_SIZE = AVATAR_PLANE_SIZE;
+const SHADOW_RADIUS = AVATAR_RING_RADIUS * 0.8;
+
 interface LootSpriteProps {
     position: [number, number, number];
     icon?: string;

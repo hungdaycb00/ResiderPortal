@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { MAP_PLANE_SCALE } from '../../constants';
-import { pxToScene } from '../sceneUtils';
+import { pxToScene, AVATAR_PLANE_SIZE } from '../sceneUtils';
 import LootSprite from './LootSprite';
 
 interface ProceduralBoatProps {
@@ -39,8 +39,8 @@ export default function ProceduralBoat({
                 type="boat"
                 title="You"
                 accent="#38bdf8"
-                scale={scale * 1.85}
-                size={32}
+                scale={scale}
+                size={AVATAR_PLANE_SIZE * 1.1}
             />
         </group>
     );

@@ -84,7 +84,11 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
 
   useEffect(() => {
     setIsItemDragging?.(!!draggingItem);
+    return () => {
+      if (draggingItem) setIsItemDragging?.(false);
+    };
   }, [draggingItem, setIsItemDragging]);
+
 
   useEffect(() => {
     if (!isMobileViewport || !activeBag || activeBag.gridX < 0 || activeBag.gridY < 0) return;

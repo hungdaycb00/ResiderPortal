@@ -1,4 +1,5 @@
 import LootSprite from './LootSprite';
+import { AVATAR_PLANE_SIZE } from '../sceneUtils';
 
 interface ProceduralFortressProps {
     position: [number, number, number];
@@ -13,8 +14,8 @@ export default function ProceduralFortress({ position, scale = 1, onClick }: Pro
             type="fortress"
             title="Fortress"
             accent="#f59e0b"
-            scale={scale * 2.15}
-            size={34}
+            scale={scale}
+            size={AVATAR_PLANE_SIZE * 1.5}
             onClick={onClick}
         />
     );
