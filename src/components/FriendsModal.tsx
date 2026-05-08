@@ -49,7 +49,7 @@ export default function FriendsModal({
       setStatusMsg({ text: result.message || 'Friend request sent!', type: 'success' });
       setFriendInput('');
     } catch (err: any) {
-      if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
+      if (err.message?.includes('409') || err.message?.toLowerCase().includes('already')) {
         setStatusMsg({ text: 'Bạn đã là bạn bè hoặc đã gửi yêu cầu rồi!', type: 'error' });
       } else {
         setStatusMsg({ text: err.message || 'Lỗi khi gửi yêu cầu kết bạn', type: 'error' });

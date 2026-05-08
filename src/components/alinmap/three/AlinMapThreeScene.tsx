@@ -17,7 +17,7 @@ import LootSprite from './models/LootSprite';
 import DashedPath from './models/DashedPath';
 
 // Utils
-import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, type LatLng } from './sceneUtils';
+import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, AVATAR_PLANE_SIZE, type LatLng } from './sceneUtils';
 
 // ─── Public Types ─────────────────────────────────────────────────────────────
 export interface AlinMapThreeSceneProps {
