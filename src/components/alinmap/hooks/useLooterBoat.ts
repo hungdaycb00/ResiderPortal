@@ -90,7 +90,8 @@ export function useLooterBoat({
         }
     }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat]);
 
-    const executeMoveToExact = useCallback((lat: number, lng: number) => {
+    const executeMoveToExact = useCallback((lat: number, lng: number, source: string = 'map') => {
+        console.log('[MoveExec] Called from', source, { lat, lng, hasMyObfPos: !!myObfPos, isChallengeActive, worldTier: state?.worldTier, blocked: !!(showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) });
         if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
             const now = Date.now();
@@ -120,7 +121,8 @@ export function useLooterBoat({
 
         if (!myObfPos) return;
 
-
+        // Dừng animation cũ trước khi bắt đầu animation mới (tránh double execution)
+        stopAllAnimations();
 
         const boatLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
         const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
@@ -194,7 +196,7 @@ export function useLooterBoat({
             containerW: containerRect?.width, containerH: containerRect?.height,
             windowW: window.innerWidth, windowH: window.innerHeight,
         });
-        executeMoveToExact(lat, lng);
+        executeMoveToExact(lat, lng, 'map');
     }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact, state?.currentLat, state?.currentLng]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {

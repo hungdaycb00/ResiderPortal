@@ -61,7 +61,7 @@ export interface AlinMapThreeSceneProps {
     selectedUser?: any;
     onSelectUser?: (user: any) => void;
     onSelectSelf?: (user: any) => void;
-    onRequestMove?: (lat: number, lng: number) => void;
+    onRequestMove?: (lat: number, lng: number, source?: string) => void;
     onStopBoat?: () => void;
 }
 
@@ -246,8 +246,11 @@ function SceneContent({
         const interactionRadius = 250;
         const isPortal = worldItem?.item?.type === 'portal';
 
+        console.log('[ItemClick]', { itemName: worldItem?.item?.name, itemLat: worldItem.lat, itemLng: worldItem.lng, boatLat: boat.lat, boatLng: boat.lng, dist, type: worldItem?.item?.type, minigameType: worldItem.minigameType });
+
         if (dist > interactionRadius) {
-            onRequestMove?.(worldItem.lat, worldItem.lng);
+            console.log('[ItemClick] Distance > 250m, requesting move to item position');
+            onRequestMove?.(worldItem.lat, worldItem.lng, 'item');
             return;
         }
 
@@ -282,7 +285,7 @@ function SceneContent({
             onStopBoat?.();
             openFortressStorage?.('fortress');
         } else {
-            onRequestMove?.(target.lat, target.lng);
+            onRequestMove?.(target.lat, target.lng, 'fortress');
         }
     }, [
         distanceMeters,
