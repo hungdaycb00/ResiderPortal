@@ -4,6 +4,10 @@ import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
+import { MAP_COORD_SCENE_SCALE, clamp as clampVal } from '../three/sceneUtils';
+
+const CAMERA_FOV_RAD = (46 * Math.PI) / 180;
+const CAMERA_HALF_FOV_TAN = Math.tan(CAMERA_FOV_RAD / 2);
 
 interface UseSeaBoatParams {
     isLooterGameMode: boolean;
@@ -12,6 +16,9 @@ interface UseSeaBoatParams {
     planeYScale: MotionValue<number>;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
+    perspectivePx: number;
+    cameraZ: MotionValue<number>;
+    cameraHeightPct: number;
     setMainTab?: (tab: string) => void;
     setIsSheetExpanded: (v: boolean) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -22,6 +29,7 @@ const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
     isLooterGameMode, myObfPos, scale, planeYScale, panX, panY,
+    perspectivePx, cameraZ, cameraHeightPct,
     setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
@@ -176,28 +184,73 @@ export function useLooterBoat({
 
     }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
-    const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
-        if (!isLooterGameMode || !myObfPos) return;
-        const currentScale = scale?.get?.() || 1;
+    /**
+     * Chuyển đổi click trên màn hình (offsetX, offsetY từ tâm container) → (lat, lng) trên map.
+     * Dùng phép chiếu ray-plane intersection chính xác trong không gian 3D,
+     * tính đến vị trí camera (H, D), góc tilt θ, và FOV 46° của perspective camera.
+     */
+    const screenToWorld = useCallback((offsetX: number, offsetY: number, containerW: number, containerH: number) => {
+        if (!myObfPos) return null;
+        const safeW = Math.max(containerW || 1, 1);
+        const safeH = Math.max(containerH || 1, 1);
+
+        // 1. Vị trí camera (H, D) — công thức giống CameraRig
+        const zoom = clampVal(scale?.get?.() ?? 1, 0.08, 8);
+        const D = clampVal(perspectivePx * 0.56 / zoom - (cameraZ?.get?.() ?? 0) * 5, 95, 9000);
+        const H = D * (0.22 + cameraHeightPct / 620);
+
+        // 2. Góc tilt θ = acos(planeYScale / MAP_PLANE_SCALE)
+        const curPlaneYScale = planeYScale.get();
+        const cosTheta = clampVal(curPlaneYScale / MAP_PLANE_SCALE, 0.001, 1);
+        const theta = Math.acos(cosTheta);
+
+        // 3. Ray-plane intersection
+        // β = 2·tan(FOV/2) / containerHeight
+        const beta = 2 * CAMERA_HALF_FOV_TAN / safeH;
+        const L = Math.sqrt(H * H + D * D);
+        const S = Math.cos(theta) * H + Math.sin(theta) * D;
+        const K = H * Math.sin(theta) - D * Math.cos(theta);
+
+        const denom = S - beta * offsetY * K;
+        if (Math.abs(denom) < 1e-8) return null; // ray song song với map plane
+
+        const t = S * L / denom;
+
+        // Giao điểm trong world space
+        const Px = t * beta * offsetX;
+        const Pz = D + t * ((beta * offsetY * H) / L - D / L);
+
+        // Chuyển về ground-local (trừ đi pan offset)
         const curPanX = panX?.get?.() ?? 0;
         const curPanY = panY?.get?.() ?? 0;
-        const curPlaneYScale = planeYScale.get();
-        const mapX = (offsetX / currentScale - curPanX) / MAP_PLANE_SCALE;
-        const mapY = (offsetY / currentScale - curPanY) / curPlaneYScale;
-        const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
-        const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+        const xGround = Px - curPanX * MAP_COORD_SCENE_SCALE;
+        const zGround = Pz / Math.cos(theta) - curPanY * MAP_COORD_SCENE_SCALE;
+
+        // Chuyển sang lat/lng
+        const COORD_SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
+        const lng = myObfPos.lng + xGround / COORD_SCALE;
+        const lat = myObfPos.lat - zGround / COORD_SCALE;
+
+        return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
+    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightPct]);
+
+    const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
+        if (!isLooterGameMode || !myObfPos) return;
+        const cw = containerRect?.width ?? window.innerWidth;
+        const ch = containerRect?.height ?? window.innerHeight;
+        const result = screenToWorld(offsetX, offsetY, cw, ch);
+        if (!result) return;
         console.log('[MapClick]', {
-            offsetX, offsetY,
-            currentScale, panX: curPanX, panY: curPanY,
-            planeYScale: curPlaneYScale, MAP_PLANE_SCALE,
-            mapX, mapY,
-            clickLng: lng, clickLat: lat,
+            offsetX, offsetY, containerW: cw, containerH: ch,
+            zoom: result.debug.zoom, H: result.debug.H.toFixed(0), D: result.debug.D.toFixed(0),
+            thetaDeg: (result.debug.theta * 180 / Math.PI).toFixed(1),
+            Px: result.debug.Px.toFixed(1), Pz: result.debug.Pz.toFixed(1),
+            xGround: result.debug.xGround.toFixed(1), zGround: result.debug.zGround.toFixed(1),
+            clickLng: result.lng, clickLat: result.lat,
             boatLat: state?.currentLat, boatLng: state?.currentLng,
-            containerW: containerRect?.width, containerH: containerRect?.height,
-            windowW: window.innerWidth, windowH: window.innerHeight,
         });
-        executeMoveToExact(lat, lng, 'map');
-    }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact, state?.currentLat, state?.currentLng]);
+        executeMoveToExact(result.lat, result.lng, 'map');
+    }, [isLooterGameMode, myObfPos, screenToWorld, executeMoveToExact, state?.currentLat, state?.currentLng]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;

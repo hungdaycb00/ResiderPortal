@@ -104,6 +104,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
         myObfPos, scale, planeYScale, panX, panY,
+        perspectivePx, cameraZ, cameraHeightPct,
         setMainTab, setIsSheetExpanded, showNotification,
         setIsTierSelectorOpen
     });
