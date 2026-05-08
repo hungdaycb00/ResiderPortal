@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
 import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
@@ -136,6 +136,19 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         };
     }, [looterBoat.centerOnBoat, looterBoat.centerOnCombat, looterActions.setCenterBoatHandler, looterActions.setCenterCombatHandler]);
 
+    const handleSelfDragEnd = useCallback((newLat: number, newLng: number) => {
+        setMyObfPos({ lat: newLat, lng: newLng });
+        if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({
+                type: 'MAP_MOVE',
+                payload: { lat: newLat, lng: newLng, zoom: 13 }
+            }));
+        }
+        selfDragX.set(0);
+        selfDragY.set(0);
+        addLog(`Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
+    }, [setMyObfPos, ws, selfDragX, selfDragY, addLog]);
+
     // Pointer Interactions Hook
     const {
         handleMapPointerDown, handleMapPointerMove, handleMapPointerUp,
@@ -234,18 +247,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         boatOffsetY={looterBoat.boatOffsetY}
                         onRequestMove={looterBoat.executeMoveToExact}
                         onStopBoat={looterBoat.stopBoat}
-                        onSelfDragEnd={(newLat, newLng) => {
-                            setMyObfPos({ lat: newLat, lng: newLng });
-                            if (ws.current?.readyState === WebSocket.OPEN) {
-                                ws.current.send(JSON.stringify({
-                                    type: 'MAP_MOVE',
-                                    payload: { lat: newLat, lng: newLng, zoom: 13 }
-                                }));
-                            }
-                            selfDragX.set(0);
-                            selfDragY.set(0);
-                            addLog(`Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
-                        }}
+                        onSelfDragEnd={handleSelfDragEnd}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={setSelectedUser}

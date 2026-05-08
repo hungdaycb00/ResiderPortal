@@ -1,5 +1,26 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getWeatherInfo } from '../constants';
+
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 phút
+
+function readCache<T>(key: string): T | null {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts > CACHE_TTL_MS) {
+            localStorage.removeItem(key);
+            return null;
+        }
+        return data as T;
+    } catch { return null; }
+}
+
+function writeCache(key: string, data: unknown): void {
+    try {
+        localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+    } catch { /* quota exceeded, silently ignore */ }
+}
 
 export interface WeatherData {
   temp: number;
@@ -38,11 +59,15 @@ export function useGeolocation() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   const fetchProvinceName = useCallback(async (lat: number, lng: number) => {
+    const cacheKey = `alin_province_${lat.toFixed(3)}_${lng.toFixed(3)}`;
+    const cached = readCache<string>(cacheKey);
+    if (cached) { setCurrentProvince(cached); return; }
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
       const data = await res.json();
       const province = data.address?.province || data.address?.city || data.address?.state || 'Unknown Location';
       setCurrentProvince(province);
+      writeCache(cacheKey, province);
     } catch (e) {
       console.error('Geocoding error:', e);
     }
@@ -97,24 +122,34 @@ export function useGeolocation() {
     }
   }, []);
 
-  // Fetch Weather Data (temp, humidity, feels-like)
+  // Fetch Weather Data (cached, deferred to avoid blocking critical path)
+  const weatherFetchedRef = useRef(false);
   useEffect(() => {
-    if (myObfPos) {
+    if (!myObfPos) return;
+    const cacheKey = `alin_weather_${myObfPos.lat.toFixed(2)}_${myObfPos.lng.toFixed(2)}`;
+    const cached = readCache<WeatherData>(cacheKey);
+    if (cached) { setWeatherData(cached); return; }
+    if (weatherFetchedRef.current) return;
+    weatherFetchedRef.current = true;
+    const timer = setTimeout(() => {
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${myObfPos.lat}&longitude=${myObfPos.lng}&current_weather=true&current=relative_humidity_2m,apparent_temperature`)
         .then(res => res.json())
         .then(data => {
           if (data.current_weather) {
             const { icon, desc } = getWeatherInfo(data.current_weather.weathercode);
-            setWeatherData({
+            const wd: WeatherData = {
               temp: data.current_weather.temperature,
               desc,
               icon,
               humidity: data.current?.relative_humidity_2m,
               feelsLike: data.current?.apparent_temperature,
-            });
+            };
+            setWeatherData(wd);
+            writeCache(cacheKey, wd);
           }
         }).catch(err => console.error('Weather fetch error:', err));
-    }
+    }, 3000);
+    return () => clearTimeout(timer);
   }, [myObfPos?.lat, myObfPos?.lng]);
 
   return React.useMemo(() => ({

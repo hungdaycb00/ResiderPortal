@@ -122,6 +122,11 @@ function SceneContent({
         startClientY: number;
         moved: boolean;
     }>({ active: false, startClientX: 0, startClientY: 0, moved: false });
+    // Cache useFrame values to skip redundant .set() calls
+    const lastLiftXRef = useRef(0);
+    const lastLiftZRef = useRef(0);
+    const lastTiltRef = useRef(0);
+    const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
     const { scene } = useThree();
     const looterState = useLooterState();
     const looterActions = useLooterActions();
@@ -177,13 +182,20 @@ function SceneContent({
         const liftZ = panY.get();
         const tilt = tiltAngle.get();
 
-        moveGroupRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
-        
-        tiltGroupRef.current.rotation.set(
-            MathUtils.degToRad(tilt + cameraRotateXDeg),
-            MathUtils.degToRad(cameraRotateYDeg),
-            MathUtils.degToRad(cameraRotateDeg)
-        );
+        if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
+            moveGroupRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
+            lastLiftXRef.current = liftX;
+            lastLiftZRef.current = liftZ;
+        }
+
+        if (Math.abs(tilt - lastTiltRef.current) > 0.001) {
+            tiltGroupRef.current.rotation.set(
+                MathUtils.degToRad(tilt + cameraRotateXDeg),
+                MathUtils.degToRad(cameraRotateYDeg),
+                MathUtils.degToRad(cameraRotateDeg)
+            );
+            lastTiltRef.current = tilt;
+        }
 
         // Cập nhật vị trí thuyền thực tế để DashedPath luôn bắt đúng điểm
         if (position && isLooterGameMode) {
@@ -192,11 +204,13 @@ function SceneContent({
             const currentPlaneY = planeYScale?.get?.() ?? MAP_PLANE_SCALE;
             const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
             const visualBoatY = (boatOffsetY?.get?.() ?? 0) * currentPlaneY;
-            boatPosRef.current = [
-                sp.x + pxToScene(visualBoatX),
-                5.0,
-                sp.z + pxToScene(visualBoatY),
-            ];
+            const nx = sp.x + pxToScene(visualBoatX);
+            const nz = sp.z + pxToScene(visualBoatY);
+            const [lx, , lz] = lastBoatPosRef.current;
+            if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
+                boatPosRef.current = [nx, 5.0, nz];
+                lastBoatPosRef.current = [nx, 0, nz];
+            }
         }
     });
 

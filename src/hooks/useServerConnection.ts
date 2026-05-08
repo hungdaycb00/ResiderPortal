@@ -40,7 +40,7 @@ export function useServerConnection() {
         checkServer(cloudflareUrl);
         const interval = setInterval(() => {
             checkServer(cloudflareUrl);
-        }, 30000);
+        }, 120000);
         return () => clearInterval(interval);
     }, [cloudflareUrl]);
 
