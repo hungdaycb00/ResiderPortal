@@ -37,8 +37,8 @@ export default defineConfig(({mode}) => {
       // Xóa cấu hình HMR tĩnh để Vite tự động phân tích WSS/WS dựa vào trình duyệt khi dùng qua Tunnel
     },
     build: {
-      // Keep previous hashed assets so users with an older cached HTML shell do not get SPA fallback HTML for JS/CSS.
-      emptyOutDir: false,
+      // Empty the outDir before build to keep it clean.
+      emptyOutDir: true,
       rollupOptions: {
         output: {
           entryFileNames: 'assets/app-[hash].js',
