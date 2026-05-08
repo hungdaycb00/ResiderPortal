@@ -1,7 +1,7 @@
 import { Billboard } from '@react-three/drei';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { makeLootSpriteTexture } from '../sceneUtils';
+import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
 
 interface LootSpriteProps {
     position: [number, number, number];
@@ -21,7 +21,7 @@ export default function LootSprite({
     title,
     accent = '#22d3ee',
     scale = 1,
-    size = 25,
+    size = AVATAR_PLANE_SIZE,
     onClick,
 }: LootSpriteProps) {
     const texture = useMemo(() => makeLootSpriteTexture(type, title, accent, icon), [type, title, accent, icon]);
@@ -73,7 +73,7 @@ export default function LootSprite({
                 />
             </mesh>
             <mesh position={[0, -size * 0.48, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[Math.max(8, size * 0.38), 16]} />
+                <circleGeometry args={[AVATAR_RING_RADIUS * 0.8, 16]} />
                 <meshBasicMaterial color="black" transparent opacity={0.18} depthWrite={false} />
             </mesh>
         </Billboard>
