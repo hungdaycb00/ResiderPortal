@@ -183,7 +183,8 @@ export function useMapInteractions({
         }
 
              // --- Looter Challenge Initiation Logic ---
-             if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved) {
+             // Chỉ mở tier selector khi đang ở thành trì và chưa chọn tier (worldTier === -1)
+             if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved && looterStateObj?.worldTier === -1) {
                   setIsTierSelectorOpen?.(true);
                   return;
              }

@@ -113,7 +113,7 @@ export function useLooterBoat({
             return;
         }
 
-        if (!isChallengeActive) {
+        if (!isChallengeActive && state?.worldTier === -1) {
             setIsTierSelectorOpen?.(true);
             return;
         }

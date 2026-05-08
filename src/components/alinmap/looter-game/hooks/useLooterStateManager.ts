@@ -216,11 +216,13 @@ export function useLooterStateManager({
         
         const distToFortress = getDistanceMeters(s.currentLat, s.currentLng, s.fortressLat, s.fortressLng);
         const isNearFortress = distToFortress <= FORTRESS_INTERACTION_METERS;
-        
-        // Trả về đúng logic gốc: worldTier lấy từ server, chỉ update -1 nếu đang ở gần và chưa active
-        const finalWorldTier = (isNearFortress && !isChallengeActive) ? -1 : s.worldTier;
 
-        const shouldBeActive = !isNearFortress || (finalWorldTier ?? -1) > 0;
+        // Chỉ set worldTier = -1 nếu state từ server KHÔNG có challenge đang chạy
+        // Tránh ghi đè khi F5 reload lúc đang trong thử thách
+        const savedHadChallenge = (s.worldTier ?? 0) > 0;
+        const finalWorldTier = (isNearFortress && !isChallengeActive && !savedHadChallenge) ? -1 : s.worldTier;
+
+        const shouldBeActive = !isNearFortress || (finalWorldTier ?? -1) > 0 || savedHadChallenge;
 
         setState({
           ...s,
