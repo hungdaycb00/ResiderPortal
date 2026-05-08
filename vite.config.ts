@@ -56,6 +56,7 @@ export default defineConfig(({mode}) => {
               if (normalizedId.includes('/src/hooks/') || normalizedId.includes('/src/services/') || normalizedId.includes('/src/utils/')) return 'app-services';
               return undefined;
             }
+            if (id.includes('three') || id.includes('@react-three') || id.includes('three-stdlib')) return 'vendor-three';
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) return 'vendor-react';
             if (id.includes('firebase/')) return 'vendor-firebase';
             if (id.includes('framer-motion') || id.includes('motion/')) return 'vendor-motion';

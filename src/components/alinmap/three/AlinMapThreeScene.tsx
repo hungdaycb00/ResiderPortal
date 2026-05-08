@@ -1,7 +1,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
+import { Fog, Color, Group, MathUtils, SRGBColorSpace, NoToneMapping } from 'three';
 import { useMotionValueEvent, type MotionValue } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
@@ -111,8 +111,8 @@ function SceneContent({
     onStopBoat,
     onSelfDragEnd,
 }: AlinMapThreeSceneProps) {
-    const tiltGroupRef = useRef<THREE.Group>(null);
-    const moveGroupRef = useRef<THREE.Group>(null);
+    const tiltGroupRef = useRef<Group>(null);
+    const moveGroupRef = useRef<Group>(null);
     // Track vị trí thuyền thực tế để render DashedPath chính xác
     const boatPosRef = useRef<[number, number, number]>([0, 0, 0]);
     // Track self-avatar drag state
@@ -138,8 +138,8 @@ function SceneContent({
     useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
 
     useEffect(() => {
-        scene.fog = new THREE.Fog('#08111b', 1800, 22000);
-        scene.background = new THREE.Color(mapMode === 'satellite' ? '#020b12' : '#071018');
+        scene.fog = new Fog('#08111b', 1800, 22000);
+        scene.background = new Color(mapMode === 'satellite' ? '#020b12' : '#071018');
     }, [mapMode, scene]);
 
     const filteredUsers = useMemo(() => {
@@ -180,9 +180,9 @@ function SceneContent({
         moveGroupRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
         
         tiltGroupRef.current.rotation.set(
-            THREE.MathUtils.degToRad(tilt + cameraRotateXDeg),
-            THREE.MathUtils.degToRad(cameraRotateYDeg),
-            THREE.MathUtils.degToRad(cameraRotateDeg)
+            MathUtils.degToRad(tilt + cameraRotateXDeg),
+            MathUtils.degToRad(cameraRotateYDeg),
+            MathUtils.degToRad(cameraRotateDeg)
         );
 
         // Cập nhật vị trí thuyền thực tế để DashedPath luôn bắt đúng điểm
@@ -574,7 +574,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
     return (
         <Canvas
             dpr={props.isDesktop ? [1, 1.5] : [0.85, 1]}
-            frameloop="always"
+            frameloop="demand"
             shadows={false}
             gl={{
                 antialias: props.isDesktop,
@@ -585,8 +585,8 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
             camera={{ fov: 46, near: 0.5, far: 120000, position: [0, 1600, 2200] }}
             onCreated={({ gl }) => {
                 gl.setClearColor('#071018', 1);
-                gl.outputColorSpace = THREE.SRGBColorSpace;
-                gl.toneMapping = THREE.NoToneMapping;
+                gl.outputColorSpace = SRGBColorSpace;
+                gl.toneMapping = NoToneMapping;
                 gl.toneMappingExposure = 1;
                 gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, props.isDesktop ? 1.5 : 1));
             }}

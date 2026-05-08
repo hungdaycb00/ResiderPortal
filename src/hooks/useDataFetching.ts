@@ -133,7 +133,10 @@ export function useDataFetching(
     }, [fetchServerGames, serverStatus, setUser]);
 
     useEffect(() => {
-        void fetchExternalData();
+        const timer = setTimeout(() => {
+            void fetchExternalData();
+        }, 200);
+        return () => clearTimeout(timer);
     }, [fetchExternalData]);
 
     // Validate recentlyPlayed when fetchedGames changes

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { pathToTab, tabToPath, ALIN_MAP_TABS, AppTab, extractSlug } from './utils/routing';
 import { Sword, Shield, Brain, Zap, Trophy, Users, Layout, Gamepad2, Book } from 'lucide-react';
@@ -17,7 +17,7 @@ import { useFriendActions } from './hooks/useFriendActions';
 
 // Components
 import MultiTaskButton from './components/MultiTaskButton';
-import AlinMap from './components/AlinMap';
+const AlinMap = lazy(() => import('./components/AlinMap'));
 import AppHeader from './components/AppHeader';
 import HomeTab from './components/tabs/HomeTab';
 import CategoriesTab from './components/tabs/CategoriesTab';
@@ -227,7 +227,8 @@ export default function App() {
 
       <AnimatePresence>
         {ALIN_MAP_TABS.includes(activeTab) && (
-          <AlinMap 
+          <Suspense fallback={<div className="fixed inset-0 z-[100] bg-[#0a0c12] flex items-center justify-center"><div className="w-12 h-12 rounded-full border-4 border-blue-500/30 border-t-blue-400 animate-spin" /></div>}>
+          <AlinMap
             key="alin-map-instance"
             user={user} 
             onClose={() => setActiveTab('home')} 
@@ -247,6 +248,7 @@ export default function App() {
             onOpenListChange={setIsMyGamesOverlayOpen}
             onOpenChat={(id: string, name: string, avatar?: string) => { setChatTargetUser({ id, name, avatarUrl: avatar }); setIsChatOpen(true); }}
           />
+          </Suspense>
         )}
       </AnimatePresence>
 
