@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { AVATAR_PLANE_SIZE } from '../sceneUtils';
 
 interface DashedPathProps {
     /** Điểm bắt đầu (vị trí thuyền) */
@@ -19,16 +20,17 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
 
     const { geometry, material } = useMemo(() => {
         const pts = [
-            new THREE.Vector3(from[0], from[1] + 5, from[2]),
-            new THREE.Vector3(to[0], to[1] + 5, to[2]),
+            new THREE.Vector3(from[0], from[1], from[2]),
+            new THREE.Vector3(to[0], to[1], to[2]),
         ];
+
         const geo = new THREE.BufferGeometry().setFromPoints(pts);
 
         const mat = new THREE.LineDashedMaterial({
             color,
-            dashSize: 60,
-            gapSize: 40,
-            linewidth: 2,
+            dashSize: 8,
+            gapSize: 6,
+            linewidth: 1,
             transparent: true,
             opacity: 0.85,
             depthTest: false,
@@ -62,14 +64,14 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
             <primitive ref={lineRef} object={lineObject} />
 
             {/* Vòng tròn ngoài tại target */}
-            <mesh position={[to[0], to[1] + 5, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={51}>
-                <ringGeometry args={[55, 80, 32]} />
-                <meshBasicMaterial color={color} transparent opacity={0.22} depthTest={false} depthWrite={false} />
+            <mesh position={[to[0], 0.4, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={51}>
+                <ringGeometry args={[AVATAR_PLANE_SIZE * 0.8, AVATAR_PLANE_SIZE * 1.2, 32]} />
+                <meshBasicMaterial color={color} transparent opacity={0.25} depthTest={false} depthWrite={false} />
             </mesh>
             {/* Chấm trung tâm target */}
-            <mesh position={[to[0], to[1] + 5, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={52}>
-                <circleGeometry args={[20, 32]} />
-                <meshBasicMaterial color="#ffffff" transparent opacity={0.55} depthTest={false} depthWrite={false} />
+            <mesh position={[to[0], 0.45, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={52}>
+                <circleGeometry args={[AVATAR_PLANE_SIZE * 0.25, 32]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.65} depthTest={false} depthWrite={false} />
             </mesh>
         </group>
     );

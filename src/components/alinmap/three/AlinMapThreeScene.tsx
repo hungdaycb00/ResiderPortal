@@ -177,7 +177,7 @@ function SceneContent({
             const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
             boatPosRef.current = [
                 sp.x + pxToScene(visualBoatX),
-                8,
+                5.0,
                 sp.z + pxToScene(visualBoatY),
             ];
         }
@@ -420,7 +420,7 @@ function SceneContent({
                 {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (
                     <DashedPath
                         from={boatPosRef.current}
-                        to={[boatTargetScene.x, 5, boatTargetScene.z]}
+                        to={[boatTargetScene.x, 5.0, boatTargetScene.z]}
                         color="#22d3ee"
                     />
                 ) : null}
@@ -428,8 +428,9 @@ function SceneContent({
                 {/* Boat target pin (chỉ còn circle, DashedPath đã vẽ target) */}
                 {isLooterGameMode && !encounter && boatTargetPin ? (
                     <LootSprite
-                        position={[boatTargetScene!.x, 0.32, boatTargetScene!.z]}
+                        position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
                         type="target"
+                        size={AVATAR_PLANE_SIZE * 0.6}
                     />
                 ) : null}
 
@@ -442,7 +443,7 @@ function SceneContent({
                             boatPosRef.current[2] + pxToScene(-220)
                         ]}
                         type="enemy"
-                        scale={1.5}
+                        scale={1.2}
                     />
                 ) : null}
 

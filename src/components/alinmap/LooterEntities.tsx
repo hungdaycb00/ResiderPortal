@@ -219,21 +219,6 @@ const LooterEntities: React.FC<LooterEntitiesProps> = ({
     return (
         <>
             {/* SVG Layer for lines - ẩn khi combat */}
-            {!encounter && boatTargetPin && (
-                <svg className="absolute top-0 left-0 w-[10000px] h-[10000px] pointer-events-none z-[84]" style={{ overflow: 'visible' }}>
-                    <motion.line
-                        x1={lineX1}
-                        y1={lineY1}
-                        x2={lineX2}
-                        y2={lineY2}
-                        stroke="rgba(34, 211, 238, 0.6)" // cyan-400
-                        strokeWidth="3"
-                        strokeDasharray="8 8"
-                        strokeLinecap="round"
-                        className="animate-[dash_1s_linear_infinite]"
-                    />
-                </svg>
-            )}
 
             {/* Fortress - ẩn khi combat */}
             {!encounter && fortressLat && (
