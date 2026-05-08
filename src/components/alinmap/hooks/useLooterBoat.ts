@@ -174,18 +174,28 @@ export function useLooterBoat({
 
     }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
-    const handleMapDoubleClick = useCallback((clientX: number, clientY: number) => {
+    const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
         if (!isLooterGameMode || !myObfPos) return;
         const currentScale = scale?.get?.() || 1;
-        const offsetX = clientX - window.innerWidth / 2;
-        const offsetY = clientY - window.innerHeight / 2;
-        const mapX = (offsetX / currentScale - (panX?.get?.() ?? 0)) / MAP_PLANE_SCALE;
-        const mapY = (offsetY / currentScale - (panY?.get?.() ?? 0)) / planeYScale.get();
+        const curPanX = panX?.get?.() ?? 0;
+        const curPanY = panY?.get?.() ?? 0;
+        const curPlaneYScale = planeYScale.get();
+        const mapX = (offsetX / currentScale - curPanX) / MAP_PLANE_SCALE;
+        const mapY = (offsetY / currentScale - curPanY) / curPlaneYScale;
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
-        console.log('[MapClick]', { clientX, clientY, offsetX, offsetY, currentScale, panX: panX?.get?.(), panY: panY?.get?.(), mapX, mapY, lng, lat, myObfPos });
+        console.log('[MapClick]', {
+            offsetX, offsetY,
+            currentScale, panX: curPanX, panY: curPanY,
+            planeYScale: curPlaneYScale, MAP_PLANE_SCALE,
+            mapX, mapY,
+            clickLng: lng, clickLat: lat,
+            boatLat: state?.currentLat, boatLng: state?.currentLng,
+            containerW: containerRect?.width, containerH: containerRect?.height,
+            windowW: window.innerWidth, windowH: window.innerHeight,
+        });
         executeMoveToExact(lat, lng);
-    }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact]);
+    }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact, state?.currentLat, state?.currentLng]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;
@@ -208,7 +218,12 @@ export function useLooterBoat({
             pointerDownRef.current = null;
             return;
         }
-        handleMapDoubleClick(e.clientX, e.clientY);
+        // Dùng bounding rect của map container thay vì window center
+        // để tránh sai lệch khi mở tab/bottom sheet
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        handleMapDoubleClick(e.clientX - centerX, e.clientY - centerY, rect);
         pointerDownRef.current = null;
     };
 

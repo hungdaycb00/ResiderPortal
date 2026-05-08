@@ -433,6 +433,7 @@ function SceneContent({
                         position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
                         type="target"
                         size={AVATAR_PLANE_SIZE * 0.6}
+                        scale={2}
                     />
                 ) : null}
 
@@ -445,7 +446,7 @@ function SceneContent({
                             boatPosRef.current[2] + pxToScene(-220)
                         ]}
                         type="enemy"
-                        scale={1.2}
+                        scale={2.4}
                     />
                 ) : null}
 
@@ -461,6 +462,7 @@ function SceneContent({
                             icon={getWorldItemIcon(item)}
                             title={title}
                             accent={getWorldItemAccent(item)}
+                            scale={2}
                             onClick={() => handleWorldItemClick(item)}
                         />
                     );

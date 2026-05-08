@@ -7,7 +7,7 @@ interface ProceduralFortressProps {
     onClick?: () => void;
 }
 
-export default function ProceduralFortress({ position, scale = 1, onClick }: ProceduralFortressProps) {
+export default function ProceduralFortress({ position, scale = 3, onClick }: ProceduralFortressProps) {
     return (
         <LootSprite
             position={position}

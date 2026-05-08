@@ -18,7 +18,7 @@ interface ProceduralBoatProps {
 export default function ProceduralBoat({
     position,
     rotation = [0, 0, 0],
-    scale = 1,
+    scale = 2,
     offsetX,
     offsetY,
     planeYScale,

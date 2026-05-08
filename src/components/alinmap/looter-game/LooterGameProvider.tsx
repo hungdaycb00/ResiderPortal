@@ -123,8 +123,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
   const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
-  const [centerBoatHandler, setCenterBoatHandler] = useState<((yOffset?: number, xOffset?: number) => void) | null>(null);
-  const [centerCombatHandler, setCenterCombatHandler] = useState<((yOffset?: number, xOffset?: number) => void) | null>(null);
+  // Dùng ref thay state để tránh khoảng trống null khi dependency thay đổi
+  const centerBoatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
+  const centerCombatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
   const [isItemDragging, setIsItemDragging] = useState(false);
 
@@ -232,10 +233,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack,
     setOpenBackpackHandler,
-    centerOnBoat: (yOffset?: number, xOffset?: number) => { console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandler }); if (centerBoatHandler) centerBoatHandler(yOffset, xOffset); else console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
-    setCenterBoatHandler,
-    centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset, xOffset); },
-    setCenterCombatHandler,
+    centerOnBoat: (yOffset?: number, xOffset?: number) => { console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandlerRef.current }); if (centerBoatHandlerRef.current) centerBoatHandlerRef.current(yOffset, xOffset); else console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
+    setCenterBoatHandler: (h) => { centerBoatHandlerRef.current = h; },
+    centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandlerRef.current) centerCombatHandlerRef.current(yOffset, xOffset); },
+    setCenterCombatHandler: (h) => { centerCombatHandlerRef.current = h; },
     setIsChallengeActive,
     setIsItemDragging,
     
@@ -332,7 +333,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     clearPregeneratedFruit
   }), [
     stateManager, inventory, movement, runInQueue, openBackpack, showNotification,
-    centerBoatHandler, centerCombatHandler, setCenterBoatHandler, setCenterCombatHandler,
+
     setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen, setIsItemDragging,
     notify, clearPregeneratedFruit, deviceId, API_URL
