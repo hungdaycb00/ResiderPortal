@@ -14,7 +14,12 @@ export default function GalleryImage({ url, title }: GalleryImageProps) {
         const normalized = resolveRenderableImageUrl(url);
         if (!normalized) return null;
         const loader = new THREE.TextureLoader();
-        return loader.load(normalized);
+        return loader.load(
+            normalized,
+            undefined,
+            undefined,
+            (err) => console.warn('[GalleryImage] Failed to load texture:', normalized, err)
+        );
     }, [url]);
 
     return (

@@ -234,6 +234,18 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         boatOffsetY={looterBoat.boatOffsetY}
                         onRequestMove={looterBoat.executeMoveToExact}
                         onStopBoat={looterBoat.stopBoat}
+                        onSelfDragEnd={(newLat, newLng) => {
+                            setMyObfPos({ lat: newLat, lng: newLng });
+                            if (ws.current?.readyState === WebSocket.OPEN) {
+                                ws.current.send(JSON.stringify({
+                                    type: 'MAP_MOVE',
+                                    payload: { lat: newLat, lng: newLng, zoom: 13 }
+                                }));
+                            }
+                            selfDragX.set(0);
+                            selfDragY.set(0);
+                            addLog(`Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
+                        }}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={setSelectedUser}

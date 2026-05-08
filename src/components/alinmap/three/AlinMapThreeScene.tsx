@@ -1,10 +1,10 @@
-import React, { Suspense, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { MotionValue } from 'framer-motion';
+import { useMotionValueEvent, type MotionValue } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, BILLBOARD_VISIBLE_DISTANCE_KM } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 // Sub-components
 import CameraRig from './CameraRig';
@@ -63,6 +63,7 @@ export interface AlinMapThreeSceneProps {
     onSelectSelf?: (user: any) => void;
     onRequestMove?: (lat: number, lng: number, source?: string) => void;
     onStopBoat?: () => void;
+    onSelfDragEnd?: (newLat: number, newLng: number) => void;
 }
 
 // ─── Scene Content ────────────────────────────────────────────────────────────
@@ -108,11 +109,19 @@ function SceneContent({
     onSelectSelf,
     onRequestMove,
     onStopBoat,
+    onSelfDragEnd,
 }: AlinMapThreeSceneProps) {
     const tiltGroupRef = useRef<THREE.Group>(null);
     const moveGroupRef = useRef<THREE.Group>(null);
     // Track vị trí thuyền thực tế để render DashedPath chính xác
     const boatPosRef = useRef<[number, number, number]>([0, 0, 0]);
+    // Track self-avatar drag state
+    const selfDragRef = useRef<{
+        active: boolean;
+        startClientX: number;
+        startClientY: number;
+        moved: boolean;
+    }>({ active: false, startClientX: 0, startClientY: 0, moved: false });
     const { scene } = useThree();
     const looterState = useLooterState();
     const looterActions = useLooterActions();
@@ -122,6 +131,11 @@ function SceneContent({
     );
     const { state: looterStateObj, encounter } = looterState;
     const { openFortressStorage, setShowMinigame, pickupItem } = looterActions;
+
+    // Subscribe to selfDragX/Y motion value changes for reactive avatar repositioning
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
+    useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
 
     useEffect(() => {
         scene.fog = new THREE.Fog('#08111b', 1800, 22000);
@@ -152,6 +166,8 @@ function SceneContent({
             u.distKm = distKm;
             return true;
         });
+        // Sort by distance ascending — prioritize closer users for gallery billboards
+        visible.sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
         return visible.slice(0, isLooterGameMode ? 40 : 90);
     }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, isLooterGameMode]);
 
@@ -186,8 +202,8 @@ function SceneContent({
 
     const origin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
     const selfPos = worldToScene(origin, origin);
-    const selfLift = pxToScene(selfDragX.get() || 0);
-    const selfDepth = pxToScene(selfDragY.get() || 0);
+    const selfLift = pxToScene(dragOffset.x);
+    const selfDepth = pxToScene(dragOffset.y);
     const searchMarkerScene = searchMarkerPos ? worldToScene(origin, searchMarkerPos) : null;
     const fortressScene = looterStateObj?.fortressLat && looterStateObj?.fortressLng
         ? worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng })
@@ -298,6 +314,60 @@ function SceneContent({
         openFortressStorage,
     ]);
 
+    // ─── Self Avatar Drag Handlers ────────────────────────────────────────────
+    const handleSelfPointerDown = useCallback((e: any) => {
+        if (isLooterGameMode || !onSelfDragEnd) return;
+        e.stopPropagation();
+        (e as any).sourceEvent?.stopPropagation?.();
+        (e as any).sourceEvent?.preventDefault?.();
+        selfDragRef.current = {
+            active: true,
+            startClientX: (e as any).sourceEvent?.clientX ?? 0,
+            startClientY: (e as any).sourceEvent?.clientY ?? 0,
+            moved: false,
+        };
+        document.body.style.cursor = 'grabbing';
+    }, [isLooterGameMode, onSelfDragEnd]);
+
+    const handleSelfPointerMove = useCallback((e: any) => {
+        const state = selfDragRef.current;
+        if (!state.active || isLooterGameMode) return;
+        e.stopPropagation();
+        (e as any).sourceEvent?.stopPropagation?.();
+        const clientX = (e as any).sourceEvent?.clientX ?? 0;
+        const clientY = (e as any).sourceEvent?.clientY ?? 0;
+        const currentScale = scale.get();
+        const dx = (clientX - state.startClientX) / currentScale;
+        const dy = (clientY - state.startClientY) / currentScale;
+        if (Math.abs(dx) + Math.abs(dy) > 4) {
+            state.moved = true;
+        }
+        if (state.moved) {
+            selfDragX.set(dx);
+            selfDragY.set(dy);
+        }
+    }, [isLooterGameMode, scale, selfDragX, selfDragY]);
+
+    const handleSelfPointerUp = useCallback((e: any) => {
+        const state = selfDragRef.current;
+        if (!state.active) return;
+        e.stopPropagation();
+        (e as any).sourceEvent?.stopPropagation?.();
+        state.active = false;
+        document.body.style.cursor = state.moved ? 'auto' : 'pointer';
+        if (state.moved && onSelfDragEnd) {
+            const currentScale = scale.get();
+            const currentPlaneYScale = planeYScale.get();
+            const totalDx = selfDragX.get();
+            const totalDy = selfDragY.get();
+            const deltaLng = (totalDx / currentScale / MAP_PLANE_SCALE) / DEGREES_TO_PX;
+            const deltaLat = (-totalDy / currentScale / currentPlaneYScale) / DEGREES_TO_PX;
+            const newLat = (position?.[0] ?? 0) + deltaLat;
+            const newLng = (position?.[1] ?? 0) + deltaLng;
+            onSelfDragEnd(newLat, newLng);
+        }
+    }, [onSelfDragEnd, scale, planeYScale, selfDragX, selfDragY, position]);
+
     const renderedWorldItems = useMemo(() => {
         if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
         const centerLat = looterStateObj?.currentLat ?? origin.lat;
@@ -354,24 +424,34 @@ function SceneContent({
                 ) : (() => {
                     const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
                     return (
-                        <AvatarBillboard
-                            name={myDisplayName || user?.displayName || 'Me'}
-                            avatarUrl={myAvatarUrl || user?.photoURL}
-                            position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
-                            status={myStatus}
-                            isVisibleOnMap={isVisibleOnMap}
-                            isSelected={isSelfSelected}
-                            onClick={() => onSelectSelf?.({
-                                id: user?.uid || myUserId || 'self',
-                                username: myDisplayName,
-                                lat: origin.lat,
-                                lng: origin.lng,
-                                isSelf: true,
-                            })}
+                        <group
+                            onPointerDown={handleSelfPointerDown}
+                            onPointerMove={handleSelfPointerMove}
+                            onPointerUp={handleSelfPointerUp}
+                        >
+                            <AvatarBillboard
+                                name={myDisplayName || user?.displayName || 'Me'}
+                                avatarUrl={myAvatarUrl || user?.photoURL}
+                                position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
+                                status={myStatus}
+                                isVisibleOnMap={isVisibleOnMap}
+                                isSelected={isSelfSelected}
+                                onClick={() => {
+                                    if (!selfDragRef.current.moved) {
+                                        onSelectSelf?.({
+                                            id: user?.uid || myUserId || 'self',
+                                            username: myDisplayName,
+                                            lat: origin.lat,
+                                            lng: origin.lng,
+                                            isSelf: true,
+                                        });
+                                    }
+                                }}
                             showGallery={galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode))}
                             galleryTitle={galleryTitle}
                             galleryImages={galleryImages}
                         />
+                        </group>
                     );
                 })()}
 
@@ -408,7 +488,7 @@ function SceneContent({
                             isVisibleOnMap
                             isSelected={!isLooterGameMode && selectedUser?.id === u.id}
                             onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
-                            showGallery={!isLooterGameMode && u.gallery?.active && (selectedUser?.id === u.id || (u.distKm != null && u.distKm <= BILLBOARD_VISIBLE_DISTANCE_KM))}
+                            showGallery={!isLooterGameMode && u.gallery?.active}
                             galleryTitle={u.gallery?.title}
                             galleryImages={u.gallery?.images}
                             dimmed={isLooterGameMode}
