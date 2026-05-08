@@ -183,6 +183,7 @@ export function useLooterBoat({
         const mapY = (offsetY / currentScale - (panY?.get?.() ?? 0)) / planeYScale.get();
         const lng = myObfPos.lng + mapX / DEGREES_TO_PX;
         const lat = myObfPos.lat - mapY / DEGREES_TO_PX;
+        console.log('[MapClick]', { clientX, clientY, offsetX, offsetY, currentScale, panX: panX?.get?.(), panY: panY?.get?.(), mapX, mapY, lng, lat, myObfPos });
         executeMoveToExact(lat, lng);
     }, [isLooterGameMode, myObfPos, scale, panX, panY, planeYScale, executeMoveToExact]);
 

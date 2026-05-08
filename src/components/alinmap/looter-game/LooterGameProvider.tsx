@@ -232,7 +232,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack,
     setOpenBackpackHandler,
-    centerOnBoat: (yOffset?: number, xOffset?: number) => { if (centerBoatHandler) centerBoatHandler(yOffset, xOffset); },
+    centerOnBoat: (yOffset?: number, xOffset?: number) => { console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandler }); if (centerBoatHandler) centerBoatHandler(yOffset, xOffset); else console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
     setCenterBoatHandler,
     centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandler) centerCombatHandler(yOffset, xOffset); },
     setCenterCombatHandler,

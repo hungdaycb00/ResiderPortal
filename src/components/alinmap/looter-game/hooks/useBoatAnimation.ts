@@ -2,6 +2,8 @@ import { useCallback, useRef } from 'react';
 import { useMotionValue, animate, MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
 
+const DBG = '[BoatAnim]';
+
 interface UseBoatAnimationParams {
   myObfPos: { lat: number; lng: number } | null;
   panX: MotionValue<number>;
@@ -90,11 +92,10 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
       boatOffsetY.set(pxY);
     }
 
-    console.log('[BoatCenter] Centering to boat:', { pxX, pxY, yOffsetPx, xOffsetPx });
+    console.log(DBG, 'centerOnBoat called', { pxX, pxY, yOffsetPx, xOffsetPx, hasCurrentBoatPosition, myObfPos: !!myObfPos, currentLat, currentLng });
 
     // Di chuyển camera (pan) đến vị trí đó
     animate(panX, -pxX * MAP_PLANE_SCALE + xOffsetPx, { duration: 0.45, ease: 'easeInOut' });
-    // Quy đổi yOffset từ pixel màn hình sang map units (chia cho planeYScale)
     animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY, planeYScale]);
 

@@ -29,15 +29,18 @@ export const LocateBoatButton: React.FC = () => {
         return { xOffset: 0, yOffset: window.innerHeight / 2 - visibleCenterY };
     };
 
-    const handleLocateBoat = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleLocateBoat = (e: React.MouseEvent | React.PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         const { xOffset, yOffset } = getVisibleMapOffsets();
+        console.log('[LocateBoat] Fired', { encounter: !!encounter, xOffset, yOffset, isLooterGameMode });
 
         if (encounter) {
+            console.log('[LocateBoat] Calling centerOnCombat', yOffset, xOffset);
             centerOnCombat(yOffset, xOffset);
         } else {
+            console.log('[LocateBoat] Calling centerOnBoat', yOffset, xOffset);
             centerOnBoat(yOffset, xOffset);
         }
     };
@@ -46,8 +49,8 @@ export const LocateBoatButton: React.FC = () => {
         <button
             type="button"
             data-map-interactive="true"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={handleLocateBoat}
+            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onPointerUp={handleLocateBoat}
             className="w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-cyan-500/60 bg-[#0a1526]/85 text-cyan-300 shadow-[0_0_24px_rgba(8,145,178,0.35)] backdrop-blur-xl flex items-center justify-center active:scale-95 transition-all hover:bg-[#0f213a] hover:border-cyan-300"
             title="Định vị thuyền"
         >

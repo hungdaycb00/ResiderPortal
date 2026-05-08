@@ -12,6 +12,7 @@ interface ProceduralBoatProps {
     scale?: number;
     offsetX?: MotionValue<number>;
     offsetY?: MotionValue<number>;
+    planeYScale?: MotionValue<number>;
 }
 
 export default function ProceduralBoat({
@@ -20,14 +21,16 @@ export default function ProceduralBoat({
     scale = 1,
     offsetX,
     offsetY,
+    planeYScale,
 }: ProceduralBoatProps) {
     const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (!groupRef.current) return;
         const t = state.clock.getElapsedTime();
+        const yScale = planeYScale?.get?.() ?? MAP_PLANE_SCALE;
         const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE);
-        const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE);
+        const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * yScale);
         groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 1.5 + 5, z);
         groupRef.current.rotation.z = Math.sin(t * 1.2) * 0.025;
     });

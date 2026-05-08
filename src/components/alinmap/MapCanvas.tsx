@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Eye, UserRound } from 'lucide-react';
 import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
-import SelfNode from './SelfNode';
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
