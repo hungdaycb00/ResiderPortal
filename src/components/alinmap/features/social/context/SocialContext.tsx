@@ -66,7 +66,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
             setSentFriendRequests(prev => prev.includes(userToAdd.id) ? prev : [...prev, userToAdd.id]);
             showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
-            if (err.message.includes('409') || err.message.toLowerCase().includes('already')) {
+            if (err.message?.includes('409') || err.message?.toLowerCase().includes('already')) {
                 showNotification?.("Request already sent or you are already friends!", 'info');
             } else { showNotification?.(err.message || "Failed to send friend request.", 'error'); }
         }
