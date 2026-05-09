@@ -354,12 +354,12 @@ function SceneContent({
 
     // ─── Ground Click → Move (Raycaster) ───────────────────────────────────
     const handleGroundClick = useCallback((point: Vector3) => {
-        if (!isLooterGameMode || !tiltGroupRef.current || !onRequestMove) return;
+        if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
         if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
-        const localPt = tiltGroupRef.current.worldToLocal(point.clone());
+        const localPt = groundMeshRef.current.worldToLocal(point.clone());
         const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
         const lng = origin.lng + localPt.x / SCALE;
-        const lat = origin.lat - localPt.z / SCALE;
+        const lat = origin.lat + localPt.y / SCALE;
         onRequestMove(lat, lng, 'map');
     }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng]);
 
