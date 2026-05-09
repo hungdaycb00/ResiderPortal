@@ -1,3 +1,4 @@
+import React from 'react';
 import LootSprite from './LootSprite';
 import { AVATAR_PLANE_SIZE } from '../sceneUtils';
 
@@ -7,7 +8,7 @@ interface ProceduralFortressProps {
     onClick?: () => void;
 }
 
-export default function ProceduralFortress({ position, scale = 3, onClick }: ProceduralFortressProps) {
+const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 3, onClick }) => {
     return (
         <LootSprite
             position={position}
@@ -19,4 +20,6 @@ export default function ProceduralFortress({ position, scale = 3, onClick }: Pro
             onClick={onClick}
         />
     );
-}
+};
+
+export default React.memo(ProceduralFortress);

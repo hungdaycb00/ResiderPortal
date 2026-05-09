@@ -173,6 +173,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const setIsFortressStorageOpen = useCallback((v: boolean) => dispatch({ type: 'SET_FORTRESS_STORAGE_OPEN', payload: v }), []);
 
   const { runInQueue, isSyncing } = useLooterQueue();
+  const runInQueueRef = useRef(runInQueue);
+  runInQueueRef.current = runInQueue;
   const { saveInventory, saveBags, saveStorage, syncState } = useLooterData({ deviceId, apiUrl: API_URL, setState });
   const openBackpack = useCallback(() => {
     if (typeof openBackpackHandler === 'function') openBackpackHandler();
@@ -242,9 +244,9 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsChallengeActive,
     setIsItemDragging,
     
-    initGame: (lat, lng) => runInQueue(() => stateManager.initGame(lat, lng)),
-    loadState: () => runInQueue(() => stateManager.loadState()),
-    moveBoat: (lat, lng, isStep, stepDist) => runInQueue(() => movement.moveBoat(lat, lng, isStep, stepDist)),
+    initGame: (lat, lng) => runInQueueRef.current(() => stateManager.initGame(lat, lng)),
+    loadState: () => runInQueueRef.current(() => stateManager.loadState()),
+    moveBoat: (lat, lng, isStep, stepDist) => runInQueueRef.current(() => movement.moveBoat(lat, lng, isStep, stepDist)),
     // Pickup và penalty chạy song song — không block bởi heartbeat loadState
     pickupItem: (spawnId, directItem, currentLat, currentLng) => inventory.pickupItem(spawnId, directItem, currentLat, currentLng),
     inflictMinigamePenalty: (sid) => stateManager.inflictMinigamePenalty(sid),
@@ -256,7 +258,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       // Debounce saving to server
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
-        runInQueue(async () => {
+        runInQueueRef.current(async () => {
           const success = await inventory.saveInventory(inv);
           if (!success) {
             notify('Lỗi khi lưu vị trí vật phẩm', 'error');
@@ -270,7 +272,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       if (storageTimerRef.current) clearTimeout(storageTimerRef.current);
       return new Promise<void>((resolve) => {
         storageTimerRef.current = setTimeout(() => {
-          runInQueue(() => inventory.saveStorage(st))
+          runInQueueRef.current(() => inventory.saveStorage(st))
             .then(() => resolve())
             .catch(() => resolve());
         }, 500);
@@ -281,7 +283,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       if (portalStorageTimerRef.current) clearTimeout(portalStorageTimerRef.current);
       return new Promise<void>((resolve) => {
         portalStorageTimerRef.current = setTimeout(() => {
-          runInQueue(() => inventory.saveStorage(st))
+          runInQueueRef.current(() => inventory.saveStorage(st))
             .then(() => resolve())
             .catch(() => resolve());
         }, 500);
@@ -319,22 +321,22 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
         notify('Vận chuyển thất bại! Hàng hóa đã bị mất.', 'error');
       }
     },
-    saveBags: (bags) => runInQueue(() => inventory.saveBags(bags)),
-    equipBag: (uid) => runInQueue(() => inventory.equipBag(uid)),
-    executeCombat: (id, inv, hp, bags) => runInQueue(() => stateManager.executeCombat(id, inv, hp, bags)),
-    curseChoice: (choice) => runInQueue(() => stateManager.curseChoice(choice)),
-    sellItems: (uids) => runInQueue(() => inventory.sellItems(uids)),
-    storeItems: (uids, act, mode, gx, gy) => runInQueue(() => inventory.storeItems(uids, act, mode, gx, gy)),
-    setWorldTier: (tier) => runInQueue(() => stateManager.setWorldTier(tier)),
-    returnToFortress: () => runInQueue(() => movement.returnToFortress()),
-    loadWorldItems: (force) => runInQueue(() => stateManager.loadWorldItems(force)),
-    dropItems: (uids, lat, lng) => runInQueue(() => inventory.dropItems(uids, lat, lng)),
-    dropCombatLoot: (items) => runInQueue(() => inventory.dropCombatLoot(items)),
+    saveBags: (bags) => runInQueueRef.current(() => inventory.saveBags(bags)),
+    equipBag: (uid) => runInQueueRef.current(() => inventory.equipBag(uid)),
+    executeCombat: (id, inv, hp, bags) => runInQueueRef.current(() => stateManager.executeCombat(id, inv, hp, bags)),
+    curseChoice: (choice) => runInQueueRef.current(() => stateManager.curseChoice(choice)),
+    sellItems: (uids) => runInQueueRef.current(() => inventory.sellItems(uids)),
+    storeItems: (uids, act, mode, gx, gy) => runInQueueRef.current(() => inventory.storeItems(uids, act, mode, gx, gy)),
+    setWorldTier: (tier) => runInQueueRef.current(() => stateManager.setWorldTier(tier)),
+    returnToFortress: () => runInQueueRef.current(() => movement.returnToFortress()),
+    loadWorldItems: (force) => runInQueueRef.current(() => stateManager.loadWorldItems(force)),
+    dropItems: (uids, lat, lng) => runInQueueRef.current(() => inventory.dropItems(uids, lat, lng)),
+    dropCombatLoot: (items) => runInQueueRef.current(() => inventory.dropCombatLoot(items)),
     
     showNotification: notify,
     clearPregeneratedFruit
   }), [
-    stateManager, inventory, movement, runInQueue, openBackpack, showNotification,
+    stateManager, inventory, movement, openBackpack, showNotification,
 
     setEncounter, setCombatResult, setShowCurseModal, setShowMinigame,
     setIsLooterGameMode, setIsChallengeActive, setIsFortressStorageOpen, setIsItemDragging,

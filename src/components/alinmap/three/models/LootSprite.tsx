@@ -1,5 +1,5 @@
+import React, { useEffect, useMemo } from 'react';
 import { Billboard } from '@react-three/drei';
-import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
 
@@ -18,7 +18,7 @@ interface LootSpriteProps {
     onClick?: () => void;
 }
 
-export default function LootSprite({
+const LootSprite: React.FC<LootSpriteProps> = ({
     position,
     icon,
     type = 'item',
@@ -27,7 +27,7 @@ export default function LootSprite({
     scale = 1,
     size = AVATAR_PLANE_SIZE,
     onClick,
-}: LootSpriteProps) {
+}) => {
     const texture = useMemo(() => makeLootSpriteTexture(type, title, accent, icon), [type, title, accent, icon]);
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
@@ -82,4 +82,6 @@ export default function LootSprite({
             </mesh>
         </Billboard>
     );
-}
+};
+
+export default React.memo(LootSprite);

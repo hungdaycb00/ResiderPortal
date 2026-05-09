@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Billboard } from '@react-three/drei';
 import { makeBadgeTexture, MARKER_PLANE_SIZE } from './sceneUtils';
 
@@ -9,7 +9,7 @@ interface MarkerBillboardProps {
     accent?: string;
 }
 
-export default function MarkerBillboard({ position, icon, label, accent = '#22d3ee' }: MarkerBillboardProps) {
+const MarkerBillboard: React.FC<MarkerBillboardProps> = ({ position, icon, label, accent = '#22d3ee' }) => {
     const texture = useMemo(() => makeBadgeTexture(icon, label, accent), [icon, label, accent]);
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
@@ -22,4 +22,6 @@ export default function MarkerBillboard({ position, icon, label, accent = '#22d3
             </mesh>
         </Billboard>
     );
-}
+};
+
+export default React.memo(MarkerBillboard);

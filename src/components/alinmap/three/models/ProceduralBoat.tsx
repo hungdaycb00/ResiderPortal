@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
@@ -15,14 +15,14 @@ interface ProceduralBoatProps {
     planeYScale?: MotionValue<number>;
 }
 
-export default function ProceduralBoat({
+const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
     scale = 2,
     offsetX,
     offsetY,
     planeYScale,
-}: ProceduralBoatProps) {
+}) => {
     const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
@@ -47,4 +47,6 @@ export default function ProceduralBoat({
             />
         </group>
     );
-}
+};
+
+export default React.memo(ProceduralBoat);

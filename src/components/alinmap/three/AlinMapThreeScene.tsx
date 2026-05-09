@@ -422,6 +422,21 @@ function SceneContent({
         safeWorldItems,
     ]);
 
+    // Precompute scene positions — avoids calling worldToScene inside .map() (eliminates ~132 object allocations/render)
+    const userRenderData = useMemo(() =>
+        filteredUsers.map((u) => ({
+            user: u,
+            pos: worldToScene(origin, u),
+        }))
+    , [filteredUsers, origin.lat, origin.lng]);
+
+    const itemRenderData = useMemo(() =>
+        renderedWorldItems.map((item: any) => ({
+            item,
+            pos: worldToScene(origin, { lat: item.lat, lng: item.lng }),
+        }))
+    , [renderedWorldItems, origin.lat, origin.lng]);
+
     if (!position) return null;
 
     return (
@@ -501,25 +516,22 @@ function SceneContent({
                 ) : null}
 
                 {/* Nearby users - làm mờ khi ở looter game mode */}
-                {filteredUsers.map((u) => {
-                    const pos = worldToScene(origin, u);
-                    return (
-                        <AvatarBillboard
-                            key={u.id}
-                            name={u.displayName || u.username || 'U'}
-                            avatarUrl={isLooterGameMode ? null : u.avatar_url}
-                            position={[pos.x, 0.22, pos.z]}
-                            status={isLooterGameMode ? undefined : u.status}
-                            isVisibleOnMap
-                            isSelected={!isLooterGameMode && selectedUser?.id === u.id}
-                            onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
-                            showGallery={!isLooterGameMode && u.gallery?.active}
-                            galleryTitle={u.gallery?.title}
-                            galleryImages={u.gallery?.images}
-                            dimmed={isLooterGameMode}
-                        />
-                    );
-                })}
+                {userRenderData.map(({ user: u, pos }) => (
+                    <AvatarBillboard
+                        key={u.id}
+                        name={u.displayName || u.username || 'U'}
+                        avatarUrl={isLooterGameMode ? null : u.avatar_url}
+                        position={[pos.x, 0.22, pos.z]}
+                        status={isLooterGameMode ? undefined : u.status}
+                        isVisibleOnMap
+                        isSelected={!isLooterGameMode && selectedUser?.id === u.id}
+                        onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
+                        showGallery={!isLooterGameMode && u.gallery?.active}
+                        galleryTitle={u.gallery?.title}
+                        galleryImages={u.gallery?.images}
+                        dimmed={isLooterGameMode}
+                    />
+                ))}
 
                 {/* Fortress */}
                 {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
@@ -559,22 +571,18 @@ function SceneContent({
                 ) : null}
 
                 {/* World loot items */}
-                {renderedWorldItems.map((item: any) => {
-                    const pos = worldToScene(origin, { lat: item.lat, lng: item.lng });
-                    const title = item?.item?.name || 'Loot';
-                    return (
-                        <LootSprite
-                            key={item.spawnId}
-                            position={[pos.x, 0.3, pos.z]}
-                            type={getWorldItemType(item)}
-                            icon={getWorldItemIcon(item)}
-                            title={title}
-                            accent={getWorldItemAccent(item)}
-                            scale={2}
-                            onClick={() => handleWorldItemClick(item)}
-                        />
-                    );
-                })}
+                {itemRenderData.map(({ item, pos }) => (
+                    <LootSprite
+                        key={item.spawnId}
+                        position={[pos.x, 0.3, pos.z]}
+                        type={getWorldItemType(item)}
+                        icon={getWorldItemIcon(item)}
+                        title={item?.item?.name || 'Loot'}
+                        accent={getWorldItemAccent(item)}
+                        scale={2}
+                        onClick={() => handleWorldItemClick(item)}
+                    />
+                ))}
 
                 {/* Mode label */}
                 <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>

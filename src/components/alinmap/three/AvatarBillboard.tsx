@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Billboard, Text } from '@react-three/drei';
 import GalleryImage from './GalleryImage';
 import { makeAvatarTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from './sceneUtils';
@@ -18,7 +18,7 @@ interface AvatarBillboardProps {
     dimmed?: boolean;
 }
 
-export default function AvatarBillboard({
+const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     name,
     avatarUrl,
     position,
@@ -30,7 +30,7 @@ export default function AvatarBillboard({
     galleryImages,
     isSelected,
     dimmed = false,
-}: AvatarBillboardProps) {
+}) => {
     const [isHovered, setIsHovered] = useState(false);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
 
@@ -92,4 +92,6 @@ export default function AvatarBillboard({
             </Billboard>
         </group>
     );
-}
+};
+
+export default React.memo(AvatarBillboard);

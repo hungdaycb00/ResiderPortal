@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useReducer } from 'react';
 import type { LooterItem, BagItem } from '../types';
 
 interface UseInventoryDragProps {
@@ -12,6 +12,29 @@ interface UseInventoryDragProps {
   onEquipBag?: (itemUid: string) => void;
 }
 
+// ─── Unified drag state reducer — 1 dispatch thay vì 3 setState/pointermove frame
+interface DragState {
+  pos: { x: number; y: number };
+  clientPos: { x: number; y: number };
+  gridPos: { x: number; y: number } | null;
+}
+type DragAction =
+  | { type: 'SET_ALL'; pos: { x: number; y: number }; clientPos: { x: number; y: number }; gridPos: { x: number; y: number } }
+  | { type: 'UPDATE_MOVE'; pos: { x: number; y: number }; clientPos: { x: number; y: number }; gridPos: { x: number; y: number } }
+  | { type: 'RESET' };
+
+const initialDragState: DragState = { pos: { x: 0, y: 0 }, clientPos: { x: 0, y: 0 }, gridPos: null };
+
+function dragReducer(state: DragState, action: DragAction): DragState {
+  switch (action.type) {
+    case 'SET_ALL':
+    case 'UPDATE_MOVE':
+      return { pos: action.pos, clientPos: action.clientPos, gridPos: action.gridPos };
+    case 'RESET':
+      return initialDragState;
+  }
+}
+
 export function useInventoryDrag({
   items,
   cellSize,
@@ -23,13 +46,19 @@ export function useInventoryDrag({
   onEquipBag,
 }: UseInventoryDragProps) {
   const [draggingItem, setDraggingItem] = useState<LooterItem | null>(null);
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
-  const [dragClientPos, setDragClientPos] = useState({ x: 0, y: 0 });
-  const [dragGridPos, setDragGridPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragState, dispatchDrag] = useReducer(dragReducer, initialDragState);
   const [dragStartInfo, setDragStartInfo] = useState<{ item: LooterItem; x: number; y: number } | null>(null);
   const [panStart, setPanStart] = useState<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollParentRef = useRef<HTMLElement | null>(null);
+
+  const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
+    if (!el) return null;
+    const style = window.getComputedStyle(el);
+    if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
+    return findScrollParent(el.parentElement);
+  };
 
   const isItemCompletelyInBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
     const isBag = (item as any).type === 'bag';
@@ -106,19 +135,12 @@ export function useInventoryDrag({
         target.setPointerCapture(e.pointerId);
       } catch (err) {}
 
-      const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
-        if (!el) return null;
-        const style = window.getComputedStyle(el);
-        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
-        return findScrollParent(el.parentElement);
-      };
-      
-      const scrollParent = findScrollParent(container);
+      scrollParentRef.current = findScrollParent(container);
       setPanStart({
         x: e.clientX,
         y: e.clientY,
-        scrollLeft: scrollParent?.scrollLeft || 0,
-        scrollTop: scrollParent?.scrollTop || 0
+        scrollLeft: scrollParentRef.current?.scrollLeft || 0,
+        scrollTop: scrollParentRef.current?.scrollTop || 0
       });
     }
   }, []);
@@ -129,14 +151,7 @@ export function useInventoryDrag({
 
     // 1. Handle Panning (Cuộn nền)
     if (panStart) {
-      const findScrollParent = (el: HTMLElement | null): HTMLElement | null => {
-        if (!el) return null;
-        const style = window.getComputedStyle(el);
-        if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
-        return findScrollParent(el.parentElement);
-      };
-
-      const scrollParent = findScrollParent(container);
+      const scrollParent = scrollParentRef.current;
       if (scrollParent) {
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
@@ -163,12 +178,14 @@ export function useInventoryDrag({
             setDraggingItem(item);
             const startX = dragStartInfo.x - rect.left;
             const startY = dragStartInfo.y - rect.top;
-            setDragPos({ x: startX - itemW / 2, y: startY - itemH / 2 });
-            setDragClientPos({ x: dragStartInfo.x - itemW / 2, y: dragStartInfo.y - itemH / 2 });
-            
             const gx = Math.round((startX - itemW / 2) / cellSize);
             const gy = Math.round((startY - itemH / 2) / cellSize);
-            setDragGridPos({ x: gx, y: gy });
+            dispatchDrag({
+              type: 'SET_ALL',
+              pos: { x: startX - itemW / 2, y: startY - itemH / 2 },
+              clientPos: { x: dragStartInfo.x - itemW / 2, y: dragStartInfo.y - itemH / 2 },
+              gridPos: { x: gx, y: gy },
+            });
         }
         return;
     }
@@ -188,13 +205,15 @@ export function useInventoryDrag({
     const newX = currentX - itemW / 2;
     const newY = currentY - itemH / 2;
 
-    setDragPos({ x: newX, y: newY });
-    setDragClientPos({ x: e.clientX - itemW / 2, y: e.clientY - itemH / 2 });
-
     const gx = Math.round(newX / cellSize);
     const gy = Math.round(newY / cellSize);
-    
-    setDragGridPos({ x: gx, y: gy });
+
+    dispatchDrag({
+      type: 'UPDATE_MOVE',
+      pos: { x: newX, y: newY },
+      clientPos: { x: e.clientX - itemW / 2, y: e.clientY - itemH / 2 },
+      gridPos: { x: gx, y: gy },
+    });
   }, [dragStartInfo, draggingItem, cellSize, panStart]);
 
   const onPointerUp = useCallback((e: PointerEvent | React.PointerEvent) => {
@@ -207,6 +226,7 @@ export function useInventoryDrag({
 
     setDragStartInfo(null);
     setPanStart(null);
+    scrollParentRef.current = null;
 
     if (!draggingItem) return;
 
@@ -218,19 +238,19 @@ export function useInventoryDrag({
       if (isOutside) {
         onDropOutside?.(draggingItem, e);
         setDraggingItem(null);
-        setDragGridPos(null);
+        dispatchDrag({ type: 'RESET' });
         return;
       }
     }
 
-    const gx = dragGridPos?.x ?? draggingItem.gridX;
-    const gy = dragGridPos?.y ?? draggingItem.gridY;
+    const gx = dragState.gridPos?.x ?? draggingItem.gridX;
+    const gy = dragState.gridPos?.y ?? draggingItem.gridY;
 
     // 1. Kiểm tra xem có bị chồng lấp vật phẩm khác không
     if (checkOverlap(draggingItem, gx, gy, items)) {
       // Chồng lấp hoặc ra ngoài biên toàn cục -> Quay về vị trí cũ
       setDraggingItem(null);
-      setDragGridPos(null);
+      dispatchDrag({ type: 'RESET' });
       return;
     }
 
@@ -240,14 +260,14 @@ export function useInventoryDrag({
     // Items nằm ngoài bag active vẫn được giữ trên grid.
     // Chỉ bị vứt ra biển khi thuyền di chuyển (moveBoat xử lý).
 
-    const newItems = items.map((i) => 
+    const newItems = items.map((i) =>
       i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i
     );
     onItemLayoutChange?.(newItems);
 
     setDraggingItem(null);
-    setDragGridPos(null);
-  }, [draggingItem, dragGridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemCompletelyInBag]);
+    dispatchDrag({ type: 'RESET' });
+  }, [draggingItem, dragState.gridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemCompletelyInBag]);
 
   useEffect(() => {
     if (dragStartInfo || draggingItem || panStart) {
@@ -262,14 +282,12 @@ export function useInventoryDrag({
 
   return {
     draggingItem,
-    dragPos,
-    dragClientPos,
-    dragGridPos,
+    dragState,
     containerRef,
     onPointerDown,
     onPointerMove,
     onPointerUp,
-    checkOverlap, // Trả về hàm 4 tham số gốc
+    checkOverlap,
     isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
   };
 }

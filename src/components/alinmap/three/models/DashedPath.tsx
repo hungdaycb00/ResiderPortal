@@ -53,7 +53,6 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
     // Animate dashOffset → hiệu ứng đường chạy về phía target
     useFrame((_state, delta) => {
         if (!lineRef.current) return;
-        lineRef.current.computeLineDistances();
         const mat = lineRef.current.material as THREE.LineDashedMaterial;
         (mat as any).dashOffset = ((mat as any).dashOffset || 0) - delta * 80;
     });

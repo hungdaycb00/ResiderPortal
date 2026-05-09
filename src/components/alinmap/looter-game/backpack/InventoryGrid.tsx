@@ -51,13 +51,9 @@ interface InventoryGridProps {
 
   const {
     draggingItem,
-    dragPos,
-    dragClientPos,
-    dragGridPos,
+    dragState,
     containerRef,
     onPointerDown,
-    onPointerMove,
-    onPointerUp,
     checkOverlap,
     isInvalidPosition
   } = useInventoryDrag({
@@ -130,7 +126,8 @@ interface InventoryGridProps {
       }
     }
 
-    if (changed) {
+    // Only call if layout actually differs from current items
+    if (changed && updated.some((item, i) => item.gridX !== items[i].gridX || item.gridY !== items[i].gridY)) {
       onItemLayoutChange?.(updated);
     }
   }, [items, gridW, gridH, checkOverlap, onItemLayoutChange, activeBag, bagOcc]);
@@ -179,16 +176,16 @@ interface InventoryGridProps {
           ))}
 
           {/* Ghost Preview */}
-          {draggingItem && dragGridPos && (
+          {draggingItem && dragState.gridPos && (
             <InventoryItem
               key="ghost"
               item={draggingItem}
               cellSize={cellSize}
               isGhost={true}
-              isInvalid={isInvalidPosition(dragGridPos.x, dragGridPos.y)}
+              isInvalid={isInvalidPosition(dragState.gridPos.x, dragState.gridPos.y)}
               style={{
-                left: dragGridPos.x * cellSize,
-                top: dragGridPos.y * cellSize,
+                left: dragState.gridPos.x * cellSize,
+                top: dragState.gridPos.y * cellSize,
               }}
             />
           )}
@@ -201,8 +198,8 @@ interface InventoryGridProps {
               cellSize={cellSize}
               style={{
                 position: 'fixed',
-                left: dragClientPos.x,
-                top: dragClientPos.y,
+                left: dragState.clientPos.x,
+                top: dragState.clientPos.y,
                 pointerEvents: 'none',
                 zIndex: 999999,
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
