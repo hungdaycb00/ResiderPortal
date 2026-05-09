@@ -73,7 +73,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 
     return (
         <>
-            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 pointer-events-auto transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4' : 'opacity-100 translate-x-0'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
+            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4 md:opacity-100 md:pointer-events-auto md:translate-x-0' : 'opacity-100 translate-x-0 pointer-events-auto'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 <MapControlsQuickActions
                     isConnecting={isConnecting}
                     isLooterGameMode={isLooterGameMode}
