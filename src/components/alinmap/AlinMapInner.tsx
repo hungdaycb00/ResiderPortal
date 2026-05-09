@@ -164,12 +164,13 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         
         if (isLooterGameMode) {
             newPath = '/explore/looter-game';
-        } else if (subGame) {
-            newPath = location.pathname;
-        } else if (nav.mainTab !== 'discover') {
-            // Optional: Show main tab in URL if you want, e.g. /explore/social
-            // But per user request, we focus on "games in explore"
-            // If you want more, uncomment: newPath = `/explore/${nav.mainTab}`;
+        } else {
+            // Khi không ở looter mode, không bao giờ giữ URL /explore/looter-game
+            const nonLooterSubGame = subGame && subGame !== 'looter-game';
+            if (nonLooterSubGame) {
+                newPath = location.pathname;
+            }
+            // else: newPath stays '/explore' (không có sub-game nào khác)
         }
 
         if (location.pathname !== newPath) {
