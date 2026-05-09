@@ -47,7 +47,6 @@ export function useProfilePosts({
   const sendGallerySync = () => {
     const socket = ws.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      console.warn('WebSocket not ready to send: UPDATE_GALLERY');
       return false;
     }
 

@@ -108,7 +108,6 @@ export function useLooterMovement({
             serverInventory = Array.isArray(moveResult.inventory) ? moveResult.inventory : null;
           }
         } catch (moveErr) {
-          console.warn('[LooterGame] server move sync failed:', moveErr);
         }
       }
 

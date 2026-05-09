@@ -15,6 +15,7 @@ interface LootSpriteProps {
     accent?: string;
     scale?: number;
     size?: number;
+    renderOrder?: number;
     onClick?: () => void;
 }
 
@@ -26,6 +27,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
     accent = '#22d3ee',
     scale = 1,
     size = AVATAR_PLANE_SIZE,
+    renderOrder = 35,
     onClick,
 }) => {
     const texture = useMemo(() => makeLootSpriteTexture(type, title, accent, icon), [type, title, accent, icon]);
@@ -60,7 +62,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 document.body.style.cursor = 'auto';
             }}
         >
-            <mesh renderOrder={35}>
+            <mesh renderOrder={renderOrder}>
                 <planeGeometry args={[size, size]} />
                 <meshBasicMaterial
                     map={texture}

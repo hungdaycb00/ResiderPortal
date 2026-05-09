@@ -64,6 +64,7 @@ export interface AlinMapThreeSceneProps {
     onRequestMove?: (lat: number, lng: number, source?: string) => void;
     onStopBoat?: () => void;
     onSelfDragEnd?: (newLat: number, newLng: number) => void;
+    onSetArrivalAction?: (action: (() => void) | null) => void;
 }
 
 // ─── Scene Content ────────────────────────────────────────────────────────────
@@ -110,6 +111,7 @@ function SceneContent({
     onRequestMove,
     onStopBoat,
     onSelfDragEnd,
+    onSetArrivalAction,
 }: AlinMapThreeSceneProps) {
     const tiltGroupRef = useRef<Group>(null);
     const moveGroupRef = useRef<Group>(null);
@@ -122,6 +124,8 @@ function SceneContent({
         startClientY: number;
         moved: boolean;
     }>({ active: false, startClientX: 0, startClientY: 0, moved: false });
+    // Ngăn ground click khi item đã được click (R3F raycasting hit cả hai sibling)
+    const itemClickLockRef = useRef(false);
     // Cache useFrame values to skip redundant .set() calls
     const lastLiftXRef = useRef(0);
     const lastLiftZRef = useRef(0);
@@ -271,15 +275,26 @@ function SceneContent({
 
     const handleWorldItemClick = React.useCallback((worldItem: any) => {
         if (!isLooterGameMode || !worldItem) return;
+        itemClickLockRef.current = true;
         const boat = getCurrentBoatLatLng();
         const dist = distanceMeters(boat, { lat: worldItem.lat, lng: worldItem.lng });
         const interactionRadius = 250;
         const isPortal = worldItem?.item?.type === 'portal';
 
-        if (import.meta.env.DEV) console.log('[ItemClick]', { itemName: worldItem?.item?.name, itemLat: worldItem.lat, itemLng: worldItem.lng, boatLat: boat.lat, boatLng: boat.lng, dist, type: worldItem?.item?.type, minigameType: worldItem.minigameType });
-
         if (dist > interactionRadius) {
-            if (import.meta.env.DEV) console.log('[ItemClick] Distance > 250m, requesting move to item position');
+            // Lưu callback auto-interact để chạy khi thuyền đến nơi
+            const spawnId = worldItem.spawnId;
+            onSetArrivalAction?.(() => {
+                if (isPortal) {
+                    openFortressStorage?.('portal');
+                } else if (worldItem.minigameType) {
+                    const arrivedBoat = getCurrentBoatLatLng();
+                    setShowMinigame?.({ ...worldItem, currentLat: arrivedBoat.lat, currentLng: arrivedBoat.lng });
+                } else {
+                    const arrivedBoat = getCurrentBoatLatLng();
+                    pickupItem?.(spawnId, worldItem, arrivedBoat.lat, arrivedBoat.lng);
+                }
+            });
             onRequestMove?.(worldItem.lat, worldItem.lng, 'item');
             return;
         }
@@ -302,6 +317,7 @@ function SceneContent({
         isLooterGameMode,
         onRequestMove,
         onStopBoat,
+        onSetArrivalAction,
         openFortressStorage,
         pickupItem,
         setShowMinigame,
@@ -315,6 +331,9 @@ function SceneContent({
             onStopBoat?.();
             openFortressStorage?.('fortress');
         } else {
+            onSetArrivalAction?.(() => {
+                openFortressStorage?.('fortress');
+            });
             onRequestMove?.(target.lat, target.lng, 'fortress');
         }
     }, [
@@ -325,12 +344,14 @@ function SceneContent({
         looterStateObj?.fortressLng,
         onRequestMove,
         onStopBoat,
+        onSetArrivalAction,
         openFortressStorage,
     ]);
 
     // ─── Ground Click → Move (Raycaster) ───────────────────────────────────
     const handleGroundClick = useCallback((point: Vector3) => {
         if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
+        if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
         const localPt = groundMeshRef.current.worldToLocal(point.clone());
         const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
         const lng = origin.lng + localPt.x / SCALE;
@@ -578,6 +599,7 @@ function SceneContent({
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
                         scale={2}
+                        renderOrder={40}
                         onClick={() => handleWorldItemClick(item)}
                     />
                 ))}

@@ -10,7 +10,6 @@ export function useLooterQueue() {
 
   const runInQueue = useCallback(<T>(fn: () => Promise<T>, options?: { skipIfBusy?: boolean }): Promise<T | null> => {
     if (options?.skipIfBusy && activeRequestsCount.current > 0) {
-      // console.log('[LooterQueue] Skipping background task because queue is busy');
       return Promise.resolve(null);
     }
 

@@ -132,7 +132,6 @@ export function useAlinWebSocket({
   const hasPosition = Array.isArray(position) && position.length >= 2;
 
   const addLog = useCallback((msg: string) => {
-    console.log('[Alin]', msg);
     setDebugLog(prev => [...prev.slice(-15), `${new Date().toLocaleTimeString()} ${msg}`]);
   }, []);
 

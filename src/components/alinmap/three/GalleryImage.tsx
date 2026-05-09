@@ -18,7 +18,7 @@ export default function GalleryImage({ url, title }: GalleryImageProps) {
             normalized,
             undefined,
             undefined,
-            (err) => console.warn('[GalleryImage] Failed to load texture:', normalized, err)
+            undefined
         );
     }, [url]);
 

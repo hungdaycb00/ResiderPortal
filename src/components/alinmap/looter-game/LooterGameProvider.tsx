@@ -149,7 +149,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     if (typeof showNotification === 'function') {
       showNotification(msg, type);
     } else {
-      console.log(`[LooterNotify] ${type}: ${msg}`);
     }
   }, [showNotification]);
 
@@ -237,7 +236,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack,
     setOpenBackpackHandler,
-    centerOnBoat: (yOffset?: number, xOffset?: number) => { if (import.meta.env.DEV) console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandlerRef.current }); if (centerBoatHandlerRef.current) centerBoatHandlerRef.current(yOffset, xOffset); else if (import.meta.env.DEV) console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
+    centerOnBoat: (yOffset?: number, xOffset?: number) => { if (centerBoatHandlerRef.current) centerBoatHandlerRef.current(yOffset, xOffset); },
     setCenterBoatHandler: (h) => { centerBoatHandlerRef.current = h; },
     centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandlerRef.current) centerCombatHandlerRef.current(yOffset, xOffset); },
     setCenterCombatHandler: (h) => { centerCombatHandlerRef.current = h; },
@@ -387,14 +386,11 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       // Số lượng loại hoa quả khác nhau tăng theo tier
       const fruitCount = Math.min(16, 8 + worldTier);
 
-      if (import.meta.env.DEV) console.log(`[LooterMinigame] Starting background generation for Tier ${worldTier} (${rows}x${cols})`);
-      
       // Chạy ngầm để không block UI chính
       setTimeout(() => {
         const grid = generateSolvableGrid(rows, cols, fruitCount, FRUITS);
         if (grid && grid.length > 0) {
           setPregeneratedMinigames(prev => ({ ...prev, fruit: grid }));
-          if (import.meta.env.DEV) console.log(`[LooterMinigame] Background generation complete for Tier ${worldTier}`);
         }
       }, 100);
     }

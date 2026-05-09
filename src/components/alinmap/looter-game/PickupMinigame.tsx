@@ -27,7 +27,6 @@ export const PickupMinigame: React.FC = () => {
                 gameTypeRef.current = Math.random() > 0.5 ? 'minesweeper' : 'fruit';
             }
             mountTimeRef.current = Date.now();
-            console.log(`[LooterPerf] Minigame mounted: ${showMinigame.minigameType || 'chest'} (spawnId: ${showMinigame.spawnId}) at ${mountTimeRef.current}`);
         } else {
             gameTypeRef.current = null;
         }
@@ -38,7 +37,6 @@ export const PickupMinigame: React.FC = () => {
         if (!spawnId) return;
 
         const duration = Date.now() - mountTimeRef.current;
-        console.log(`[LooterPerf] Minigame completed: ${success ? 'SUCCESS' : 'FAILED'} in ${duration}ms (spawnId: ${spawnId})`);
 
         // Đóng popup NGAY LẬP TỨC, không đợi API
         setShowMinigame(null);

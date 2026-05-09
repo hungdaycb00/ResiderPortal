@@ -237,6 +237,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         onRequestMove={looterBoat.executeMoveToExact}
                         onStopBoat={looterBoat.stopBoat}
                         onSelfDragEnd={handleSelfDragEnd}
+                        onSetArrivalAction={looterBoat.setOnArrivalAction}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={setSelectedUser}

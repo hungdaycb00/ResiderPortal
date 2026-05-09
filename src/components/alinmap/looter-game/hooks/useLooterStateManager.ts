@@ -83,7 +83,6 @@ export function useLooterStateManager({
           }
           data = await chunkRequestRef.current;
         } catch (chunkErr) {
-          console.warn('[LooterGame] chunk fetch failed, using cache if available:', chunkErr);
         }
         if (data?.success) {
           const fetchedItems = sanitizeWorldItems(data.items);
@@ -176,7 +175,6 @@ export function useLooterStateManager({
             setWorldItems(Array.from(merged.values()));
           }
         } catch (fallbackErr) {
-          console.warn('[LooterGame] world-items fallback failed:', fallbackErr);
         }
       }
     } catch (err) {

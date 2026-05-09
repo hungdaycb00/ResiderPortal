@@ -1,6 +1,5 @@
 export const playSound = (soundName: string) => {
-  // Mock function, real implementation can be added later
-  console.log('Play sound:', soundName);
+  // Sound playback placeholder
 };
 
 export const triggerHaptic = (type: 'light' | 'medium' | 'heavy') => {

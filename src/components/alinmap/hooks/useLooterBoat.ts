@@ -53,6 +53,7 @@ export function useLooterBoat({
     const consecutiveBlockCountRef = useRef<number>(0);
     const curseVisual = useMotionValue(0);
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
+    const onArrivalActionRef = useRef<(() => void) | null>(null);
 
     // Sub-hook: Boat Animation
     const {
@@ -92,6 +93,7 @@ export function useLooterBoat({
     const stopBoat = useCallback(() => {
         stopAllAnimations();
         setBoatTargetPin(null);
+        onArrivalActionRef.current = null;
         if (myObfPos) {
             const boatLng = myObfPos.lng + (boatOffsetX?.get?.() ?? 0) / DEGREES_TO_PX;
             const boatLat = myObfPos.lat - (boatOffsetY?.get?.() ?? 0) / DEGREES_TO_PX;
@@ -99,15 +101,17 @@ export function useLooterBoat({
         }
     }, [stopAllAnimations, myObfPos, boatOffsetX, boatOffsetY, moveBoat]);
 
+    const setOnArrivalAction = useCallback((action: (() => void) | null) => {
+        onArrivalActionRef.current = action;
+    }, []);
+
     const executeMoveToExact = useCallback((lat: number, lng: number, source: string = 'map') => {
-        console.log('[MoveExec] Called from', source, { lat, lng, hasMyObfPos: !!myObfPos, isChallengeActive, worldTier: state?.worldTier, blocked: !!(showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) });
         if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
             const now = Date.now();
             if (now - lastBlockTimeRef.current < 2000) {
                 consecutiveBlockCountRef.current++;
                 if (consecutiveBlockCountRef.current >= 3) {
-                    console.warn('[MapMove] Force resetting blocked states');
                     setShowMinigame(null);
                     setEncounter(null);
                     setShowCurseModal(false);
@@ -146,7 +150,7 @@ export function useLooterBoat({
         // Tính toán khoảng cách và thời gian
         const multiplier = globalSettings?.speedMultiplier || 1.0;
         // Tốc độ cố định: thời gian tỉ lệ thuận với khoảng cách, không clamp
-        const SPEED_DEG_PER_SEC = 0.08; // ~8.88 km/s trong world space
+        const SPEED_DEG_PER_SEC = 0.008; // ~0.89 km/s trong world space, tốc độ mặc định (x1)
         const baseDuration = distDeg / SPEED_DEG_PER_SEC;
         const duration = baseDuration / multiplier;
 
@@ -181,6 +185,13 @@ export function useLooterBoat({
             moveBoat(lat, lng, false, finalDist).then(res => {
                 if (res?.curseTrigger) {
                     centerOnCombat();
+                } else {
+                    // Auto-interact: thực thi callback nếu được set trước khi di chuyển
+                    const arrivalAction = onArrivalActionRef.current;
+                    onArrivalActionRef.current = null;
+                    if (arrivalAction) {
+                        setTimeout(() => arrivalAction(), 300);
+                    }
                 }
             });
         });
@@ -243,15 +254,6 @@ export function useLooterBoat({
         const ch = containerRect?.height ?? window.innerHeight;
         const result = screenToWorld(offsetX, offsetY, cw, ch);
         if (!result) return;
-        console.log('[MapClick]', {
-            offsetX, offsetY, containerW: cw, containerH: ch,
-            zoom: result.debug.zoom, H: result.debug.H.toFixed(0), D: result.debug.D.toFixed(0),
-            thetaDeg: (result.debug.theta * 180 / Math.PI).toFixed(1),
-            Px: result.debug.Px.toFixed(1), Pz: result.debug.Pz.toFixed(1),
-            xGround: result.debug.xGround.toFixed(1), zGround: result.debug.zGround.toFixed(1),
-            clickLng: result.lng, clickLat: result.lat,
-            boatLat: state?.currentLat, boatLng: state?.currentLng,
-        });
         executeMoveToExact(result.lat, result.lng, 'map');
     }, [isLooterGameMode, myObfPos, screenToWorld, executeMoveToExact, state?.currentLat, state?.currentLng]);
 
@@ -291,12 +293,12 @@ export function useLooterBoat({
 
     return useMemo(() => ({
         boatOffsetX, boatOffsetY, curseVisual,
-        boatTargetPin,
+        boatTargetPin, setOnArrivalAction,
         handlePointerDown, handlePointerUp, handlePointerCancel,
         handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
-        boatTargetPin,
+        boatTargetPin, setOnArrivalAction,
         handlePointerDown, handlePointerUp, handlePointerCancel,
         handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     ]);

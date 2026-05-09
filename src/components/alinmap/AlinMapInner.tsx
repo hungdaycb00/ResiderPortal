@@ -101,7 +101,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     useEffect(() => {
         if (!wsCtx.isConnecting && wsCtx.wsStatus === 'OPEN' && !hasInitialCenteredRef.current) {
             hasInitialCenteredRef.current = true;
-            console.log('[AlinMap] Initial auto-focus trigger');
             
             // Wait a bit for map layers to settle
             setTimeout(() => {

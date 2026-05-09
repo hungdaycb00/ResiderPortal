@@ -48,21 +48,8 @@ const CurseModal: React.FC = () => {
           </div>
         </div>
 
-        {/* 3 choices */}
+        {/* 2 choices */}
         <div className="flex flex-col gap-3">
-          <button
-            onClick={async () => { await curseChoice('flee'); setEncounter(null); }}
-            className="w-full py-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/40 rounded-xl text-left px-4 transition-colors group"
-          >
-            <div className="flex items-center gap-3">
-              <Wind className="w-5 h-5 text-gray-400 group-hover:text-white" />
-              <div>
-                <p className="text-sm font-bold text-white">Bỏ Chạy</p>
-                <p className="text-[10px] text-gray-400">Mất 25% đồ (random mỗi item)</p>
-              </div>
-            </div>
-          </button>
-
           <button
             onClick={async () => { await curseChoice('challenge'); setShowCurseModal(false); }}
             className="w-full py-3 bg-amber-900/40 hover:bg-amber-800/40 border border-amber-600/40 rounded-xl text-left px-4 transition-colors group"
@@ -70,8 +57,21 @@ const CurseModal: React.FC = () => {
             <div className="flex items-center gap-3">
               <Shield className="w-5 h-5 text-amber-400 group-hover:text-amber-300" />
               <div>
-                <p className="text-sm font-bold text-amber-200">Thử Thách</p>
+                <p className="text-sm font-bold text-amber-200">Chiến Đấu</p>
                 <p className="text-[10px] text-amber-400/70">Chiến đấu! Thắng lấy 50% đồ đối thủ</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={async () => { await curseChoice('flee'); setEncounter(null); }}
+            className="w-full py-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600/40 rounded-xl text-left px-4 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <Wind className="w-5 h-5 text-gray-400 group-hover:text-white" />
+              <div>
+                <p className="text-sm font-bold text-white">Đầu Hàng</p>
+                <p className="text-[10px] text-gray-400">Mất 25% đồ (random mỗi item)</p>
               </div>
             </div>
           </button>

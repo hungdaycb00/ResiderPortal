@@ -34,13 +34,9 @@ export const LocateBoatButton: React.FC = () => {
         e.stopPropagation();
 
         const { xOffset, yOffset } = getVisibleMapOffsets();
-        console.log('[LocateBoat] Fired', { encounter: !!encounter, xOffset, yOffset, isLooterGameMode });
-
         if (encounter) {
-            console.log('[LocateBoat] Calling centerOnCombat', yOffset, xOffset);
             centerOnCombat(yOffset, xOffset);
         } else {
-            console.log('[LocateBoat] Calling centerOnBoat', yOffset, xOffset);
             centerOnBoat(yOffset, xOffset);
         }
     };

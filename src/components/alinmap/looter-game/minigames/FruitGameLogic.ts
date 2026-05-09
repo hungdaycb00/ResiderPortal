@@ -134,7 +134,6 @@ export function generateSolvableGrid(rows: number, cols: number, fruitCount: num
         }
 
         if (isClearable(newGrid)) {
-            console.log(`[FruitGenerator] Found solvable grid in ${attempts} attempts`);
             return newGrid;
         }
     }
