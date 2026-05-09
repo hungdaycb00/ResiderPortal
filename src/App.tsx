@@ -242,7 +242,7 @@ export default function App() {
             initialMainTab={activeTab}
             onTabChange={(tab) => setActiveTab(tab as any)}
             cloudflareUrl={cloudflareUrl}
-            triggerAuth={(callback) => { setAuthCallbackQueue(() => callback); setIsAuthOpen(true); }}
+            triggerAuth={(callback) => { setAuthCallbackQueue(callback); setIsAuthOpen(true); }}
             logout={logout}
             externalOpenList={isMyGamesOverlayOpen}
             onOpenListChange={setIsMyGamesOverlayOpen}
