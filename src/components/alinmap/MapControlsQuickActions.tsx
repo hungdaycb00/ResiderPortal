@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, Waves, LocateFixed } from 'lucide-react';
 import { LocateBoatButton } from './looter-game/components/LocateBoatButton';
+import BoatSpeedPanel from './looter-game/components/BoatSpeedPanel';
 
 interface MapControlsQuickActionsProps {
     isConnecting: boolean;
@@ -26,6 +27,8 @@ const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
     return (
         <>
             <LocateBoatButton />
+
+            {isLooterGameMode && <BoatSpeedPanel />}
 
             {!isLooterGameMode && (
                 <>

@@ -144,6 +144,7 @@ export interface LooterGameActions {
   dropCombatLoot: (items: LooterItem[]) => Promise<void>;
   showNotification: (message: string, type: 'success' | 'error' | 'info') => void;
   clearPregeneratedFruit: () => void;
+  setGlobalSettings: (settings: any) => void;
 }
 
 export interface LooterGameStateContextType {

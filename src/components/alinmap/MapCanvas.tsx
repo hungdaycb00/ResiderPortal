@@ -7,7 +7,7 @@ import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
 
 // Sub-components
-import { LooterBackground, MapGrid } from './components/LooterBackground';
+import { LooterBackground } from './components/LooterBackground';
 import { 
     LocationConsentOverlay, CurseIndicator, 
     LooterLoadingOverlay, MapConnectionStatus 

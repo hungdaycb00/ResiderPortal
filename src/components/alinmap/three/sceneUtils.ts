@@ -21,9 +21,6 @@ export const worldToScene = (origin: LatLng, target: LatLng) => ({
 
 export const pxToScene = (px: number) => px * MAP_COORD_SCENE_SCALE;
 
-export const clamp = (value: number, min: number, max: number) =>
-    Math.min(Math.max(value, min), max);
-
 // ─── String/Color Helpers ─────────────────────────────────────────────────────
 export const initialsForName = (name: string) => {
     const cleaned = (name || 'U')

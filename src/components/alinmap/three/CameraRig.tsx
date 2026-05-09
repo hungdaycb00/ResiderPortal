@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
-import { clamp } from './sceneUtils';
+import { clamp } from '../constants';
 
 interface CameraRigProps {
     scale: MotionValue<number>;

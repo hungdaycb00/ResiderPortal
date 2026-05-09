@@ -334,7 +334,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     dropCombatLoot: (items) => runInQueueRef.current(() => inventory.dropCombatLoot(items)),
     
     showNotification: notify,
-    clearPregeneratedFruit
+    clearPregeneratedFruit,
+    setGlobalSettings,
   }), [
     stateManager, inventory, movement, openBackpack, showNotification,
 

@@ -4,7 +4,8 @@ import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
-import { MAP_COORD_SCENE_SCALE, clamp as clampVal } from '../three/sceneUtils';
+import { MAP_COORD_SCENE_SCALE } from '../three/sceneUtils';
+import { clamp as clampVal } from '../constants';
 
 const CAMERA_FOV_RAD = (46 * Math.PI) / 180;
 const CAMERA_HALF_FOV_TAN = Math.tan(CAMERA_FOV_RAD / 2);

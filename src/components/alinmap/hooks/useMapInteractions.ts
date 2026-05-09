@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
 
 interface UseMapInteractionsProps {
     panX: MotionValue<number>;
@@ -130,7 +130,7 @@ export function useMapInteractions({
 
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
-        const mapPlaneScale = 1.32; // MAP_PLANE_SCALE from constants
+        const mapPlaneScale = MAP_PLANE_SCALE;
         
         const deltaX = (e.clientX - dragState.startX) / currentScale;
         const deltaY = (e.clientY - dragState.startY) / currentScale;
@@ -188,6 +188,10 @@ export function useMapInteractions({
                   setIsTierSelectorOpen?.(true);
                   return;
              }
+
+        // Trong looter mode, Ground onClick (R3F Raycaster) xử lý di chuyển.
+        // Không gọi looterBoat.handlePointerUp để tránh double-fire với đường screenToWorld cũ.
+        if (isLooterGameMode && !dragState.moved) return;
 
         looterBoat.handlePointerUp(e);
     }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, isInteractionLocked, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
