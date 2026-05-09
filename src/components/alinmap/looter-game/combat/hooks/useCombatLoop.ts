@@ -66,6 +66,8 @@ export function useCombatLoop({
     
     const maxActionBarB = 100 + botStats.eMax;
 
+    const autoStartRef = useRef(false);
+
     useEffect(() => {
         if (encounter) {
             if (initialPlayerInventory.length === 0) {
@@ -82,6 +84,16 @@ export function useCombatLoop({
             setActionProgressB(0);
             actionProgressARef.current = 0;
             actionProgressBRef.current = 0;
+
+            // Auto-start combat sau 800ms
+            if (!autoStartRef.current) {
+                autoStartRef.current = true;
+                setTimeout(() => {
+                    handleStart();
+                }, 800);
+            }
+        } else {
+            autoStartRef.current = false;
         }
     }, [encounter]);
 

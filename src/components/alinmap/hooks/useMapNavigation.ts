@@ -161,7 +161,7 @@ export function useMapNavigation({
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
     animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
-    animate(cameraZ, CAMERA_Z_DEFAULT, { duration: 0.8, ease: "easeInOut" });
+    animate(cameraZ, CAMERA_Z_WATER_DEFAULT, { duration: 0.8, ease: "easeInOut" });
   }, [panX, panY, cameraZ]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {

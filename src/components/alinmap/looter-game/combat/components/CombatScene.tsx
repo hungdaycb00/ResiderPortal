@@ -75,23 +75,6 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                     </div>
                 )}
 
-                {/* Start Button - Floating Center */}
-                {phase === 'ready' && (
-                    <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-50">
-                        <motion.button
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={handleStart}
-                            className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-base rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] border-2 border-amber-300/30 flex items-center gap-2"
-                        >
-                            <Swords className="w-4 h-4" />
-                            Start
-                        </motion.button>
-                    </div>
-                )}
-
                 {/* Skip Button - Floating Right */}
                 {phase === 'fighting' && (
                     <div className="absolute right-4 bottom-1/2 translate-y-1/2 pointer-events-auto">
@@ -104,18 +87,6 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                                 <div className="w-1.5 h-4 bg-amber-500 rounded-full animate-pulse [animation-delay:0.2s]" />
                             </div>
                             <span className="text-[10px] font-black text-amber-400 group-hover:text-white uppercase">Skip</span>
-                        </button>
-                    </div>
-                )}
-
-                {/* Flee Button - Same row as Player HUD */}
-                {phase === 'ready' && (
-                    <div className="absolute bottom-[46%] right-2 pointer-events-auto">
-                        <button 
-                            onClick={() => setShowFleeConfirm(true)} 
-                            className="px-4 py-2 bg-red-600/60 hover:bg-red-500 border border-red-400/30 text-white text-xs font-bold rounded-xl transition-colors shadow-lg backdrop-blur-md"
-                        >
-                            Chạy Trốn
                         </button>
                     </div>
                 )}
