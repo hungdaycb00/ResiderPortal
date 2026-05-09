@@ -54,7 +54,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
     const handleAddFriend = async (targetUser?: any) => {
         if (!requireAuth('ket ban')) return;
         const userToAdd = targetUser || selectedUser;
-        if (!userToAdd) return;
+        if (!userToAdd || !userToAdd.id) return;
         try {
             const resp = await fetch(`${apiBase}/api/friends/request`, {
                 method: 'POST',
@@ -66,7 +66,8 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
             setSentFriendRequests(prev => prev.includes(userToAdd.id) ? prev : [...prev, userToAdd.id]);
             showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
-            if (err.message?.includes('409') || err.message?.toLowerCase().includes('already')) {
+            const msg = String(err.message ?? '');
+            if (msg.includes('409') || msg.toLowerCase().includes('already')) {
                 showNotification?.("Request already sent or you are already friends!", 'info');
             } else { showNotification?.(err.message || "Failed to send friend request.", 'error'); }
         }
