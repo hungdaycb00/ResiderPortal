@@ -1,10 +1,10 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Fog, Color, Group, MathUtils, Mesh, Vector3, SRGBColorSpace, NoToneMapping } from 'three';
+import { Fog, Color, Group, MathUtils, Mesh, SRGBColorSpace, NoToneMapping } from 'three';
 import { useMotionValueEvent, type MotionValue } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import { MAP_PLANE_SCALE } from '../constants';
 
 // Sub-components
 import CameraRig from './CameraRig';
@@ -15,6 +15,10 @@ import ProceduralBoat from './models/ProceduralBoat';
 import ProceduralFortress from './models/ProceduralFortress';
 import LootSprite from './models/LootSprite';
 import DashedPath from './models/DashedPath';
+
+// Hooks
+import { useLooterInteraction } from './scene/looterInteraction';
+import { useDragHandlers } from './scene/useDragHandlers';
 
 // Utils
 import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, AVATAR_PLANE_SIZE, type LatLng } from './sceneUtils';
@@ -117,13 +121,6 @@ function SceneContent({
     const moveGroupRef = useRef<Group>(null);
     // Track vị trí thuyền thực tế để render DashedPath chính xác
     const boatPosRef = useRef<[number, number, number]>([0, 0, 0]);
-    // Track self-avatar drag state
-    const selfDragRef = useRef<{
-        active: boolean;
-        startClientX: number;
-        startClientY: number;
-        moved: boolean;
-    }>({ active: false, startClientX: 0, startClientY: 0, moved: false });
     // Ngăn ground click khi item đã được click (R3F raycasting hit cả hai sibling)
     const itemClickLockRef = useRef(false);
     // Cache useFrame values to skip redundant .set() calls
@@ -148,6 +145,44 @@ function SceneContent({
     useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
     useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
 
+    // ─── Hooks: Drag & Looter Interaction ─────────────────────────────────
+    const origin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
+
+    const { selfDragRef, handleSelfPointerDown, handleSelfPointerMove, handleSelfPointerUp } = useDragHandlers({
+        isLooterGameMode: !!isLooterGameMode,
+        position,
+        scale,
+        planeYScale,
+        selfDragX,
+        selfDragY,
+        onSelfDragEnd,
+    });
+
+    const {
+        getWorldItemIcon, getWorldItemType, getWorldItemAccent,
+        handleWorldItemClick, handleFortressClick, handleGroundClick,
+        waypointItems, waypointSpawnIds, renderedWorldItems,
+        itemRenderData, waypointRenderData,
+    } = useLooterInteraction({
+        isLooterGameMode: !!isLooterGameMode,
+        isDesktop,
+        origin,
+        safeWorldItems,
+        looterStateObj,
+        encounter,
+        boatTargetPin: boatTargetPin ?? null,
+        boatOffsetX,
+        boatOffsetY,
+        itemClickLockRef,
+        onRequestMove,
+        onStopBoat,
+        onSetArrivalAction,
+        openFortressStorage,
+        setShowMinigame,
+        pickupItem,
+    });
+
+    // ─── Effects & Derived State ──────────────────────────────────────────
     useEffect(() => {
         scene.fog = isLooterGameMode ? null : new Fog('#08111b', 1800, 22000);
         scene.background = new Color(mapMode === 'satellite' ? '#020b12' : '#071018');
@@ -172,7 +207,7 @@ function SceneContent({
             if (distKm > filterDistance) return false;
             const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
             if (age < filterAgeMin || age > filterAgeMax) return false;
-            
+
             // Gán khoảng cách vào object để dùng cho logic billboard
             u.distKm = distKm;
             return true;
@@ -222,7 +257,6 @@ function SceneContent({
         }
     });
 
-    const origin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
     const selfPos = worldToScene(origin, origin);
     const selfLift = pxToScene(dragOffset.x);
     const selfDepth = pxToScene(dragOffset.y);
@@ -231,244 +265,8 @@ function SceneContent({
         ? worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng })
         : null;
     const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
-    const getCurrentBoatLatLng = React.useCallback((): LatLng => {
-        const offsetX = boatOffsetX?.get?.();
-        const offsetY = boatOffsetY?.get?.();
-        if (typeof offsetX === 'number' && typeof offsetY === 'number') {
-            return {
-                lat: origin.lat - offsetY / DEGREES_TO_PX,
-                lng: origin.lng + offsetX / DEGREES_TO_PX,
-            };
-        }
-        return {
-            lat: looterStateObj?.currentLat ?? origin.lat,
-            lng: looterStateObj?.currentLng ?? origin.lng,
-        };
-    }, [boatOffsetX, boatOffsetY, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
 
-    const distanceMeters = React.useCallback((a: LatLng, b: LatLng) => {
-        const cosLat = Math.cos((a.lat * Math.PI) / 180);
-        const dLat = b.lat - a.lat;
-        const dLng = (b.lng - a.lng) * cosLat;
-        return Math.sqrt(dLat * dLat + dLng * dLng) * 111000;
-    }, []);
-
-    const getWorldItemIcon = React.useCallback((worldItem: any) => {
-        if (worldItem?.item?.icon) return worldItem.item.icon;
-        if (worldItem?.item?.type === 'portal') return '\ud83c\udf00';
-        if (worldItem?.minigameType) return '\ud83d\udce6';
-        if (worldItem?.item?.type === 'bag') return '\ud83c\udf92';
-        return '\ud83d\udc8e';
-    }, []);
-
-    const getWorldItemType = React.useCallback((worldItem: any) => {
-        if (worldItem?.item?.type === 'portal') return 'portal';
-        if (worldItem?.minigameType) return 'chest';
-        if (worldItem?.item?.type === 'bag') return 'bag';
-        return 'item';
-    }, []);
-
-    const getWorldItemAccent = React.useCallback((worldItem: any) => {
-        const rarity = String(worldItem?.item?.rarity || '').toLowerCase();
-        if (worldItem?.item?.type === 'portal') return '#a78bfa';
-        if (rarity.includes('legend')) return '#f59e0b';
-        if (rarity.includes('rare')) return '#60a5fa';
-        if (rarity.includes('uncommon')) return '#34d399';
-        return '#22d3ee';
-    }, []);
-
-    const handleWorldItemClick = React.useCallback((worldItem: any) => {
-        if (!isLooterGameMode || !worldItem) return;
-        itemClickLockRef.current = true;
-        const boat = getCurrentBoatLatLng();
-        const dist = distanceMeters(boat, { lat: worldItem.lat, lng: worldItem.lng });
-        const interactionRadius = 250;
-        const isPortal = worldItem?.item?.type === 'portal';
-
-        if (dist > interactionRadius) {
-            // Lưu callback auto-interact để chạy khi thuyền đến nơi
-            const spawnId = worldItem.spawnId;
-            onSetArrivalAction?.(() => {
-                if (isPortal) {
-                    openFortressStorage?.('portal');
-                } else if (worldItem.minigameType) {
-                    const arrivedBoat = getCurrentBoatLatLng();
-                    setShowMinigame?.({ ...worldItem, currentLat: arrivedBoat.lat, currentLng: arrivedBoat.lng });
-                } else {
-                    const arrivedBoat = getCurrentBoatLatLng();
-                    pickupItem?.(spawnId, worldItem, arrivedBoat.lat, arrivedBoat.lng);
-                }
-            });
-            onRequestMove?.(worldItem.lat, worldItem.lng, 'item');
-            return;
-        }
-
-        onStopBoat?.();
-        if (isPortal) {
-            openFortressStorage?.('portal');
-            return;
-        }
-
-        if (worldItem.minigameType) {
-            setShowMinigame?.({ ...worldItem, currentLat: boat.lat, currentLng: boat.lng });
-            return;
-        }
-
-        pickupItem?.(worldItem.spawnId, worldItem, boat.lat, boat.lng);
-    }, [
-        distanceMeters,
-        getCurrentBoatLatLng,
-        isLooterGameMode,
-        onRequestMove,
-        onStopBoat,
-        onSetArrivalAction,
-        openFortressStorage,
-        pickupItem,
-        setShowMinigame,
-    ]);
-
-    const handleFortressClick = React.useCallback(() => {
-        if (!isLooterGameMode || !looterStateObj?.fortressLat || !looterStateObj?.fortressLng) return;
-        const target = { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng };
-        const boat = getCurrentBoatLatLng();
-        if (distanceMeters(boat, target) <= 250) {
-            onStopBoat?.();
-            openFortressStorage?.('fortress');
-        } else {
-            onSetArrivalAction?.(() => {
-                openFortressStorage?.('fortress');
-            });
-            onRequestMove?.(target.lat, target.lng, 'fortress');
-        }
-    }, [
-        distanceMeters,
-        getCurrentBoatLatLng,
-        isLooterGameMode,
-        looterStateObj?.fortressLat,
-        looterStateObj?.fortressLng,
-        onRequestMove,
-        onStopBoat,
-        onSetArrivalAction,
-        openFortressStorage,
-    ]);
-
-    // ─── Ground Click → Move (Raycaster) ───────────────────────────────────
-    const handleGroundClick = useCallback((point: Vector3) => {
-        if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
-        if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
-        const localPt = groundMeshRef.current.worldToLocal(point.clone());
-        const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
-        const lng = origin.lng + localPt.x / SCALE;
-        const lat = origin.lat + localPt.y / SCALE;
-        onRequestMove(lat, lng, 'map');
-    }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng]);
-
-    // ─── Self Avatar Drag Handlers ────────────────────────────────────────────
-    const handleSelfPointerDown = useCallback((e: any) => {
-        if (isLooterGameMode || !onSelfDragEnd) return;
-        e.stopPropagation();
-        (e as any).sourceEvent?.stopPropagation?.();
-        (e as any).sourceEvent?.preventDefault?.();
-        selfDragRef.current = {
-            active: true,
-            startClientX: (e as any).sourceEvent?.clientX ?? 0,
-            startClientY: (e as any).sourceEvent?.clientY ?? 0,
-            moved: false,
-        };
-        document.body.style.cursor = 'grabbing';
-    }, [isLooterGameMode, onSelfDragEnd]);
-
-    const handleSelfPointerMove = useCallback((e: any) => {
-        const state = selfDragRef.current;
-        if (!state.active || isLooterGameMode) return;
-        e.stopPropagation();
-        (e as any).sourceEvent?.stopPropagation?.();
-        const clientX = (e as any).sourceEvent?.clientX ?? 0;
-        const clientY = (e as any).sourceEvent?.clientY ?? 0;
-        const currentScale = scale.get();
-        const dx = (clientX - state.startClientX) / currentScale;
-        const dy = (clientY - state.startClientY) / currentScale;
-        if (Math.abs(dx) + Math.abs(dy) > 4) {
-            state.moved = true;
-        }
-        if (state.moved) {
-            selfDragX.set(dx);
-            selfDragY.set(dy);
-        }
-    }, [isLooterGameMode, scale, selfDragX, selfDragY]);
-
-    const handleSelfPointerUp = useCallback((e: any) => {
-        const state = selfDragRef.current;
-        if (!state.active) return;
-        e.stopPropagation();
-        (e as any).sourceEvent?.stopPropagation?.();
-        state.active = false;
-        document.body.style.cursor = state.moved ? 'auto' : 'pointer';
-        if (state.moved && onSelfDragEnd) {
-            const currentScale = scale.get();
-            const currentPlaneYScale = planeYScale.get();
-            const totalDx = selfDragX.get();
-            const totalDy = selfDragY.get();
-            const deltaLng = (totalDx / currentScale / MAP_PLANE_SCALE) / DEGREES_TO_PX;
-            const deltaLat = (-totalDy / currentScale / currentPlaneYScale) / DEGREES_TO_PX;
-            const newLat = (position?.[0] ?? 0) + deltaLat;
-            const newLng = (position?.[1] ?? 0) + deltaLng;
-            onSelfDragEnd(newLat, newLng);
-        }
-    }, [onSelfDragEnd, scale, planeYScale, selfDragX, selfDragY, position]);
-
-    // Waypoint: 3 item gần nhất, bypass culling — rendered separately with larger scale
-    const waypointItems = React.useMemo(() => {
-        if (!isLooterGameMode || !safeWorldItems.length) return [];
-        const curLat = looterStateObj?.currentLat ?? origin.lat;
-        const curLng = looterStateObj?.currentLng ?? origin.lng;
-        return safeWorldItems
-            .filter((i: any) => i.item?.type !== 'portal')
-            .map((i: any) => ({
-                item: i,
-                dist: (i.lat - curLat) ** 2 + (i.lng - curLng) ** 2,
-            }))
-            .sort((a, b) => a.dist - b.dist)
-            .slice(0, 3)
-            .map(e => e.item);
-    }, [isLooterGameMode, safeWorldItems, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
-
-    const waypointSpawnIds = React.useMemo(() =>
-        new Set(waypointItems.map((i: any) => i.spawnId))
-    , [waypointItems]);
-
-    const renderedWorldItems = useMemo(() => {
-        if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
-        const centerLat = looterStateObj?.currentLat ?? origin.lat;
-        const centerLng = looterStateObj?.currentLng ?? origin.lng;
-        const cullDeg = (isDesktop ? 5000 : 3200) / 111000;
-        const maxItems = isDesktop ? 42 : 24;
-
-        return safeWorldItems
-            .filter((item: any) => Math.abs(item.lat - centerLat) <= cullDeg && Math.abs(item.lng - centerLng) <= cullDeg)
-            .filter((item: any) => !waypointSpawnIds.has(item.spawnId))
-            .map((item: any) => {
-                const dLat = item.lat - centerLat;
-                const dLng = item.lng - centerLng;
-                const priority = item?.item?.type === 'portal' ? -1 : 0;
-                return { item, score: priority + dLat * dLat + dLng * dLng };
-            })
-            .sort((a, b) => a.score - b.score)
-            .slice(0, maxItems)
-            .map((entry) => entry.item);
-    }, [
-        encounter,
-        isDesktop,
-        isLooterGameMode,
-        looterStateObj?.currentLat,
-        looterStateObj?.currentLng,
-        origin.lat,
-        origin.lng,
-        safeWorldItems,
-        waypointSpawnIds,
-    ]);
-
-    // Precompute scene positions — avoids calling worldToScene inside .map() (eliminates ~132 object allocations/render)
+    // Precompute user positions (stays in main file — uses filteredUsers which is local)
     const userRenderData = useMemo(() =>
         filteredUsers.map((u) => ({
             user: u,
@@ -476,27 +274,14 @@ function SceneContent({
         }))
     , [filteredUsers, origin.lat, origin.lng]);
 
-    const itemRenderData = useMemo(() =>
-        renderedWorldItems.map((item: any) => ({
-            item,
-            pos: worldToScene(origin, { lat: item.lat, lng: item.lng }),
-        }))
-    , [renderedWorldItems, origin.lat, origin.lng]);
-
-    const waypointRenderData = useMemo(() =>
-        waypointItems.map((item: any) => ({
-            item,
-            pos: worldToScene(origin, { lat: item.lat, lng: item.lng }),
-        }))
-    , [waypointItems, origin.lat, origin.lng]);
-
     if (!position) return null;
 
     return (
         <group ref={tiltGroupRef}>
             <group ref={moveGroupRef}>
                 {/* 1. Nền bản đồ (Ground) */}
-                <Ground mapMode={mapMode} groundRef={groundMeshRef} onGroundClick={handleGroundClick} />
+                <Ground mapMode={mapMode} groundRef={groundMeshRef}
+                    onGroundClick={(point) => handleGroundClick(groundMeshRef, point)} />
 
                 {/* Search Target Pin */}
                 <group position={[0, 0.08, 0]}>
@@ -595,7 +380,7 @@ function SceneContent({
                 ) : null}
 
                 {/* Waypoint: 3 item gần nhất — luôn hiển thị, to hơn và cao hơn item thường */}
-                {waypointRenderData.map(({ item, pos }) => (
+                {waypointRenderData.map(({ item, pos }: any) => (
                     <LootSprite
                         key={`wp-${item.spawnId}`}
                         position={[pos.x, 0.3, pos.z]}
@@ -643,7 +428,7 @@ function SceneContent({
                 ) : null}
 
                 {/* World loot items */}
-                {itemRenderData.map(({ item, pos }) => (
+                {itemRenderData.map(({ item, pos }: any) => (
                     <LootSprite
                         key={item.spawnId}
                         position={[pos.x, 0.15, pos.z]}
