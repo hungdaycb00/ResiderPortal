@@ -4,7 +4,6 @@ import { useLooterGame } from './looter-game/LooterGameContext';
 import MapControlsQuickActions from './MapControlsQuickActions';
 import MapControlsWeatherWidget from './MapControlsWeatherWidget';
 import MapControlsFiltersSidebar from './MapControlsFiltersSidebar';
-import ZoomSlider from './components/ZoomSlider';
 
 interface MapControlsProps {
     isConnecting: boolean;
@@ -84,9 +83,6 @@ const MapControls: React.FC<MapControlsProps> = ({
                     handleCenter={handleCenter}
                     setMapMode={setMapMode}
                 />
-                {!isLooterGameMode && (
-                    <ZoomSlider cameraZ={cameraZ} setCameraZ={setCameraZ} />
-                )}
             </div>
 
             {!isLooterGameMode && (
