@@ -2,20 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Bomb, Flag, Trophy, XCircle, RefreshCw, HelpCircle, Zap, Layers } from 'lucide-react';
 import { playSound, triggerHaptic } from './utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const LEVELS = {
-  easy: { size: 4, mines: 3, name: 'EASY' },
-  medium: { size: 7, mines: 9, name: 'MEDIUM' },
-  hard: { size: 9, mines: 15, name: 'HARD' }
-};
-
-type Cell = {
-  isMine: boolean;
-  isOpened: boolean;
-  isFlagged: boolean;
-  isQuestion: boolean;
-  neighborMines: number;
-};
+import { LEVELS, setupGrid, openCell, toggleFlag, getNumberColor, type Cell } from './MinesweeperGameLogic';
 
 export function MinesweeperGame({
   onActiveChange,
@@ -55,54 +42,18 @@ export function MinesweeperGame({
 
   const initCustomGame = useCallback((rows: number, cols: number) => {
     const total = rows * cols;
-    // Tỉ lệ mìn khoảng 20% cho sảnh chờ
     const mines = Math.max(3, Math.floor(total * 0.20));
-    setupGrid(rows, cols, mines, 'custom');
+    const newGrid = setupGrid(rows, cols, mines);
+    startGameWithGrid(rows, cols, mines, 'custom', newGrid);
   }, []);
 
   const initGame = useCallback((diff: keyof typeof LEVELS) => {
     const { size, mines } = LEVELS[diff];
-    setupGrid(size, size, mines, diff);
+    const newGrid = setupGrid(size, size, mines);
+    startGameWithGrid(size, size, mines, diff, newGrid);
   }, []);
 
-  const setupGrid = (rows: number, cols: number, mines: number, diffLevel: keyof typeof LEVELS | 'custom') => {
-    const newGrid: Cell[][] = Array(rows).fill(null).map(() =>
-      Array(cols).fill(null).map(() => ({
-        isMine: false,
-        isOpened: false,
-        isFlagged: false,
-        isQuestion: false,
-        neighborMines: 0,
-      }))
-    );
-
-    let minesPlaced = 0;
-    while (minesPlaced < mines) {
-      const r = Math.floor(Math.random() * rows);
-      const c = Math.floor(Math.random() * cols);
-      if (!newGrid[r][c].isMine) {
-        newGrid[r][c].isMine = true;
-        minesPlaced++;
-      }
-    }
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (newGrid[r][c].isMine) continue;
-        let count = 0;
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            const nr = r + dr;
-            const nc = c + dc;
-            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && newGrid[nr][nc].isMine) {
-              count++;
-            }
-          }
-        }
-        newGrid[r][c].neighborMines = count;
-      }
-    }
-
+  const startGameWithGrid = (rows: number, cols: number, mines: number, diffLevel: keyof typeof LEVELS | 'custom', newGrid: Cell[][]) => {
     setGridConfig({ rows, cols, mines });
     setGrid(newGrid);
     setGameState('playing');
@@ -131,49 +82,23 @@ export function MinesweeperGame({
     return () => clearInterval(interval);
   }, [gameState]);
 
-  const openCell = (r: number, c: number) => {
+  const handleOpenCell = (r: number, c: number) => {
     if (gameState !== 'playing' || grid[r][c].isOpened || grid[r][c].isFlagged) return;
-
     playSound('click');
     triggerHaptic('light');
 
-    const { rows, cols } = gridConfig;
-    const newGrid = [...grid.map(row => [...row])];
-
-    if (newGrid[r][c].isMine) {
-      newGrid[r][c].isOpened = true;
+    const { newGrid, hitMine, allCleared } = openCell(grid, r, c, gridConfig.rows, gridConfig.cols);
+    if (hitMine) {
       setGameState('lost');
       playSound('wrong');
       triggerHaptic('heavy');
-      newGrid.forEach(row => row.forEach(cell => { if (cell.isMine) cell.isOpened = true; }));
-      if (onComplete) {
-        setTimeout(() => onComplete(false), 2000);
-      }
-    } else {
-      const reveal = (row: number, col: number) => {
-        if (row < 0 || row >= rows || col < 0 || col >= cols || newGrid[row][col].isOpened || newGrid[row][col].isFlagged) return;
-        newGrid[row][col].isOpened = true;
-        if (newGrid[row][col].neighborMines === 0) {
-          for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-              reveal(row + dr, col + dc);
-            }
-          }
-        }
-      };
-
-      reveal(r, c);
-
-      const allOpened = newGrid.every(row => row.every(cell => cell.isMine || cell.isOpened));
-      if (allOpened) {
-        setGameState('won');
-        playSound('success');
-        triggerHaptic('heavy');
-        window.dispatchEvent(new CustomEvent('MINIGAME_WIN', { detail: { difficulty: level } }));
-        if (onComplete) {
-          setTimeout(() => onComplete(true), 2000);
-        }
-      }
+      if (onComplete) { setTimeout(() => onComplete(false), 2000); }
+    } else if (allCleared) {
+      setGameState('won');
+      playSound('success');
+      triggerHaptic('heavy');
+      window.dispatchEvent(new CustomEvent('MINIGAME_WIN', { detail: { difficulty: level } }));
+      if (onComplete) { setTimeout(() => onComplete(true), 2000); }
     }
     setGrid(newGrid);
   };
@@ -181,39 +106,11 @@ export function MinesweeperGame({
   const handleRightClick = (e: React.MouseEvent, r: number, c: number) => {
     e.preventDefault();
     if (gameState !== 'playing' || grid[r][c].isOpened) return;
-
     playSound('click');
     triggerHaptic('light');
-
-    const newGrid = [...grid.map(row => [...row])];
-    const cell = newGrid[r][c];
-
-    if (!cell.isFlagged && !cell.isQuestion) {
-      cell.isFlagged = true;
-      setMinesLeft(prev => prev - 1);
-    } else if (cell.isFlagged) {
-      cell.isFlagged = false;
-      cell.isQuestion = true;
-      setMinesLeft(prev => prev + 1);
-    } else {
-      cell.isQuestion = false;
-    }
-
+    const { newGrid, flagDelta } = toggleFlag(grid, r, c);
     setGrid(newGrid);
-  };
-
-  const getNumberColor = (num: number) => {
-    switch (num) {
-      case 1: return 'text-blue-500';
-      case 2: return 'text-green-500';
-      case 3: return 'text-red-500';
-      case 4: return 'text-indigo-600';
-      case 5: return 'text-orange-600';
-      case 6: return 'text-teal-600';
-      case 7: return 'text-pink-600';
-      case 8: return 'text-gray-800';
-      default: return 'text-transparent';
-    }
+    setMinesLeft(prev => prev + flagDelta);
   };
 
   const maxDimension = Math.max(gridConfig.rows, gridConfig.cols);
@@ -329,7 +226,7 @@ export function MinesweeperGame({
                     row.map((cell, cIdx) => (
                       <button
                         key={`${rIdx}-${cIdx}`}
-                        onClick={() => openCell(rIdx, cIdx)}
+                        onClick={() => handleOpenCell(rIdx, cIdx)}
                         onContextMenu={(e) => handleRightClick(e, rIdx, cIdx)}
                         className={`
                         w-full h-full aspect-square rounded-lg transition-all duration-200 transform flex items-center justify-center relative font-black text-sm

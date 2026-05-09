@@ -3,13 +3,7 @@ import { Timer, RefreshCw, Trophy, XCircle, Zap, ChevronLeft, Layers, Apple } fr
 import { playSound, triggerHaptic } from './utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { checkConnection, findAllValidPairs, type Point, type Cell } from './FruitGameLogic';
-
-// Constants for 3 difficulty levels
-const LEVELS = {
-  easy: { rows: 6, cols: 8, fruits: 8, time: 300, name: 'EASY' },
-  medium: { rows: 8, cols: 10, fruits: 12, time: 300, name: 'MEDIUM' },
-  hard: { rows: 8, cols: 12, fruits: 16, time: 300, name: 'HARD' }
-};
+import { LEVELS, formatTime, setupGrid, handleLevelMechanics, shiftGrid, getCellCoord } from './FruitGameEngine';
 
 export const FRUITS = [
   '🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒',
@@ -76,41 +70,18 @@ export function FruitGame({
 
   const initCustomGame = useCallback((rows: number, cols: number) => {
     const totalTiles = rows * cols;
-    // ensure fruit types are enough
     const maxFruits = Math.min(16, Math.max(8, Math.floor(totalTiles / 4)));
-    setupGrid(rows, cols, maxFruits, 45, 'custom');
+    const newGrid = setupGrid(rows, cols, maxFruits, false);
+    startGameWithGrid(rows, cols, 45, 'custom', newGrid);
   }, []);
 
   const initGame = useCallback((diff: keyof typeof LEVELS) => {
     const { rows, cols, fruits, time } = LEVELS[diff];
-    setupGrid(rows, cols, fruits, time, diff);
+    const newGrid = setupGrid(rows, cols, fruits, false);
+    startGameWithGrid(rows, cols, time, diff, newGrid);
   }, []);
 
-  const setupGrid = (rows: number, cols: number, fruitCount: number, timeLimit: number, diffLevel: keyof typeof LEVELS | 'custom') => {
-    const totalTiles = rows * cols;
-    const fruitSubSet = FRUITS.slice(0, fruitCount);
-
-    let tiles: string[] = [];
-    for (let i = 0; i < totalTiles / 2; i++) {
-      const f = fruitSubSet[i % fruitSubSet.length];
-      tiles.push(f, f);
-    }
-
-    for (let i = tiles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-    }
-
-    const newGrid: Cell[][] = [];
-    let idx = 0;
-    for (let r = 0; r < rows; r++) {
-      const row: Cell[] = [];
-      for (let c = 0; c < cols; c++) {
-        row.push({ fruit: tiles[idx++], id: idx });
-      }
-      newGrid.push(row);
-    }
-
+  const startGameWithGrid = (rows: number, cols: number, timeLimit: number, diffLevel: keyof typeof LEVELS | 'custom', newGrid: Cell[][]) => {
     setGridConfig({ rows, cols, time: timeLimit });
     if (autoStart && pregeneratedGrid) {
       setGrid(pregeneratedGrid);
@@ -130,9 +101,7 @@ export function FruitGame({
         if (prev <= 1) {
           setGameState('lost');
           if (timerRef.current) clearInterval(timerRef.current);
-          if (onComplete) {
-            setTimeout(() => onComplete(false), 2000);
-          }
+          if (onComplete) { setTimeout(() => onComplete(false), 2000); }
           return 0;
         }
         return prev - 1;
@@ -142,51 +111,7 @@ export function FruitGame({
 
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // checkConnection moved to FruitGameLogic.ts
-
-  const handleLevelMechanics = (newGrid: Cell[][]) => {
-    if (level === 'easy') return newGrid;
-    const rows = newGrid.length;
-    const cols = newGrid[0].length;
-
-    if (level === 'medium') {
-      for (let c = 0; c < cols; c++) {
-        let emptyCount = 0;
-        for (let r = rows - 1; r >= 0; r--) {
-          if (newGrid[r][c].fruit === null) emptyCount++;
-          else if (emptyCount > 0) {
-            newGrid[r + emptyCount][c] = { ...newGrid[r][c] };
-            newGrid[r][c].fruit = null;
-          }
-        }
-      }
-    } else if (level === 'hard') {
-      const midR = rows / 2;
-      for (let c = 0; c < cols; c++) {
-        for (let r = Math.floor(midR) - 1; r >= 0; r--) {
-          if (newGrid[r][c].fruit !== null) {
-            let targetR = r;
-            while (targetR + 1 < midR && newGrid[targetR + 1][c].fruit === null) {
-              newGrid[targetR + 1][c] = { ...newGrid[targetR][c] };
-              newGrid[targetR][c].fruit = null;
-              targetR++;
-            }
-          }
-        }
-        for (let r = Math.ceil(midR); r < rows; r++) {
-          if (newGrid[r][c].fruit !== null) {
-            let targetR = r;
-            while (targetR - 1 >= midR && newGrid[targetR - 1][c].fruit === null) {
-              newGrid[targetR - 1][c] = { ...newGrid[targetR][c] };
-              newGrid[targetR][c].fruit = null;
-              targetR--;
-            }
-          }
-        }
-      }
-    }
-    return newGrid;
-  };
+  // Logic extracted to FruitGameEngine.ts & FruitGameLogic.ts
 
   const handleCellClick = (r: number, c: number) => {
     if (gameState !== 'playing' || grid[r][c].fruit === null) return;
@@ -209,7 +134,7 @@ export function FruitGame({
             const newGrid = [...grid.map(row => [...row])];
             newGrid[r][c].fruit = null;
             newGrid[selection.r][selection.c].fruit = null;
-            const shiftedGrid = handleLevelMechanics(newGrid);
+            const shiftedGrid = handleLevelMechanics(newGrid, level);
             setGrid(shiftedGrid);
             setPath([]);
             setSelection(null);
@@ -228,7 +153,7 @@ export function FruitGame({
               const validMoves = findAllValidPairs(shiftedGrid);
               if (validMoves.length === 0) {
                 setTimeout(() => {
-                  shiftGrid(shiftedGrid);
+                  doShiftGrid(shiftedGrid);
                   notify?.('Không còn nước đi! Tự động xáo trộn...', 'info');
                 }, 500);
               }
@@ -239,39 +164,13 @@ export function FruitGame({
     }
   };
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const rs = s % 60;
-    return `${m}:${rs < 10 ? '0' : ''}${rs}`;
-  };
-
-  const shiftGrid = (currentGrid?: Cell[][]) => {
+  const doShiftGrid = (currentGrid?: Cell[][]) => {
     playSound('click');
     triggerHaptic('medium');
     const targetGrid = currentGrid || grid;
-    const allFruits = targetGrid.flatMap(row => row.map(c => c.fruit)).filter(f => f !== null) as string[];
-    if (allFruits.length === 0) return;
-
-    for (let i = allFruits.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allFruits[i], allFruits[j]] = [allFruits[j], allFruits[i]];
-    }
-    const newGrid = targetGrid.map(row => row.map(cell => {
-      if (cell.fruit === null) return cell;
-      return { ...cell, fruit: allFruits.pop()! };
-    }));
-    setGrid(newGrid);
+    const result = shiftGrid(targetGrid);
+    setGrid(result);
     setSelection(null);
-  };
-
-  const getCellCoord = (p: Point) => {
-    if (!gridRef.current) return { x: 0, y: 0 };
-    const rect = gridRef.current.getBoundingClientRect();
-    const rows = grid.length;
-    const cols = grid[0].length;
-    const cellW = rect.width / cols;
-    const cellH = rect.height / rows;
-    return { x: (p.c + 0.5) * cellW, y: (p.r + 0.5) * cellH };
   };
 
   const maxCellSize = level === 'easy' ? 45 : level === 'medium' ? 38 : 32;
@@ -401,7 +300,7 @@ export function FruitGame({
 
                   {path.length > 1 && (
                     <svg className="absolute inset-0 w-full h-full pointer-events-none z-30 overflow-visible">
-                      <polyline points={path.map(p => { const { x, y } = getCellCoord(p); return `${x},${y}`; }).join(' ')} fill="none" stroke="#10b981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse" style={{ filter: 'drop-shadow(0 0 10px rgba(16,185,129,0.8))' }} />
+                      <polyline points={path.map(p => { const { x, y } = getCellCoord(p, gridRef.current, grid.length, grid[0].length); return `${x},${y}`; }).join(' ')} fill="none" stroke="#10b981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse" style={{ filter: 'drop-shadow(0 0 10px rgba(16,185,129,0.8))' }} />
                     </svg>
                   )}
                 </div>
