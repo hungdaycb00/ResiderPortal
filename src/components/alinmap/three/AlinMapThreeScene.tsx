@@ -202,9 +202,8 @@ function SceneContent({
         if (position && isLooterGameMode) {
             const origin2: LatLng = { lat: position[0], lng: position[1] };
             const sp = worldToScene(origin2, origin2);
-            const currentPlaneY = planeYScale?.get?.() ?? MAP_PLANE_SCALE;
             const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
-            const visualBoatY = (boatOffsetY?.get?.() ?? 0) * currentPlaneY;
+            const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
             const nx = sp.x + pxToScene(visualBoatX);
             const nz = sp.z + pxToScene(visualBoatY);
             const [lx, , lz] = lastBoatPosRef.current;
@@ -459,7 +458,6 @@ function SceneContent({
                         position={[selfPos.x, 0, selfPos.z]}
                         offsetX={boatOffsetX}
                         offsetY={boatOffsetY}
-                        planeYScale={planeYScale}
                     />
                 ) : (() => {
                     const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;

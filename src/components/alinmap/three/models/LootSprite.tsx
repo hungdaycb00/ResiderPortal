@@ -39,21 +39,15 @@ const LootSprite: React.FC<LootSpriteProps> = ({
             scale={[scale, scale, 1]}
             onClick={(e) => {
                 e.stopPropagation();
-                (e as any).nativeEvent?.stopPropagation?.();
-                (e as any).sourceEvent?.stopPropagation?.();
                 onClick?.();
             }}
             onPointerDown={(e) => {
                 if (!onClick) return;
                 e.stopPropagation();
-                (e as any).nativeEvent?.stopPropagation?.();
-                (e as any).sourceEvent?.stopPropagation?.();
             }}
             onPointerUp={(e) => {
                 if (!onClick) return;
                 e.stopPropagation();
-                (e as any).nativeEvent?.stopPropagation?.();
-                (e as any).sourceEvent?.stopPropagation?.();
             }}
             onPointerOver={(e) => {
                 if (!onClick) return;
