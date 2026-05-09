@@ -1,7 +1,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Fog, Color, Group, MathUtils, SRGBColorSpace, NoToneMapping } from 'three';
+import { Fog, Color, Group, MathUtils, Mesh, Vector3, SRGBColorSpace, NoToneMapping } from 'three';
 import { useMotionValueEvent, type MotionValue } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../looter-game/LooterGameContext';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
@@ -127,6 +127,7 @@ function SceneContent({
     const lastLiftZRef = useRef(0);
     const lastTiltRef = useRef(0);
     const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
+    const groundMeshRef = useRef<Mesh>(null);
     const { scene } = useThree();
     const looterState = useLooterState();
     const looterActions = useLooterActions();
@@ -328,6 +329,16 @@ function SceneContent({
         openFortressStorage,
     ]);
 
+    // ─── Ground Click → Move (Raycaster) ───────────────────────────────────
+    const handleGroundClick = useCallback((point: Vector3) => {
+        if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
+        const localPt = groundMeshRef.current.worldToLocal(point.clone());
+        const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
+        const lng = origin.lng + localPt.x / SCALE;
+        const lat = origin.lat + localPt.y / SCALE;
+        onRequestMove(lat, lng, 'map');
+    }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng]);
+
     // ─── Self Avatar Drag Handlers ────────────────────────────────────────────
     const handleSelfPointerDown = useCallback((e: any) => {
         if (isLooterGameMode || !onSelfDragEnd) return;
@@ -417,7 +428,7 @@ function SceneContent({
         <group ref={tiltGroupRef}>
             <group ref={moveGroupRef}>
                 {/* 1. Nền bản đồ (Ground) */}
-                <Ground mapMode={mapMode} />
+                <Ground mapMode={mapMode} groundRef={groundMeshRef} onGroundClick={handleGroundClick} />
 
                 {/* Search Target Pin */}
                 <group position={[0, 0.08, 0]}>
