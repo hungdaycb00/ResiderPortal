@@ -143,9 +143,9 @@ function SceneContent({
     useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
 
     useEffect(() => {
-        scene.fog = new Fog('#08111b', 1800, 22000);
+        scene.fog = isLooterGameMode ? null : new Fog('#08111b', 1800, 22000);
         scene.background = new Color(mapMode === 'satellite' ? '#020b12' : '#071018');
-    }, [mapMode, scene]);
+    }, [mapMode, scene, isLooterGameMode]);
 
     const filteredUsers = useMemo(() => {
         const baseLat = position?.[0] ?? 0;

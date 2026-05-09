@@ -196,16 +196,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     onPointerCancel={handleMapPointerCancel}
                     onClickCapture={handleMapClickCapture}
                 >
-                    {/* Khi looter mode: overlay mờ đè lên toàn canvas (bên dưới Three.js) */}
-                    {isLooterGameMode && (
-                        <div
-                            className="absolute inset-0 z-[5] pointer-events-none"
-                            style={{
-                                background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,8,20,0.72) 100%)',
-                                mixBlendMode: 'multiply',
-                            }}
-                        />
-                    )}
                     <AlinMapThreeScene
                         position={position}
                         nearbyUsers={nearbyUsers}
