@@ -305,7 +305,7 @@ export const makeLootSpriteTexture = (type: string, title?: string, accent = '#2
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.8)';
         ctx.shadowBlur = 6;
-        ctx.fillText(title, cx, size - 20);
+        ctx.fillText(title, cx, 25);
     }
 
     const texture = new THREE.CanvasTexture(canvas);

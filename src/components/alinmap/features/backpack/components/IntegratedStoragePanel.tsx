@@ -73,6 +73,7 @@ export default function IntegratedStoragePanel() {
     fortressStorageMode,
     isIntegratedStorageOpen,
     isItemDragging,
+    setIsItemDragging,
     setIsIntegratedStorageOpen,
     openFortressStorage,
     saveStorage,
@@ -268,7 +269,7 @@ export default function IntegratedStoragePanel() {
                   }
                   activeSave([...activeItems]); 
                 }}
-                onDragStateChange={setIsItemDragging}
+                onDragStateChange={(item) => setIsItemDragging(!!item)}
                 cellSize={cellSize}
               />
 

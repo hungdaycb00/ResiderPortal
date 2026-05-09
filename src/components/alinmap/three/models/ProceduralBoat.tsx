@@ -18,7 +18,7 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 2,
+    scale = 4,
     offsetX,
     offsetY,
     planeYScale,

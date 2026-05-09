@@ -64,12 +64,12 @@ export default function DashedPath({ from, to, color = '#22d3ee' }: DashedPathPr
 
             {/* Vòng tròn ngoài tại target */}
             <mesh position={[to[0], 0.4, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={51}>
-                <ringGeometry args={[AVATAR_PLANE_SIZE * 0.8, AVATAR_PLANE_SIZE * 1.2, 32]} />
+                <ringGeometry args={[AVATAR_PLANE_SIZE * 0.267, AVATAR_PLANE_SIZE * 0.4, 32]} />
                 <meshBasicMaterial color={color} transparent opacity={0.25} depthTest={false} depthWrite={false} />
             </mesh>
             {/* Chấm trung tâm target */}
             <mesh position={[to[0], 0.45, to[2]]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={52}>
-                <circleGeometry args={[AVATAR_PLANE_SIZE * 0.25, 32]} />
+                <circleGeometry args={[AVATAR_PLANE_SIZE * 0.083, 32]} />
                 <meshBasicMaterial color="#ffffff" transparent opacity={0.65} depthTest={false} depthWrite={false} />
             </mesh>
         </group>

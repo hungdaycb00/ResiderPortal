@@ -145,7 +145,9 @@ export function useLooterBoat({
         
         // Tính toán khoảng cách và thời gian
         const multiplier = globalSettings?.speedMultiplier || 1.0;
-        const baseDuration = Math.min(Math.max(distDeg * 2000, 1), 8);
+        // Tốc độ cố định: thời gian tỉ lệ thuận với khoảng cách, không clamp
+        const SPEED_DEG_PER_SEC = 0.08; // ~8.88 km/s trong world space
+        const baseDuration = distDeg / SPEED_DEG_PER_SEC;
         const duration = baseDuration / multiplier;
 
         // Lưu lại vị trí bắt đầu

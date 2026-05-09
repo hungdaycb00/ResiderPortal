@@ -552,7 +552,7 @@ function SceneContent({
                     <LootSprite
                         position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
                         type="target"
-                        size={AVATAR_PLANE_SIZE * 0.6}
+                        size={AVATAR_PLANE_SIZE * 0.2}
                         scale={2}
                     />
                 ) : null}
@@ -574,7 +574,7 @@ function SceneContent({
                 {itemRenderData.map(({ item, pos }) => (
                     <LootSprite
                         key={item.spawnId}
-                        position={[pos.x, 0.3, pos.z]}
+                        position={[pos.x, 3.0, pos.z]}
                         type={getWorldItemType(item)}
                         icon={getWorldItemIcon(item)}
                         title={item?.item?.name || 'Loot'}

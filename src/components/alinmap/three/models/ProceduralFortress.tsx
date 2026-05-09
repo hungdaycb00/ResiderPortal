@@ -8,7 +8,7 @@ interface ProceduralFortressProps {
     onClick?: () => void;
 }
 
-const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 3, onClick }) => {
+const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 9, onClick }) => {
     return (
         <LootSprite
             position={position}
