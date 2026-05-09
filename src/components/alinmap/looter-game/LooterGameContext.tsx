@@ -122,6 +122,7 @@ export interface LooterGameActions {
   setCenterCombatHandler: (h: ((yOffset?: number, xOffset?: number) => void) | null) => void;
   setIsChallengeActive: (v: boolean) => void;
   setIsItemDragging: (v: boolean) => void;
+  setIsTierSelectorOpen: (v: boolean) => void;
   initGame: (lat: number, lng: number) => Promise<void>;
   loadState: () => Promise<void>;
   moveBoat: (toLat: number, toLng: number, isStep?: boolean, stepDist?: number) => Promise<{ curseTrigger: boolean; encounter: Encounter | null }>;
@@ -165,6 +166,7 @@ export interface LooterGameStateContextType {
   isLooterGameMode: boolean;
   isChallengeActive: boolean;
   isItemDragging: boolean;
+  isTierSelectorOpen: boolean;
   globalSettings: any;
   isMoving: boolean;
   isSyncing: boolean;

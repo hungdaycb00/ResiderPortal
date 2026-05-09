@@ -169,10 +169,13 @@ export function useLooterInventory({
         return;
       }
 
+      // Khi mode='portal', đồng bộ portalStorage với storage từ server
+      // vì server chỉ có 1 storage, client tách 2 view (fortress vs portal)
       setState(prev => ({
         ...prev,
         inventory: Array.isArray(result.inventory) ? result.inventory : prev.inventory,
         storage: Array.isArray(result.storage) ? result.storage : prev.storage,
+        portalStorage: mode === 'portal' && Array.isArray(result.storage) ? result.storage : prev.portalStorage,
         looterGold: result.looterGold ?? prev.looterGold,
       }));
       notify(action === 'store' ? 'Da cat vat pham vao kho' : 'Da lay vat pham tu kho', 'success');
@@ -180,47 +183,6 @@ export function useLooterInventory({
     } catch (err) {
       console.error('[LooterGame] store item error:', err);
       notify('Khong the xac thuc kho voi server', 'error');
-      return;
-    }
-    
-    let success = false;
-    setState(prev => {
-        let newInventory = [...prev.inventory];
-        let newStorage = [...prev.storage];
-
-        if (action === 'store') {
-            const itemsToStore = newInventory.filter(i => itemUids.includes(i.uid));
-            newInventory = newInventory.filter(i => !itemUids.includes(i.uid));
-            
-            itemsToStore.forEach(item => {
-                // Reset coords to -1 so buildPlacedStorage can find a new spot
-                newStorage.push({ ...item, gridX: gridX ?? -1, gridY: gridY ?? -1 });
-            });
-        } else {
-            const itemsToRetrieve = newStorage.filter(i => itemUids.includes(i.uid));
-            newStorage = newStorage.filter(i => !itemUids.includes(i.uid));
-            
-            itemsToRetrieve.forEach(item => {
-                const currentBag = prev.bags[0];
-                const slot = findEmptySlotFor(item, newInventory, currentBag);
-                if (slot) {
-                    newInventory.push({ ...item, gridX: slot.x, gridY: slot.y });
-                } else {
-                    newInventory.push({ ...item, gridX: -1, gridY: -1, stagingX: Math.random() * 200, stagingY: Math.random() * 300 } as any);
-                }
-            });
-        }
-
-        const nextState = { ...prev, inventory: newInventory, storage: newStorage };
-        // Dùng saveInventory để đi qua debounce, tránh spam 429
-        saveInventory(newInventory);
-        saveStorage(newStorage);
-        success = true;
-        return nextState;
-    });
-
-    if (success) {
-      notify(action === 'store' ? 'Đã cất vật phẩm vào kho' : 'Đã lấy vật phẩm từ kho', 'success');
     }
   }, [deviceId, apiUrl, setState, notify]);
 

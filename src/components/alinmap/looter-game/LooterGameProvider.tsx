@@ -128,6 +128,11 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const centerCombatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
   const [isItemDragging, setIsItemDragging] = useState(false);
+  const [isTierSelectorOpen, setIsTierSelectorOpenState] = useState(false);
+
+  const setIsTierSelectorOpen = useCallback((v: boolean) => {
+    setIsTierSelectorOpenState(v);
+  }, []);
 
   // Reset dragging state when game mode changes or unmounts
   useEffect(() => {
@@ -213,7 +218,10 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     deviceId, apiUrl: API_URL, state, setState, notify,
     setIsChallengeActive,
     setEncounter, setShowCurseModal,
-    setWorldItems, saveInventory, loadWorldItems: stateManager.loadWorldItems, chunkCacheRef
+    setWorldItems, saveInventory, loadWorldItems: stateManager.loadWorldItems, chunkCacheRef,
+    openBackpack,
+    setIsIntegratedStorageOpen: (v: boolean) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
+    setIsTierSelectorOpen,
   });
 
   const clearPregeneratedFruit = useCallback(() => {
@@ -242,7 +250,8 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setCenterCombatHandler: (h) => { centerCombatHandlerRef.current = h; },
     setIsChallengeActive,
     setIsItemDragging,
-    
+    setIsTierSelectorOpen,
+
     initGame: (lat, lng) => runInQueueRef.current(() => stateManager.initGame(lat, lng)),
     loadState: () => runInQueueRef.current(() => stateManager.loadState()),
     moveBoat: (lat, lng, isStep, stepDist) => runInQueueRef.current(() => movement.moveBoat(lat, lng, isStep, stepDist)),
@@ -356,11 +365,12 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     isLooterGameMode: ui.isLooterGameMode,
     isChallengeActive: ui.isChallengeActive,
     isItemDragging,
+    isTierSelectorOpen,
     isFortressStorageOpen: ui.isFortressStorageOpen, fortressStorageMode: ui.fortressStorageMode,
     isIntegratedStorageOpen: ui.isIntegratedStorageOpen,
     globalSettings, isMoving: movement.isMoving, isSyncing,
     pregeneratedMinigames
-  }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing, pregeneratedMinigames, isItemDragging]);
+  }), [state, worldItems, ui, globalSettings, movement.isMoving, isSyncing, pregeneratedMinigames, isItemDragging, isTierSelectorOpen]);
 
   // 4. Effects
   

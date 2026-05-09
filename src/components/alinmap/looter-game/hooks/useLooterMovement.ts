@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef } from 'react';
 
 import { looterApi } from '../services/looterApi';
 import { getDistanceMeters } from '../backpack/utils';
@@ -23,6 +23,9 @@ interface UseLooterMovementProps {
   saveInventory: (inventory: LooterItem[]) => Promise<boolean>;
   loadWorldItems: (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => Promise<void>;
   chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
+  openBackpack?: () => void;
+  setIsIntegratedStorageOpen?: (v: boolean) => void;
+  setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 export function useLooterMovement({
@@ -37,9 +40,13 @@ export function useLooterMovement({
   setWorldItems,
   saveInventory,
   loadWorldItems,
-  chunkCacheRef
+  chunkCacheRef,
+  openBackpack,
+  setIsIntegratedStorageOpen,
+  setIsTierSelectorOpen,
 }: UseLooterMovementProps) {
   const [isMoving, setIsMoving] = useState(false);
+  const prevDistToFortressRef = useRef<number>(99999);
 
   const moveBoat = useCallback(async (toLat: number, toLng: number, isStep?: boolean, stepDist?: number) => {
     setIsMoving(true);
@@ -49,7 +56,9 @@ export function useLooterMovement({
       const distToFortress = getDistanceMeters(toLat, toLng, state.fortressLat, state.fortressLng);
 
       if ((state.worldTier ?? -1) === -1 && distToFortress > FORTRESS_INTERACTION_METERS) {
-        if (!isStep) notify('Bạn cần bắt đầu thử thách mới để ra khỏi khu vực này!', 'info');
+        if (!isStep) {
+          setIsTierSelectorOpen?.(true);
+        }
         return { curseTrigger: false, encounter: null };
       }
 
@@ -151,11 +160,25 @@ export function useLooterMovement({
         notify(`Đã ném ${itemsToDrop.length} vật phẩm ra biển`, 'info');
       }
 
+      // Phát hiện crossing boundary (vào/ra vùng thành trì)
+      const wasInside = prevDistToFortressRef.current <= FORTRESS_INTERACTION_METERS;
+      const isInside = distToFortress <= FORTRESS_INTERACTION_METERS;
+      prevDistToFortressRef.current = distToFortress;
+
       if (distToFortress > FORTRESS_INTERACTION_METERS) {
         setIsChallengeActive(true);
+        if (wasInside && !isStep) {
+          // Vừa rời khỏi thành trì → đóng storage panel
+          setIsIntegratedStorageOpen?.(false);
+        }
       } else if (!isStep) {
         setState(prev => ({ ...prev, worldTier: -1 }));
         setIsChallengeActive(false);
+        if (!wasInside) {
+          // Vừa vào thành trì → mở tab kho đồ
+          openBackpack?.();
+          setTimeout(() => setIsIntegratedStorageOpen?.(true), 200);
+        }
       }
 
       if (curseTrigger && encounter) {

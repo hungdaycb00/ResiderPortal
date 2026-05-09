@@ -79,12 +79,11 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const resolvedMyUserId = wsCtx.myUserId || profileUserId || localStorage.getItem('alin_profile_user_id') || null;
     const resolvedMyStatus = profileStatus || wsCtx.myStatus || '';
 
-    const requireAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
+    const requireAuth = useCallback((_actionLabel: string, afterLogin?: () => void) => {
         if (user) return true;
-        showNotification?.(`Dang nhap de ${actionLabel}. Du lieu se duoc dong bo voi tai khoan Gmail.`, 'info');
         triggerAuth?.(afterLogin || (() => {}));
         return false;
-    }, [user, showNotification, triggerAuth]);
+    }, [user, triggerAuth]);
 
     // --- Map Navigation ---
     const nav = useMapNavigation({

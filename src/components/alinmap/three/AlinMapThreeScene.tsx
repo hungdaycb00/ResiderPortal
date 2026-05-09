@@ -483,6 +483,10 @@ function SceneContent({
                         position={[selfPos.x, 0, selfPos.z]}
                         offsetX={boatOffsetX}
                         offsetY={boatOffsetY}
+                        currentLat={looterStateObj?.currentLat}
+                        currentLng={looterStateObj?.currentLng}
+                        fortressLat={looterStateObj?.fortressLat}
+                        fortressLng={looterStateObj?.fortressLng}
                     />
                 ) : (() => {
                     const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;

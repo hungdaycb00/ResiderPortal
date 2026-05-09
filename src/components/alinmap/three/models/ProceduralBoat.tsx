@@ -1,10 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { MAP_PLANE_SCALE } from '../../constants';
 import { pxToScene, AVATAR_PLANE_SIZE } from '../sceneUtils';
 import LootSprite from './LootSprite';
+import { getDistanceMeters } from '../../looter-game/backpack/utils';
 
 interface ProceduralBoatProps {
     position: [number, number, number];
@@ -12,6 +14,10 @@ interface ProceduralBoatProps {
     scale?: number;
     offsetX?: MotionValue<number>;
     offsetY?: MotionValue<number>;
+    currentLat?: number | null;
+    currentLng?: number | null;
+    fortressLat?: number | null;
+    fortressLng?: number | null;
 }
 
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
@@ -20,6 +26,10 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     scale = 4,
     offsetX,
     offsetY,
+    currentLat,
+    currentLng,
+    fortressLat,
+    fortressLng,
 }) => {
     const groupRef = useRef<THREE.Group>(null);
 
@@ -32,6 +42,11 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
         groupRef.current.rotation.z = Math.sin(t * 1.2) * 0.025;
     });
 
+    const distToFortress = useMemo(() => {
+        if (currentLat == null || currentLng == null || fortressLat == null || fortressLng == null) return null;
+        return Math.round(getDistanceMeters(currentLat, currentLng, fortressLat, fortressLng));
+    }, [currentLat, currentLng, fortressLat, fortressLng]);
+
     return (
         <group position={position} rotation={rotation} ref={groupRef}>
             <LootSprite
@@ -43,6 +58,13 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 size={AVATAR_PLANE_SIZE * 1.1}
                 interactive={false}
             />
+            {distToFortress != null && (
+                <Html position={[0, -9, 0]} center transform sprite distanceFactor={20} occlude={false}>
+                    <div style={{ color: '#94a3b8', fontSize: 9, fontWeight: 700, textShadow: '0 0 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
+                        {distToFortress}m → 🏰
+                    </div>
+                </Html>
+            )}
         </group>
     );
 };

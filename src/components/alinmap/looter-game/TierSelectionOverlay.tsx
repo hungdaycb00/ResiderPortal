@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, X, ShieldCheck, Zap, TrendingUp, Coins } from 'lucide-react';
+import { GAME_CONFIG } from './gameConfig';
 
 interface TierSelectionOverlayProps {
   isOpen: boolean;
@@ -9,18 +10,28 @@ interface TierSelectionOverlayProps {
   onSelectTier: (tier: number) => void;
 }
 
-const TIER_LABELS = [
-  { tier: 0, label: '0', cost: 0, mult: 1, color: 'from-gray-400 to-gray-600', icon: '🌊' },
-  { tier: 1, label: '10', cost: 10, mult: 2, color: 'from-sky-400 to-blue-600', icon: '⚓' },
-  { tier: 2, label: '100', cost: 100, mult: 5, color: 'from-emerald-400 to-teal-600', icon: '🐚' },
-  { tier: 3, label: '1k', cost: 1000, mult: 10, color: 'from-amber-400 to-orange-600', icon: '🔱' },
-  { tier: 4, label: '10k', cost: 10000, mult: 25, color: 'from-rose-400 to-red-600', icon: '🔥' },
-  { tier: 5, label: '100k', cost: 100000, mult: 100, color: 'from-purple-400 to-indigo-600', icon: '💎' },
-];
+const TIER_MULTIPLIERS = [1, 2, 5, 10, 25, 100];
+const TIER_ICONS   = ['🌊', '⚓', '🐚', '🔱', '🔥', '💎'];
+const TIER_COLORS  = ['from-gray-400 to-gray-600', 'from-sky-400 to-blue-600', 'from-emerald-400 to-teal-600', 'from-amber-400 to-orange-600', 'from-rose-400 to-red-600', 'from-purple-400 to-indigo-600'];
+
+const formatCost = (n: number) => n >= 1000 ? `${(n / 1000)}k` : `${n}`;
+
+const buildTierLabels = () => {
+  const costs = GAME_CONFIG.TIER_COSTS || [0, 50, 150, 450, 1000, 2500];
+  return costs.map((cost, i) => ({
+    tier: i,
+    label: formatCost(cost),
+    cost,
+    mult: TIER_MULTIPLIERS[i] || 1,
+    color: TIER_COLORS[i] || 'from-gray-400 to-gray-600',
+    icon: TIER_ICONS[i] || '🌊',
+  }));
+};
 
 const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onClose, currentGold, onSelectTier }) => {
   const [selected, setSelected] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const tierLabels = useMemo(() => buildTierLabels(), []);
 
   const handleStart = async () => {
     if (isLoading || !canAfford) return;
@@ -32,7 +43,7 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
     }
   };
 
-  const selectedData = TIER_LABELS[selected] || TIER_LABELS[1];
+  const selectedData = tierLabels[selected] || tierLabels[1];
   const canAfford = currentGold >= selectedData.cost;
 
   return (
@@ -85,7 +96,7 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
                   }}
                 />
                 <div className="flex justify-between mt-4">
-                  {TIER_LABELS.map((t) => (
+                  {tierLabels.map((t) => (
                     <button 
                       key={t.tier}
                       onClick={() => setSelected(t.tier)}

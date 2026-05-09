@@ -29,8 +29,9 @@ const LooterGameUI: React.FC = () => {
         encounter,
         isChallengeActive,
         isLooterGameMode,
+        isTierSelectorOpen,
     } = useLooterState();
-    const { setWorldTier } = useLooterActions();
+    const { setWorldTier, setIsTierSelectorOpen } = useLooterActions();
 
 
     if (!isLooterGameMode) return null;
@@ -42,7 +43,17 @@ const LooterGameUI: React.FC = () => {
             <ChallengeStatusHeader
                 isChallengeActive={!!isChallengeActive}
                 worldTier={state.worldTier ?? -1}
-                onStartChallenge={() => setWorldTier(1)}
+                onStartChallenge={() => setIsTierSelectorOpen(true)}
+            />
+
+            <TierSelectionOverlay
+                isOpen={isTierSelectorOpen}
+                onClose={() => setIsTierSelectorOpen(false)}
+                currentGold={state.looterGold || 0}
+                onSelectTier={async (tier: number) => {
+                    await setWorldTier(tier);
+                    setIsTierSelectorOpen(false);
+                }}
             />
 
             <ErrorBoundary name="Combat">
