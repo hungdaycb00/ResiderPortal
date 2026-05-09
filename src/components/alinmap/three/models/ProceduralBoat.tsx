@@ -23,7 +23,7 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 4,
+    scale = 2,
     offsetX,
     offsetY,
     currentLat,
@@ -38,7 +38,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
         const t = state.clock.getElapsedTime();
         const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE);
         const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE);
-        groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 1.5 + 5, z);
+        groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 0.75 + 1.0, z);
         groupRef.current.rotation.z = Math.sin(t * 1.2) * 0.025;
     });
 
@@ -55,7 +55,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 title="You"
                 accent="#38bdf8"
                 scale={scale}
-                size={AVATAR_PLANE_SIZE * 1.1}
+                size={AVATAR_PLANE_SIZE * 0.55}
                 interactive={false}
             />
             {distToFortress != null && (

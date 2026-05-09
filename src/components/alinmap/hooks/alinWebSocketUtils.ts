@@ -81,7 +81,7 @@ export const normalizeNearbyUsers = (params: {
     let filtered = users.filter((u: any) => !u.isSelf);
 
     if (currentSearchTag?.trim()) {
-        const tag = currentSearchTag.toLowerCase().replace('#', '');
+        const tag = String(currentSearchTag || '').toLowerCase().replace('#', '');
         filtered = filtered.filter((u: any) =>
             (u.gallery?.title && u.gallery.title.toLowerCase().includes(tag)) ||
             (u.username && u.username.toLowerCase().includes(tag)) ||

@@ -354,12 +354,12 @@ function SceneContent({
 
     // ─── Ground Click → Move (Raycaster) ───────────────────────────────────
     const handleGroundClick = useCallback((point: Vector3) => {
-        if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
+        if (!isLooterGameMode || !tiltGroupRef.current || !onRequestMove) return;
         if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
-        const localPt = groundMeshRef.current.worldToLocal(point.clone());
+        const localPt = tiltGroupRef.current.worldToLocal(point.clone());
         const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
         const lng = origin.lng + localPt.x / SCALE;
-        const lat = origin.lat + localPt.y / SCALE;
+        const lat = origin.lat - localPt.z / SCALE;
         onRequestMove(lat, lng, 'map');
     }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng]);
 
@@ -598,13 +598,13 @@ function SceneContent({
                 {waypointRenderData.map(({ item, pos }) => (
                     <LootSprite
                         key={`wp-${item.spawnId}`}
-                        position={[pos.x, 3.5, pos.z]}
+                        position={[pos.x, 0.3, pos.z]}
                         type={getWorldItemType(item)}
                         icon={getWorldItemIcon(item)}
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
-                        scale={2.4}
-                        size={AVATAR_PLANE_SIZE * 2.0}
+                        scale={1.2}
+                        size={AVATAR_PLANE_SIZE}
                         renderOrder={50}
                         onClick={() => handleWorldItemClick(item)}
                     />
@@ -614,7 +614,7 @@ function SceneContent({
                 {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (
                     <DashedPath
                         from={boatPosRef.current}
-                        to={[boatTargetScene.x, 5.0, boatTargetScene.z]}
+                        to={[boatTargetScene.x, 0.3, boatTargetScene.z]}
                         color="#22d3ee"
                     />
                 ) : null}
@@ -622,10 +622,10 @@ function SceneContent({
                 {/* Boat target pin (chỉ còn circle, DashedPath đã vẽ target) */}
                 {isLooterGameMode && !encounter && boatTargetPin ? (
                     <LootSprite
-                        position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
+                        position={[boatTargetScene!.x, 0.3, boatTargetScene!.z]}
                         type="target"
                         size={AVATAR_PLANE_SIZE * 0.2}
-                        scale={2}
+                        scale={1}
                     />
                 ) : null}
 
@@ -633,12 +633,12 @@ function SceneContent({
                 {isLooterGameMode && encounter ? (
                     <LootSprite
                         position={[
-                            boatPosRef.current[0] + pxToScene(180),
-                            0.7,
-                            boatPosRef.current[2] + pxToScene(-220)
+                            boatPosRef.current[0] + pxToScene(90),
+                            0.3,
+                            boatPosRef.current[2] + pxToScene(-110)
                         ]}
                         type="enemy"
-                        scale={2.4}
+                        scale={1.2}
                     />
                 ) : null}
 
@@ -646,13 +646,13 @@ function SceneContent({
                 {itemRenderData.map(({ item, pos }) => (
                     <LootSprite
                         key={item.spawnId}
-                        position={[pos.x, 3.0, pos.z]}
+                        position={[pos.x, 0.15, pos.z]}
                         type={getWorldItemType(item)}
                         icon={getWorldItemIcon(item)}
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
-                        scale={2}
-                        size={AVATAR_PLANE_SIZE * 1.8}
+                        scale={1}
+                        size={AVATAR_PLANE_SIZE * 0.9}
                         renderOrder={40}
                         onClick={() => handleWorldItemClick(item)}
                     />

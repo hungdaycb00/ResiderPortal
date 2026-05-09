@@ -37,7 +37,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
     const [showSearchResults, setShowSearchResults] = useState(false);
     const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const nearbyUsersRef = useRef(nearbyUsers);
-    const normalizedSearchTag = searchTag.trim().toLowerCase();
+    const normalizedSearchTag = (searchTag || '').trim().toLowerCase();
     const hasResults = searchResults.users.length > 0
         || searchResults.posts.length > 0
         || searchResults.games.length > 0

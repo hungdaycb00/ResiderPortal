@@ -171,7 +171,7 @@ export default function App() {
       if (slug && slug !== 'looter-game') {
         const game = allGames.find((g: any) => 
           (g.slug?.toLowerCase() === slug) || 
-          (g.id?.toString().toLowerCase() === slug) ||
+          (String(g.id || '').toLowerCase() === slug) ||
           ((g.title || g.name || '').toLowerCase().replace(/\s+/g, '-') === slug)
         );
         if (game) {

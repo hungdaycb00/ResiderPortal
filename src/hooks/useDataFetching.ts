@@ -123,7 +123,7 @@ export function useDataFetching(
                 setFriendRequests(normalizedRequests);
             }
         } catch (err: any) {
-            if (retry && err.message?.toLowerCase().includes('user not found')) {
+            if (retry && (err.message || '').toLowerCase().includes('user not found')) {
                 console.warn('[DataFetching] Friends fetch reported user not found; keeping cached deviceId and profile state.');
                 return;
             }
