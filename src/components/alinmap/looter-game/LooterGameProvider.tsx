@@ -178,12 +178,14 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     if (typeof openBackpackHandler === 'function') openBackpackHandler();
   }, [openBackpackHandler]);
 
-  // Handle BeforeUnload for final sync
+  // Handle BeforeUnload for final sync — only serialize essential game state
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!deviceId) return;
       try {
-        const payload = JSON.stringify({ deviceId, state });
+        const { currentLat, currentLng, fortressLat, fortressLng, cursePercent, looterGold, worldTier, currentHp, baseMaxHp, inventory, storage } = state;
+        const essentialState = { currentLat, currentLng, fortressLat, fortressLng, cursePercent, looterGold, worldTier, currentHp, baseMaxHp, inventory, storage };
+        const payload = JSON.stringify({ deviceId, state: essentialState });
         navigator.sendBeacon(`${API_URL}/api/looter/sync`, new Blob([payload], { type: 'application/json' }));
       } catch (e) {
         console.error('[Looter] beforeunload sync error', e);
@@ -233,7 +235,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     toggleIntegratedStorage: (mode: StorageAccessMode = 'fortress') => dispatch({ type: 'TOGGLE_INTEGRATED_STORAGE', payload: mode }),
     openBackpack,
     setOpenBackpackHandler,
-    centerOnBoat: (yOffset?: number, xOffset?: number) => { console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandlerRef.current }); if (centerBoatHandlerRef.current) centerBoatHandlerRef.current(yOffset, xOffset); else console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
+    centerOnBoat: (yOffset?: number, xOffset?: number) => { if (import.meta.env.DEV) console.log('[LooterProvider] centerOnBoat called', { yOffset, xOffset, hasHandler: !!centerBoatHandlerRef.current }); if (centerBoatHandlerRef.current) centerBoatHandlerRef.current(yOffset, xOffset); else if (import.meta.env.DEV) console.warn('[LooterProvider] centerOnBoat: NO HANDLER REGISTERED'); },
     setCenterBoatHandler: (h) => { centerBoatHandlerRef.current = h; },
     centerOnCombat: (yOffset?: number, xOffset?: number) => { if (centerCombatHandlerRef.current) centerCombatHandlerRef.current(yOffset, xOffset); },
     setCenterCombatHandler: (h) => { centerCombatHandlerRef.current = h; },
@@ -382,14 +384,14 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
       // Số lượng loại hoa quả khác nhau tăng theo tier
       const fruitCount = Math.min(16, 8 + worldTier);
 
-      console.log(`[LooterMinigame] Starting background generation for Tier ${worldTier} (${rows}x${cols})`);
+      if (import.meta.env.DEV) console.log(`[LooterMinigame] Starting background generation for Tier ${worldTier} (${rows}x${cols})`);
       
       // Chạy ngầm để không block UI chính
       setTimeout(() => {
         const grid = generateSolvableGrid(rows, cols, fruitCount, FRUITS);
         if (grid && grid.length > 0) {
           setPregeneratedMinigames(prev => ({ ...prev, fruit: grid }));
-          console.log(`[LooterMinigame] Background generation complete for Tier ${worldTier}`);
+          if (import.meta.env.DEV) console.log(`[LooterMinigame] Background generation complete for Tier ${worldTier}`);
         }
       }, 100);
     }

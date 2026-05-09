@@ -276,10 +276,10 @@ function SceneContent({
         const interactionRadius = 250;
         const isPortal = worldItem?.item?.type === 'portal';
 
-        console.log('[ItemClick]', { itemName: worldItem?.item?.name, itemLat: worldItem.lat, itemLng: worldItem.lng, boatLat: boat.lat, boatLng: boat.lng, dist, type: worldItem?.item?.type, minigameType: worldItem.minigameType });
+        if (import.meta.env.DEV) console.log('[ItemClick]', { itemName: worldItem?.item?.name, itemLat: worldItem.lat, itemLng: worldItem.lng, boatLat: boat.lat, boatLng: boat.lng, dist, type: worldItem?.item?.type, minigameType: worldItem.minigameType });
 
         if (dist > interactionRadius) {
-            console.log('[ItemClick] Distance > 250m, requesting move to item position');
+            if (import.meta.env.DEV) console.log('[ItemClick] Distance > 250m, requesting move to item position');
             onRequestMove?.(worldItem.lat, worldItem.lng, 'item');
             return;
         }

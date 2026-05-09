@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Eye, UserRound } from 'lucide-react';
-import { motion, MotionValue, useMotionTemplate, useMotionValueEvent, useTransform } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 import MapTiles from './MapTiles';
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
@@ -17,7 +16,7 @@ import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import { BILLBOARD_UPRIGHT_LIFT_PX, BILLBOARD_UPRIGHT_PITCH_DEGREES } from './constants';
+import { BILLBOARD_UPRIGHT_PITCH_DEGREES } from './constants';
 
 
 interface MapCanvasProps {
@@ -94,12 +93,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const looterState = useLooterState();
     const looterActions = useLooterActions();
     const { isLooterGameMode, state: looterStateObj, isChallengeActive } = looterState;
-    const isMapInteractionLocked = !!(
+    const isMapInteractionLocked = React.useMemo(() => !!(
         looterState.showMinigame ||
         looterState.encounter ||
         looterState.showCurseModal ||
         looterState.combatResult
-    );
+    ), [looterState.showMinigame, looterState.encounter, looterState.showCurseModal, looterState.combatResult]);
     
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
@@ -283,242 +282,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
             {/* Connection Status */}
             {isConnecting && <MapConnectionStatus />}
         </div>
-    );
-};
-
-// Internal sub-components for cleaner structure
-const GuestNode = () => (
-    <div className="absolute z-[100] -ml-6 -mt-12 pointer-events-auto select-none alin-map-billboard" style={{ top: '50%', left: '50%' }}>
-        <div className="relative w-12 h-12 alin-map-upright-sprite">
-            <div className="absolute inset-0 rounded-full bg-slate-400/20 animate-ping" />
-            <div className="relative w-12 h-12 rounded-full border-[2.5px] border-slate-300 bg-slate-950/90 shadow-[0_0_24px_rgba(148,163,184,0.35)] flex items-center justify-center overflow-hidden">
-                <UserRound className="w-6 h-6 text-slate-200" />
-                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-slate-800 border border-slate-500 flex items-center justify-center">
-                    <Eye className="w-3 h-3 text-cyan-300" />
-                </div>
-            </div>
-            <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-950/85 backdrop-blur border border-slate-500/40 px-2 py-1 rounded-full shadow-lg pointer-events-none">
-                <span className="text-[9px] font-bold text-slate-200">Guest - see only</span>
-            </div>
-        </div>
-    </div>
-);
-
-const User3DBeacon = () => (
-    <div
-        className="absolute z-[120] pointer-events-none select-none alin-map-billboard"
-        style={{
-            top: '50%',
-            left: '50%',
-            marginLeft: '-12px',
-            marginTop: '-36px',
-        }}
-    >
-        <div className="relative h-12 w-6 [transform-style:preserve-3d]">
-            <div className="absolute inset-x-1 top-0 h-12 rounded-md border border-cyan-300/60 bg-cyan-400/20 shadow-[0_0_24px_rgba(34,211,238,0.35)] [transform:translateZ(10px)]" />
-            <div className="absolute inset-x-0 top-0 h-12 rounded-md border border-cyan-200/40 bg-gradient-to-b from-cyan-200/20 to-slate-950/70 [transform:rotateY(90deg)_translateZ(8px)]" />
-            <div className="absolute inset-x-0 top-0 h-12 rounded-md border border-cyan-100/30 bg-gradient-to-b from-white/25 to-cyan-500/5 [transform:rotateY(-90deg)_translateZ(8px)]" />
-            <div className="absolute left-1/2 top-0 h-12 w-1 -translate-x-1/2 bg-cyan-200/80 shadow-[0_0_18px_rgba(34,211,238,0.8)] [transform:translateZ(18px)]" />
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full border border-cyan-300/50 bg-slate-950/85 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] text-cyan-100 shadow-[0_0_16px_rgba(34,211,238,0.35)]">
-                You
-            </div>
-            <div className="absolute -bottom-2 left-1/2 h-2 w-16 -translate-x-1/2 rounded-full bg-cyan-500/30 blur-md" />
-        </div>
-    </div>
-);
-
-const BillboardTransformProbes = ({
-    tiltAngle,
-    cameraRotateXDeg,
-    cameraRotateYDeg,
-}: {
-    tiltAngle: MotionValue<number>;
-    cameraRotateXDeg: number;
-    cameraRotateYDeg: number;
-}) => {
-    type ProbeId = 'A' | 'D';
-    type ProbeState = { x: number; y: number; yaw: number; pitch: number; z: number };
-
-    const [selectedProbe, setSelectedProbe] = React.useState<ProbeId>('D');
-    const [tiltValue, setTiltValue] = React.useState(() => tiltAngle.get());
-    const [probeState, setProbeState] = React.useState<Record<ProbeId, ProbeState>>({
-        A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
-        D: { x: 24, y: -110, yaw: 0, pitch: BILLBOARD_UPRIGHT_PITCH_DEGREES, z: BILLBOARD_UPRIGHT_LIFT_PX },
-    });
-
-    useMotionValueEvent(tiltAngle, 'change', setTiltValue);
-
-    React.useEffect(() => {
-        const root = document.documentElement;
-        console.table({
-            mapTilt: getComputedStyle(root).getPropertyValue('--alin-map-tilt-deg'),
-            counterTilt: getComputedStyle(root).getPropertyValue('--alin-map-counter-tilt-deg'),
-            pitchDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-pitch-deg'),
-            yawDeg: getComputedStyle(root).getPropertyValue('--alin-map-billboard-yaw-deg'),
-        });
-    }, []);
-
-    const nudge = (patch: Partial<ProbeState>) => {
-        setProbeState((prev) => ({
-            ...prev,
-            [selectedProbe]: {
-                ...prev[selectedProbe],
-                ...patch,
-            },
-        }));
-    };
-
-    const selectedState = probeState[selectedProbe];
-
-    const staticRefs = [
-        { id: 'B', label: 'flat ref', x: -72, y: -110, transform: 'translateZ(0px) rotateX(0deg) rotateY(0deg)' },
-        { id: 'C', label: 'x90 ref', x: -24, y: -110, transform: 'translateZ(40px) rotateX(90deg) rotateY(0deg)' },
-        { id: 'E', label: 'y90 ref', x: 72, y: -110, transform: 'translateZ(40px) rotateY(90deg)' },
-        { id: 'F', label: 'x90 y-90', x: 120, y: -110, transform: 'translateZ(40px) rotateX(90deg) rotateY(-90deg)' },
-    ];
-
-    const renderProbe = (probe: { id: string; label: string; x: number; y: number; transform: string }) => (
-        <div
-            key={probe.id}
-            className="absolute z-[999] pointer-events-auto select-none"
-            style={{
-                left: `calc(50% + ${probe.x}px)`,
-                top: `calc(50% + ${probe.y}px)`,
-                width: 78,
-                height: 108,
-                marginLeft: -39,
-                marginTop: -108,
-                transformStyle: 'preserve-3d',
-            }}
-            onClick={(e) => {
-                e.stopPropagation();
-                if (probe.id === 'A' || probe.id === 'D') {
-                    setSelectedProbe(probe.id);
-                }
-                console.info(`[AlinMap probe] ${probe.id}: ${probe.label}`, probe.transform);
-            }}
-        >
-            <div
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    transform: probe.transform,
-                    transformOrigin: 'center bottom',
-                    transformStyle: 'preserve-3d',
-                    backfaceVisibility: 'visible',
-                }}
-            >
-                <div className={`flex h-full w-full flex-col overflow-hidden rounded-xl border-2 text-center shadow-[0_0_24px_rgba(251,191,36,0.55)] ${selectedProbe === probe.id ? 'border-cyan-300 bg-slate-950/98' : 'border-amber-300 bg-slate-950/95'}`}>
-                    <div className="bg-amber-300 px-1 py-1 text-[10px] font-black text-slate-950">{probe.id}</div>
-                    <div className="flex flex-1 items-center justify-center bg-cyan-500/20 text-3xl font-black text-white">
-                        {probe.id}
-                    </div>
-                    <div className="bg-slate-900 px-1 py-1 text-[8px] font-bold uppercase tracking-wide text-cyan-100">{probe.label}</div>
-                </div>
-            </div>
-        </div>
-    );
-
-    return (
-        <>
-            <div
-                className="absolute z-[1000] pointer-events-auto select-none rounded-xl border border-white/15 bg-slate-950/85 p-2 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md"
-                style={{
-                    left: 'calc(50% - 180px)',
-                    top: 'calc(50% + 56px)',
-                    minWidth: 360,
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-[0.28em] text-cyan-200">Billboard Lab</div>
-                        <div className="text-[9px] text-slate-300">Chọn A hoặc D, rồi nắn góc/điểm neo ngay tại map.</div>
-                    </div>
-                    <div className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black text-amber-200">
-                        Selected {selectedProbe}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-1.5">
-                    {([
-                        { label: 'X-', onClick: () => nudge({ x: selectedState.x - 8 }) },
-                        { label: 'X+', onClick: () => nudge({ x: selectedState.x + 8 }) },
-                        { label: 'Y-', onClick: () => nudge({ y: selectedState.y - 8 }) },
-                        { label: 'Y+', onClick: () => nudge({ y: selectedState.y + 8 }) },
-                        { label: 'Yaw-', onClick: () => nudge({ yaw: selectedState.yaw - 5 }) },
-                        { label: 'Yaw+', onClick: () => nudge({ yaw: selectedState.yaw + 5 }) },
-                        { label: 'Pitch-', onClick: () => nudge({ pitch: selectedState.pitch - 5 }) },
-                        { label: 'Pitch+', onClick: () => nudge({ pitch: selectedState.pitch + 5 }) },
-                    ]).map((btn) => (
-                        <button
-                            key={btn.label}
-                            type="button"
-                            className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white/90 hover:bg-white/10"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                btn.onClick();
-                            }}
-                        >
-                            {btn.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="mt-2 flex items-center gap-1.5">
-                    {(['A', 'D'] as ProbeId[]).map((probeId) => (
-                        <button
-                            key={probeId}
-                            type="button"
-                            className={`rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide ${selectedProbe === probeId ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100' : 'border-white/10 bg-white/5 text-white/80'}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedProbe(probeId);
-                            }}
-                        >
-                            Probe {probeId}
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        className="rounded-md border border-amber-300/30 bg-amber-400/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-amber-100"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setProbeState((prev) => ({
-                                A: { x: -120, y: -110, yaw: 45, pitch: 90, z: 40 },
-                                D: { x: 24, y: -110, yaw: 0, pitch: BILLBOARD_UPRIGHT_PITCH_DEGREES, z: BILLBOARD_UPRIGHT_LIFT_PX },
-                            }));
-                        }}
-                    >
-                        Reset
-                    </button>
-                </div>
-
-                <div className="mt-2 rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-slate-300">
-                    A: x={probeState.A.x}, y={probeState.A.y}, yaw={probeState.A.yaw}, pitch={probeState.A.pitch}, z={probeState.A.z}
-                    <br />
-                    D: x={probeState.D.x}, y={probeState.D.y}, yaw={probeState.D.yaw}, pitch={probeState.D.pitch}, z={probeState.D.z}
-                </div>
-            </div>
-
-            {renderProbe({
-                id: 'A',
-                label: 'upright y45',
-                x: probeState.A.x,
-                y: probeState.A.y,
-                transform: `translateZ(${probeState.A.z}px) rotateX(${probeState.A.pitch}deg) rotateY(${probeState.A.yaw}deg)`,
-            })}
-            {renderProbe({
-                id: 'D',
-                label: 'billboard upright',
-                x: probeState.D.x,
-                y: probeState.D.y,
-                transform: `translateZ(${probeState.D.z}px) rotateX(${-(tiltValue + cameraRotateXDeg) + probeState.D.pitch}deg) rotateY(${-cameraRotateYDeg + probeState.D.yaw}deg)`,
-            })}
-
-            {staticRefs.map(renderProbe)}
-        </>
     );
 };
 
