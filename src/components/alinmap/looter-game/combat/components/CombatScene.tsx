@@ -6,7 +6,8 @@ import type { LooterItem } from '../../backpack/types';
 
 interface CombatSceneProps {
     encounter: Encounter;
-    phase: 'ready' | 'fighting' | 'result';
+    phase: 'ready' | 'countdown' | 'fighting' | 'result';
+    countdown?: number;
     flyingItem: { item: LooterItem; from: 'A' | 'B'; damage: number } | null;
     handleStart: () => void;
     skipCombat: () => void;
@@ -15,7 +16,7 @@ interface CombatSceneProps {
 }
 
 export const CombatScene: React.FC<CombatSceneProps> = ({
-    encounter, phase, flyingItem, handleStart, skipCombat, setShowFleeConfirm, isHUDMode
+    encounter, phase, countdown = 0, flyingItem, handleStart, skipCombat, setShowFleeConfirm, isHUDMode
 }) => {
     if (isHUDMode) {
         return (
@@ -50,6 +51,29 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Countdown Overlay */}
+                {phase === 'countdown' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-50">
+                        <motion.div
+                            key={countdown}
+                            initial={{ scale: 2, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            className="text-center"
+                        >
+                            {countdown > 0 ? (
+                                <span className="text-7xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)]">
+                                    {countdown}
+                                </span>
+                            ) : (
+                                <span className="text-4xl font-black text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.8)]">
+                                    FIGHT!
+                                </span>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
 
                 {/* Start Button - Floating Center */}
                 {phase === 'ready' && (
@@ -125,6 +149,29 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                 <span className="text-4xl md:text-5xl" style={{ transform: 'scaleX(-1)' }}>🚢</span>
                 <span className="text-[10px] font-black text-red-200 bg-black/40 px-2 py-0.5 rounded-full mt-1 max-w-[80px] truncate">{encounter.name}</span>
             </motion.div>
+
+            {/* Countdown Overlay - Non-HUD */}
+            {phase === 'countdown' && (
+                <div className="absolute inset-0 flex items-center justify-center z-50">
+                    <motion.div
+                        key={countdown}
+                        initial={{ scale: 2, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        className="text-center"
+                    >
+                        {countdown > 0 ? (
+                            <span className="text-7xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)]">
+                                {countdown}
+                            </span>
+                        ) : (
+                            <span className="text-4xl font-black text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.8)]">
+                                FIGHT!
+                            </span>
+                        )}
+                    </motion.div>
+                </div>
+            )}
 
             {/* Flying item animation */}
             <AnimatePresence mode="popLayout">

@@ -189,8 +189,8 @@ const CombatScreen: React.FC = () => {
             {/* 6. Fighting Scene (Start/Skip/Flee Buttons & Flying Items) */}
             {!state.showCurseModal && (
                 <div className="absolute inset-0 pointer-events-none">
-                     <CombatScene 
-                        encounter={encounter} phase={combat.phase} flyingItem={combat.flyingItem}
+                     <CombatScene
+                        encounter={encounter} phase={combat.phase} countdown={combat.countdown} flyingItem={combat.flyingItem}
                         handleStart={combat.handleStart} skipCombat={combat.skipCombat}
                         setShowFleeConfirm={setShowFleeConfirm}
                         isHUDMode={true}

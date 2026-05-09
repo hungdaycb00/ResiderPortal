@@ -75,6 +75,7 @@ export function useAlinWebSocket({
   const pendingJoinRef = useRef(false);
   const lastPositionKeyRef = useRef('');
   const reconnectAttemptsRef = useRef(0);
+  const lastNearbyUsersTsRef = useRef(0);
 
   const positionRef = useRef(position);
   const myObfPosRef = useRef(myObfPos);
@@ -217,11 +218,7 @@ export function useAlinWebSocket({
 
     socket.onmessage = (event) => {
       const data = parseWsMessage(event.data);
-      if (!data?.type) {
-        addLog('Ignored malformed WebSocket message');
-        return;
-      }
-      addLog(`Received: ${data.type}`);
+      if (!data?.type) return;
 
       if (data.type === 'JOIN_SUCCESS') {
         const p = data.payload || {};
@@ -266,6 +263,10 @@ export function useAlinWebSocket({
       }
 
       if (data.type === 'NEARBY_USERS') {
+        const now = Date.now();
+        if (now - lastNearbyUsersTsRef.current < 500) return;
+        lastNearbyUsersTsRef.current = now;
+
         const currentMyUserId = myUserIdRef.current;
         const currentSearchTag = searchTagRef.current;
         const currentSelectedUser = selectedUserRef.current;

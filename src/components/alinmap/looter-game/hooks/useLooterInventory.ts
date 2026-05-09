@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { findEmptySlotFor } from '../utils/looterHelpers';
 import { looterApi } from '../services/looterApi';
@@ -40,8 +40,7 @@ export function useLooterInventory({
   consumedSpawnIdsRef
 }: UseLooterInventoryProps) {
 
-
-
+  const lastPickupTimeRef = useRef(0);
 
   const equipBag = useCallback(async (itemUid: string) => {
     const itemToEquip = state.inventory.find(i => i.uid === itemUid);
@@ -229,6 +228,10 @@ export function useLooterInventory({
 
   const pickupItem = useCallback(async (spawnId: string, directItem?: WorldItem, currentLat?: number, currentLng?: number) => {
     if (!deviceId) return;
+    // Rate limiting: chặn gọi API quá nhanh (tối thiểu 800ms giữa các lần pickup)
+    const now = Date.now();
+    if (now - lastPickupTimeRef.current < 800) return;
+    lastPickupTimeRef.current = now;
     
     // Tìm vật phẩm ngay lập tức từ tham số hoặc từ state hiện tại (để tránh race condition)
     let pickedWorldItem = directItem;

@@ -131,6 +131,7 @@ function SceneContent({
     const lastLiftZRef = useRef(0);
     const lastTiltRef = useRef(0);
     const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
+    const frameSkipRef = useRef(0);
     const groundMeshRef = useRef<Mesh>(null);
     const { scene } = useThree();
     const looterState = useLooterState();
@@ -202,18 +203,21 @@ function SceneContent({
             lastTiltRef.current = tilt;
         }
 
-        // Cập nhật vị trí thuyền thực tế để DashedPath luôn bắt đúng điểm
+        // Cập nhật vị trí thuyền thực tế để DashedPath luôn bắt đúng điểm (mỗi 3 frame để giảm rAF cost)
         if (position && isLooterGameMode) {
-            const origin2: LatLng = { lat: position[0], lng: position[1] };
-            const sp = worldToScene(origin2, origin2);
-            const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
-            const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
-            const nx = sp.x + pxToScene(visualBoatX);
-            const nz = sp.z + pxToScene(visualBoatY);
-            const [lx, , lz] = lastBoatPosRef.current;
-            if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
-                boatPosRef.current = [nx, 5.0, nz];
-                lastBoatPosRef.current = [nx, 0, nz];
+            frameSkipRef.current = (frameSkipRef.current + 1) % 3;
+            if (frameSkipRef.current === 0) {
+                const origin2: LatLng = { lat: position[0], lng: position[1] };
+                const sp = worldToScene(origin2, origin2);
+                const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
+                const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
+                const nx = sp.x + pxToScene(visualBoatX);
+                const nz = sp.z + pxToScene(visualBoatY);
+                const [lx, , lz] = lastBoatPosRef.current;
+                if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
+                    boatPosRef.current = [nx, 5.0, nz];
+                    lastBoatPosRef.current = [nx, 0, nz];
+                }
             }
         }
     });
@@ -599,6 +603,7 @@ function SceneContent({
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
                         scale={2}
+                        size={AVATAR_PLANE_SIZE * 1.8}
                         renderOrder={40}
                         onClick={() => handleWorldItemClick(item)}
                     />

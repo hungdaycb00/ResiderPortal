@@ -41,6 +41,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 accent="#38bdf8"
                 scale={scale}
                 size={AVATAR_PLANE_SIZE * 1.1}
+                interactive={false}
             />
         </group>
     );

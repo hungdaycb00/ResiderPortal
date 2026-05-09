@@ -189,6 +189,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     style={{
                         '--alin-map-perspective-px': `${perspectivePx}px`,
                         '--alin-map-perspective-origin-y': `${cameraHeightPct}%`,
+                        touchAction: 'none',
                     } as React.CSSProperties}
                     onPointerDown={handleMapPointerDown}
                     onPointerMove={handleMapPointerMove}

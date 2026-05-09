@@ -18,7 +18,8 @@ interface UseCombatLoopProps {
 export function useCombatLoop({
     state, encounter, executeCombat, setCombatResult, showNotification
 }: UseCombatLoopProps) {
-    const [phase, setPhase] = useState<'ready' | 'fighting' | 'result'>('ready');
+    const [phase, setPhase] = useState<'ready' | 'countdown' | 'fighting' | 'result'>('ready');
+    const [countdown, setCountdown] = useState(3);
     const [pendingResult, setPendingResult] = useState<CombatResult | null>(null);
     const [actionProgressA, setActionProgressA] = useState(0);
     const [actionProgressB, setActionProgressB] = useState(0);
@@ -170,6 +171,21 @@ export function useCombatLoop({
 
     const handleStart = async () => {
         if (!encounter) return;
+        // Countdown 3-2-1-Fight trước khi bắt đầu combat
+        setPhase('countdown');
+        setCountdown(3);
+        await new Promise<void>(resolve => {
+            let tick = 3;
+            const timer = setInterval(() => {
+                tick--;
+                setCountdown(tick);
+                if (tick <= 0) {
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 700);
+        });
+
         setPhase('fighting');
         hpARef.current = maxHpA;
         hpBRef.current = maxHpB;
@@ -229,7 +245,7 @@ export function useCombatLoop({
     }, []);
 
     return {
-        phase, setPhase,
+        phase, setPhase, countdown,
         pendingResult, setPendingResult,
         actionProgressA, actionProgressB,
         hpA, hpB,
