@@ -5,8 +5,9 @@ import { simulateCombat } from '../engine/combat';
 import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/utils';
 import { FORTRESS_INTERACTION_METERS, isValidWorldItem, sanitizeWorldItems } from '../LooterGameContext';
 import type { LooterChunkCacheEntry, LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
+import { GAME_CONFIG } from '../gameConfig';
 
-const LOOT_RENDER_LIMIT = 5;
+const LOOT_RENDER_LIMIT = 12;
 
 interface UseLooterStateManagerProps {
   deviceId: string | null;
@@ -48,7 +49,7 @@ export function useLooterStateManager({
   const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => {
     if (!deviceId) return;
     try {
-      const radius = 4;
+      const radius = GAME_CONFIG.CHUNK_FETCH_RADIUS;
       const now = Date.now();
       const cacheTtlMs = forceActive ? 0 : 90_000;
       const maxCacheEntries = 80;

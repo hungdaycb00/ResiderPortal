@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
-import MapTiles from './MapTiles';
+
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';

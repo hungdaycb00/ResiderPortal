@@ -12,7 +12,7 @@ export const GAME_CONFIG = {
   // UI & UX
   SYNC_HEARTBEAT_MS: 30000,
   NOTIFY_DURATION_MS: 3000,
-  
+
   // Inventory Scaling (Grid sizes)
   GRID_MIN_W: 4,
   GRID_MIN_H: 4,
@@ -24,10 +24,17 @@ export const GAME_CONFIG = {
   CURSE_GAIN_MOVE_BASE: 0.1, // % per meter
   CURSE_GAIN_PICKUP: 5,     // % flat
   CURSE_GAIN_MINIGAME_LOSE: 15, // % flat
-  
+
   // Tiers
   TIER_MAX: 5,
   TIER_COSTS: [0, 50, 150, 450, 1000, 2500],
+
+  // Spawn
+  SPAWN_MIN_DISTANCE_FROM_FORTRESS: 1500,
+  SPAWN_MIN_ITEM_SPACING: 2000,
+  SPAWN_MAX_ITEM_SPACING: 5000,
+  SPAWN_RING_RADIUS: 10000,
+  CHUNK_FETCH_RADIUS: 10,
 };
 
 export default GAME_CONFIG;
