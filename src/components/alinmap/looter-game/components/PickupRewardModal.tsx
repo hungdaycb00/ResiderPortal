@@ -15,11 +15,7 @@ const PickupRewardModal: React.FC<PickupRewardModalProps> = ({
     <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm">
         <div className="w-full max-w-xs rounded-3xl border border-cyan-700/40 bg-[#08131d] p-6 text-center shadow-2xl">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-cyan-700/40 bg-[#0d2137] text-5xl shadow-inner">
-                {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-16 h-16 object-contain drop-shadow-md" />
-                ) : (
-                    item.icon
-                )}
+                {item.icon}
             </div>
             <p className="mt-4 text-lg font-black text-cyan-100">{item.name}</p>
             <div className="mt-4 grid grid-cols-2 gap-2 text-left text-xs text-cyan-100/85">

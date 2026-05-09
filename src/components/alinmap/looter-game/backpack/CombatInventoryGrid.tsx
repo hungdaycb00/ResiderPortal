@@ -286,11 +286,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
               }}
               title={`${item.name}\n${item.weight} DMG | +${item.hpBonus} HP\n${item.price}g | ${item.gridW}x${item.gridH}`}
             >
-              {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1" />
-              ) : (
-                <span className="text-lg leading-none drop-shadow-md">{item.icon}</span>
-              )}
+              <span className="text-lg leading-none drop-shadow-md">{item.icon}</span>
               {(w * cellSize > 50 || h * cellSize > 50) && (
                 <span className="text-[8px] font-bold text-gray-700 leading-tight truncate max-w-full px-0.5">{item.name}</span>
               )}
@@ -309,11 +305,7 @@ const CombatInventoryGrid: React.FC<CombatInventoryGridProps> = ({
             }}
           >
             <div className={`w-full h-full rounded-md border-2 flex items-center justify-center shadow-2xl ${RARITY_COLORS[dragItem.rarity] || ''}`}>
-              {dragItem.imageUrl ? (
-                <img src={dragItem.imageUrl} alt={dragItem.name} className="w-full h-full object-contain p-1" />
-              ) : (
-                <span className="text-2xl">{dragItem.icon}</span>
-              )}
+              <span className="text-2xl">{dragItem.icon}</span>
             </div>
           </div>
         )}

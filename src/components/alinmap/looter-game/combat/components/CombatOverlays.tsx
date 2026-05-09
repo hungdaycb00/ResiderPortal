@@ -92,11 +92,7 @@ export const CombatResultOverlay: React.FC<CombatResultOverlayProps> = ({
                                         onClick={() => onSelectItem(selectedItem?.uid === item.uid ? null : item)}
                                         className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition-all active:scale-90 ${selectedItem?.uid === item.uid ? 'bg-amber-500/30 ring-2 ring-amber-400' : 'bg-white/5 hover:bg-white/10'}`}
                                     >
-                                        {item.imageUrl ? (
-                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1" />
-                                        ) : (
-                                            item.icon
-                                        )}
+                                        {item.icon}
                                     </div>
                                 ))}
                             </div>
@@ -118,13 +114,7 @@ export const CombatResultOverlay: React.FC<CombatResultOverlayProps> = ({
                             <p className="text-xs font-bold text-red-300 uppercase tracking-widest mb-3">Vật phẩm bị mất (75%)</p>
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {result.droppedItems.map((item: any) => (
-                                    <div key={item.uid} className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xl opacity-40" title={item.name}>
-                                        {item.imageUrl ? (
-                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain p-1" />
-                                        ) : (
-                                            item.icon
-                                        )}
-                                    </div>
+                                    <div key={item.uid} className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xl opacity-40" title={item.name}>{item.icon}</div>
                                 ))}
                             </div>
                         </div>

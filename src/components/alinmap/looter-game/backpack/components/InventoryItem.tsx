@@ -110,11 +110,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         })
       )}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain drop-shadow-md select-none p-1" />
-        ) : (
-          <span className="text-4xl drop-shadow-md select-none">{item.icon}</span>
-        )}
+        <span className="text-4xl drop-shadow-md select-none">{item.icon}</span>
       </div>
     </motion.div>
   );

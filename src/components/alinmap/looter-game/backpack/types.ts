@@ -7,7 +7,6 @@ export interface LooterItem {
   id: string;
   name: string;
   icon: string;
-  imageUrl?: string;
   type?: 'item' | 'bag' | 'portal' | 'grid_expander';
   rarity: string;
   tier: number;
