@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Database, X, Package, Home, Truck, DollarSign } from 'lucide-react';
 import { useLooterGame } from '../../../looter-game/LooterGameContext';
 import { InventoryGrid, MAX_GRID_W } from '../../../looter-game/backpack';
+import StorageEdgeControls from '../../../bottom-sheet/StorageEdgeControls';
 import type { LooterItem, BagItem } from '../../../looter-game/backpack';
 
 const STORAGE_GRID_W = MAX_GRID_W;
@@ -75,6 +76,7 @@ export default function IntegratedStoragePanel() {
     isItemDragging,
     setIsItemDragging,
     setIsIntegratedStorageOpen,
+    toggleIntegratedStorage,
     openFortressStorage,
     saveStorage,
     savePortalStorage,
@@ -205,6 +207,15 @@ export default function IntegratedStoragePanel() {
             </div>
             
             <div className="flex items-center gap-2">
+              {!isPortalMode && (
+                <StorageEdgeControls
+                  isItemDragging={isItemDragging}
+                  showFortressStorageButton={true}
+                  showStorageEdgeControls={true}
+                  setIsSheetExpanded={() => {}}
+                  toggleIntegratedStorage={toggleIntegratedStorage}
+                />
+              )}
               <div className="hidden items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold text-white/40 md:flex">
                 <Package className="h-3 w-3" />
                 {storageItems.length} VẬT PHẨM

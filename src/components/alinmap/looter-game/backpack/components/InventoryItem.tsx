@@ -69,7 +69,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
         const now = Date.now();
         const timeDiff = now - lastClickTimeRef.current;
 
-        if (timeDiff < 200) {
+        if (timeDiff < 350) {
           // CUSTOM DOUBLE CLICK DETECTED
           if (clickTimerRef.current) {
             clearTimeout(clickTimerRef.current);
@@ -85,7 +85,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
             clickTimerRef.current = setTimeout(() => {
               onClick?.();
               clickTimerRef.current = null;
-            }, 200);
+            }, 350);
           } else {
             onClick?.();
           }

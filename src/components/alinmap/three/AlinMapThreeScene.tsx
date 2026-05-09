@@ -417,6 +417,26 @@ function SceneContent({
         }
     }, [onSelfDragEnd, scale, planeYScale, selfDragX, selfDragY, position]);
 
+    // Waypoint: 3 item gần nhất, bypass culling — rendered separately with larger scale
+    const waypointItems = React.useMemo(() => {
+        if (!isLooterGameMode || !safeWorldItems.length) return [];
+        const curLat = looterStateObj?.currentLat ?? origin.lat;
+        const curLng = looterStateObj?.currentLng ?? origin.lng;
+        return safeWorldItems
+            .filter((i: any) => i.item?.type !== 'portal')
+            .map((i: any) => ({
+                item: i,
+                dist: (i.lat - curLat) ** 2 + (i.lng - curLng) ** 2,
+            }))
+            .sort((a, b) => a.dist - b.dist)
+            .slice(0, 3)
+            .map(e => e.item);
+    }, [isLooterGameMode, safeWorldItems, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
+
+    const waypointSpawnIds = React.useMemo(() =>
+        new Set(waypointItems.map((i: any) => i.spawnId))
+    , [waypointItems]);
+
     const renderedWorldItems = useMemo(() => {
         if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
         const centerLat = looterStateObj?.currentLat ?? origin.lat;
@@ -426,6 +446,7 @@ function SceneContent({
 
         return safeWorldItems
             .filter((item: any) => Math.abs(item.lat - centerLat) <= cullDeg && Math.abs(item.lng - centerLng) <= cullDeg)
+            .filter((item: any) => !waypointSpawnIds.has(item.spawnId))
             .map((item: any) => {
                 const dLat = item.lat - centerLat;
                 const dLng = item.lng - centerLng;
@@ -444,6 +465,7 @@ function SceneContent({
         origin.lat,
         origin.lng,
         safeWorldItems,
+        waypointSpawnIds,
     ]);
 
     // Precompute scene positions — avoids calling worldToScene inside .map() (eliminates ~132 object allocations/render)
@@ -460,6 +482,13 @@ function SceneContent({
             pos: worldToScene(origin, { lat: item.lat, lng: item.lng }),
         }))
     , [renderedWorldItems, origin.lat, origin.lng]);
+
+    const waypointRenderData = useMemo(() =>
+        waypointItems.map((item: any) => ({
+            item,
+            pos: worldToScene(origin, { lat: item.lat, lng: item.lng }),
+        }))
+    , [waypointItems, origin.lat, origin.lng]);
 
     if (!position) return null;
 
@@ -564,6 +593,22 @@ function SceneContent({
                 {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
                     <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} onClick={handleFortressClick} />
                 ) : null}
+
+                {/* Waypoint: 3 item gần nhất — luôn hiển thị, to hơn và cao hơn item thường */}
+                {waypointRenderData.map(({ item, pos }) => (
+                    <LootSprite
+                        key={`wp-${item.spawnId}`}
+                        position={[pos.x, 3.5, pos.z]}
+                        type={getWorldItemType(item)}
+                        icon={getWorldItemIcon(item)}
+                        title={item?.item?.name || 'Loot'}
+                        accent={getWorldItemAccent(item)}
+                        scale={2.4}
+                        size={AVATAR_PLANE_SIZE * 2.0}
+                        renderOrder={50}
+                        onClick={() => handleWorldItemClick(item)}
+                    />
+                ))}
 
                 {/* Đường nét đứt từ thuyền → target (chỉ khi có target và không combat) */}
                 {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (

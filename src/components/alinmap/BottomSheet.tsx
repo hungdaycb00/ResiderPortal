@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BottomSheetContent from './bottom-sheet/BottomSheetContent';
 import SheetHeader from './bottom-sheet/SheetHeader';
-import StorageEdgeControls from './bottom-sheet/StorageEdgeControls';
+
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './bottom-sheet/types';
 import { isLooterAtFortress, useLooterGame } from './looter-game/LooterGameContext';
 
@@ -69,9 +69,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
 
     const isWhiteBg = mainTab !== 'backpack';
     const isPortalStorageOpen = mainTab === 'backpack' && isIntegratedStorageOpen && fortressStorageMode === 'portal';
-    const showFortressStorageButton = mainTab === 'backpack' && !isPortalStorageOpen && (looterState.worldTier ?? -1) === -1 && isLooterAtFortress(looterState);
-    const showStorageEdgeControls = showFortressStorageButton || isPortalStorageOpen;
-
     return (
         <div
             className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : (mainTab === 'backpack' ? 'top-0 bottom-0 overflow-visible w-full' : 'top-0 bottom-0 overflow-hidden w-full')}`}
@@ -108,14 +105,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     }
                 }}
             >
-                <StorageEdgeControls
-                    isItemDragging={isItemDragging}
-                    showFortressStorageButton={showFortressStorageButton}
-                    showStorageEdgeControls={showStorageEdgeControls}
-                    setIsSheetExpanded={setIsSheetExpanded}
-                    toggleIntegratedStorage={toggleIntegratedStorage}
-                />
-
                 <button
                     onClick={() => {
                         if (!isItemDragging) setIsSheetExpanded(!isSheetExpanded);

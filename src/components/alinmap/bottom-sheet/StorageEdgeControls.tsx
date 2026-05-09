@@ -19,7 +19,7 @@ const StorageEdgeControls: React.FC<StorageEdgeControlsProps> = ({
     if (!showStorageEdgeControls) return null;
 
     return (
-        <div className="absolute -top-12 left-3 z-[190] flex items-center gap-2 md:top-4 md:-left-14 md:flex-col md:gap-3">
+        <div className="absolute -top-12 left-3 z-[190] flex items-center gap-2 md:static md:flex-row md:gap-3">
             {showFortressStorageButton && (
                 <button
                     type="button"

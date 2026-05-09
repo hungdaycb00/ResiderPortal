@@ -58,7 +58,7 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
     <AnimatePresence>
       <div 
         className="fixed inset-0 z-[100] pointer-events-auto" 
-        onPointerDown={(e) => {
+        onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}

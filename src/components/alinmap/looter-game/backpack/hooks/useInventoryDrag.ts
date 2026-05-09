@@ -166,7 +166,7 @@ export function useInventoryDrag({
     if (dragStartInfo && !draggingItem) {
         const dx = e.clientX - dragStartInfo.x;
         const dy = e.clientY - dragStartInfo.y;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
             const item = dragStartInfo.item;
             const rect = container.getBoundingClientRect();
             const isBag = (item as any).type === 'bag';
