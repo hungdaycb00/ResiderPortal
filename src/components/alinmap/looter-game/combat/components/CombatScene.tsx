@@ -40,7 +40,13 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                             transition={{ duration: 0.5, ease: 'easeIn' }}
                             className="absolute z-50 flex flex-col items-center -ml-4 -mt-4"
                         >
-                            <span className="text-4xl drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">{flyingItem.item.icon}</span>
+                            <div className="w-12 h-12 flex items-center justify-center drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                                {flyingItem.item.imageUrl ? (
+                                    <img src={flyingItem.item.imageUrl} alt={flyingItem.item.name} className="w-full h-full object-contain" />
+                                ) : (
+                                    <span className="text-4xl">{flyingItem.item.icon}</span>
+                                )}
+                            </div>
                             <motion.span 
                                 initial={{ y: 0, opacity: 1 }}
                                 animate={{ y: -20, opacity: 0 }}
@@ -184,7 +190,13 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                         transition={{ duration: 0.6, ease: 'easeIn' }}
                         className="absolute z-50 flex flex-col items-center"
                     >
-                        <span className="text-4xl">{flyingItem.item.icon}</span>
+                        <div className="w-10 h-10 flex items-center justify-center">
+                            {flyingItem.item.imageUrl ? (
+                                <img src={flyingItem.item.imageUrl} alt={flyingItem.item.name} className="w-full h-full object-contain" />
+                            ) : (
+                                <span className="text-4xl">{flyingItem.item.icon}</span>
+                            )}
+                        </div>
                         <span className="text-xl font-black text-red-500 bg-black/60 px-2 rounded">-{flyingItem.damage}</span>
                     </motion.div>
                 )}

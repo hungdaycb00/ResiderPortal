@@ -13,14 +13,15 @@ const BASE_ITEMS = [
   { id: 'baby_shark',     name: 'Cá Mập Con',     icon: '🦈', rarity: RARITY.COMMON,   price: 15,  weight: { min: 30, max: 50 },  hpBonus: 0,                   energyMax: 0, energyRegen: 2, energyCost: 80, gridW: 2, gridH: 2, shape: ITEM_SHAPES.SQUARE_2x2 },
   { id: 'small_whale',    name: 'Cá Voi Nhỏ',     icon: '🐋', rarity: RARITY.COMMON,   price: 25,  weight: { min: 50, max: 80 },  hpBonus: 20,                  energyMax: 10, energyRegen: 0, energyCost: 120, gridW: 3, gridH: 2 },
   
-  { id: 'ancient_sword',  name: 'Kiếm Cổ',         icon: '🗡️', rarity: RARITY.RARE,     price: 60,  weight: { min: 60, max: 100 }, hpBonus: 0,  energyMax: 20, energyRegen: 0,  energyCost: 150, gridW: 1, gridH: 3 },
+  { id: 'ancient_sword',  name: 'Kiếm Cổ',         icon: '🗡️', imageUrl: '/assets/looter/magic_sword.png', rarity: RARITY.RARE,     price: 60,  weight: { min: 60, max: 100 }, hpBonus: 0,  energyMax: 20, energyRegen: 0,  energyCost: 150, gridW: 1, gridH: 3 },
   { id: 'trident',        name: 'Trident Poseidon', icon: '🔱', rarity: RARITY.LEGENDARY, price: 300, weight: { min: 120, max: 200 }, hpBonus: 0,  energyMax: 50, energyRegen: 0,  energyCost: 250, gridW: 1, gridH: 4 },
 
   // --- HỆ PHỤ KIỆN (Stats & Support - Sát thương không đáng kể) ---
+  { id: 'health_potion',  name: 'Bình Máu',       icon: '🧪', imageUrl: '/assets/looter/health_potion.png', rarity: RARITY.UNCOMMON, price: 15,  weight: { min: 5, max: 10 }, hpBonus: 50, energyMax: 0, energyRegen: 0, energyCost: 10, gridW: 1, gridH: 1 },
   { id: 'coral_small',    name: 'San Hô Nhỏ',     icon: '🪸', rarity: RARITY.UNCOMMON, price: 3,   weight: { min: 0.1, max: 0.5 }, hpBonus: 10, energyMax: 5,  energyRegen: 2,  energyCost: 10, gridW: 1, gridH: 1 },
   { id: 'coral_reef',     name: 'Rạn San Hô',     icon: '🏝️', rarity: RARITY.UNCOMMON, price: 50,  weight: { min: 1.0, max: 2.0 }, hpBonus: 50, energyMax: 30, energyRegen: 10, energyCost: 30, gridW: 3, gridH: 3, shape: ITEM_SHAPES.CROSS_3x3 },
   { id: 'black_pearl',    name: 'Ngọc Trai Đen',   icon: '🖤', rarity: RARITY.LEGENDARY, price: 200, weight: { min: 2.0, max: 5.0 }, hpBonus: 150, energyMax: 80, energyRegen: 20, energyCost: 50, gridW: 1, gridH: 1 },
-  { id: 'gold_chest',     name: 'Rương Vàng Cổ',   icon: '💰', rarity: RARITY.LEGENDARY, price: 500, weight: { min: 5.0, max: 10.0 }, hpBonus: 100, energyMax: 100, energyRegen: 15, energyCost: 80, gridW: 3, gridH: 2 },
+  { id: 'gold_chest',     name: 'Rương Vàng Cổ',   icon: '💰', imageUrl: '/assets/looter/treasure_chest.png', rarity: RARITY.LEGENDARY, price: 500, weight: { min: 5.0, max: 10.0 }, hpBonus: 100, energyMax: 100, energyRegen: 15, energyCost: 80, gridW: 3, gridH: 2 },
 ];
 
 const GRID_EXPANDERS = [
@@ -46,6 +47,7 @@ function getScaledItem(baseItem, tier) {
     id: baseItem.id,
     name: baseItem.name,
     icon: baseItem.icon,
+    imageUrl: baseItem.imageUrl,
     rarity: baseItem.rarity,
     tier,
     price: Math.round(baseItem.price * mult),

@@ -73,7 +73,13 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-3">
-          <div className="text-4xl">{displayItem.icon}</div>
+          <div className="text-4xl w-12 h-12 flex items-center justify-center">
+            {displayItem.imageUrl ? (
+              <img src={displayItem.imageUrl} alt={displayItem.name} className="w-full h-full object-contain" />
+            ) : (
+              displayItem.icon
+            )}
+          </div>
           <div>
             <h3 className="font-bold text-white text-lg">{displayItem.name}</h3>
             <span className={`text-xs uppercase font-black ${RARITY_COLORS[displayItem.rarity]?.split(' ')[1] || 'text-white'}`}>

@@ -1,8 +1,10 @@
 import React from 'react';
+import { MotionValue } from 'framer-motion';
 import { useLooterGame } from './looter-game/LooterGameContext';
 import MapControlsQuickActions from './MapControlsQuickActions';
 import MapControlsWeatherWidget from './MapControlsWeatherWidget';
 import MapControlsFiltersSidebar from './MapControlsFiltersSidebar';
+import ZoomSlider from './components/ZoomSlider';
 
 interface MapControlsProps {
     isConnecting: boolean;
@@ -29,6 +31,8 @@ interface MapControlsProps {
     handleCenter: () => void;
     handleCenterTo: (lat: number, lng: number, offset?: number) => void;
     setMapMode: (v: 'grid' | 'satellite') => void;
+    cameraZ: MotionValue<number>;
+    setCameraZ: (z: number) => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
     isSheetExpanded: boolean;
@@ -59,6 +63,8 @@ const MapControls: React.FC<MapControlsProps> = ({
     handleCenter,
     handleCenterTo,
     setMapMode,
+    cameraZ,
+    setCameraZ,
     isWidgetExpanded,
     setIsWidgetExpanded,
     isSheetExpanded,
@@ -78,6 +84,9 @@ const MapControls: React.FC<MapControlsProps> = ({
                     handleCenter={handleCenter}
                     setMapMode={setMapMode}
                 />
+                {!isLooterGameMode && (
+                    <ZoomSlider cameraZ={cameraZ} setCameraZ={setCameraZ} />
+                )}
             </div>
 
             {!isLooterGameMode && (

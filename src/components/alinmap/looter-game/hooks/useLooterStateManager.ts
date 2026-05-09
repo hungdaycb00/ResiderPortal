@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { looterApi } from '../services/looterApi';
-import { chunkKey, createPortalWorldItems, getActiveChunkKeys, getChunkCoords } from '../utils/looterHelpers';
+import { createPortalWorldItems } from '../utils/looterHelpers';
 import { simulateCombat } from '../engine/combat';
 import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/utils';
-import { FORTRESS_INTERACTION_METERS, isValidWorldItem, sanitizeWorldItems } from '../LooterGameContext';
-import type { LooterChunkCacheEntry, LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
-import { GAME_CONFIG } from '../gameConfig';
+import { FORTRESS_INTERACTION_METERS, sanitizeWorldItems } from '../LooterGameContext';
+import type { LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
 
 const LOOT_RENDER_LIMIT = 12;
 
@@ -21,7 +20,7 @@ interface UseLooterStateManagerProps {
   saveBags?: (bags: BagItem[]) => void;
   syncState: (state: LooterGameState) => void;
   isChallengeActive: boolean;
-  chunkCacheRef: React.MutableRefObject<Map<string, LooterChunkCacheEntry>>;
+  chunkCacheRef: React.MutableRefObject<Map<string, any>>;
   consumedSpawnIdsRef: React.MutableRefObject<Set<string>>;
   saveInventory?: (inventory: LooterItem[]) => Promise<boolean>;
 }
@@ -42,146 +41,40 @@ export function useLooterStateManager({
   consumedSpawnIdsRef,
   saveInventory
 }: UseLooterStateManagerProps) {
-  const chunkBackoffUntilRef = useRef(0);
-  const chunkRequestRef = useRef<Promise<any> | null>(null);
-  const chunkRequestKeyRef = useRef('');
 
   const loadWorldItems = useCallback(async (forceActive?: boolean, centerOverride?: { lat: number; lng: number; fortressLat?: number | null; fortressLng?: number | null }) => {
     if (!deviceId) return;
     try {
-      const radius = GAME_CONFIG.CHUNK_FETCH_RADIUS;
-      const now = Date.now();
-      const cacheTtlMs = forceActive ? 0 : 90_000;
-      const maxCacheEntries = 80;
       const centerLat = centerOverride?.lat ?? state.currentLat;
       const centerLng = centerOverride?.lng ?? state.currentLng;
       const fortressLat = centerOverride?.fortressLat ?? state.fortressLat;
       const fortressLng = centerOverride?.fortressLng ?? state.fortressLng;
-      const centerChunk = getChunkCoords(
-        centerLat,
-        centerLng,
-        fortressLat,
-        fortressLng
-      );
-      const chunkKeys = getActiveChunkKeys(centerChunk, radius);
-      const cache = chunkCacheRef.current;
-      const missingKeys = chunkKeys.filter((key) => {
-        const cached = cache.get(key);
-        return !cached || now - cached.touchedAt > cacheTtlMs;
-      });
-
-      if (missingKeys.length > 0 && now >= chunkBackoffUntilRef.current) {
-        let data: any = null;
-        try {
-          const requestKey = missingKeys.join(',');
-          if (!chunkRequestRef.current || chunkRequestKeyRef.current !== requestKey) {
-            chunkRequestKeyRef.current = requestKey;
-            chunkRequestRef.current = looterApi.fetchChunks(apiUrl, deviceId, missingKeys)
-              .finally(() => {
-                chunkRequestRef.current = null;
-                chunkRequestKeyRef.current = '';
-              });
-          }
-          data = await chunkRequestRef.current;
-        } catch (chunkErr) {
-        }
-        if (data?.success) {
-          const fetchedItems = sanitizeWorldItems(data.items);
-          const fetchedByChunk = new Map<string, WorldItem[]>();
-
-          for (const item of fetchedItems) {
-            if (item.chunkX == null || item.chunkY == null) continue;
-            const key = chunkKey(item.chunkX, item.chunkY);
-            if (!fetchedByChunk.has(key)) fetchedByChunk.set(key, []);
-            fetchedByChunk.get(key)!.push(item);
-          }
-
-          for (const key of missingKeys) {
-            const [chunkXRaw, chunkYRaw] = key.split(':');
-            const chunkX = Number(chunkXRaw);
-            const chunkY = Number(chunkYRaw);
-            cache.set(key, {
-              key,
-              chunkX,
-              chunkY,
-              items: sanitizeWorldItems(fetchedByChunk.get(key)).filter(item => !consumedSpawnIdsRef.current.has(item.spawnId)),
-              touchedAt: now,
-            });
-          }
-        } else if (data?.rateLimited) {
-          chunkBackoffUntilRef.current = Date.now() + Math.max(1000, Number(data.retryAfter || 1500));
-        } else if (cache.size === 0) {
-          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
-          if (fallback.success) {
-            const portalItems = sanitizeWorldItems(createPortalWorldItems(fortressLat, fortressLng, centerLat, centerLng));
-            const mapItems = sanitizeWorldItems(fallback.items);
-            const curLat = centerLat ?? state.fortressLat ?? 0;
-            const curLng = centerLng ?? state.fortressLng ?? 0;
-            const normalItems = mapItems
-              .filter((item) => (item as any)?.item?.type !== 'portal')
-              .sort((a, b) => {
-                const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
-                const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
-                return ad - bd;
-              })
-              .slice(0, LOOT_RENDER_LIMIT);
-            setWorldItems([...portalItems, ...normalItems]);
-          }
-          return;
-        }
-      }
-
-      for (const key of chunkKeys) {
-        const cached = cache.get(key);
-        if (cached) cached.touchedAt = now;
-      }
-
-      if (cache.size > maxCacheEntries) {
-        const entries = Array.from(cache.entries()).sort((a, b) => b[1].touchedAt - a[1].touchedAt);
-        for (const [key] of entries.slice(maxCacheEntries)) cache.delete(key);
-      }
 
       const portalItems = sanitizeWorldItems(createPortalWorldItems(fortressLat, fortressLng, centerLat, centerLng));
       const curLat = centerLat ?? state.fortressLat ?? 0;
       const curLng = centerLng ?? state.fortressLng ?? 0;
-      const normalItems = chunkKeys
-        .flatMap(key => cache.get(key)?.items || [])
-        .filter(isValidWorldItem)
-        .filter((item) => !consumedSpawnIdsRef.current.has(item.spawnId) && (item as any)?.item?.type !== 'portal')
-        .sort((a, b) => {
-          const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
-          const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
-          return ad - bd;
-        })
-        .slice(0, LOOT_RENDER_LIMIT);
 
-      let items = sanitizeWorldItems([...portalItems, ...normalItems]);
-      if (!forceActive && !isChallengeActive) {
-        items = sanitizeWorldItems([...portalItems, ...normalItems]);
-      }
-      setWorldItems(items);
+      // Primary: proximity-based world-items (DB-persisted, 5km radius)
+      const worldData = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
+      if (worldData?.success) {
+        const fetchedItems = sanitizeWorldItems(worldData.items)
+          .filter(item => !consumedSpawnIdsRef.current.has(item.spawnId));
 
-      if (normalItems.length < 2) {
-        try {
-          const fallback = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
-          if (fallback.success) {
-              const fallbackItems = sanitizeWorldItems(fallback.items);
-              const merged = new Map<string, WorldItem>();
-              for (const item of [...portalItems, ...normalItems, ...fallbackItems]) {
-                if (!item?.spawnId) continue;
-              if (consumedSpawnIdsRef.current.has(item.spawnId)) continue;
-              if ((item as any)?.item?.type === 'portal' && merged.has(item.spawnId)) continue;
-              merged.set(item.spawnId, item);
-            }
-            setWorldItems(Array.from(merged.values()));
-          }
-        } catch (fallbackErr) {
-        }
+        const normalItems = fetchedItems
+          .filter((item) => (item as any)?.item?.type !== 'portal')
+          .sort((a, b) => {
+            const ad = Math.pow(a.lat - curLat, 2) + Math.pow(a.lng - curLng, 2);
+            const bd = Math.pow(b.lat - curLat, 2) + Math.pow(b.lng - curLng, 2);
+            return ad - bd;
+          })
+          .slice(0, LOOT_RENDER_LIMIT);
+
+        setWorldItems([...portalItems, ...normalItems]);
       }
     } catch (err) {
       console.error('[LooterGame] loadWorldItems error:', err);
     }
-  }, [deviceId, apiUrl, state.fortressLat, state.fortressLng, state.currentLat, state.currentLng, isChallengeActive, setWorldItems, chunkCacheRef, consumedSpawnIdsRef]);
+  }, [deviceId, apiUrl, state.fortressLat, state.fortressLng, state.currentLat, state.currentLng, setWorldItems, consumedSpawnIdsRef]);
 
   const loadState = useCallback(async () => {
     if (!deviceId) return;
@@ -212,7 +105,7 @@ export function useLooterStateManager({
         } as LooterGameState);
 
         if (data.settings) setGlobalSettings(data.settings);
-        
+
         const distToFortress = getDistanceMeters(s.currentLat, s.currentLng, s.fortressLat, s.fortressLng);
         const isNearFortress = distToFortress <= FORTRESS_INTERACTION_METERS;
 
@@ -230,7 +123,7 @@ export function useLooterStateManager({
         } as LooterGameState);
 
         if (data.settings) setGlobalSettings(data.settings);
-        
+
         if (shouldBeActive && !isChallengeActive) {
           setIsChallengeActive(true);
         }
@@ -288,9 +181,6 @@ export function useLooterStateManager({
           inventory: opponentInventory || [],
           bag: opponentBags?.[0],
           activeCurses: {},
-          // Approximate base max HP since we only have total HP. 
-          // Actually, totalHp = base + stats.totalHp. So base = totalHp - stats.totalHp.
-          // For simplicity, just use opponentHp as baseMaxHp if we don't have accurate decomposition.
           baseMaxHp: opponentHp || 100
       };
 
@@ -302,8 +192,7 @@ export function useLooterStateManager({
           let hp = result.finalHpA;
 
           if (result.winner === 'A') {
-              // Gained items. They go to staging or empty slots. We let CombatLootModal handle claiming them, so we DON'T add them here automatically!
-              // Wait, the API used to return `result.droppedItems`. CombatLootModal displays them. So we just return them.
+              // Gained items. They go to staging or empty slots. CombatLootModal handles claiming.
           } else if (result.winner === 'B') {
               // Lost items. Remove them from inventory.
               const lostUids = result.droppedItems.map((i: any) => i.uid);
@@ -311,7 +200,6 @@ export function useLooterStateManager({
               // Player respawns at fortress with full HP if they die
               if (hp <= 0) {
                   hp = 100;
-                  // Should we teleport them to fortress? The `returnToFortress` is usually called on death.
               }
           }
 
@@ -346,7 +234,6 @@ export function useLooterStateManager({
     if (!deviceId) return;
     try {
       if (choice === 'flee') {
-          // Flee penalty: Lose some energy or drop random item
           setState(prev => {
              const nextState = { ...prev };
              syncState(nextState);
@@ -378,13 +265,13 @@ export function useLooterStateManager({
     }
   }, [deviceId, setState, setWorldItems, syncState]);
 
-  return useMemo(() => ({ 
-    loadWorldItems, loadState, initGame, 
-    setWorldTier, inflictMinigamePenalty, 
-    executeCombat, curseChoice 
+  return useMemo(() => ({
+    loadWorldItems, loadState, initGame,
+    setWorldTier, inflictMinigamePenalty,
+    executeCombat, curseChoice
   }), [
-    loadWorldItems, loadState, initGame, 
-    setWorldTier, inflictMinigamePenalty, 
+    loadWorldItems, loadState, initGame,
+    setWorldTier, inflictMinigamePenalty,
     executeCombat, curseChoice
   ]);
 }

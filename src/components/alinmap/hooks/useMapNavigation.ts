@@ -3,6 +3,7 @@ import { useMotionValue, animate, useTransform } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import {
   CAMERA_Z_DEFAULT,
+  CAMERA_Z_WATER_DEFAULT,
   CAMERA_Z_FAR,
   CAMERA_Z_NEAR,
   CAMERA_HEIGHT_DEFAULT_PCT,
@@ -58,7 +59,7 @@ export function useMapNavigation({
 
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
-  const cameraZ = useMotionValue(CAMERA_Z_DEFAULT);
+  const cameraZ = useMotionValue(CAMERA_Z_WATER_DEFAULT);
   const selfDragX = useMotionValue(0);
   const selfDragY = useMotionValue(0);
 
@@ -67,7 +68,7 @@ export function useMapNavigation({
   const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 720);
   const [mainTab, setMainTab] = useState<MainTab>((initialMainTab as MainTab) === 'creator' ? 'discover' : (initialMainTab as MainTab) || 'discover');
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
-  const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('grid');
+  const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('satellite');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isLooterLoading, setIsSeaLoading] = useState(false);
   const [radius, setRadius] = useState(50);

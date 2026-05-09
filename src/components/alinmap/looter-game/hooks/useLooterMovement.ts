@@ -115,6 +115,12 @@ export function useLooterMovement({
             encounter = moveResult.encounter || encounter;
             serverDroppedItems = sanitizeWorldItems(moveResult.droppedItems);
             serverInventory = Array.isArray(moveResult.inventory) ? moveResult.inventory : null;
+
+            // Handle newly spawned proximity items from milestone
+            if (Array.isArray(moveResult.spawnedItems) && moveResult.spawnedItems.length > 0) {
+              const spawned = sanitizeWorldItems(moveResult.spawnedItems);
+              setWorldItems(prev => [...sanitizeWorldItems(prev), ...spawned]);
+            }
           }
         } catch (moveErr) {
         }
