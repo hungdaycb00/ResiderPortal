@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Timer, XCircle, Zap } from 'lucide-react';
+import { Timer, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playSound, triggerHaptic } from './utils';
 import { formatTime, getCellCoord, LEVELS } from './FruitGameEngine';

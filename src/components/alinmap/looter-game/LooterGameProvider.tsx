@@ -57,14 +57,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [isTierSelectorOpen, setIsTierSelectorOpenState] = useState(false);
 
-  // Pre-generate minigame boards trong background
-  const { pregeneratedMinigames, clearPregeneratedFruit } = useLooterMinigamePregen({
-    isLooterGameMode: ui.isLooterGameMode,
-    worldTier: state.worldTier || 0,
-  });
-
-  // Sync trước khi thoát tab
-  useBeforeUnloadSync({ deviceId, apiUrl: API_URL, state });
 
   const setIsTierSelectorOpen = useCallback((v: boolean) => {
     setIsTierSelectorOpenState(v);
@@ -85,6 +77,15 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const initialLoadDoneRef = useRef(false);
   const chunkCacheRef = useRef<Map<string, LooterChunkCacheEntry>>(new Map());
   const consumedSpawnIdsRef = useRef<Set<string>>(new Set());
+
+  // Pre-generate minigame boards trong background (API_URL phải được khai báo trước)
+  const { pregeneratedMinigames, clearPregeneratedFruit } = useLooterMinigamePregen({
+    isLooterGameMode: ui.isLooterGameMode,
+    worldTier: state.worldTier || 0,
+  });
+
+  // Sync trước khi thoát tab
+  useBeforeUnloadSync({ deviceId, apiUrl: API_URL, state });
 
   const notify = useCallback((msg: string, type: 'success'|'error'|'info' = 'info') => {
     if (typeof showNotification === 'function') {
