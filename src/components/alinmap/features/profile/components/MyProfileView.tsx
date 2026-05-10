@@ -146,7 +146,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi });
 
     return (
-        <div className="space-y-4 pt-16 md:pt-4">
+        <div className="space-y-4">
             <div className="flex items-center justify-between px-1 mb-2">
                 <h3 className="text-lg font-black text-gray-900">My Profile</h3>
                 {user ? (
