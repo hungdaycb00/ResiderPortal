@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, X, ShieldCheck, Zap, TrendingUp, Coins } from 'lucide-react';
+import { Swords, X, TrendingUp, Coins } from 'lucide-react';
 import { GAME_CONFIG } from './gameConfig';
 
 interface TierSelectionOverlayProps {
@@ -53,106 +53,99 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-[#001424]/90 backdrop-blur-xl pointer-events-auto"
+          className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md pointer-events-auto"
         >
           <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="w-full max-w-md bg-[#0d2137] border border-cyan-800/50 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="w-full max-w-[320px] bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[28px] p-5 shadow-2xl relative overflow-hidden"
           >
-            {/* Background Glow */}
-            <div className={`absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br ${selectedData.color} opacity-20 blur-[60px] rounded-full transition-all duration-500`} />
+            {/* Glow */}
+            <div className={`absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br ${selectedData.color} opacity-20 blur-[60px] rounded-full transition-colors duration-500`} />
             
-            <div className="flex justify-between items-center mb-6 relative">
+            <div className="flex justify-between items-center mb-4 relative z-10">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-                  <ShieldCheck className="w-6 h-6 text-amber-500" />
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                  <Swords className="w-4 h-4 text-amber-500" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-black text-white leading-tight">Chọn Thử Thách</h3>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Select Your World Tier</p>
-                </div>
+                <h3 className="text-lg font-black text-white leading-none">Chọn Thử Thách</h3>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-gray-400 transition-colors">
+              <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-full text-white/50 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-gray-400 mb-8 leading-relaxed">
-              Chi phí vào thế giới càng cao, <strong className="text-cyan-300">vật phẩm</strong> nhận được và <strong className="text-red-400">chỉ số đối thủ</strong> sẽ tăng mạnh theo hệ số nhân.
+            <p className="text-[11px] text-gray-300/80 mb-5 leading-tight">
+              Chi phí cao sẽ tăng <strong className="text-cyan-400">Vật phẩm</strong> & <strong className="text-red-400">Đối thủ</strong>.
             </p>
 
             {/* Tier Slider */}
-            <div className="space-y-6 mb-8">
-              <div className="relative px-2">
-                <input
-                  type="range" min={0} max={5} step={1}
-                  value={selected}
-                  onChange={(e) => setSelected(Number(e.target.value))}
-                  className="w-full h-2 appearance-none rounded-full bg-cyan-950 outline-none cursor-pointer accent-amber-500"
-                  style={{
-                    background: `linear-gradient(90deg, #f59e0b 0%, #f59e0b ${(selected / 5) * 100}%, #082f49 ${(selected / 5) * 100}%, #082f49 100%)`
-                  }}
-                />
-                <div className="flex justify-between mt-4">
-                  {tierLabels.map((t) => (
-                    <button 
-                      key={t.tier}
-                      onClick={() => setSelected(t.tier)}
-                      className={`flex flex-col items-center gap-1 transition-all ${selected === t.tier ? 'scale-125' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'}`}
-                    >
-                      <span className="text-xl">{t.icon}</span>
-                      <span className={`text-[9px] font-black ${selected === t.tier ? 'text-amber-400' : 'text-gray-500'}`}>T{t.tier}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Stats Card */}
-              <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent p-5 text-center`}>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-1 text-cyan-400">
-                      <TrendingUp className="w-3 h-3" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Multiplier</span>
-                    </div>
-                    <p className="text-2xl font-black text-white">x{selectedData.mult}</p>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-1 text-amber-400">
-                      <Coins className="w-3 h-3" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Entry Fee</span>
-                    </div>
-                    <p className="text-2xl font-black text-white">{selectedData.label}</p>
-                  </div>
-                </div>
+            <div className="mb-6 relative z-10">
+              <input
+                type="range" min={0} max={5} step={1}
+                value={selected}
+                onChange={(e) => setSelected(Number(e.target.value))}
+                className="w-full h-1.5 appearance-none rounded-full bg-black/50 outline-none cursor-pointer accent-amber-500"
+                style={{
+                  background: `linear-gradient(90deg, #f59e0b 0%, #f59e0b ${(selected / 5) * 100}%, rgba(0,0,0,0.5) ${(selected / 5) * 100}%, rgba(0,0,0,0.5) 100%)`
+                }}
+              />
+              <div className="flex justify-between mt-3 px-1">
+                {tierLabels.map((t) => (
+                  <button 
+                    key={t.tier}
+                    onClick={() => setSelected(t.tier)}
+                    className={`flex flex-col items-center transition-all ${selected === t.tier ? 'scale-125' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'}`}
+                  >
+                    <span className="text-lg leading-none">{t.icon}</span>
+                    <span className={`text-[9px] font-black mt-1 ${selected === t.tier ? 'text-amber-400' : 'text-gray-400'}`}>T{t.tier}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            {/* Compact Stats */}
+            <div className="flex items-center justify-between bg-black/30 rounded-xl p-3 border border-white/5 mb-5 relative z-10">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-cyan-400" />
+                <div>
+                  <p className="text-[9px] text-cyan-400/80 uppercase font-bold">Hệ số</p>
+                  <p className="text-sm font-black text-white">x{selectedData.mult}</p>
+                </div>
+              </div>
+              <div className="w-px h-8 bg-white/10"></div>
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-[9px] text-amber-400/80 uppercase font-bold text-right">Chi phí</p>
+                  <p className="text-sm font-black text-white">{selectedData.label}</p>
+                </div>
+                <Coins className="w-4 h-4 text-amber-400" />
+              </div>
+            </div>
+
+            <div className="relative z-10">
               <button
                 disabled={!canAfford || isLoading}
                 onClick={handleStart}
-                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-lg font-black transition-all active:scale-95 ${
+                className={`w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-[14px] font-black transition-all active:scale-95 ${
                   canAfford && !isLoading
-                  ? `bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-orange-900/40`
-                  : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5'
+                  ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:bg-amber-400'
+                  : 'bg-white/5 text-white/30 cursor-not-allowed'
                 }`}
               >
                 {isLoading ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Swords className="w-5 h-5" />
-                    {canAfford ? 'BẮT ĐẦU CHUYẾN ĐI' : 'KHÔNG ĐỦ VÀNG'}
+                    BẮT ĐẦU <span className="opacity-70 font-bold ml-1">({selectedData.label} VÀNG)</span>
                   </>
                 )}
               </button>
               
               {!canAfford && (
-                <p className="text-center text-[10px] font-bold text-red-400/80 animate-pulse">
-                  Bạn cần thêm {(Math.max(0, (selectedData?.cost || 0) - (currentGold || 0))).toLocaleString()} vàng để bắt đầu Tier {selected}
+                <p className="text-center text-[10px] font-bold text-red-400/80 mt-3 animate-pulse">
+                  Thiếu {(Math.max(0, (selectedData?.cost || 0) - (currentGold || 0))).toLocaleString()} vàng
                 </p>
               )}
             </div>

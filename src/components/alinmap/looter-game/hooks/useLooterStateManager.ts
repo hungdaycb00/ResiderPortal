@@ -6,7 +6,7 @@ import { repairBagData, createStarterBag, getDistanceMeters } from '../backpack/
 import { FORTRESS_INTERACTION_METERS, sanitizeWorldItems } from '../LooterGameContext';
 import type { LooterGameState, WorldItem, LooterItem, BagItem } from '../LooterGameContext';
 
-const LOOT_RENDER_LIMIT = 12;
+const LOOT_RENDER_LIMIT = 25; // Đủ để hiển thị trên mobile mà không gây lag
 
 interface UseLooterStateManagerProps {
   deviceId: string | null;
@@ -51,8 +51,9 @@ export function useLooterStateManager({
       const fortressLng = centerOverride?.fortressLng ?? state.fortressLng;
 
       const portalItems = sanitizeWorldItems(createPortalWorldItems(fortressLat, fortressLng, centerLat, centerLng));
-      const curLat = centerLat ?? state.fortressLat ?? 0;
-      const curLng = centerLng ?? state.fortressLng ?? 0;
+      // Ưu tiên centerOverride để tránh stale closure state, đặc biệt khi vừa moveBoat
+      const curLat = centerOverride?.lat ?? centerLat ?? state.fortressLat ?? 0;
+      const curLng = centerOverride?.lng ?? centerLng ?? state.fortressLng ?? 0;
 
       // Primary: proximity-based world-items (DB-persisted, 5km radius)
       const worldData = await looterApi.fetchWorldItems(apiUrl, deviceId, centerLat, centerLng);
