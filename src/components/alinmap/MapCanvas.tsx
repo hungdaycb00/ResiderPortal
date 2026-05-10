@@ -47,9 +47,9 @@ interface MapCanvasProps {
     tiltAngle: MotionValue<number>;
     planeYScale: MotionValue<number>;
     perspectivePx: number;
-    cameraHeightPct: number;
+    cameraHeightOffset: number;
     cameraRotateDeg: number;
-    cameraRotateXDeg: number;
+    cameraPitchOverride: number | null;
     cameraRotateYDeg: number;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
@@ -73,9 +73,9 @@ interface MapCanvasProps {
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
     setIsTierSelectorOpen?: (v: boolean) => void;
     setCameraZ: (z: number) => void;
-    setCameraHeightPct: (v: number) => void;
+    setCameraHeightOffset: (v: number) => void;
     setCameraRotateDeg: (v: number) => void;
-    setCameraRotateXDeg: (v: number) => void;
+    setCameraPitchOverride: (v: number | null) => void;
     setCameraRotateYDeg: (v: number) => void;
 }
 
@@ -84,7 +84,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myAvatarUrl, myStatus,
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
-        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
+        scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, selectedUser, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
@@ -103,7 +103,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const looterBoat = useLooterBoat({
         isLooterGameMode: !!isLooterGameMode,
         myObfPos, scale, planeYScale, panX, panY,
-        perspectivePx, cameraZ, cameraHeightPct,
+        perspectivePx, cameraZ, cameraHeightOffset,
         setMainTab, setIsSheetExpanded, showNotification,
         setIsTierSelectorOpen
     });
@@ -113,7 +113,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
     const billboardPitchDeg = useTransform(
         tiltAngle,
-        (v) => `${-(v + cameraRotateXDeg) + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
+        (v) => `${-v + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
     );
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
 
@@ -188,7 +188,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     className="absolute inset-0 overflow-hidden pointer-events-auto alin-map-scene"
                     style={{
                         '--alin-map-perspective-px': `${perspectivePx}px`,
-                        '--alin-map-perspective-origin-y': `${cameraHeightPct}%`,
+                        '--alin-map-perspective-origin-y': '42%',
                         touchAction: 'none',
                     } as React.CSSProperties}
                     onPointerDown={handleMapPointerDown}
@@ -222,9 +222,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         tiltAngle={tiltAngle}
                         planeYScale={planeYScale}
                         perspectivePx={perspectivePx}
-                        cameraHeightPct={cameraHeightPct}
+                        cameraHeightOffset={cameraHeightOffset}
                         cameraRotateDeg={cameraRotateDeg}
-                        cameraRotateXDeg={cameraRotateXDeg}
+                        cameraPitchOverride={cameraPitchOverride}
                         cameraRotateYDeg={cameraRotateYDeg}
                         panX={panX}
                         panY={panY}

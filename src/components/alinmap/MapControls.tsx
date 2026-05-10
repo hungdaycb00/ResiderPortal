@@ -33,10 +33,10 @@ interface MapControlsProps {
     setMapMode: (v: 'grid' | 'satellite') => void;
     cameraZ: MotionValue<number>;
     setCameraZ: (z: number) => void;
-    cameraHeightPct: number;
-    cameraRotateXDeg: number;
-    setCameraHeightPct: (v: number) => void;
-    setCameraRotateXDeg: (v: number) => void;
+    cameraHeightOffset: number;
+    cameraPitchOverride: number | null;
+    setCameraHeightOffset: (v: number) => void;
+    setCameraPitchOverride: (v: number | null) => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
     isSheetExpanded: boolean;
@@ -69,10 +69,10 @@ const MapControls: React.FC<MapControlsProps> = ({
     setMapMode,
     cameraZ,
     setCameraZ,
-    cameraHeightPct,
-    cameraRotateXDeg,
-    setCameraHeightPct,
-    setCameraRotateXDeg,
+    cameraHeightOffset,
+    cameraPitchOverride,
+    setCameraHeightOffset,
+    setCameraPitchOverride,
     isWidgetExpanded,
     setIsWidgetExpanded,
     isSheetExpanded,
@@ -84,11 +84,11 @@ const MapControls: React.FC<MapControlsProps> = ({
             <div className={`absolute right-2 md:right-8 z-[360] flex items-end gap-0 transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4 md:opacity-100 md:pointer-events-auto md:translate-x-0' : 'opacity-100 translate-x-0 pointer-events-auto'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 <CameraPanel
                     cameraZ={cameraZ}
-                    cameraHeightPct={cameraHeightPct}
-                    cameraRotateXDeg={cameraRotateXDeg}
+                    cameraHeightOffset={cameraHeightOffset}
+                    cameraPitchOverride={cameraPitchOverride}
                     setCameraZ={setCameraZ}
-                    setCameraHeightPct={setCameraHeightPct}
-                    setCameraRotateXDeg={setCameraRotateXDeg}
+                    setCameraHeightOffset={setCameraHeightOffset}
+                    setCameraPitchOverride={setCameraPitchOverride}
                 />
                 <div className="flex flex-col gap-2 md:gap-3 ml-2">
                     <MapControlsQuickActions

@@ -29,6 +29,11 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     // Load recent searches
     try {
@@ -44,7 +49,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     window.history.pushState({ searchOverlay: true }, '');
     
     const handlePopState = (e: PopStateEvent) => {
-      onClose();
+      onCloseRef.current();
     };
     
     window.addEventListener('popstate', handlePopState);
@@ -61,7 +66,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         window.history.back();
       }
     };
-  }, [onClose]);
+  }, []);
 
   const saveRecentSearch = (query: string) => {
     const trimmed = query.trim();

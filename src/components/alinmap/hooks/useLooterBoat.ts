@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { animate, useMotionValue, MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, CAMERA_HEIGHT_RATIO_DEFAULT } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
@@ -19,7 +19,7 @@ interface UseSeaBoatParams {
     panY: MotionValue<number>;
     perspectivePx: number;
     cameraZ: MotionValue<number>;
-    cameraHeightPct: number;
+    cameraHeightOffset: number;
     setMainTab?: (tab: string) => void;
     setIsSheetExpanded: (v: boolean) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -30,7 +30,7 @@ const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
     isLooterGameMode, myObfPos, scale, planeYScale, panX, panY,
-    perspectivePx, cameraZ, cameraHeightPct,
+    perspectivePx, cameraZ, cameraHeightOffset,
     setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
@@ -211,7 +211,7 @@ export function useLooterBoat({
         // 1. Vị trí camera (H, D) — công thức giống CameraRig
         const zoom = clampVal(scale?.get?.() ?? 1, 0.08, 8);
         const D = clampVal(perspectivePx * 0.56 / zoom - (cameraZ?.get?.() ?? 0) * 5, 95, 9000);
-        const H = D * (0.22 + cameraHeightPct / 620);
+        const H = D * CAMERA_HEIGHT_RATIO_DEFAULT + cameraHeightOffset;
 
         // 2. Góc tilt θ = acos(planeYScale / MAP_PLANE_SCALE)
         const curPlaneYScale = planeYScale.get();
@@ -246,7 +246,7 @@ export function useLooterBoat({
         const lat = myObfPos.lat - zGround / COORD_SCALE;
 
         return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
-    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightPct]);
+    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightOffset]);
 
     const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
         if (!isLooterGameMode || !myObfPos) return;

@@ -2,32 +2,32 @@ import React, { useState, useCallback, useRef } from 'react';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import {
   CAMERA_Z_WATER_DEFAULT, CAMERA_Z_NEAR,
-  CAMERA_HEIGHT_DEFAULT_PCT, CAMERA_HEIGHT_MIN_PCT, CAMERA_HEIGHT_MAX_PCT,
-  CAMERA_ROTATE_X_DEFAULT_DEG, CAMERA_ROTATE_X_MIN_DEG, CAMERA_ROTATE_X_MAX_DEG,
+  CAMERA_HEIGHT_OFFSET_DEFAULT, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX,
+  CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG,
+  clamp, getTiltAngleFromCameraZ,
 } from '../constants';
 
 interface CameraPanelProps {
   cameraZ: MotionValue<number>;
-  cameraHeightPct: number;
-  cameraRotateXDeg: number;
+  cameraHeightOffset: number;
+  cameraPitchOverride: number | null;
   setCameraZ: (z: number) => void;
-  setCameraHeightPct: (v: number) => void;
-  setCameraRotateXDeg: (v: number) => void;
+  setCameraHeightOffset: (v: number) => void;
+  setCameraPitchOverride: (v: number | null) => void;
 }
 
 const CameraPanel: React.FC<CameraPanelProps> = ({
   cameraZ,
-  cameraHeightPct,
-  cameraRotateXDeg,
+  cameraHeightOffset,
+  cameraPitchOverride,
   setCameraZ,
-  setCameraHeightPct,
-  setCameraRotateXDeg,
+  setCameraHeightOffset,
+  setCameraPitchOverride,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [zDisplay, setZDisplay] = useState(() => Math.round(cameraZ.get()));
   const tickRef = useRef(0);
 
-  // Throttle state update: chỉ cập nhật mỗi 3 frame (~20fps) khi spring animation chạy
   useMotionValueEvent(cameraZ, 'change', (v) => {
     tickRef.current = (tickRef.current + 1) % 3;
     if (tickRef.current === 0) {
@@ -37,15 +37,18 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
 
   const toggleExpanded = useCallback(() => setExpanded((p) => !p), []);
 
+  const autoTilt = Math.round(getTiltAngleFromCameraZ(zDisplay));
+  const effectivePitch = cameraPitchOverride ?? autoTilt;
+  const isAutoPitch = cameraPitchOverride === null;
+
   const resetAll = useCallback(() => {
     setCameraZ(CAMERA_Z_WATER_DEFAULT);
-    setCameraHeightPct(CAMERA_HEIGHT_DEFAULT_PCT);
-    setCameraRotateXDeg(CAMERA_ROTATE_X_DEFAULT_DEG);
-  }, [setCameraZ, setCameraHeightPct, setCameraRotateXDeg]);
+    setCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
+    setCameraPitchOverride(null);
+  }, [setCameraZ, setCameraHeightOffset, setCameraPitchOverride]);
 
   return (
     <div className="flex items-end gap-0">
-      {/* Panel mở rộng về bên trái */}
       {expanded && (
         <div className="bg-[#0a1526]/92 backdrop-blur-xl border border-cyan-500/50 rounded-2xl p-3 md:p-4 min-w-[170px] md:min-w-[190px] shadow-[0_0_24px_rgba(8,145,178,0.3)] mr-2">
           <div className="flex items-center justify-between mb-3">
@@ -64,64 +67,79 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Zoom</span>
-              <span className="text-[10px] font-mono font-bold text-cyan-300">{zDisplay}</span>
             </div>
             <input
-              type="range"
+              type="number"
               min={5}
               max={CAMERA_Z_NEAR}
+              step={1}
               value={zDisplay}
-              onChange={(e) => setCameraZ(Number(e.target.value))}
-              className="w-full h-1.5 appearance-none rounded-full bg-slate-700/80 outline-none
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:cursor-pointer
-                [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) setCameraZ(clamp(v, 5, CAMERA_Z_NEAR));
+              }}
+              className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
           </div>
 
-          {/* Góc camera (Rotate X) */}
+          {/* Góc (Pitch) */}
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Góc</span>
-              <span className="text-[10px] font-mono font-bold text-cyan-300">{cameraRotateXDeg}°</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono font-bold text-cyan-300">
+                  {effectivePitch}°
+                </span>
+                <button
+                  onClick={() => setCameraPitchOverride(isAutoPitch ? effectivePitch : null)}
+                  className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-all ${
+                    isAutoPitch
+                      ? 'bg-slate-700/70 text-slate-400 hover:text-slate-300'
+                      : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40'
+                  }`}
+                >
+                  {isAutoPitch ? 'Auto' : 'Manual'}
+                </button>
+              </div>
             </div>
             <input
-              type="range"
-              min={CAMERA_ROTATE_X_MIN_DEG}
-              max={CAMERA_ROTATE_X_MAX_DEG}
-              value={cameraRotateXDeg}
-              onChange={(e) => setCameraRotateXDeg(Number(e.target.value))}
-              className="w-full h-1.5 appearance-none rounded-full bg-slate-700/80 outline-none
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:cursor-pointer
-                [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+              type="number"
+              min={CAMERA_PITCH_MIN_DEG}
+              max={CAMERA_PITCH_MAX_DEG}
+              step={1}
+              value={effectivePitch}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) setCameraPitchOverride(clamp(v, CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG));
+              }}
+              className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
           </div>
 
-          {/* Độ cao */}
+          {/* Độ cao (Height Offset) */}
           <div className="mb-0">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Cao</span>
-              <span className="text-[10px] font-mono font-bold text-cyan-300">{cameraHeightPct}%</span>
+              <span className="text-[10px] font-mono font-bold text-cyan-300">{cameraHeightOffset}</span>
             </div>
             <input
-              type="range"
-              min={CAMERA_HEIGHT_MIN_PCT}
-              max={CAMERA_HEIGHT_MAX_PCT}
-              value={cameraHeightPct}
-              onChange={(e) => setCameraHeightPct(Number(e.target.value))}
-              className="w-full h-1.5 appearance-none rounded-full bg-slate-700/80 outline-none
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:cursor-pointer
-                [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+              type="number"
+              min={CAMERA_HEIGHT_OFFSET_MIN}
+              max={CAMERA_HEIGHT_OFFSET_MAX}
+              step={10}
+              value={cameraHeightOffset}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) setCameraHeightOffset(clamp(v, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX));
+              }}
+              className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
           </div>
         </div>
       )}
 
-      {/* Nút toggle + các nút khác nằm trong cột */}
+      {/* Nút toggle */}
       <div className="flex flex-col gap-2 md:gap-3">
-        {/* Nút Camera toggle */}
         <button
           onClick={toggleExpanded}
           className={`w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-xl flex items-center justify-center active:scale-95 transition-all backdrop-blur-md shadow-md

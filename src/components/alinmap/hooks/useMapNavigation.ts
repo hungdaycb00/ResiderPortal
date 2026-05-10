@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useMotionValue, animate, useTransform } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useMotionValue, animate, useTransform, useMotionValueEvent } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import {
   CAMERA_Z_DEFAULT,
@@ -7,17 +7,19 @@ import {
   CAMERA_Z_FAR,
   CAMERA_Z_NEAR,
   CAMERA_HEIGHT_DEFAULT_PCT,
-  CAMERA_HEIGHT_MIN_PCT,
-  CAMERA_HEIGHT_MAX_PCT,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_MIN_DEG,
   CAMERA_ROTATE_MAX_DEG,
-  CAMERA_ROTATE_X_DEFAULT_DEG,
-  CAMERA_ROTATE_X_MIN_DEG,
-  CAMERA_ROTATE_X_MAX_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
   CAMERA_ROTATE_Y_MIN_DEG,
   CAMERA_ROTATE_Y_MAX_DEG,
+  CAMERA_PITCH_MIN_DEG,
+  CAMERA_PITCH_MAX_DEG,
+  CAMERA_HEIGHT_OFFSET_DEFAULT,
+  CAMERA_HEIGHT_OFFSET_MIN,
+  CAMERA_HEIGHT_OFFSET_MAX,
+  CAMERA_HEIGHT_RATIO_DEFAULT,
+  CAMERA_TILT_FAR_DEGREES,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   clamp,
@@ -72,16 +74,36 @@ export function useMapNavigation({
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isLooterLoading, setIsSeaLoading] = useState(false);
   const [radius, setRadius] = useState(50);
-  const [cameraHeightPct, setCameraHeightPct] = useState(CAMERA_HEIGHT_DEFAULT_PCT);
+  const [cameraHeightOffset, setCameraHeightOffset] = useState(CAMERA_HEIGHT_OFFSET_DEFAULT);
   const [cameraRotateDeg, setCameraRotateDeg] = useState(CAMERA_ROTATE_DEFAULT_DEG);
-  const [cameraRotateXDeg, setCameraRotateXDeg] = useState(CAMERA_ROTATE_X_DEFAULT_DEG);
   const [cameraRotateYDeg, setCameraRotateYDeg] = useState(CAMERA_ROTATE_Y_DEFAULT_DEG);
+  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
-  const tiltAngle = useTransform(cameraZ, getTiltAngleFromCameraZ);
-  const planeYScale = useTransform(tiltAngle, getPlaneYScaleFromTilt);
+  const effectiveTiltAngle = useMotionValue(CAMERA_TILT_FAR_DEGREES);
+  const pitchOverrideRef = useRef<number | null>(null);
+  pitchOverrideRef.current = cameraPitchOverride;
+
+  // Sync effectiveTiltAngle: auto mode follows cameraZ, manual mode uses override
+  const cameraZRef = useRef(cameraZ.get());
+  useMotionValueEvent(cameraZ, 'change', (v) => {
+    cameraZRef.current = v;
+    if (pitchOverrideRef.current === null) {
+      effectiveTiltAngle.set(getTiltAngleFromCameraZ(v));
+    }
+  });
+
+  useEffect(() => {
+    if (cameraPitchOverride !== null) {
+      effectiveTiltAngle.set(cameraPitchOverride);
+    } else {
+      effectiveTiltAngle.set(getTiltAngleFromCameraZ(cameraZRef.current));
+    }
+  }, [cameraPitchOverride]);
+
+  const planeYScale = useTransform(effectiveTiltAngle, getPlaneYScaleFromTilt);
 
   useEffect(() => {
     const handleResize = () => {
@@ -247,8 +269,8 @@ export function useMapNavigation({
   ]);
 
   return {
-    panX, panY, scale, cameraZ, tiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
-    cameraHeightPct, cameraRotateDeg, cameraRotateXDeg, cameraRotateYDeg,
+    panX, panY, scale, cameraZ, effectiveTiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
+    cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg,
     isSheetExpanded, setIsSheetExpanded,
     isDesktop, mainTab, setMainTab: (tab: string) => setMainTab(tab as MainTab),
     activeTab, setActiveTab,
@@ -258,9 +280,12 @@ export function useMapNavigation({
     isLooterLoading, setIsSeaLoading,
     handleWheel, handleCenter, handleCenterTo,
     setCameraZ, setVisualScale, zoomIn, zoomOut,
-    setCameraHeightPct: (v: number) => setCameraHeightPct(clamp(v, CAMERA_HEIGHT_MIN_PCT, CAMERA_HEIGHT_MAX_PCT)),
+    setCameraHeightOffset: (v: number) => setCameraHeightOffset(clamp(v, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX)),
     setCameraRotateDeg: (v: number) => setCameraRotateDeg(clamp(v, CAMERA_ROTATE_MIN_DEG, CAMERA_ROTATE_MAX_DEG)),
-    setCameraRotateXDeg: (v: number) => setCameraRotateXDeg(clamp(v, CAMERA_ROTATE_X_MIN_DEG, CAMERA_ROTATE_X_MAX_DEG)),
+    setCameraPitchOverride: (v: number | null) => {
+      if (v === null) setCameraPitchOverride(null);
+      else setCameraPitchOverride(clamp(v, CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG));
+    },
     setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(clamp(v, CAMERA_ROTATE_Y_MIN_DEG, CAMERA_ROTATE_Y_MAX_DEG)),
     handleUpdateRadius, handleTabClick,
   };

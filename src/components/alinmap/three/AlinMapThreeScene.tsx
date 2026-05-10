@@ -46,12 +46,12 @@ export interface AlinMapThreeSceneProps {
     searchMarkerPos: LatLng | null;
     scale: MotionValue<number>;
     cameraZ: MotionValue<number>;
-    tiltAngle: MotionValue<number>;
+    tiltAngle: MotionValue<number>;  // keep backward compat — alias for effectiveTiltAngle
     planeYScale: MotionValue<number>;
     perspectivePx: number;
-    cameraHeightPct: number;
+    cameraHeightOffset: number;
     cameraRotateDeg: number;
-    cameraRotateXDeg: number;
+    cameraPitchOverride: number | null;
     cameraRotateYDeg: number;
     panX: MotionValue<number>;
     panY: MotionValue<number>;
@@ -96,9 +96,9 @@ function SceneContent({
     tiltAngle,
     planeYScale,
     perspectivePx,
-    cameraHeightPct,
+    cameraHeightOffset,
     cameraRotateDeg,
-    cameraRotateXDeg,
+    cameraPitchOverride,
     cameraRotateYDeg,
     panX,
     panY,
@@ -231,7 +231,7 @@ function SceneContent({
 
         if (Math.abs(tilt - lastTiltRef.current) > 0.001) {
             tiltGroupRef.current.rotation.set(
-                MathUtils.degToRad(tilt + cameraRotateXDeg),
+                MathUtils.degToRad(tilt),
                 MathUtils.degToRad(cameraRotateYDeg),
                 MathUtils.degToRad(cameraRotateDeg)
             );
@@ -463,7 +463,7 @@ function SceneContent({
             <CameraRig
                 scale={scale}
                 cameraZ={cameraZ}
-                cameraHeightPct={cameraHeightPct}
+                cameraHeightOffset={cameraHeightOffset}
                 perspectivePx={perspectivePx}
             />
         </group>

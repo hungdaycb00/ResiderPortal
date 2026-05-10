@@ -2,16 +2,16 @@ import { useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
-import { clamp } from '../constants';
+import { clamp, CAMERA_HEIGHT_RATIO_DEFAULT } from '../constants';
 
 interface CameraRigProps {
     scale: MotionValue<number>;
     cameraZ: MotionValue<number>;
-    cameraHeightPct: number;
+    cameraHeightOffset: number;
     perspectivePx: number;
 }
 
-export default function CameraRig({ scale, cameraZ, cameraHeightPct, perspectivePx }: CameraRigProps) {
+export default function CameraRig({ scale, cameraZ, cameraHeightOffset, perspectivePx }: CameraRigProps) {
     const { camera } = useThree();
     const targetPosRef = useRef(new THREE.Vector3());
 
@@ -19,12 +19,12 @@ export default function CameraRig({ scale, cameraZ, cameraHeightPct, perspective
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
         const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 5, 95, 9000);
-        const height = distance * (0.22 + cameraHeightPct / 620);
+        const baseHeight = distance * CAMERA_HEIGHT_RATIO_DEFAULT;
+        const height = baseHeight + cameraHeightOffset;
 
         targetPosRef.current.set(0, height, distance);
         camera.position.lerp(targetPosRef.current, Math.min(1, delta * 12));
-        camera.lookAt(0, 0, 0);
-        // updateProjectionMatrix removed — redundant, camera.position.lerp + lookAt already update matrices
+        camera.lookAt(0, cameraHeightOffset, 0);
     });
 
     return null;

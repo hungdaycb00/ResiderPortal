@@ -9,23 +9,6 @@ import SearchHeader from './SearchHeader';
 import SearchOverlay from './SearchOverlay';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
-import {
-  CAMERA_HEIGHT_DEFAULT_PCT,
-  CAMERA_HEIGHT_MAX_PCT,
-  CAMERA_HEIGHT_MIN_PCT,
-  CAMERA_ROTATE_DEFAULT_DEG,
-  CAMERA_ROTATE_MAX_DEG,
-  CAMERA_ROTATE_MIN_DEG,
-  CAMERA_ROTATE_X_DEFAULT_DEG,
-  CAMERA_ROTATE_X_MAX_DEG,
-  CAMERA_ROTATE_X_MIN_DEG,
-  CAMERA_ROTATE_Y_DEFAULT_DEG,
-  CAMERA_ROTATE_Y_MAX_DEG,
-  CAMERA_ROTATE_Y_MIN_DEG,
-  CAMERA_Z_DEFAULT,
-  CAMERA_Z_FAR,
-  CAMERA_Z_NEAR,
-} from './constants';
 import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useLooterActions } from './looter-game/LooterGameContext';
@@ -36,14 +19,14 @@ import { usePosts } from './features/profile/hooks/usePosts';
 type CameraLabState = {
   cameraZ: MotionValue<number>;
   tiltAngle: MotionValue<number>;
-  cameraHeightPct: number;
+  cameraHeightOffset: number;
   cameraRotateDeg: number;
-  cameraRotateXDeg: number;
+  cameraPitchOverride: number | null;
   cameraRotateYDeg: number;
   setCameraZ: (z: number) => void;
-  setCameraHeightPct: (v: number) => void;
+  setCameraHeightOffset: (v: number) => void;
   setCameraRotateDeg: (v: number) => void;
-  setCameraRotateXDeg: (v: number) => void;
+  setCameraPitchOverride: (v: number | null) => void;
   setCameraRotateYDeg: (v: number) => void;
 };
 
@@ -214,10 +197,10 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setMapMode={nav.setMapMode}
         cameraZ={camera.cameraZ}
         setCameraZ={camera.setCameraZ}
-        cameraHeightPct={camera.cameraHeightPct}
-        cameraRotateXDeg={camera.cameraRotateXDeg}
-        setCameraHeightPct={camera.setCameraHeightPct}
-        setCameraRotateXDeg={camera.setCameraRotateXDeg}
+        cameraHeightOffset={camera.cameraHeightOffset}
+        cameraPitchOverride={camera.cameraPitchOverride}
+        setCameraHeightOffset={camera.setCameraHeightOffset}
+        setCameraPitchOverride={camera.setCameraPitchOverride}
         isWidgetExpanded={isWeatherWidgetExpanded}
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
