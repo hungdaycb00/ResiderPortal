@@ -15,6 +15,13 @@ if (typeof window !== 'undefined') {
       window.location.reload();
     }
   });
+
+  // Tạm ẩn cảnh báo THREE.Clock deprecation từ @react-three/fiber
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('THREE.Clock')) return;
+    originalWarn(...args);
+  };
 }
 
 if (typeof window !== 'undefined' && 'ontouchstart' in window) {

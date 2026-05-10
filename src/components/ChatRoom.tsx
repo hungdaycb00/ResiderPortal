@@ -97,7 +97,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
             socket.off('connect', handleConnect);
             socket.off('disconnect', handleDisconnect);
         };
-    }, [deviceId, targetUser]);
+    }, [deviceId, targetUser?.id]);
 
     useChat(
         useCallback((newMessage) => {

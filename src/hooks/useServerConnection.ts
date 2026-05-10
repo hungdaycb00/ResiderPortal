@@ -20,7 +20,7 @@ export function useServerConnection() {
         const result = await externalApi.checkStatus(url);
         setServerStatus(result.status);
         setServerError(result.message || null);
-        if (result.status === 'offline' && result.message === 'Proxy unreachable' && cloudflareUrl) {
+        if (result.status === 'offline' && result.message === 'Proxy unreachable' && cloudflareUrl && cloudflareUrl !== window.location.origin) {
             setCloudflareUrl('');
         }
     }, [cloudflareUrl]);
