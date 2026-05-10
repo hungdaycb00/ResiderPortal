@@ -1,4 +1,4 @@
-import { FRUITS } from './FruitGame';
+import { FRUITS } from './fruitConstants';
 import { checkConnection, findAllValidPairs, type Point, type Cell } from './FruitGameLogic';
 
 export const LEVELS = {

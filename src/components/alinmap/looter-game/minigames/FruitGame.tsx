@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { playSound, triggerHaptic } from './utils';
 import { checkConnection, findAllValidPairs, type Point, type Cell } from './FruitGameLogic';
 import { LEVELS, setupGrid, handleLevelMechanics, shiftGrid } from './FruitGameEngine';
+import { FRUITS } from './fruitConstants';
 import FruitGameMenu from './FruitGameMenu';
 import FruitGameBoard from './FruitGameBoard';
 
-export const FRUITS = [
-  '🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒',
-  '🥝', '🥭', '🍐', '🍑', '🍋', '🫐', '🥑', '🐲'
-];
+// Re-export FRUITS cho backward compatibility
+export { FRUITS } from './fruitConstants';
+
 
 export function FruitGame({
   onBack,

@@ -1,4 +1,4 @@
-import { FRUITS } from './FruitGame'; // We will need to export FRUITS from FruitGame.tsx or define them here
+import { FRUITS } from './fruitConstants'; // Hằng số riêng biệt để tránh circular dependency
 
 export type Point = { r: number, c: number };
 export type Cell = { fruit: string | null, id: number };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { generateSolvableGrid } from '../minigames/FruitGameLogic';
-import { FRUITS } from '../minigames/FruitGame';
+import { FRUITS } from '../minigames/fruitConstants';
 
 /**
  * Hook: Pre-generate minigame grids in background để giảm delay khi mở minigame.
