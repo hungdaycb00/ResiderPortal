@@ -25,8 +25,8 @@ import { useLooterData } from './hooks/useLooterData';
 import { useLooterMovement } from './hooks/useLooterMovement';
 import { useLooterInventory } from './hooks/useLooterInventory';
 import { useLooterStateManager } from './hooks/useLooterStateManager';
-import { generateSolvableGrid } from './minigames/FruitGameLogic';
-import { FRUITS } from './minigames/FruitGame';
+import { useBeforeUnloadSync } from './hooks/useBeforeUnloadSync';
+import { useLooterMinigamePregen } from './hooks/useLooterMinigamePregen';
 
 const defaultState: LooterGameState = {
   initialized: false, fortressLat: null, fortressLng: null, currentLat: null, currentLng: null,
@@ -54,9 +54,17 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   // Dùng ref thay state để tránh khoảng trống null khi dependency thay đổi
   const centerBoatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const centerCombatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
-  const [pregeneratedMinigames, setPregeneratedMinigames] = useState<{ fruit?: any }>({});
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [isTierSelectorOpen, setIsTierSelectorOpenState] = useState(false);
+
+  // Pre-generate minigame boards trong background
+  const { pregeneratedMinigames, clearPregeneratedFruit } = useLooterMinigamePregen({
+    isLooterGameMode: ui.isLooterGameMode,
+    worldTier: state.worldTier || 0,
+  });
+
+  // Sync trước khi thoát tab
+  useBeforeUnloadSync({ deviceId, apiUrl: API_URL, state });
 
   const setIsTierSelectorOpen = useCallback((v: boolean) => {
     setIsTierSelectorOpenState(v);
@@ -112,23 +120,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     if (typeof openBackpackHandler === 'function') openBackpackHandler();
   }, [openBackpackHandler]);
 
-  // Handle BeforeUnload for final sync — only serialize essential game state
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!deviceId) return;
-      try {
-        const { currentLat, currentLng, fortressLat, fortressLng, cursePercent, looterGold, worldTier, currentHp, baseMaxHp, inventory, storage } = state;
-        const essentialState = { currentLat, currentLng, fortressLat, fortressLng, cursePercent, looterGold, worldTier, currentHp, baseMaxHp, inventory, storage };
-        const payload = JSON.stringify({ deviceId, state: essentialState });
-        navigator.sendBeacon(`${API_URL}/api/looter/sync`, new Blob([payload], { type: 'application/json' }));
-      } catch (e) {
-        console.error('[Looter] beforeunload sync error', e);
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [deviceId, API_URL, state]);
-
   // 3. Initialize Hooks
   const stateManager = useLooterStateManager({
     deviceId, apiUrl: API_URL, state, setState, setWorldItems,
@@ -151,10 +142,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     setIsIntegratedStorageOpen: (v: boolean) => dispatch({ type: 'SET_INTEGRATED_STORAGE_OPEN', payload: v }),
     setIsTierSelectorOpen,
   });
-
-  const clearPregeneratedFruit = useCallback(() => {
-    setPregeneratedMinigames(prev => ({ ...prev, fruit: null }));
-  }, []);
 
   // 3. Actions Orchestrator
   const actionsValue: LooterGameActions = useMemo(() => ({
@@ -309,30 +296,6 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
     initialLoadDoneRef.current = true;
     actionsValue.loadState();
   }, [deviceId, ui.isLooterGameMode, actionsValue]);
-
-  // Background Minigame Generation
-  useEffect(() => {
-    if (!ui.isLooterGameMode) return;
-    
-    // Nếu chưa có bàn chơi sẵn cho tier hiện tại, hãy tạo một cái
-    if (!pregeneratedMinigames.fruit) {
-      const worldTier = state.worldTier || 0;
-      const baseSize = 3 + worldTier;
-      const rows = baseSize;
-      const cols = (rows * rows) % 2 === 0 ? rows : rows + 1;
-      
-      // Số lượng loại hoa quả khác nhau tăng theo tier
-      const fruitCount = Math.min(16, 8 + worldTier);
-
-      // Chạy ngầm để không block UI chính
-      setTimeout(() => {
-        const grid = generateSolvableGrid(rows, cols, fruitCount, FRUITS);
-        if (grid && grid.length > 0) {
-          setPregeneratedMinigames(prev => ({ ...prev, fruit: grid }));
-        }
-      }, 100);
-    }
-  }, [ui.isLooterGameMode, state.worldTier, !!pregeneratedMinigames.fruit]);
 
   // Debug: Press 'P' to spawn all bags
   useEffect(() => {

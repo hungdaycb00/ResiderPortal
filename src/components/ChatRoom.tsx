@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initSocket, getSocket } from '../utils/socket';
 import { authenticateChat, joinRoom, sendMessage, getMyPrivateRooms, createOrGetPrivateRoom } from '../utils/chatService';
 import { useChat } from '../hooks/useChat';
-import { MessageCircle, Send as SendIcon, MessageSquare, ChevronLeft, Globe, User, Plus, Search, Users } from 'lucide-react';
-import { normalizeImageUrl } from '../services/externalApi';
+import ChatSidebar from './chat/ChatSidebar';
+import ChatArea from './chat/ChatArea';
 
 interface ChatRoomProps {
     deviceId: string;
@@ -31,13 +31,13 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
     const [isLoading, setIsLoading] = useState(true);
     const [authenticatedUserId, setAuthenticatedUserId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    
+
     const [privateRooms, setPrivateRooms] = useState<RoomInfo[]>([]);
     const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
     const [activeRoomName, setActiveRoomName] = useState('World Chat');
     const [activeRoomAvatar, setActiveRoomAvatar] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
-    
+
     const activeRoomIdRef = useRef<number | null>(null);
 
     const setActiveRoom = (id: number, name: string, avatar: string | null = null) => {
@@ -52,7 +52,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         initSocket();
         const socket = getSocket();
         if (!socket) return;
-        
+
         const handleConnect = () => setIsConnected(true);
         const handleDisconnect = () => setIsConnected(false);
 
@@ -70,7 +70,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
             .then((rooms) => {
                 if (!mounted) return;
                 if (rooms) setPrivateRooms(rooms);
-                
+
                 if (targetUser) {
                     setMobileView('chat');
                     return createOrGetPrivateRoom(targetUser.id).then(res => {
@@ -110,23 +110,16 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         }, [])
     );
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
     // Auto-scroll after messages have rendered
     useEffect(() => {
-        scrollToBottom();
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     const handleSend = () => {
         if (inputText.trim() && activeRoomId) {
             try {
-                // If it's World Chat, contentType is text, roomId passed as number
                 sendMessage(inputText.trim(), 'text', activeRoomId);
                 setInputText('');
-                
-                // Fetch rooms again to update latest message in sidebar
                 getMyPrivateRooms().then(rooms => setPrivateRooms(rooms || []));
             } catch (error: any) {
                 alert('Error: ' + error.message);
@@ -147,7 +140,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         setActiveRoomAvatar(avatarUrl);
         setMobileView('chat');
         setMessages([]);
-        
+
         joinRoom(type, roomId)
             .then((data) => {
                 setActiveRoom(data.roomId, roomName, avatarUrl);
@@ -179,179 +172,31 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
 
     return (
         <div className="flex w-full h-[80vh] min-h-[500px] bg-[#1a1d24] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            
-            {/* LEFT SIDEBAR (Room List) */}
-            <div className={`w-full md:w-[320px] shrink-0 border-r border-gray-800 flex-col bg-[#16181d] ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-gray-800 bg-[#1e2128] flex items-center justify-between">
-                    <h2 className="font-bold text-white flex items-center gap-2 text-lg">
-                        <MessageCircle className="w-5 h-5 text-blue-500" />
-                        Messenger
-                    </h2>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    {/* World Chat Global Option */}
-                    <button 
-                        onClick={() => switchRoom('global', null, 'World Chat', null)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors active:scale-95 ${activeRoomName === 'World Chat' ? 'bg-blue-600/20 shadow-inner' : 'hover:bg-gray-800/50'}`}
-                    >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${activeRoomName === 'World Chat' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                            <Globe className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                            <h3 className={`font-bold text-sm truncate ${activeRoomName === 'World Chat' ? 'text-blue-400' : 'text-gray-200'}`}>Kênh Tổng Thế Giới</h3>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest">Toàn bộ cư dân Alin</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        </div>
-                    </button>
-
-                    <div className="pt-4 pb-2 px-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Danh sách Bạn bè</span>
-                            <span className="text-[10px] font-bold text-gray-600 bg-gray-800/50 px-1.5 py-0.5 rounded-md">{friends.length}</span>
-                        </div>
-                        <div className="h-px bg-gray-800/50 mt-2"></div>
-                    </div>
-
-                    <div className="space-y-1">
-                        {friends.map(friend => {
-                            const isActive = activeRoomName === (friend.displayName || friend.username || friend.id);
-                            return (
-                                <button 
-                                    key={friend.id}
-                                    onClick={() => startChatWithFriend(friend)}
-                                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all active:scale-95 ${isActive ? 'bg-blue-600/10' : 'hover:bg-gray-800/40'}`}
-                                >
-                                    <div className="relative w-9 h-9 rounded-full shrink-0 border border-gray-700 overflow-hidden bg-[#252830]">
-                                        <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-full h-full object-cover" />
-                                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-gray-600'}`}></div>
-                                    </div>
-                                    <div className="flex-1 text-left min-w-0">
-                                        <h3 className={`font-bold text-xs truncate ${isActive ? 'text-blue-400' : 'text-gray-300'}`}>{friend.display_name || friend.displayName || friend.username || friend.id}</h3>
-                                        <p className="text-[9px] text-gray-500 uppercase font-medium">{friend.is_online ? 'Đang hoạt động' : 'Ngoại tuyến'}</p>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                        {friends.length === 0 && (
-                            <div className="text-center py-8 opacity-40 space-y-2">
-                                <Users className="w-8 h-8 mx-auto text-gray-600" />
-                                <p className="text-[10px] uppercase font-bold tracking-widest">Chưa có bạn bè</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* RIGHT MAIN (Chat Area) */}
-            <div className={`flex-1 flex-col bg-[#1a1d24] ${mobileView === 'sidebar' ? 'hidden md:flex' : 'flex'}`}>
-                {/* Header */}
-                <div className="p-4 border-b border-gray-800 bg-[#20232a] flex items-center justify-between shrink-0 h-[69px]">
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => setMobileView('sidebar')}
-                            className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full transition-colors active:scale-95"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        
-                        <div className="flex flex-col">
-                            <h2 className="font-bold text-white text-lg flex items-center gap-2">
-                                {activeRoomName === 'World Chat' ? (
-                                    <Globe className="w-4 h-4 text-blue-400" />
-                                ) : activeRoomAvatar ? (
-                                    <img src={normalizeImageUrl(activeRoomAvatar)} className="w-5 h-5 rounded-full object-cover border border-gray-700" alt="avatar" />
-                                ) : (
-                                    <User className="w-4 h-4 text-emerald-400" />
-                                )}
-                                {activeRoomName}
-                            </h2>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                                <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-red-500 shadow-[0_0_5px_#ef4444]'}`}></div>
-                                <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">
-                                    {isConnected ? 'Connected' : 'Offline'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#16181d] relative">
-                    {messages.length > 0 ? messages.map((msg, idx) => {
-                        const msgSenderId = msg.sender_id || msg.senderId || msg.uid || (msg.sender && msg.sender.id);
-                        
-                        // Checking if this message was sent by the currently logged in user
-                        const isOwn = (
-                            (authenticatedUserId && String(msgSenderId) === String(authenticatedUserId)) ||
-                            (currentUserId && String(msgSenderId) === String(currentUserId)) ||
-                            (deviceId && String(msgSenderId) === String(deviceId))
-                        );
-
-                        return (
-                            <div 
-                                key={msg.id || idx} 
-                                className={`flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-300 ${isOwn ? 'items-end' : 'items-start'}`}
-                            >
-                                <div className={`flex items-center gap-2 mb-0.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    <span className={`text-[11px] font-bold ${isOwn ? 'text-gray-400' : (activeRoomName === 'World Chat' ? 'text-blue-400' : 'text-emerald-400')}`}>
-                                        {isOwn ? 'Bạn' : (msg.display_name || msg.senderName || msg.sender_name || 'User')}
-                                    </span>
-                                    <span className="text-[9px] font-medium text-gray-500/80">
-                                        {new Date(msg.createdAt || msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                                <div 
-                                    className={`px-4 py-2.5 rounded-2xl text-[14px] max-w-[80%] break-words leading-relaxed shadow-sm ${
-                                        isOwn 
-                                            ? 'bg-blue-600 border border-blue-500 rounded-tr-sm text-white shadow-blue-900/20' 
-                                            : 'bg-[#252830] border border-gray-700/80 rounded-tl-sm text-gray-200'
-                                    }`}
-                                >
-                                    {msg.content || msg.message}
-                                </div>
-                            </div>
-                        );
-                    }) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500/70 p-4 text-center pointer-events-none">
-                            <MessageSquare className="w-12 h-12 mb-3 opacity-50" />
-                            <p className="font-medium text-sm">Chưa có tin nhắn nào.</p>
-                            <p className="text-xs mt-1">Gửi lời chào để bắt đầu!</p>
-                        </div>
-                    )}
-                    {isLoading && activeRoomId && (
-                        <div className="flex justify-center p-2">
-                             <div className="w-4 h-4 border-2 border-gray-700 border-t-white rounded-full animate-spin"></div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} className="h-2" />
-                </div>
-
-                {/* Input Area */}
-                <div className="p-4 border-t border-gray-800 bg-[#20232a] shrink-0">
-                    <div className="flex gap-2 p-1 bg-[#16181d] border border-gray-700/50 rounded-2xl focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-inner">
-                        <input
-                            type="text"
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                            disabled={!isConnected || isLoading}
-                            placeholder={isConnected ? "Nhập tin nhắn..." : "Đang kết nối..."}
-                            className="flex-1 bg-transparent px-4 py-2 text-[14px] text-white focus:outline-none disabled:opacity-50 min-w-0"
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={!inputText.trim() || !isConnected || isLoading}
-                            className="p-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 disabled:hover:bg-gray-800 text-white rounded-xl transition-all active:scale-95 flex items-center justify-center"
-                        >
-                            <SendIcon className="w-5 h-5 -ml-0.5 mt-0.5" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
+            <ChatSidebar
+                friends={friends}
+                activeRoomName={activeRoomName}
+                mobileView={mobileView}
+                switchRoom={switchRoom}
+                startChatWithFriend={startChatWithFriend}
+            />
+            <ChatArea
+                messages={messages}
+                inputText={inputText}
+                isConnected={isConnected}
+                isLoading={isLoading}
+                activeRoomId={activeRoomId}
+                activeRoomName={activeRoomName}
+                activeRoomAvatar={activeRoomAvatar}
+                mobileView={mobileView}
+                authenticatedUserId={authenticatedUserId}
+                currentUserId={currentUserId}
+                deviceId={deviceId}
+                messagesEndRef={messagesEndRef}
+                setInputText={setInputText}
+                setMobileView={setMobileView}
+                handleSend={handleSend}
+                handleKeyPress={handleKeyPress}
+            />
         </div>
     );
 }

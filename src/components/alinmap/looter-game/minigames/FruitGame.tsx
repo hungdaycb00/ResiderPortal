@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Timer, RefreshCw, Trophy, XCircle, Zap, ChevronLeft, Layers, Apple } from 'lucide-react';
 import { playSound, triggerHaptic } from './utils';
-import { motion, AnimatePresence } from 'framer-motion';
 import { checkConnection, findAllValidPairs, type Point, type Cell } from './FruitGameLogic';
-import { LEVELS, formatTime, setupGrid, handleLevelMechanics, shiftGrid, getCellCoord } from './FruitGameEngine';
+import { LEVELS, setupGrid, handleLevelMechanics, shiftGrid } from './FruitGameEngine';
+import FruitGameMenu from './FruitGameMenu';
+import FruitGameBoard from './FruitGameBoard';
 
 export const FRUITS = [
   '🍎', '🍌', '🍇', '🍉', '🍊', '🍓', '🍍', '🍒',
   '🥝', '🥭', '🍐', '🍑', '🍋', '🫐', '🥑', '🐲'
 ];
-
-// type Point = { r: number, c: number };
-// type Cell = { fruit: string | null, id: number };
 
 export function FruitGame({
   onBack,
@@ -109,10 +106,6 @@ export function FruitGame({
     }, 1000);
   };
 
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  // Logic extracted to FruitGameEngine.ts & FruitGameLogic.ts
-
   const handleCellClick = (r: number, c: number) => {
     if (gameState !== 'playing' || grid[r][c].fruit === null) return;
     playSound('click');
@@ -149,7 +142,6 @@ export function FruitGame({
                 setTimeout(() => onComplete(true), 2000);
               }
             } else {
-              // Check if stuck
               const validMoves = findAllValidPairs(shiftedGrid);
               if (validMoves.length === 0) {
                 setTimeout(() => {
@@ -173,161 +165,26 @@ export function FruitGame({
     setSelection(null);
   };
 
-  const maxCellSize = level === 'easy' ? 45 : level === 'medium' ? 38 : 32;
-
   return (
     <div className="w-full h-full flex flex-col items-center justify-center">
       {gameState === 'menu' ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-sm mx-auto overflow-y-auto no-scrollbar">
-          {/* Animated Icon Section - EMERALD */}
-          <div className="w-20 h-20 bg-emerald-100 rounded-[35px] flex items-center justify-center mb-4 shadow-sm border-4 border-white animate-bounce-slow shrink-0">
-            <Apple size={40} className="text-emerald-500 fill-emerald-50" />
-          </div>
-
-          {/* Unified Header - EMERALD */}
-          <h2 className="font-bubbly text-3xl text-white mb-1 uppercase tracking-widest italic">FRUIT HARVEST</h2>
-          <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-8 text-center leading-relaxed px-4">
-            Connect identical fruits with paths that have no more than two turns!
-          </p>
-
-          {/* Difficulty Selection */}
-          <div className="w-full">
-            <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-4 block px-2 text-center italic">SELECT HARVEST LEVEL</label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {Object.keys(LEVELS).map((diff) => (
-                <button
-                  key={diff}
-                  aria-label={`Select ${LEVELS[diff as keyof typeof LEVELS].name} difficulty`}
-                  onClick={() => initGame(diff as keyof typeof LEVELS)}
-                  className="group bg-white/80 hover:bg-emerald-500 p-1.5 md:p-3 rounded-2xl flex flex-col items-center justify-center border-2 border-slate-100 hover:border-emerald-300 transition-all active:scale-95 shadow-sm"
-                >
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="font-black text-[10px] md:text-xs text-slate-700 group-hover:text-white uppercase italic tracking-tighter">{LEVELS[diff as keyof typeof LEVELS].name}</span>
-                    <span className="text-[7px] md:text-[8px] font-black text-slate-400 group-hover:text-emerald-100 uppercase tracking-widest">{LEVELS[diff as keyof typeof LEVELS].rows}x{LEVELS[diff as keyof typeof LEVELS].cols}</span>
-                  </div>
-                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-emerald-50 group-hover:bg-emerald-400 flex items-center justify-center text-emerald-500 group-hover:text-white transition-colors mt-0 md:mt-1">
-                    <Layers size={14} />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <FruitGameMenu onSelectDifficulty={initGame} />
       ) : (
-        <AnimatePresence mode="wait">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full h-full flex flex-col items-center justify-center relative p-1 md:p-4 gap-2 md:gap-4 overflow-visible"
-          >
-            {/* Header Dashboard */}
-            <div
-              className="flex w-full max-w-[min(96vw,560px)] flex-row items-center justify-between gap-2 bg-white/20 p-2 md:px-4 md:py-3 rounded-xl md:rounded-[24px] backdrop-blur-sm border border-white/30 shrink-0 z-40"
-              style={{ WebkitBackdropFilter: 'blur(4px)' }}
-            >
-              <div className="flex items-center gap-1.5 bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30">
-                <Timer size={12} className={`${timeLeft < 30 ? 'text-red-400 animate-pulse' : 'text-emerald-300'}`} />
-                <span className={`text-xs md:text-lg font-black tabular-nums ${timeLeft < 30 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
-                  {formatTime(timeLeft)}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <span className="text-[8px] md:text-[10px] font-black text-white/60 uppercase tracking-widest">Score</span>
-                <span className="font-black text-lg md:text-2xl text-white tabular-nums leading-none">{score}</span>
-              </div>
-
-              {autoStart && onComplete && (
-                <button
-                  onClick={() => {
-                    playSound('click');
-                    triggerHaptic('medium');
-                    onComplete(false);
-                  }}
-                  className="w-10 h-10 bg-red-500/20 hover:bg-red-500/40 text-red-100 rounded-xl flex items-center justify-center border border-red-500/30 transition-all active:scale-95 shadow-md backdrop-blur-md shrink-0"
-                >
-                  <XCircle size={24} />
-                </button>
-              )}
-
-              {!autoStart && (
-                <button
-                  aria-label="Back to Menu"
-                  onClick={() => { playSound('click'); setGameState('menu'); }}
-                  className="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform text-white border border-white/20 shrink-0"
-                >
-                  <XCircle size={24} />
-                </button>
-              )}
-            </div>
-
-            {/* Content Area */}
-            <div className="min-h-0 flex-1 flex flex-col items-center justify-center w-full">
-              {/* Grid Area Wrapper - Glassmorphism */}
-              <div
-                className="p-2 md:p-4 bg-white/30 backdrop-blur-sm rounded-[30px] border-2 border-white/50 flex items-center justify-center z-10 shadow-inner overflow-hidden mx-auto"
-                style={{
-                  width: '100%',
-                  WebkitBackdropFilter: 'blur(4px)',
-                  maxWidth: isMobile
-                    ? `min(96vw, ${(gridConfig.cols / gridConfig.rows) * 45}vh)`
-                    : `min(96vw, ${(gridConfig.cols / gridConfig.rows) * 55}vh)`
-                }}
-              >
-                <div
-                  ref={gridRef}
-                  className="grid gap-1 md:gap-1.5 w-full h-full select-none relative"
-                  style={{
-                    gridTemplateColumns: `repeat(${gridConfig.cols}, minmax(0, 1fr))`,
-                    aspectRatio: `${gridConfig.cols}/${gridConfig.rows}`
-                  }}
-                >
-                  {grid.map((row, r) =>
-                    row.map((cell, c) => (
-                      <button
-                        key={`${r}-${c}`}
-                        onClick={() => handleCellClick(r, c)}
-                        className={`aspect-square rounded-md md:rounded-lg flex items-center justify-center text-sm md:text-2xl transition-all duration-200 w-full h-full
-                            ${cell.fruit === null ? 'opacity-0 pointer-events-none' : 'bg-white shadow-[0_2px_0_0_#e2e8f0] md:shadow-[0_4px_0_0_#e2e8f0] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none'}
-                            ${selection?.r === r && selection?.c === c ? ' ring-2 md:ring-4 ring-emerald-400 ring-offset-1 scale-105 z-10' : ''}
-                          `}
-                      >
-                        <span className="text-2xl md:text-5xl leading-none flex items-center justify-center">{cell.fruit}</span>
-                      </button>
-                    ))
-                  )}
-
-                  {path.length > 1 && (
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-30 overflow-visible">
-                      <polyline points={path.map(p => { const { x, y } = getCellCoord(p, gridRef.current, grid.length, grid[0].length); return `${x},${y}`; }).join(' ')} fill="none" stroke="#10b981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse" style={{ filter: 'drop-shadow(0 0 10px rgba(16,185,129,0.8))' }} />
-                    </svg>
-                  )}
-                </div>
-              </div>
-
-              {/* Hint */}
-              <p className="text-[7px] md:text-[10px] font-black text-white/80 uppercase tracking-widest text-center mt-2 md:mt-4 z-10 opacity-80">
-                Connect identical fruits! Max 2 turns.
-              </p>
-            </div>
-
-            {/* Result Message */}
-            <AnimatePresence>
-              {gameState === 'won' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
-                >
-                  <h2 className="text-4xl md:text-6xl font-black text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.8)] italic uppercase tracking-tighter animate-bounce">
-                    THÀNH CÔNG!
-                  </h2>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </AnimatePresence>
+        <FruitGameBoard
+          grid={grid}
+          selection={selection}
+          path={path}
+          timeLeft={timeLeft}
+          score={score}
+          gameState={gameState}
+          level={level}
+          gridConfig={gridConfig}
+          isMobile={isMobile}
+          autoStart={autoStart}
+          onComplete={onComplete}
+          onBack={() => setGameState('menu')}
+          onCellClick={handleCellClick}
+        />
       )}
     </div>
   );
