@@ -8,6 +8,8 @@ import {
   openSearchTagResult,
   openSearchUserResult,
 } from './searchActions';
+import MobileTopNavBar from './components/MobileTopNavBar';
+import MobileSearchOverlay from './components/MobileSearchOverlay';
 
 interface SearchHeaderProps {
   searchTag: string;
@@ -64,6 +66,8 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
     || desktopSearchResults.games.length > 0
     || desktopSearchResults.tags.length > 0;
 
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = React.useState(false);
+
   const actions = {
     nearbyUsers,
     setSelectedUser,
@@ -73,6 +77,32 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
     setSearchTag,
     handlePlayGame,
   };
+
+  if (!isDesktop) {
+    return (
+      <>
+        {!shouldHideSearch && (
+          <MobileTopNavBar
+            myAvatarUrl={myAvatarUrl}
+            myDisplayName={myDisplayName}
+            weatherData={weatherData}
+            onWeatherClick={onWeatherClick}
+            onSearchClick={() => setIsMobileSearchOpen(true)}
+            onAvatarClick={() => handleTabClick('profile')}
+          />
+        )}
+        <MobileSearchOverlay
+          isOpen={isMobileSearchOpen}
+          onClose={() => setIsMobileSearchOpen(false)}
+          nearbyUsers={nearbyUsers}
+          setSelectedUser={setSelectedUser}
+          setActiveTab={setActiveTab}
+          setIsSheetExpanded={setIsSheetExpanded}
+          handlePlayGame={handlePlayGame}
+        />
+      </>
+    );
+  }
 
   return (
     <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 pointer-events-auto transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${shouldHideSearch ? 'hidden' : ''}`}>

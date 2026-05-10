@@ -250,6 +250,9 @@ function SceneContent({
                 const nz = sp.z + pxToScene(visualBoatY);
                 const [lx, , lz] = lastBoatPosRef.current;
                 if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
+                    // ⚠️ ĐỒNG BỘ Y=5.0: giá trị này phải khớp với ProceduralBoat.tsx (bobbing Y offset +5)
+                    // và tất cả looter element bên dưới (DashedPath to Y=5.0, target pin Y=5.02).
+                    // Nếu thay đổi, phải cập nhật đồng thời tất cả các vị trí Y liên quan.
                     boatPosRef.current = [nx, 5.0, nz];
                     lastBoatPosRef.current = [nx, 0, nz];
                 }
@@ -374,6 +377,12 @@ function SceneContent({
                     />
                 ))}
 
+                {/* ─── Looter Game Elements ────────────────────────────────────────── */}
+                {/* ⚠️ Tất cả vị trí Y và scale dưới đây đồng bộ với:                   */}
+                {/*   - ProceduralBoat.tsx: scale=4, bobbing Y offset +5               */}
+                {/*   - boatPosRef Y=5.0 (trong useFrame phía trên)                    */}
+                {/*   Khi scale hình ảnh, phải cập nhật đồng bộ cả 3 nơi.              */}
+
                 {/* Fortress */}
                 {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
                     <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} onClick={handleFortressClick} />
@@ -383,13 +392,13 @@ function SceneContent({
                 {waypointRenderData.map(({ item, pos }: any) => (
                     <LootSprite
                         key={`wp-${item.spawnId}`}
-                        position={[pos.x, 0.3, pos.z]}
+                        position={[pos.x, 3.5, pos.z]}
                         type={getWorldItemType(item)}
                         icon={getWorldItemIcon(item)}
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
-                        scale={1.2}
-                        size={AVATAR_PLANE_SIZE}
+                        scale={2.4}
+                        size={AVATAR_PLANE_SIZE * 2.0}
                         renderOrder={50}
                         onClick={() => handleWorldItemClick(item)}
                     />
@@ -399,7 +408,7 @@ function SceneContent({
                 {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (
                     <DashedPath
                         from={boatPosRef.current}
-                        to={[boatTargetScene.x, 0.3, boatTargetScene.z]}
+                        to={[boatTargetScene.x, 5.0, boatTargetScene.z]}
                         color="#22d3ee"
                     />
                 ) : null}
@@ -407,10 +416,10 @@ function SceneContent({
                 {/* Boat target pin (chỉ còn circle, DashedPath đã vẽ target) */}
                 {isLooterGameMode && !encounter && boatTargetPin ? (
                     <LootSprite
-                        position={[boatTargetScene!.x, 0.3, boatTargetScene!.z]}
+                        position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
                         type="target"
                         size={AVATAR_PLANE_SIZE * 0.2}
-                        scale={1}
+                        scale={2}
                     />
                 ) : null}
 
@@ -418,12 +427,12 @@ function SceneContent({
                 {isLooterGameMode && encounter ? (
                     <LootSprite
                         position={[
-                            boatPosRef.current[0] + pxToScene(90),
-                            0.3,
-                            boatPosRef.current[2] + pxToScene(-110)
+                            boatPosRef.current[0] + pxToScene(180),
+                            0.7,
+                            boatPosRef.current[2] + pxToScene(-220)
                         ]}
                         type="enemy"
-                        scale={1.2}
+                        scale={2.4}
                     />
                 ) : null}
 
@@ -431,13 +440,13 @@ function SceneContent({
                 {itemRenderData.map(({ item, pos }: any) => (
                     <LootSprite
                         key={item.spawnId}
-                        position={[pos.x, 0.15, pos.z]}
+                        position={[pos.x, 3.0, pos.z]}
                         type={getWorldItemType(item)}
                         icon={getWorldItemIcon(item)}
                         title={item?.item?.name || 'Loot'}
                         accent={getWorldItemAccent(item)}
-                        scale={1}
-                        size={AVATAR_PLANE_SIZE * 0.9}
+                        scale={2}
+                        size={AVATAR_PLANE_SIZE * 1.8}
                         renderOrder={40}
                         onClick={() => handleWorldItemClick(item)}
                     />

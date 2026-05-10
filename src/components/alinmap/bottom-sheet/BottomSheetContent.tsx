@@ -8,7 +8,7 @@ import { useProfile } from '../features/profile/context/ProfileContext';
 import NotificationsView from '../features/social/components/NotificationsView';
 import SocialView from '../features/social/components/SocialView';
 import { useLooterGame } from '../looter-game/LooterGameContext';
-import SheetSearchResults from '../SheetSearchResults';
+
 import SubTabSwitcher from './SubTabSwitcher';
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './types';
 
@@ -106,17 +106,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
         >
             {shouldRenderSheetContent && (
                 <div style={{ direction: 'ltr' }}>
-                    {!selectedUser && !shouldHideSearch && (
-                        <SheetSearchResults
-                            searchTag={deferredSearchTag}
-                            nearbyUsers={nearbyUsers}
-                            setSelectedUser={setSelectedUser}
-                            setActiveTab={setActiveTab}
-                            setIsSheetExpanded={setIsSheetExpanded}
-                            setSearchTag={setSearchTag}
-                            handlePlayGame={handlePlayGame}
-                        />
-                    )}
+
 
                     {selectedUser ? (
                         <SelectedUserView
@@ -251,6 +241,16 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     requestLocation={requestLocation}
                                     friends={friends}
                                     setSelectedUser={setSelectedUser}
+                                    isCreatingPost={isCreatingPost}
+                                    setIsCreatingPost={setIsCreatingPost}
+                                    postTitle={postTitle}
+                                    setPostTitle={setPostTitle}
+                                    postPrivacy={postPrivacy}
+                                    setPostPrivacy={setPostPrivacy}
+                                    postIsStarred={postIsStarred}
+                                    setPostIsStarred={setPostIsStarred}
+                                    isSavingPost={isSavingPost}
+                                    handleCreatePost={handleCreatePost}
                                 />
                             )}
 

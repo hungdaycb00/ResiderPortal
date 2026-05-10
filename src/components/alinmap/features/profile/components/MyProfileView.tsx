@@ -7,6 +7,7 @@ import ProfilePostsSection from './ProfilePostsSection';
 import ProfileTabs from './ProfileTabs';
 import { useProfile } from '../context/ProfileContext';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
+import CreatePostForm from '../../creator/components/CreatePostForm';
 
 const INITIAL_SAVED_POST_LIMIT = 8;
 const SAVED_POST_BATCH_SIZE = 8;
@@ -39,6 +40,16 @@ interface MyProfileViewProps {
     requestLocation?: (forceInvisible?: boolean, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => void;
     friends: any[];
     setSelectedUser: (user: any) => void;
+    isCreatingPost?: boolean;
+    setIsCreatingPost?: (v: boolean) => void;
+    postTitle?: string;
+    setPostTitle?: (v: string) => void;
+    postPrivacy?: 'public' | 'friends' | 'private';
+    setPostPrivacy?: (v: 'public' | 'friends' | 'private') => void;
+    postIsStarred?: boolean;
+    setPostIsStarred?: (v: boolean) => void;
+    isSavingPost?: boolean;
+    handleCreatePost?: (files: File[]) => void;
 }
 
 const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
@@ -51,7 +62,10 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         handleStarPost, handleDeletePost, handleUpdatePostPrivacy, fetchUserPosts, externalApi,
         setMyAvatarUrl,
         triggerAuth, requireAuth, logout, requestLocation,
-        friends, setSelectedUser
+        friends, setSelectedUser,
+        isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
+        postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
+        isSavingPost, handleCreatePost
     } = props;
 
     const { 
@@ -190,21 +204,39 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
             />
 
             {activeTab === 'posts' ? (
-                <ProfilePostsSection
-                    posts={userPosts}
-                    visibleCount={visibleSavedPostCount}
-                    onShowMore={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
-                    showMoreLabel="Show more posts"
-                    emptyTitle="No posts yet"
-                    emptyDescription="Create a post from Social to show it here."
-                    emptyType="posts"
-                    onStar={handleStarPost}
-                    onDelete={handleDeletePost}
-                    onUpdatePrivacy={handleUpdatePostPrivacy}
-                    externalApi={externalApi}
-                    fetchUserPosts={fetchUserPosts}
-                    requireAuth={requireAuth}
-                />
+                <div className="space-y-4">
+                    {setIsCreatingPost && (
+                        <div className="mb-4">
+                            <CreatePostForm
+                                isCreatingPost={!!isCreatingPost}
+                                setIsCreatingPost={setIsCreatingPost}
+                                postTitle={postTitle || ''}
+                                setPostTitle={setPostTitle || (() => {})}
+                                postPrivacy={postPrivacy || 'public'}
+                                setPostPrivacy={setPostPrivacy || (() => {})}
+                                postIsStarred={postIsStarred}
+                                setPostIsStarred={setPostIsStarred}
+                                isSavingPost={!!isSavingPost}
+                                handleCreatePost={handleCreatePost || (() => {})}
+                            />
+                        </div>
+                    )}
+                    <ProfilePostsSection
+                        posts={userPosts}
+                        visibleCount={visibleSavedPostCount}
+                        onShowMore={() => setVisibleSavedPostCount((count) => count + SAVED_POST_BATCH_SIZE)}
+                        showMoreLabel="Show more posts"
+                        emptyTitle="No posts yet"
+                        emptyDescription="Create a post from Social to show it here."
+                        emptyType="posts"
+                        onStar={handleStarPost}
+                        onDelete={handleDeletePost}
+                        onUpdatePrivacy={handleUpdatePostPrivacy}
+                        externalApi={externalApi}
+                        fetchUserPosts={fetchUserPosts}
+                        requireAuth={requireAuth}
+                    />
+                </div>
             ) : activeTab === 'info' ? (
                 <ProfileInfoTab
                     myUserId={myUserId} games={games} ws={ws}

@@ -23,7 +23,11 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 2,
+    // ⚠️ THAM SỐ ĐỒNG BỘ: scale, bobbing Y offset, và size phải khớp với
+    // AlinMapThreeScene.tsx (boatPosRef Y=5.0, DashedPath to Y=5.0, target pin Y=5.02).
+    // Nếu thay đổi scale thuyền hoặc độ cao Y, phải cập nhật đồng thời tất cả
+    // các vị trí Y của waypoint, loot item, target pin, enemy trong AlinMapThreeScene.
+    scale = 4,
     offsetX,
     offsetY,
     currentLat,
@@ -38,7 +42,8 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
         const t = state.clock.getElapsedTime();
         const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE);
         const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE);
-        groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 0.75 + 1.0, z);
+        // Y offset +5: đồng bộ với boatPosRef Y=5.0 trong AlinMapThreeScene.useFrame
+        groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 1.5 + 5, z);
         groupRef.current.rotation.z = Math.sin(t * 1.2) * 0.025;
     });
 
@@ -49,13 +54,14 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
 
     return (
         <group position={position} rotation={rotation} ref={groupRef}>
+            {/* size đồng bộ với scale=4 */}
             <LootSprite
                 position={[0, 0, 0]}
                 type="boat"
                 title="You"
                 accent="#38bdf8"
                 scale={scale}
-                size={AVATAR_PLANE_SIZE * 0.55}
+                size={AVATAR_PLANE_SIZE * 1.1}
                 interactive={false}
             />
             {distToFortress != null && (
