@@ -9,7 +9,6 @@ import SearchHeader from './SearchHeader';
 import SearchOverlay from './SearchOverlay';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
-import CameraPanel from './components/CameraPanel';
 import {
   CAMERA_HEIGHT_DEFAULT_PCT,
   CAMERA_HEIGHT_MAX_PCT,
@@ -215,21 +214,14 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setMapMode={nav.setMapMode}
         cameraZ={camera.cameraZ}
         setCameraZ={camera.setCameraZ}
+        cameraHeightPct={camera.cameraHeightPct}
+        cameraRotateXDeg={camera.cameraRotateXDeg}
+        setCameraHeightPct={camera.setCameraHeightPct}
+        setCameraRotateXDeg={camera.setCameraRotateXDeg}
         isWidgetExpanded={isWeatherWidgetExpanded}
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
       />
-
-      <div className="pointer-events-auto">
-        <CameraPanel
-          cameraZ={camera.cameraZ}
-          cameraHeightPct={camera.cameraHeightPct}
-          cameraRotateXDeg={camera.cameraRotateXDeg}
-          setCameraZ={camera.setCameraZ}
-          setCameraHeightPct={camera.setCameraHeightPct}
-          setCameraRotateXDeg={camera.setCameraRotateXDeg}
-        />
-      </div>
 
       <NavigationBar
         mainTab={nav.mainTab}

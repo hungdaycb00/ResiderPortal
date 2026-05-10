@@ -4,6 +4,7 @@ import { useLooterGame } from './looter-game/LooterGameContext';
 import MapControlsQuickActions from './MapControlsQuickActions';
 import MapControlsWeatherWidget from './MapControlsWeatherWidget';
 import MapControlsFiltersSidebar from './MapControlsFiltersSidebar';
+import CameraPanel from './components/CameraPanel';
 
 interface MapControlsProps {
     isConnecting: boolean;
@@ -32,6 +33,10 @@ interface MapControlsProps {
     setMapMode: (v: 'grid' | 'satellite') => void;
     cameraZ: MotionValue<number>;
     setCameraZ: (z: number) => void;
+    cameraHeightPct: number;
+    cameraRotateXDeg: number;
+    setCameraHeightPct: (v: number) => void;
+    setCameraRotateXDeg: (v: number) => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
     isSheetExpanded: boolean;
@@ -64,6 +69,10 @@ const MapControls: React.FC<MapControlsProps> = ({
     setMapMode,
     cameraZ,
     setCameraZ,
+    cameraHeightPct,
+    cameraRotateXDeg,
+    setCameraHeightPct,
+    setCameraRotateXDeg,
     isWidgetExpanded,
     setIsWidgetExpanded,
     isSheetExpanded,
@@ -72,17 +81,27 @@ const MapControls: React.FC<MapControlsProps> = ({
 
     return (
         <>
-            <div className={`absolute right-2 md:right-8 z-[360] flex flex-col gap-2 md:gap-3 transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4 md:opacity-100 md:pointer-events-auto md:translate-x-0' : 'opacity-100 translate-x-0 pointer-events-auto'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
-                <MapControlsQuickActions
-                    isConnecting={isConnecting}
-                    isLooterGameMode={isLooterGameMode}
-                    mapMode={mapMode}
-                    handleRefresh={handleRefresh}
-                    zoomIn={zoomIn}
-                    zoomOut={zoomOut}
-                    handleCenter={handleCenter}
-                    setMapMode={setMapMode}
+            <div className={`absolute right-2 md:right-8 z-[360] flex items-end gap-0 transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4 md:opacity-100 md:pointer-events-auto md:translate-x-0' : 'opacity-100 translate-x-0 pointer-events-auto'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
+                <CameraPanel
+                    cameraZ={cameraZ}
+                    cameraHeightPct={cameraHeightPct}
+                    cameraRotateXDeg={cameraRotateXDeg}
+                    setCameraZ={setCameraZ}
+                    setCameraHeightPct={setCameraHeightPct}
+                    setCameraRotateXDeg={setCameraRotateXDeg}
                 />
+                <div className="flex flex-col gap-2 md:gap-3 ml-2">
+                    <MapControlsQuickActions
+                        isConnecting={isConnecting}
+                        isLooterGameMode={isLooterGameMode}
+                        mapMode={mapMode}
+                        handleRefresh={handleRefresh}
+                        zoomIn={zoomIn}
+                        zoomOut={zoomOut}
+                        handleCenter={handleCenter}
+                        setMapMode={setMapMode}
+                    />
+                </div>
             </div>
 
             {!isLooterGameMode && (
