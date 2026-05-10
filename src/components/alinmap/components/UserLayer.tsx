@@ -24,11 +24,11 @@ const UserLayer: React.FC<UserLayerProps> = ({
     const filteredUsers = nearbyUsers.filter(u => {
         if (u.id === myUserId || u.id === user?.uid) return false;
         if (searchTag) {
-            const term = searchTag.toLowerCase();
-            const matchesName = (u.displayName || u.username || '').toLowerCase().includes(term);
-            const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase();
+            const term = String(searchTag || '').toLowerCase();
+            const matchesName = String(u.displayName || u.username || '').toLowerCase().includes(term);
+            const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : String(u.tags || '')).toLowerCase();
             const matchesTags = tagsStr.includes(term);
-            const statusStr = (u.status || '').toLowerCase();
+            const statusStr = String(u.status || '').toLowerCase();
             const matchesStatus = statusStr.includes(term);
             if (!matchesName && !matchesTags && !matchesStatus) return false;
         }

@@ -93,9 +93,9 @@ export default function App() {
   // Wrapper for handlePlayGame to integrate multiplayer lobby
   const handlePlayGame = (game: any, bypassLobby: boolean = false) => {
     const isAccessingViaTunnel = cloudflareUrl && (cloudflareUrl.includes('.trycloudflare.com') || cloudflareUrl.includes('alin.city') || cloudflareUrl.includes('.pages.dev'));
-    const isVpsGame = game.tunnel_url || game.category?.toLowerCase().includes('vps') || isAccessingViaTunnel;
+    const isVpsGame = game.tunnel_url || (game.category || '').toLowerCase().includes('vps') || isAccessingViaTunnel;
     
-    if (!bypassLobby && game.category?.toLowerCase().includes('multiplayer') && !isVpsGame) {
+    if (!bypassLobby && (game.category || '').toLowerCase().includes('multiplayer') && !isVpsGame) {
       if (!user) {
         setAuthCallbackQueue(() => {
           setSelectedRoomGame(game);
@@ -138,9 +138,10 @@ export default function App() {
     const query = searchQuery.toLowerCase();
     const matchesQuery = title.includes(query);
     const gameCat = (game.category || '').toLowerCase();
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.some(cat =>
-      gameCat.includes(cat.toLowerCase()) || title.includes(cat.toLowerCase())
-    );
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.some(cat => {
+      const normalizedCat = String(cat || '').toLowerCase();
+      return gameCat.includes(normalizedCat) || title.includes(normalizedCat);
+    });
     return matchesQuery && matchesCategory;
   });
 
@@ -170,9 +171,9 @@ export default function App() {
       const slug = extractSlug(location.pathname);
       if (slug && slug !== 'looter-game') {
         const game = allGames.find((g: any) => 
-          (g.slug?.toLowerCase() === slug) || 
+          (String(g.slug || '').toLowerCase() === slug) || 
           (String(g.id || '').toLowerCase() === slug) ||
-          ((g.title || g.name || '').toLowerCase().replace(/\s+/g, '-') === slug)
+          (String(g.title || g.name || '').toLowerCase().replace(/\s+/g, '-') === slug)
         );
         if (game) {
           console.log(`[AutoPlay] Launching game from URL: ${slug}`);

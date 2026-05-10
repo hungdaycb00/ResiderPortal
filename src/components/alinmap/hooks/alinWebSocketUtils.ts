@@ -83,9 +83,9 @@ export const normalizeNearbyUsers = (params: {
     if (currentSearchTag?.trim()) {
         const tag = String(currentSearchTag || '').toLowerCase().replace('#', '');
         filtered = filtered.filter((u: any) =>
-            (u.gallery?.title && u.gallery.title.toLowerCase().includes(tag)) ||
-            (u.username && u.username.toLowerCase().includes(tag)) ||
-            (u.status && u.status.toLowerCase().includes(tag))
+            (u.gallery?.title && String(u.gallery.title).toLowerCase().includes(tag)) ||
+            (u.username && String(u.username).toLowerCase().includes(tag)) ||
+            (u.status && String(u.status).toLowerCase().includes(tag))
         );
     }
 

@@ -147,10 +147,10 @@ export default function SceneContent({
     const visible = nearbyUsers.filter((u) => {
       if (u.id === myUserId || u.id === user?.uid) return false;
       if (searchTag) {
-        const term = searchTag.toLowerCase();
-        const matchesName = (u.displayName || u.username || '').toLowerCase().includes(term);
-        const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase();
-        const statusStr = (u.status || '').toLowerCase();
+        const term = String(searchTag || '').toLowerCase();
+        const matchesName = String(u.displayName || u.username || '').toLowerCase().includes(term);
+        const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : String(u.tags || '')).toLowerCase();
+        const statusStr = String(u.status || '').toLowerCase();
         if (!matchesName && !tagsStr.includes(term) && !statusStr.includes(term)) return false;
       }
       if (u.lat == null || u.lng == null || Number.isNaN(u.lat) || Number.isNaN(u.lng)) return false;

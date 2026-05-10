@@ -52,7 +52,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
         AVAILABLE_CATEGORIES.map((cat) => {
             const catGames = gameList.filter(g =>
                 ((g.category || '').toLowerCase().includes(cat.id)) ||
-                keywordsMap[cat.id]?.some((k) => getGameTitle(g).toLowerCase().includes(k))
+                keywordsMap[cat.id]?.some((k) => (getGameTitle(g) || '').toLowerCase().includes(k))
             ).slice(0, CATEGORY_GAMES_LIMIT);
 
             return { ...cat, games: catGames };

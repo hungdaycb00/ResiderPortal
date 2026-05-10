@@ -65,11 +65,14 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
             try {
                 const remoteResults = await fetchAlinSearch(normalizedSearchTag, controller.signal);
                 const localUserMatches = nearbyUsersRef.current
-                    .filter(u =>
-                        (u.username || '').toLowerCase().includes(normalizedSearchTag) ||
-                        (u.status || '').toLowerCase().includes(normalizedSearchTag) ||
-                        (Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase().includes(normalizedSearchTag)
-                    )
+                    .filter(u => {
+                        const isMatch =
+                            (String(u.displayName || '').toLowerCase().includes(normalizedSearchTag)) ||
+                            (String(u.username || '').toLowerCase().includes(normalizedSearchTag)) ||
+                            (String(u.status || '').toLowerCase().includes(normalizedSearchTag)) ||
+                            (String(Array.isArray(u.tags) ? u.tags.join(' ') : u.tags || '').toLowerCase().includes(normalizedSearchTag));
+                        return isMatch;
+                    })
                     .slice(0, 10)
                     .map(u => ({ id: u.id, displayName: u.username, username: u.username, avatar: u.avatar_url, status: u.status || '', tags: u.tags || [] }));
 
