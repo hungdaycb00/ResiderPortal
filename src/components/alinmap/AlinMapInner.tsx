@@ -57,6 +57,9 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const setPickupRewardItem = (looterActions as any).setPickupRewardItem || (() => {});
 
     // --- WebSocket ---
+    const fetchNotifications = useCallback(async () => {}, []);
+    const onStatusSync = useCallback(() => {}, []);
+
     const wsCtx = useAlinWebSocket({
         position: geo.position,
         myObfPos: geo.myObfPos,
@@ -73,8 +76,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         currentProvince: geo.currentProvince,
         panX: undefined as any,
         panY: undefined as any,
-        fetchNotifications: async () => {},
-        onStatusSync: () => {}, // We will update ProfileContext from children or a separate effect if needed
+        fetchNotifications,
+        onStatusSync, // We will update ProfileContext from children or a separate effect if needed
     });
     const resolvedMyUserId = wsCtx.myUserId || profileUserId || localStorage.getItem('alin_profile_user_id') || null;
     const resolvedMyStatus = profileStatus || wsCtx.myStatus || '';
