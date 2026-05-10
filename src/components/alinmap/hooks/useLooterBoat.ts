@@ -234,18 +234,18 @@ export function useLooterBoat({
         const Px = t * beta * offsetX;
         const Pz = D + t * ((beta * offsetY * H) / L - D / L);
 
-        // Chuyển về ground-local (pixels)
+        // Chuyển về ground-local (trừ đi pan offset)
         const curPanX = panX?.get?.() ?? 0;
         const curPanY = panY?.get?.() ?? 0;
-        const xGroundPx = Px - curPanX;
-        const zGroundPx = Pz - curPanY;
+        const xGround = Px - curPanX * MAP_COORD_SCENE_SCALE;
+        const zGround = Pz / Math.cos(theta) - curPanY * MAP_COORD_SCENE_SCALE;
 
         // Chuyển sang lat/lng
-        const COORD_SCALE_PX = DEGREES_TO_PX * MAP_PLANE_SCALE;
-        const lng = myObfPos.lng + xGroundPx / COORD_SCALE_PX;
-        const lat = myObfPos.lat - zGroundPx / COORD_SCALE_PX;
+        const COORD_SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
+        const lng = myObfPos.lng + xGround / COORD_SCALE;
+        const lat = myObfPos.lat - zGround / COORD_SCALE;
 
-        return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGroundPx, zGroundPx } };
+        return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
     }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightOffset]);
 
     const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
