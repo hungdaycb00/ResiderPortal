@@ -198,108 +198,16 @@ export function useLooterBoat({
 
     }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
 
-    /**
-     * Chuyển đổi click trên màn hình (offsetX, offsetY từ tâm container) → (lat, lng) trên map.
-     * Dùng phép chiếu ray-plane intersection chính xác trong không gian 3D,
-     * tính đến vị trí camera (H, D), góc tilt θ, và FOV 46° của perspective camera.
-     */
-    const screenToWorld = useCallback((offsetX: number, offsetY: number, containerW: number, containerH: number) => {
-        if (!myObfPos) return null;
-        const safeW = Math.max(containerW || 1, 1);
-        const safeH = Math.max(containerH || 1, 1);
 
-        // 1. Vị trí camera (H, D) — công thức giống CameraRig
-        const zoom = clampVal(scale?.get?.() ?? 1, 0.08, 8);
-        const D = clampVal(perspectivePx * 0.56 / zoom - (cameraZ?.get?.() ?? 0) * 5, 95, 9000);
-        const H = D * CAMERA_HEIGHT_RATIO_DEFAULT + cameraHeightOffset;
 
-        // 2. Góc tilt θ = acos(planeYScale / MAP_PLANE_SCALE)
-        const curPlaneYScale = planeYScale.get();
-        const cosTheta = clampVal(curPlaneYScale / MAP_PLANE_SCALE, 0.001, 1);
-        const theta = Math.acos(cosTheta);
-
-        // 3. Ray-plane intersection
-        // β = 2·tan(FOV/2) / containerHeight
-        const beta = 2 * CAMERA_HALF_FOV_TAN / safeH;
-        const L = Math.sqrt(H * H + D * D);
-        const S = Math.cos(theta) * H + Math.sin(theta) * D;
-        const K = H * Math.sin(theta) - D * Math.cos(theta);
-
-        const denom = S - beta * offsetY * K;
-        if (Math.abs(denom) < 1e-8) return null; // ray song song với map plane
-
-        const t = S * L / denom;
-
-        // Giao điểm trong world space
-        const Px = t * beta * offsetX;
-        const Pz = D + t * ((beta * offsetY * H) / L - D / L);
-
-        // Chuyển về ground-local (trừ đi pan offset)
-        const curPanX = panX?.get?.() ?? 0;
-        const curPanY = panY?.get?.() ?? 0;
-        const xGround = Px - curPanX * MAP_COORD_SCENE_SCALE;
-        const zGround = Pz / Math.cos(theta) - curPanY * MAP_COORD_SCENE_SCALE;
-
-        // Chuyển sang lat/lng
-        const COORD_SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
-        const lng = myObfPos.lng + xGround / COORD_SCALE;
-        const lat = myObfPos.lat - zGround / COORD_SCALE;
-
-        return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
-    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightOffset]);
-
-    const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
-        if (!isLooterGameMode || !myObfPos) return;
-        const cw = containerRect?.width ?? window.innerWidth;
-        const ch = containerRect?.height ?? window.innerHeight;
-        const result = screenToWorld(offsetX, offsetY, cw, ch);
-        if (!result) return;
-        executeMoveToExact(result.lat, result.lng, 'map');
-    }, [isLooterGameMode, myObfPos, screenToWorld, executeMoveToExact, state?.currentLat, state?.currentLng]);
-
-    const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
-        if (!start) return true;
-        const deltaX = end.x - start.x;
-        const deltaY = end.y - start.y;
-        return Math.sqrt(deltaX * deltaX + deltaY * deltaY) <= TAP_MOVE_TOLERANCE_PX;
-    };
-
-    const handlePointerDown = (e: React.PointerEvent) => {
-        pointerDownRef.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const handlePointerUp = (e: React.PointerEvent) => {
-        if (!isLooterGameMode || !looterState || !myObfPos) {
-            pointerDownRef.current = null;
-            return;
-        }
-        const currentPoint = { x: e.clientX, y: e.clientY };
-        if (!isTapWithinTolerance(pointerDownRef.current, currentPoint)) {
-            pointerDownRef.current = null;
-            return;
-        }
-        // Dùng bounding rect của map container thay vì window center
-        // để tránh sai lệch khi mở tab/bottom sheet
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        handleMapDoubleClick(e.clientX - centerX, e.clientY - centerY, rect);
-        pointerDownRef.current = null;
-    };
-
-    const handlePointerCancel = () => {
-        pointerDownRef.current = null;
-    };
 
     return useMemo(() => ({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin, setOnArrivalAction,
-        handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
+        executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin, setOnArrivalAction,
-        handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
+        executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
     ]);
 }
