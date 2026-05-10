@@ -29,6 +29,19 @@ export const BILLBOARD_UPRIGHT_PITCH_DEGREES = 55;
 export const BILLBOARD_UPRIGHT_LIFT_PX = 40;
 export const CAMERA_TILT_FAR_DEGREES = 64;
 export const CAMERA_TILT_NEAR_DEGREES = 42;
+
+// Camera pitch (Góc) — manual override range in degrees
+export const CAMERA_PITCH_MIN_DEG = 25;
+export const CAMERA_PITCH_MAX_DEG = 85;
+
+// Camera height offset (Cao) — pure vertical translation in scene units
+export const CAMERA_HEIGHT_OFFSET_DEFAULT = 0;
+export const CAMERA_HEIGHT_OFFSET_MIN = -800;
+export const CAMERA_HEIGHT_OFFSET_MAX = 800;
+
+// Fixed height-to-distance ratio using default heightPct: 0.22 + 42/620 ≈ 0.2877
+export const CAMERA_HEIGHT_RATIO_DEFAULT = 0.22 + CAMERA_HEIGHT_DEFAULT_PCT / 620;
+
 export const LIKE_THRESHOLD_FOR_SCALE = 20;
 export const FEATURED_BILLBOARD_FAR_SCALE = 1.35;
 export const BILLBOARD_VISIBLE_DISTANCE_KM = 3.5;
