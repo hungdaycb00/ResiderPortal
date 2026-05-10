@@ -8,8 +8,6 @@ import {
   openSearchTagResult,
   openSearchUserResult,
 } from './searchActions';
-import MobileTopNavBar from './components/MobileTopNavBar';
-import MobileSearchOverlay from './components/MobileSearchOverlay';
 
 interface SearchHeaderProps {
   searchTag: string;
@@ -17,6 +15,7 @@ interface SearchHeaderProps {
   isDesktop: boolean;
   isSheetExpanded: boolean;
   setIsSheetExpanded: (v: boolean) => void;
+  setIsSearchOverlayOpen?: (v: boolean) => void;
   isLooterGameMode: boolean;
   mainTab: string;
   myAvatarUrl: string;
@@ -42,6 +41,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   isDesktop,
   isSheetExpanded,
   setIsSheetExpanded,
+  setIsSearchOverlayOpen,
   isLooterGameMode,
   mainTab,
   myAvatarUrl,
@@ -66,43 +66,18 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
     || desktopSearchResults.games.length > 0
     || desktopSearchResults.tags.length > 0;
 
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = React.useState(false);
-
   const actions = {
     nearbyUsers,
     setSelectedUser,
     setActiveTab,
     setIsSheetExpanded,
-    closeResults: () => setShowDesktopResults(false),
+    closeResults: () => {
+      setShowDesktopResults(false);
+      setIsSearchOverlayOpen?.(false);
+    },
     setSearchTag,
     handlePlayGame,
   };
-
-  if (!isDesktop) {
-    return (
-      <>
-        {!shouldHideSearch && (
-          <MobileTopNavBar
-            myAvatarUrl={myAvatarUrl}
-            myDisplayName={myDisplayName}
-            weatherData={weatherData}
-            onWeatherClick={onWeatherClick}
-            onSearchClick={() => setIsMobileSearchOpen(true)}
-            onAvatarClick={() => handleTabClick('profile')}
-          />
-        )}
-        <MobileSearchOverlay
-          isOpen={isMobileSearchOpen}
-          onClose={() => setIsMobileSearchOpen(false)}
-          nearbyUsers={nearbyUsers}
-          setSelectedUser={setSelectedUser}
-          setActiveTab={setActiveTab}
-          setIsSheetExpanded={setIsSheetExpanded}
-          handlePlayGame={handlePlayGame}
-        />
-      </>
-    );
-  }
 
   return (
     <div className={`absolute top-12 left-4 right-4 z-[180] flex gap-2 pointer-events-auto transition-all duration-300 ${isDesktop && isSheetExpanded ? 'md:top-0 md:left-[72px] md:w-[400px] md:bg-white md:pt-5 md:pb-2 md:px-4' : 'md:left-[88px] md:top-6 md:w-[384px]'} ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'} ${shouldHideSearch ? 'hidden' : ''}`}>
@@ -111,15 +86,13 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
         <input
           type="text"
           placeholder="Search..."
-          onFocus={() => {
-            setIsSheetExpanded(true);
-            if (!isDesktop) {
-              setTimeout(() => document.getElementById('sheet-search-mobile')?.focus(), 50);
-            }
+          onFocus={(e) => {
+            e.target.blur();
+            setIsSearchOverlayOpen?.(true);
           }}
-          className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
+          className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans cursor-pointer"
           value={searchTag}
-          onChange={(e) => setSearchTag(e.target.value)}
+          readOnly
         />
 
         {!isDesktop && weatherData && (

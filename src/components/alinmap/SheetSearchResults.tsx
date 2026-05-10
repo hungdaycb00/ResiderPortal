@@ -21,6 +21,7 @@ interface SheetSearchResultsProps {
     setIsSheetExpanded: (v: boolean) => void;
     setSearchTag: (v: string) => void;
     handlePlayGame?: (game: any) => void;
+    onClose?: () => void;
 }
 
 const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
@@ -31,6 +32,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
     setIsSheetExpanded,
     setSearchTag,
     handlePlayGame,
+    onClose,
 }) => {
     const [searchResults, setSearchResults] = useState<AlinSearchResults>(EMPTY_SEARCH_RESULTS);
     const [isSearching, setIsSearching] = useState(false);
@@ -99,7 +101,10 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
         setSelectedUser,
         setActiveTab,
         setIsSheetExpanded,
-        closeResults: () => setShowSearchResults(false),
+        closeResults: () => {
+            setShowSearchResults(false);
+            onClose?.();
+        },
         setSearchTag,
         handlePlayGame,
     };

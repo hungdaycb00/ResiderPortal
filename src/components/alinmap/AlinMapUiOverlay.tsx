@@ -6,8 +6,10 @@ import ContextMenu from './ContextMenu';
 import MapControls from './MapControls';
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
+import SearchOverlay from './SearchOverlay';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
+import CameraPanel from './components/CameraPanel';
 import {
   CAMERA_HEIGHT_DEFAULT_PCT,
   CAMERA_HEIGHT_MAX_PCT,
@@ -153,6 +155,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   isSheetExpanded,
   camera,
 }) => {
+  const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   if (!portalTarget) return null;
@@ -165,6 +168,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isDesktop={isDesktop}
         isSheetExpanded={isSheetExpanded}
         setIsSheetExpanded={nav.setIsSheetExpanded}
+        setIsSearchOverlayOpen={setIsSearchOverlayOpen}
         isLooterGameMode={isLooterGameMode}
         mainTab={mainTab}
         myAvatarUrl={myAvatarUrl}
@@ -215,6 +219,17 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
       />
+
+      <div className="pointer-events-auto">
+        <CameraPanel
+          cameraZ={camera.cameraZ}
+          cameraHeightPct={camera.cameraHeightPct}
+          cameraRotateXDeg={camera.cameraRotateXDeg}
+          setCameraZ={camera.setCameraZ}
+          setCameraHeightPct={camera.setCameraHeightPct}
+          setCameraRotateXDeg={camera.setCameraRotateXDeg}
+        />
+      </div>
 
       <NavigationBar
         mainTab={nav.mainTab}
@@ -337,6 +352,21 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
           }}
         />
       </div>
+
+      {isSearchOverlayOpen && (
+        <div className="pointer-events-auto">
+          <SearchOverlay
+            searchTag={searchTag}
+            setSearchTag={setSearchTag}
+            nearbyUsers={wsCtx.nearbyUsers}
+            setSelectedUser={nav.setSelectedUser}
+            setActiveTab={nav.setActiveTab}
+            setIsSheetExpanded={nav.setIsSheetExpanded}
+            handlePlayGame={handlePlayGame}
+            onClose={() => setIsSearchOverlayOpen(false)}
+          />
+        </div>
+      )}
 
     </div>,
     portalTarget

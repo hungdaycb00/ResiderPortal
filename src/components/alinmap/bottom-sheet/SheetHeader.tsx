@@ -9,6 +9,7 @@ interface SheetHeaderProps {
     searchTag: string;
     shouldHideSearch: boolean;
     setIsSheetExpanded: (v: boolean) => void;
+    setIsSearchOverlayOpen?: (v: boolean) => void;
     setSelectedUser: (user: any) => void;
     setSearchTag: (v: string) => void;
 }
@@ -21,6 +22,7 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
     searchTag,
     shouldHideSearch,
     setIsSheetExpanded,
+    setIsSearchOverlayOpen,
     setSelectedUser,
     setSearchTag,
 }) => (
@@ -52,9 +54,13 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
                         id="sheet-search-mobile"
                         type="text"
                         placeholder="Search..."
-                        className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans"
+                        onFocus={(e) => {
+                            e.target.blur();
+                            setIsSearchOverlayOpen?.(true);
+                        }}
+                        className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans cursor-pointer"
                         value={searchTag}
-                        onChange={(e) => setSearchTag(e.target.value)}
+                        readOnly
                     />
                     {searchTag && (
                         <button onClick={() => setSearchTag('')} className="p-1 hover:bg-gray-200 rounded-full ml-1">

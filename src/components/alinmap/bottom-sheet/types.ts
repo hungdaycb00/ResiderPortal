@@ -49,6 +49,7 @@ export interface BottomSheetProps {
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     handleUpdateRadius: (v: number) => void;
     setIsSheetExpanded: (v: boolean) => void;
+    setIsSearchOverlayOpen?: (v: boolean) => void;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: BottomSheetActiveTab) => void;
     setMainTab: (tab: any) => void;

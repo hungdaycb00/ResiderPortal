@@ -18,10 +18,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         isSheetExpanded,
         mainTab,
         searchTag,
-        selectedUser,
         setIsSheetExpanded,
         setSearchTag,
         setSelectedUser,
+        setIsSearchOverlayOpen,
     } = props;
 
     const {
@@ -150,6 +150,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     searchTag={searchTag}
                     shouldHideSearch={shouldHideSearch}
                     setIsSheetExpanded={setIsSheetExpanded}
+                    setIsSearchOverlayOpen={setIsSearchOverlayOpen}
                     setSelectedUser={setSelectedUser}
                     setSearchTag={setSearchTag}
                 />
