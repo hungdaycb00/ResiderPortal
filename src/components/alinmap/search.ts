@@ -18,18 +18,29 @@ export const fetchAlinSearch = async (
   query: string,
   signal?: AbortSignal,
 ): Promise<AlinSearchResults> => {
-  const API_BASE = getBaseUrl();
-  const resp = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query.trim())}`, { signal });
-  const data = await resp.json();
+  try {
+    const API_BASE = getBaseUrl();
+    const resp = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query.trim())}`, { signal });
+    
+    if (!resp.ok) {
+      console.warn(`[Search] Server returned ${resp.status} for query: "${query}"`);
+      return EMPTY_SEARCH_RESULTS;
+    }
 
-  if (!data.success) return EMPTY_SEARCH_RESULTS;
+    const data = await resp.json();
+    if (!data.success) return EMPTY_SEARCH_RESULTS;
 
-  return {
-    posts: Array.isArray(data.posts) ? data.posts : [],
-    users: Array.isArray(data.users) ? data.users : [],
-    games: Array.isArray(data.games) ? data.games : [],
-    tags: Array.isArray(data.tags) ? data.tags : [],
-  };
+    return {
+      posts: Array.isArray(data.posts) ? data.posts : [],
+      users: Array.isArray(data.users) ? data.users : [],
+      games: Array.isArray(data.games) ? data.games : [],
+      tags: Array.isArray(data.tags) ? data.tags : [],
+    };
+  } catch (err: any) {
+    if (err?.name === 'AbortError') throw err; // Cho phép abort signal lan truyền
+    console.warn('[Search] Fetch error:', err?.message);
+    return EMPTY_SEARCH_RESULTS;
+  }
 };
 
 export const normalizeSearchUser = (rawUser: any) => ({
