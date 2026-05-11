@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Encounter } from '../LooterGameContext';
 import { CAMERA_Z_DEFAULT, CAMERA_Z_NEAR } from '../../constants';
+import { getVisibleBoatCameraOffsets } from '../utils/boatCameraFocus';
 
 export function useCombatCamera(
   encounter: Encounter | null,
@@ -36,11 +37,12 @@ export function useCombatCamera(
       setMainTab?.('backpack');
       setIsSheetExpanded?.(true);
 
-      const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-      const yOffset = !isDesktop ? window.innerHeight * 0.25 : 0;
-
       setCameraZ?.(CAMERA_Z_NEAR);
-      centerOnCombat(yOffset);
+      window.requestAnimationFrame(() => {
+        const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+        const { yOffset } = getVisibleBoatCameraOffsets();
+        centerOnCombat(isDesktop ? 0 : yOffset);
+      });
     }, 300);
 
     return () => window.clearTimeout(timer);

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useMotionValue, animate, MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
+import { GAME_CONFIG } from '../gameConfig';
 
 
 interface UseBoatAnimationParams {
@@ -117,8 +118,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
     
     const boatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
     const boatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
-    // Enemy boat render at boatX + 120px -> midpoint = boatX + 60px
-    const midX = boatX + 60;
+    const midX = boatX + GAME_CONFIG.COMBAT_MIDPOINT_OFFSET_PX;
     const midY = boatY;
     animate(panX, -midX + xOffsetPx, { duration: 0.8, ease: 'easeInOut' });
     animate(panY, -midY - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });

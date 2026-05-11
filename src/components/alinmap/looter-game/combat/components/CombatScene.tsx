@@ -3,6 +3,7 @@ import { Swords } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Encounter } from '../../LooterGameContext';
 import type { LooterItem } from '../../backpack/types';
+import { GAME_CONFIG } from '../../gameConfig';
 
 interface CombatSceneProps {
     encounter: Encounter;
@@ -19,6 +20,12 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
     encounter, phase, countdown = 0, flyingItem, handleStart, skipCombat, setShowFleeConfirm, isHUDMode
 }) => {
     if (isHUDMode) {
+        const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+        const combatYOffsetPx = !isDesktop && typeof window !== 'undefined' ? window.innerHeight * 0.25 : 0;
+        const attackY = combatYOffsetPx ? `calc(50vh - ${Math.round(combatYOffsetPx)}px)` : '50vh';
+        const playerX = `calc(50vw - ${GAME_CONFIG.COMBAT_MIDPOINT_OFFSET_PX}px)`;
+        const enemyX = `calc(50vw + ${GAME_CONFIG.COMBAT_MIDPOINT_OFFSET_PX}px)`;
+
         return (
             <div className="absolute inset-0 pointer-events-none">
                 {/* Flying item animation - Adjusted for Map HUD */}
@@ -27,13 +34,13 @@ export const CombatScene: React.FC<CombatSceneProps> = ({
                         <motion.div
                             key={flyingItem.item.uid + flyingItem.from}
                             initial={{ 
-                                x: flyingItem.from === 'A' ? '50vw' : 'calc(50vw + 120px)', 
-                                y: '50vh', 
+                                x: flyingItem.from === 'A' ? playerX : enemyX, 
+                                y: attackY, 
                                 opacity: 1, scale: 1.2 
                             }}
                             animate={{ 
-                                x: flyingItem.from === 'A' ? 'calc(50vw + 120px)' : '50vw', 
-                                y: '50vh', 
+                                x: flyingItem.from === 'A' ? enemyX : playerX, 
+                                y: attackY, 
                                 opacity: 0.3, scale: 0.6 
                             }}
                             exit={{ opacity: 0 }}

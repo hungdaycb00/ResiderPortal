@@ -21,6 +21,8 @@ export const GAME_CONFIG = {
 
   // Combat & Balancing
   BASE_HP: 100,
+  COMBAT_ENEMY_BOAT_OFFSET_PX: 180,
+  COMBAT_MIDPOINT_OFFSET_PX: 90,
   CURSE_GAIN_MOVE_BASE: 0.1, // % per meter
   CURSE_GAIN_PICKUP: 5,     // % flat
   CURSE_GAIN_MINIGAME_LOSE: 15, // % flat

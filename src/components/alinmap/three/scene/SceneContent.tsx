@@ -4,6 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Fog, Color, Group, MathUtils, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
+import { GAME_CONFIG } from '../../looter-game/gameConfig';
 import { MAP_PLANE_SCALE } from '../../constants';
 
 // Sub-components
@@ -391,9 +392,9 @@ export default function SceneContent({
         {isLooterGameMode && encounter ? (
           <LootSprite
             position={[
-              boatPosRef.current[0] + pxToScene(180),
+              boatPosRef.current[0] + pxToScene(GAME_CONFIG.COMBAT_ENEMY_BOAT_OFFSET_PX),
               0.7,
-              boatPosRef.current[2] + pxToScene(-220)
+              boatPosRef.current[2]
             ]}
             type="enemy"
             scale={2.4}

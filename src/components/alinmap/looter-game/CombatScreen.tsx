@@ -173,19 +173,6 @@ const CombatScreen: React.FC = () => {
 
             {/* 4. Removed - Mobile Enemy HUD now merged above */}
 
-            {/* 5. Desktop Player Info at Bottom Left */}
-            {!state.showCurseModal && (
-                <div className="hidden md:block absolute bottom-2 left-2 w-80 pointer-events-auto">
-                    <CombatStatsPanel 
-                        side="player" name="Bạn" hp={combat.hpA} maxHp={combat.maxHpA}
-                        actionProgress={combat.actionProgressA} maxActionBar={combat.maxActionBarA}
-                        dmg={combat.myStats.weight} regen={combat.myStats.eRegen + 10}
-                        inventory={combat.initialPlayerInventory}
-                        gridWidth={state.inventoryWidth} gridHeight={state.inventoryHeight}
-                    />
-                </div>
-            )}
-
             {/* 6. Fighting Scene (Start/Skip/Flee Buttons & Flying Items) */}
             {!state.showCurseModal && (
                 <div className="absolute inset-0 pointer-events-none">
