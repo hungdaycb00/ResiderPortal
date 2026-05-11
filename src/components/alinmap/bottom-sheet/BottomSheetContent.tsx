@@ -10,7 +10,6 @@ import NotificationsView from '../features/social/components/NotificationsView';
 import SocialView from '../features/social/components/SocialView';
 import { isLooterAtFortress, useLooterGame } from '../looter-game/LooterGameContext';
 import SheetSearchResults from '../SheetSearchResults';
-import SubTabSwitcher from './SubTabSwitcher';
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './types';
 
 interface BottomSheetContentProps extends BottomSheetProps {
@@ -232,17 +231,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                             onPublishSuccess={onPublishSuccess}
                                         />
                                     )}
-
-                                    {!selectedUser && (
-                                        <SubTabSwitcher
-                                            value={exploreSubTab}
-                                            onChange={setExploreSubTab}
-                                            options={[
-                                                { value: 'games', label: 'Games' },
-                                                { value: 'creator', label: 'Creator' },
-                                            ]}
-                                        />
-                                    )}
                                 </div>
                             )}
 
@@ -283,16 +271,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         onPostClick={onPostClick}
                                     />
 
-                                    {!selectedUser && (
-                                        <SubTabSwitcher
-                                            value={socialSubTab}
-                                            onChange={setSocialSubTab}
-                                            options={[
-                                                { value: 'posts', label: 'Posts' },
-                                                { value: 'nearby', label: 'Nearby' },
-                                            ]}
-                                        />
-                                    )}
                                 </div>
                             )}
 

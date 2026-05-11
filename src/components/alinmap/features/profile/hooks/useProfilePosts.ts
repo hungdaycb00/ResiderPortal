@@ -10,6 +10,7 @@ interface UseProfilePostsParams {
   user: any;
   selectedUser: any;
   showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
+  triggerAuth?: (callback: () => void) => void;
   setGalleryActive: (v: boolean) => void;
   setGalleryTitle: (v: string) => void;
   setGalleryImages: (v: string[]) => void;
@@ -23,6 +24,7 @@ export function useProfilePosts({
   user,
   selectedUser,
   showNotification,
+  triggerAuth,
   setGalleryActive,
   setGalleryTitle,
   setGalleryImages,
@@ -104,7 +106,7 @@ export function useProfilePosts({
   const handleCreatePost = async (files: File[]) => {
     if (files.length === 0 && !postTitle.trim()) return;
     if (!user) {
-      showNotification?.('Dang nhap de dang bai viet.', 'info');
+      triggerAuth?.(() => {});
       return;
     }
 
@@ -176,7 +178,7 @@ export function useProfilePosts({
 
   const handleStarPost = async (postId: string) => {
     if (!user) {
-      showNotification?.('Dang nhap de chon billboard.', 'info');
+      triggerAuth?.(() => {});
       return;
     }
 
@@ -201,7 +203,7 @@ export function useProfilePosts({
 
   const handleDeletePost = async (postId: string) => {
     if (!user) {
-      showNotification?.('Dang nhap de xoa bai viet.', 'info');
+      triggerAuth?.(() => {});
       return;
     }
     if (!confirm('Xoá bài viết này?')) return;

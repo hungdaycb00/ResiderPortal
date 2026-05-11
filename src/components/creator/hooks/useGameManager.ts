@@ -207,7 +207,6 @@ export function useGameManager(params: UseGameManagerParams) {
     updatingGameId: string | null
   ) => {
     if (!user) {
-      showNotification('Dang nhap de publish game.', 'info');
       triggerAuth(() => {});
       return;
     }

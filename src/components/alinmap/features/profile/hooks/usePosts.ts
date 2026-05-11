@@ -10,6 +10,7 @@ interface UsePostsParams {
   selectedUser: any;
   viewerLocation?: { lat: number; lng: number } | null;
   showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
+  triggerAuth?: (callback: () => void) => void;
   setGalleryActive: (v: boolean) => void;
   setGalleryTitle: (v: string) => void;
   setGalleryImages: (v: string[]) => void;
@@ -28,6 +29,7 @@ export function usePosts(params: UsePostsParams) {
     user: params.user,
     selectedUser: params.selectedUser,
     showNotification: params.showNotification,
+    triggerAuth: params.triggerAuth,
     setGalleryActive: params.setGalleryActive,
     setGalleryTitle: params.setGalleryTitle,
     setGalleryImages: params.setGalleryImages,

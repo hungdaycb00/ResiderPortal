@@ -116,10 +116,9 @@ export default function CreatorTabView({
 
   const requireCreatorAuth = useCallback((actionLabel: string, afterLogin?: () => void) => {
     if (user) return true;
-    showNotification?.(`Dang nhap de ${actionLabel}. Du lieu se duoc dong bo voi tai khoan Gmail.`, 'info');
     triggerAuth?.(afterLogin || (() => {}));
     return false;
-  }, [user, showNotification, triggerAuth]);
+  }, [user, triggerAuth]);
 
   useEffect(() => {
     if (externalOpenList) {

@@ -134,6 +134,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         selectedUser: nav.selectedUser,
         viewerLocation: geo.myObfPos,
         showNotification,
+        triggerAuth,
         setGalleryActive: wsCtx.setGalleryActive,
         setGalleryTitle: wsCtx.setGalleryTitle,
         setGalleryImages: wsCtx.setGalleryImages,

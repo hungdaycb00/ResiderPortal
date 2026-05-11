@@ -16,7 +16,7 @@ const SubTabSwitcher = <T extends string,>({
     options,
     onChange,
 }: SubTabSwitcherProps<T>) => (
-    <div className="fixed md:absolute bottom-[64px] md:bottom-6 left-0 right-0 z-[190] px-6 pb-4 md:pb-0 pointer-events-none">
+    <div className="fixed md:static bottom-[64px] left-0 right-0 z-[190] px-6 pb-4 md:pb-0 pointer-events-none md:pointer-events-auto">
         <div
             className={`grid gap-1.5 bg-white/80 backdrop-blur-2xl p-1.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-200/50 pointer-events-auto max-w-[400px] mx-auto ${
                 options.length === 3 ? 'grid-cols-3' : 'grid-cols-2'

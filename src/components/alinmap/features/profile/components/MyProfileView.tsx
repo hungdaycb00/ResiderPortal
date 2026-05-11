@@ -145,7 +145,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         .filter(w => w.startsWith('#'))
         .map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')), [myStatus]);
 
-    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi });
+    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, triggerAuth, externalApi });
 
     return (
         <div className="space-y-4">

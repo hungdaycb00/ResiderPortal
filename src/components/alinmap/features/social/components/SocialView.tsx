@@ -57,6 +57,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                     {socialSubTab === 'posts' && !isCreatingPost && (
                         <button
                             onClick={() => {
+                                if (requireAuth && !requireAuth('tao bai viet')) return;
                                 setPostPrivacy('public');
                                 setPostIsStarred(false);
                                 setIsCreatingPost(true);

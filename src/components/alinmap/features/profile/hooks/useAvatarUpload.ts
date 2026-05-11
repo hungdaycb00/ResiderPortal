@@ -6,10 +6,11 @@ interface UseAvatarUploadParams {
     ws: React.MutableRefObject<WebSocket | null>;
     setMyAvatarUrl: (v: string) => void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
+    triggerAuth?: (callback: () => void) => void;
     externalApi: any;
 }
 
-export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, externalApi }: UseAvatarUploadParams) {
+export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, triggerAuth, externalApi }: UseAvatarUploadParams) {
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,7 +23,7 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, ex
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!user) {
-            showNotification?.('Dang nhap de cap nhat avatar', 'info');
+            triggerAuth?.(() => {});
             return;
         }
         if (!e.target.files || e.target.files.length === 0) return;
@@ -67,7 +68,7 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, ex
 
     const handleDefaultAvatar = async () => {
         if (!user) {
-            showNotification?.('Dang nhap de cap nhat avatar', 'info');
+            triggerAuth?.(() => {});
             return;
         }
         try {
