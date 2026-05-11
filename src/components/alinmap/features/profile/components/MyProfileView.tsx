@@ -238,6 +238,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
                         onPostClick={onPostClick}
+                        onAuthorClick={setSelectedUser}
                     />
                 </div>
             ) : activeTab === 'info' ? (
@@ -262,6 +263,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     fetchUserPosts={fetchUserPosts}
                     requireAuth={requireAuth}
                     onPostClick={onPostClick}
+                    onAuthorClick={setSelectedUser}
                 />
             )}
         </div>

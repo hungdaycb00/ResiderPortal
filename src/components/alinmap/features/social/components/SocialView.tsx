@@ -74,6 +74,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                         externalApi={externalApi}
                         requireAuth={requireAuth}
                         onPostClick={onPostClick}
+                        onAuthorClick={setSelectedUser}
                     />
                 ) : (
                     <SocialNearbySection

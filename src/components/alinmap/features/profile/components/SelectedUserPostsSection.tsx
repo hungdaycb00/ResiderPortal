@@ -10,6 +10,7 @@ interface SelectedUserPostsSectionProps {
     fetchUserPosts: (uid: string) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     onPostClick?: (post: any) => void;
+    onAuthorClick?: (author: any) => void;
 }
 
 const INITIAL_POST_LIMIT = 8;
@@ -23,6 +24,7 @@ const SelectedUserPostsSection: React.FC<SelectedUserPostsSectionProps> = ({
     fetchUserPosts,
     requireAuth,
     onPostClick,
+    onAuthorClick,
 }) => {
     const [visiblePostCount, setVisiblePostCount] = React.useState(INITIAL_POST_LIMIT);
 
@@ -58,6 +60,7 @@ const SelectedUserPostsSection: React.FC<SelectedUserPostsSectionProps> = ({
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
                         onClick={onPostClick ? () => onPostClick(post) : undefined}
+                        onAuthorClick={onAuthorClick}
                     />
                 ))}
                 {visiblePostCount < userPosts.length && (

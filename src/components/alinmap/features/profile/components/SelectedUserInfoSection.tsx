@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserPlus, MessageCircle, MapPin, Flag } from 'lucide-react';
+import { UserPlus, MessageCircle, MapPin, Flag, UserCheck, Clock } from 'lucide-react';
 
 interface SelectedUserInfoSectionProps {
     selectedUser: any;
@@ -44,15 +44,37 @@ const SelectedUserInfoSection: React.FC<SelectedUserInfoSectionProps> = ({
             ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pb-8">
-            {!sentFriendRequests.some(r => r.id === selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
-                <button onClick={() => handleAddFriend()} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
-                    <UserPlus className="w-5 h-5" /> Add Friend
-                </button>
-            )}
-            <div className={`flex gap-3 ${sentFriendRequests.some(r => r.id === selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
+        <div className="pb-8 space-y-3">
+            {(() => {
+                const isPending = sentFriendRequests.some(r => r.id === selectedUser.id);
+                const isFriend = friends.some(f => f.id === selectedUser.id);
+
+                if (isFriend) {
+                    return (
+                        <div className="flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 py-3 rounded-[20px] font-bold text-sm">
+                            <UserCheck className="w-4 h-4" /> Bạn bè
+                        </div>
+                    );
+                }
+
+                if (isPending) {
+                    return (
+                        <button disabled className="w-full flex items-center justify-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 py-4 rounded-[20px] font-bold cursor-not-allowed opacity-80">
+                            <Clock className="w-5 h-5" /> Đã gửi lời mời
+                        </button>
+                    );
+                }
+
+                return (
+                    <button onClick={() => handleAddFriend()} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                        <UserPlus className="w-5 h-5" /> Kết bạn
+                    </button>
+                );
+            })()}
+
+            <div className="flex gap-3">
                 <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
-                    <MessageCircle className="w-5 h-5" /> Message
+                    <MessageCircle className="w-5 h-5" /> Nhắn tin
                 </button>
                 <button onClick={() => { onLocateUser(selectedUser.lat, selectedUser.lng); }} className="px-5 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-blue-600 rounded-[20px] active:scale-95 transition-all shadow-sm">
                     <MapPin className="w-5 h-5" />

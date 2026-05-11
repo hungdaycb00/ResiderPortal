@@ -41,7 +41,14 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
     onOpenChat,
     selectedUser
 }) => {
-    const [sentFriendRequests, setSentFriendRequests] = useState<any[]>([]);
+    const SENT_REQUESTS_KEY = 'alin_sent_friend_requests';
+
+    const [sentFriendRequests, setSentFriendRequests] = useState<any[]>(() => {
+        try {
+            const saved = localStorage.getItem(SENT_REQUESTS_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch { return []; }
+    });
     const [incomingFriendRequests, setIncomingFriendRequests] = useState<any[]>([]);
     const [friendIdInput, setFriendIdInput] = useState('');
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
@@ -68,13 +75,20 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
             });
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok || !data.success) throw new Error(data.error || 'Failed to send friend request.');
-            setSentFriendRequests(prev => prev.some(r => r.id === userToAdd.id) ? prev : [...prev, userToAdd]);
-            showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
+            const updated = sentFriendRequests.some(r => r.id === userToAdd.id) ? sentFriendRequests : [...sentFriendRequests, userToAdd];
+            setSentFriendRequests(updated);
+            localStorage.setItem(SENT_REQUESTS_KEY, JSON.stringify(updated));
+            showNotification?.(`Đã gửi lời mời kết bạn đến ${userToAdd.displayName || userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
             const msg = String(err.message ?? '');
             if (msg.includes('409') || msg.toLowerCase().includes('already')) {
-                showNotification?.("Request already sent or you are already friends!", 'info');
-            } else { showNotification?.(err.message || "Failed to send friend request.", 'error'); }
+                if (!sentFriendRequests.some(r => r.id === userToAdd.id)) {
+                    const updated = [...sentFriendRequests, userToAdd];
+                    setSentFriendRequests(updated);
+                    localStorage.setItem(SENT_REQUESTS_KEY, JSON.stringify(updated));
+                }
+                showNotification?.("Lời mời đã được gửi trước đó hoặc các bạn đã là bạn bè!", 'info');
+            } else { showNotification?.(err.message || "Không thể gửi lời mời kết bạn.", 'error'); }
         }
     };
 
@@ -91,7 +105,14 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
                 headers: { 'X-Device-Id': externalApi.getDeviceId() },
             });
             const data = await resp.json();
-            if (data.requests) setIncomingFriendRequests(data.requests);
+            console.log('📨 Incoming friend requests response:', data);
+            if (data.requests && Array.isArray(data.requests)) {
+                setIncomingFriendRequests(data.requests);
+            } else if (data.friendRequests && Array.isArray(data.friendRequests)) {
+                setIncomingFriendRequests(data.friendRequests);
+            } else if (Array.isArray(data)) {
+                setIncomingFriendRequests(data);
+            }
         } catch (err) {
             console.error('Fetch friend requests error:', err);
         }

@@ -3,7 +3,7 @@ import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Globe, Users, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi, fetchUserPosts, requireAuth, onClick }: any) => {
+const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi, fetchUserPosts, requireAuth, onClick, onAuthorClick }: any) => {
     const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
     const [liked, setLiked] = useState(post.isLiked);
     const [likeCount, setLikeCount] = useState(post.likeCount || 0);
@@ -91,13 +91,19 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     return (
         <div onClick={onClick} className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4 ${onClick ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                <div className="flex items-center gap-2">
-                    <img 
-                        src={normalizeImageUrl(post.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=random`} 
-                        alt="author" 
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onAuthorClick?.(post.author);
+                    }}
+                    className={`flex items-center gap-2 ${onAuthorClick ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''}`}
+                >
+                    <img
+                        src={normalizeImageUrl(post.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=random`}
+                        alt="author"
                         loading="lazy"
                         decoding="async"
-                        className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-100" 
+                        className="w-10 h-10 rounded-full object-cover shadow-sm bg-gray-100"
                     />
                     <div className="flex flex-col">
                         <div className="flex items-center gap-1.5">

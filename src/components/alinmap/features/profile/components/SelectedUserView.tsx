@@ -67,6 +67,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
                         onPostClick={onPostClick}
+                        onAuthorClick={setSelectedUser}
                     />
                 </>
             )}
