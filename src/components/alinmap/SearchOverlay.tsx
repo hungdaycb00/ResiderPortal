@@ -67,9 +67,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      // Clean up history if we close without going back (e.g. clicking a result)
       if (window.history.state?.searchOverlay) {
-        window.history.back();
+        setTimeout(() => window.history.back(), 0);
       }
     };
   }, []);

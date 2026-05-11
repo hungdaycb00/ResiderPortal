@@ -88,6 +88,9 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
           placeholder="Search..."
           onFocus={(e) => {
             e.target.blur();
+            if (isDesktop && !isSheetExpanded) {
+              handleTabClick('discover');
+            }
             setIsSearchOverlayOpen?.(true);
           }}
           className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans cursor-pointer"
