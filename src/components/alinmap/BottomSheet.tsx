@@ -3,10 +3,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BottomSheetContent from './bottom-sheet/BottomSheetContent';
 import SheetHeader from './bottom-sheet/SheetHeader';
-import StorageEdgeControls from './bottom-sheet/StorageEdgeControls';
+import { useLooterGame } from './looter-game/LooterGameContext';
 
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './bottom-sheet/types';
-import { isLooterAtFortress, useLooterGame } from './looter-game/LooterGameContext';
 
 export type { BottomSheetProps } from './bottom-sheet/types';
 
@@ -28,20 +27,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         onPostClick,
     } = props;
 
-    const {
-        fortressStorageMode,
-        isIntegratedStorageOpen,
-        isItemDragging,
-        state: looterState,
-        toggleIntegratedStorage,
-    } = useLooterGame();
-
     const [exploreSubTab, setExploreSubTab] = React.useState<ExploreSubTab>('games');
     const [socialSubTab, setSocialSubTab] = React.useState<SocialSubTab>('posts');
     const lastSocialFeedRequestRef = React.useRef('');
     const shouldHideSearch = ['creator', 'backpack'].includes(mainTab);
     const deferredSearchTag = React.useDeferredValue(searchTag);
     const shouldRenderSheetContent = isDesktop || isSheetExpanded || !!selectedUser || mainTab === 'backpack';
+    const { isItemDragging } = useLooterGame();
 
     React.useEffect(() => {
         (window as any).collapseLooterTab = () => {
@@ -72,25 +64,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     }, [setIsSheetExpanded]);
 
     const isWhiteBg = mainTab !== 'backpack';
-    const isPortalStorageOpen = mainTab === 'backpack' && isIntegratedStorageOpen && fortressStorageMode === 'portal';
-    const atFortress = isLooterAtFortress(looterState);
-    const showMobileStorageButtons = !isDesktop && atFortress && !isIntegratedStorageOpen && mainTab === 'backpack';
 
     return (
         <div
             className={`absolute left-0 right-0 md:left-[72px] md:right-auto md:translate-x-0 pointer-events-none z-[140] ${isDesktop ? 'top-0 bottom-0 overflow-visible' : (mainTab === 'backpack' ? 'top-0 bottom-0 overflow-visible w-full' : 'top-0 bottom-0 overflow-hidden w-full')}`}
             style={isDesktop ? { width: panelWidth } : {}}
         >
-            {showMobileStorageButtons && (
-                <StorageEdgeControls
-                    isItemDragging={isItemDragging}
-                    showFortressStorageButton={true}
-                    showStorageEdgeControls={true}
-                    setIsSheetExpanded={setIsSheetExpanded}
-                    toggleIntegratedStorage={toggleIntegratedStorage}
-                />
-            )}
-
             <motion.div
                 className={`absolute top-0 left-0 right-0 h-full ${isWhiteBg ? 'bg-white' : 'bg-[#121417]'} rounded-t-[32px] md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[4px_0_24px_rgba(0,0,0,0.05)] md:border-r ${isWhiteBg ? 'border-gray-100' : 'border-white/5'} flex flex-col pointer-events-auto`}
                 variants={{

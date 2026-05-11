@@ -1,4 +1,5 @@
-import type React from 'react';
+import React from 'react';
+import { Database, ShoppingBag } from 'lucide-react';
 import BackpackView from '../features/backpack/components/BackpackView';
 import CreatorTabView from '../features/creator/components/CreatorTabView';
 import DiscoverView from '../features/explore/components/DiscoverView';
@@ -7,7 +8,7 @@ import SelectedUserView from '../features/profile/components/SelectedUserView';
 import { useProfile } from '../features/profile/context/ProfileContext';
 import NotificationsView from '../features/social/components/NotificationsView';
 import SocialView from '../features/social/components/SocialView';
-import { useLooterGame } from '../looter-game/LooterGameContext';
+import { isLooterAtFortress, useLooterGame } from '../looter-game/LooterGameContext';
 import SheetSearchResults from '../SheetSearchResults';
 import SubTabSwitcher from './SubTabSwitcher';
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './types';
@@ -41,6 +42,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     handleStarPost,
     handleUpdatePostPrivacy,
     handleUpdateRadius,
+    isDesktop,
     isCreatingPost,
     isSavingPost,
     mainTab,
@@ -88,12 +90,75 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     logout,
     onPostClick,
 }) => {
-    const { encounter } = useLooterGame();
+    const {
+        encounter,
+        currentLat,
+        currentLng,
+        fortressLat,
+        fortressLng,
+        worldTier,
+        isItemDragging,
+        openFortressStorage,
+    } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
+    const isAtFortress = worldTier === -1 || isLooterAtFortress({ currentLat, currentLng, fortressLat, fortressLng });
+
+    const pulseSellZone = React.useCallback(() => {
+        const sellZone = document.getElementById('global-sell-zone');
+        if (!sellZone || typeof sellZone.animate !== 'function') return;
+
+        sellZone.animate(
+            [
+                { transform: 'scale(1)', boxShadow: '0 0 24px rgba(234, 179, 8, 0.35)' },
+                { transform: 'scale(1.08)', boxShadow: '0 0 0 4px rgba(234, 179, 8, 0.36), 0 0 32px rgba(234, 179, 8, 0.45)' },
+                { transform: 'scale(1)', boxShadow: '0 0 24px rgba(234, 179, 8, 0.35)' },
+            ],
+            { duration: 900, easing: 'ease-out' }
+        );
+    }, []);
+
+    const handleOpenFortressStorage = React.useCallback(() => {
+        openFortressStorage('fortress');
+    }, [openFortressStorage]);
+
+    const handleOpenShop = React.useCallback(() => {
+        openFortressStorage('fortress');
+        window.setTimeout(() => {
+            pulseSellZone();
+        }, 220);
+    }, [openFortressStorage, pulseSellZone]);
 
     if (mainTab === 'backpack') {
         return (
             <div className="flex-1 relative z-[100] flex flex-col overflow-visible">
+                {!isDesktop && isAtFortress && (
+                    <div className="px-3 pt-2">
+                        <div className="flex items-stretch gap-2 rounded-3xl border border-amber-400/15 bg-black/35 p-2 backdrop-blur-xl shadow-[0_12px_30px_rgba(0,0,0,0.25)]">
+                            <button
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={handleOpenFortressStorage}
+                                disabled={isItemDragging}
+                                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-amber-400/35 bg-amber-500/15 px-3 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-200 shadow-[0_8px_20px_rgba(245,158,11,0.18)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Mở kho thành trì"
+                            >
+                                <Database className="h-4 w-4 shrink-0" />
+                                <span>Mở kho thành trì</span>
+                            </button>
+                            <button
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={handleOpenShop}
+                                disabled={isItemDragging}
+                                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-emerald-200 shadow-[0_8px_20px_rgba(16,185,129,0.16)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Mở shop thành trì"
+                            >
+                                <ShoppingBag className="h-4 w-4 shrink-0" />
+                                <span>Shop</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <BackpackView onEnterWorld={onEnterWorld} readOnly={!!encounter} />
             </div>
         );
