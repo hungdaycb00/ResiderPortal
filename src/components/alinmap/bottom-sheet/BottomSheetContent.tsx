@@ -1,6 +1,7 @@
 import React from 'react';
 import { Database, ShoppingBag, X } from 'lucide-react';
 import BackpackView from '../features/backpack/components/BackpackView';
+import IntegratedStoragePanel from '../features/backpack/components/IntegratedStoragePanel';
 import CreatorTabView from '../features/creator/components/CreatorTabView';
 import DiscoverView from '../features/explore/components/DiscoverView';
 import MyProfileView from '../features/profile/components/MyProfileView';
@@ -138,7 +139,12 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
 
     if (mainTab === 'backpack') {
         return (
-            <div className="flex-1 relative z-[100] flex flex-col overflow-visible">
+            <div className={`flex-1 relative z-[100] flex flex-col overflow-hidden ${isDesktop ? 'min-h-0' : 'overflow-visible'}`}>
+                {isDesktop && isIntegratedStorageOpen && (
+                    <div className="flex-[0.44] min-h-0 border-b border-white/5">
+                        <IntegratedStoragePanel variant="inline" />
+                    </div>
+                )}
                 {!isDesktop && isAtFortress && (
                     <div className="absolute left-3 top-2 z-[140] flex items-center gap-2">
                             <button
@@ -168,7 +174,9 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                             </button>
                     </div>
                 )}
-                <BackpackView onEnterWorld={onEnterWorld} readOnly={!!encounter} />
+                <div className={`${isDesktop && isIntegratedStorageOpen ? 'flex-[0.56] min-h-0' : 'flex-1 min-h-0'}`}>
+                    <BackpackView onEnterWorld={onEnterWorld} readOnly={!!encounter} />
+                </div>
             </div>
         );
     }

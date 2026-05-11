@@ -68,7 +68,11 @@ const buildPlacedStorage = (items: LooterItem[]) => {
   });
 };
 
-export default function IntegratedStoragePanel() {
+interface IntegratedStoragePanelProps {
+  variant?: 'overlay' | 'inline';
+}
+
+export default function IntegratedStoragePanel({ variant = 'overlay' }: IntegratedStoragePanelProps) {
   const {
     state,
     fortressStorageMode,
@@ -173,6 +177,167 @@ export default function IntegratedStoragePanel() {
   const headerIcon = isPortalMode ? '🌀' : '🏰';
   const borderColor = isPortalMode ? 'border-purple-500/30' : 'border-cyan-500/30';
   const accentColor = isPortalMode ? 'purple' : 'cyan';
+
+  if (variant === 'inline') {
+    return (
+      <motion.div
+        id="integrated-storage-panel"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        className={`flex h-full min-h-0 flex-col overflow-hidden border-b ${borderColor} bg-[#050b14]/95 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex items-center justify-between border-b border-white/5 bg-black/20 px-4 py-2">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-${accentColor}-500/20 text-${accentColor}-400`}>
+                <Database className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-white">
+                  <span className="mr-1">{headerIcon}</span>{headerTitle}
+                </h3>
+                <p className={`text-[10px] font-bold text-${accentColor}-500/60 uppercase`}>Double-click để lấy đồ • Kéo để cuộn</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isPortalMode && (
+                <StorageEdgeControls
+                  isItemDragging={isItemDragging}
+                  showFortressStorageButton={true}
+                  showStorageEdgeControls={true}
+                  setIsSheetExpanded={() => {}}
+                  toggleIntegratedStorage={toggleIntegratedStorage}
+                />
+              )}
+              <div className="hidden items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold text-white/40 md:flex">
+                <Package className="h-3 w-3" />
+                {storageItems.length} VẬT PHẨM
+              </div>
+              <button
+                onClick={() => setIsIntegratedStorageOpen(false)}
+                className="rounded-full p-2 text-white/20 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={scrollRef}
+            className={`flex-1 min-h-0 overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''} ${isTransporting ? 'pointer-events-none' : ''}`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
+            <div className={`flex justify-center p-4 transition-all duration-300 ${isTransporting ? 'grayscale opacity-50' : ''}`}>
+              <InventoryGrid
+                items={storageItems}
+                bags={[VIRTUAL_STORAGE_BAG]}
+                gridH={STORAGE_GRID_H}
+                onItemLayoutChange={(newItems) => activeSave(newItems)}
+                onItemDoubleClick={(item) => {
+                  if (isTransporting) return;
+                  storeItems([item.uid], 'retrieve', fortressStorageMode);
+                }}
+                onDropOutside={(item, e) => {
+                  if (isTransporting) return;
+
+                  if (e) {
+                    const sellZone = document.getElementById('global-sell-zone');
+                    if (sellZone) {
+                      const sRect = sellZone.getBoundingClientRect();
+                      if (
+                        e.clientX >= sRect.left - 10 &&
+                        e.clientX <= sRect.right + 10 &&
+                        e.clientY >= sRect.top - 10 &&
+                        e.clientY <= sRect.bottom + 10
+                      ) {
+                        sellItems([item.uid]);
+                        return;
+                      }
+                    }
+                    const backpack = document.getElementById('looter-backpack-container');
+                    if (backpack) {
+                      const rect = backpack.getBoundingClientRect();
+                      if (
+                        e.clientX >= rect.left &&
+                        e.clientX <= rect.right &&
+                        e.clientY >= rect.top &&
+                        e.clientY <= rect.bottom
+                      ) {
+                        storeItems([item.uid], 'retrieve', fortressStorageMode);
+                        return;
+                      }
+                    }
+                  }
+                  activeSave([...activeItems]);
+                }}
+                onDragStateChange={(item) => setIsItemDragging(!!item)}
+                cellSize={cellSize}
+              />
+            </div>
+          </div>
+
+          {isPortalMode && (
+            <div className="border-t border-white/5 bg-black/25 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTransport}
+                  disabled={!canTransport}
+                  className={`flex items-center gap-2 rounded-b-xl border-x border-b px-4 py-2 text-xs font-black uppercase tracking-widest shadow-lg transition-all duration-200 ${
+                    canTransport
+                      ? 'border-emerald-400/40 bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_10px_28px_rgba(16,185,129,0.35)]'
+                      : 'border-white/10 bg-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <Truck className="h-4 w-4" />
+                  {isTransporting ? 'Đang vận chuyển...' : 'Vận chuyển'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleReturnToFortress}
+                  disabled={isReturning}
+                  className="flex items-center gap-2 rounded-b-xl border-x border-b border-amber-400/40 bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-[0_10px_28px_rgba(245,158,11,0.35)] transition-colors hover:bg-amber-300 disabled:cursor-wait disabled:opacity-70"
+                >
+                  <Home className="h-4 w-4" />
+                  {isReturning ? 'Đang về...' : 'Về Thành Trì'}
+                </button>
+              </div>
+
+              {isTransporting && (
+                <div className="mt-3 w-full overflow-hidden rounded-full bg-black/60 border border-emerald-500/30">
+                  <motion.div
+                    className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300"
+                    style={{ width: `${transportProgress}%` }}
+                  />
+                  <p className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">
+                    {Math.floor(transportProgress)}%
+                  </p>
+                </div>
+              )}
+
+              {!isTransporting && (state.portalStorage || []).length > 0 && (
+                <div className="mt-3 flex flex-col items-center gap-0.5 rounded-lg bg-black/60 px-3 py-1 backdrop-blur-sm">
+                  <p className="text-[10px] font-bold text-yellow-400">
+                    Phí: {transportFee}G (5%)
+                  </p>
+                  <p className="text-[9px] font-bold text-red-400/80">
+                    ⚠ 25% tỷ lệ mất đồ khi vận chuyển
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <>

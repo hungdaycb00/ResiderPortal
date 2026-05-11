@@ -69,9 +69,11 @@ const LooterGameUI: React.FC = () => {
                 <PickupMinigame />
             </ErrorBoundary>
 
-            <ErrorBoundary name="IntegratedStorage">
-                <IntegratedStoragePanel />
-            </ErrorBoundary>
+            {!isDesktop && (
+                <ErrorBoundary name="IntegratedStorage">
+                    <IntegratedStoragePanel />
+                </ErrorBoundary>
+            )}
         </>
     );
 };
