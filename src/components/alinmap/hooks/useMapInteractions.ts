@@ -59,10 +59,10 @@ export function useMapInteractions({
         }
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
         if (interactiveTarget && !isLooterGameMode) {
-            // LooterBoat events removed
+            looterBoat.handlePointerDown(e);
             return;
         }
-        // LooterBoat events removed
+        looterBoat.handlePointerDown(e);
         mapDragRef.current = {
             active: true,
             pointerId: e.pointerId,
@@ -148,7 +148,7 @@ export function useMapInteractions({
         const dragState = mapDragRef.current;
         if (isInteractionLocked) {
             dragState.active = false;
-            // LooterBoat events removed
+            looterBoat.handlePointerCancel();
             e.preventDefault();
             e.stopPropagation();
             return;
@@ -167,13 +167,13 @@ export function useMapInteractions({
 
             if (dragState.moved) {
                 dragState.suppressClick = true;
-                // LooterBoat events removed
+                looterBoat.handlePointerCancel();
                 return;
             }
         }
 
         if (interactiveTarget) {
-            // LooterBoat events removed
+            looterBoat.handlePointerCancel();
             return;
         }
 
@@ -189,7 +189,11 @@ export function useMapInteractions({
                   return;
              }
 
-        // LooterBoat events removed
+        // Trong looter mode, Ground onClick (R3F Raycaster) xử lý di chuyển.
+        // Không gọi looterBoat.handlePointerUp để tránh double-fire với đường screenToWorld cũ.
+        if (isLooterGameMode && !dragState.moved) return;
+
+        looterBoat.handlePointerUp(e);
     }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, isInteractionLocked, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -209,7 +213,7 @@ export function useMapInteractions({
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
         }
-        // LooterBoat events removed
+        looterBoat.handlePointerCancel();
     }, [looterBoat, isInteractionLocked]);
 
     const handleMapClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
