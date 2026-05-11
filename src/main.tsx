@@ -1,11 +1,17 @@
 import {lazy, StrictMode, Suspense} from 'react';
 
 // Build version identifier — changing this forces new asset hashes
-export const BUILD_VERSION = '2026.05.05.1';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter} from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+import { checkAppVersion } from './utils/cacheBuster';
+
+// Build version identifier — changing this forces storage cleanup
+export const BUILD_VERSION = '2026.05.11.1';
+
+// Kiểm tra và dọn dẹp dữ liệu cũ nếu phát hiện phiên bản mới
+checkAppVersion(BUILD_VERSION);
 
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
