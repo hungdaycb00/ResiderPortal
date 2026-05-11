@@ -125,7 +125,8 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                 {sentFriendRequests.map((req) => (
                                     <div
                                         key={req.id}
-                                        className="flex items-center gap-3 py-3 px-2"
+                                        onClick={() => setSelectedUser(req)}
+                                        className="flex items-center gap-3 py-3 px-2 cursor-pointer hover:bg-gray-50 rounded-2xl transition-colors active:scale-[0.99]"
                                     >
                                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                                             <img
@@ -160,7 +161,8 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                 {incomingFriendRequests.map((req) => (
                                     <div
                                         key={req.id}
-                                        className="flex items-center gap-3 py-3 px-2"
+                                        onClick={() => setSelectedUser(req)}
+                                        className="flex items-center gap-3 py-3 px-2 cursor-pointer hover:bg-gray-50 rounded-2xl transition-colors active:scale-[0.99]"
                                     >
                                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                                             <img
@@ -176,14 +178,14 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                         </div>
                                         <div className="flex gap-2 shrink-0">
                                             <button
-                                                onClick={() => handleAcceptFriendRequest(req.id)}
+                                                onClick={(e) => { e.stopPropagation(); handleAcceptFriendRequest(req.id); }}
                                                 className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors active:scale-90"
                                                 title="Chấp nhận"
                                             >
                                                 <Check className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleRejectFriendRequest(req.id)}
+                                                onClick={(e) => { e.stopPropagation(); handleRejectFriendRequest(req.id); }}
                                                 className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-xl transition-colors active:scale-90"
                                                 title="Từ chối"
                                             >

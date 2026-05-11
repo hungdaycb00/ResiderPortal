@@ -2,6 +2,18 @@ let socket: WebSocket | null = null;
 let reconnectTimeout: any = null;
 let reconnectAttempts = 0;
 const eventHandlers = new Map<string, Set<Function>>();
+const messageQueue: Array<{ event: string; data: any }> = [];
+
+function flushMessageQueue() {
+    if (messageQueue.length === 0) return;
+    console.log(`📤 Flushing ${messageQueue.length} queued messages`);
+    while (messageQueue.length > 0) {
+        const msg = messageQueue.shift()!;
+        if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: msg.event, ...msg.data }));
+        }
+    }
+}
 
 export function initSocket(): WebSocket {
     if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
@@ -39,6 +51,7 @@ export function initSocket(): WebSocket {
             clearTimeout(reconnectTimeout);
             reconnectTimeout = null;
         }
+        flushMessageQueue();
         emitInternal('connect', null);
     };
 
@@ -106,8 +119,11 @@ export function getSocket(): any {
         emit: (event: string, data: any) => {
             if (socket?.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: event, ...data }));
+            } else if (socket?.readyState === WebSocket.CONNECTING) {
+                console.log(`⏳ Buffering message "${event}" — socket is connecting`);
+                messageQueue.push({ event, data });
             } else {
-                console.warn('⚠️ WebSocket not ready to send:', event);
+                console.warn('⚠️ WebSocket not ready to send:', event, 'readyState:', socket?.readyState);
             }
         },
         on: (event: string, callback: Function) => {
@@ -139,6 +155,7 @@ export function disconnectSocket() {
     if (socket) {
         socket.close();
         socket = null;
+        messageQueue.length = 0;
         console.log('🔌 WebSocket disconnected');
     }
 }
