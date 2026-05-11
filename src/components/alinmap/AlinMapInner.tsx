@@ -156,8 +156,9 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             looterActions.setIsLooterGameMode(true);
             nav.setMainTab('backpack');
             nav.setIsSheetExpanded(true);
+            nav.requestBoatAutoFocus();
         }
-    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.setMainTab, nav.setIsSheetExpanded]);
+    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus]);
 
     useEffect(() => {
         const subGame = extractExploreGame(location.pathname);
@@ -186,39 +187,14 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setIsLooterGameMode(true);
         nav.setMainTab('backpack');
         nav.setIsSheetExpanded(true);
+        nav.requestBoatAutoFocus();
         setPickupRewardItem(null);
-    }, [nav.setMainTab, nav.setIsSheetExpanded, setIsLooterGameMode, setPickupRewardItem]);
+    }, [nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus, setIsLooterGameMode, setPickupRewardItem]);
 
     useEffect(() => {
         setOpenBackpackHandler(() => handleOpenBackpackFromPickup);
         return () => setOpenBackpackHandler(null);
     }, [handleOpenBackpackFromPickup, setOpenBackpackHandler]);
-
-    useEffect(() => {
-        if (!isLooterGameMode || nav.mainTab !== 'backpack' || !nav.isSheetExpanded) return;
-        const timer = window.setTimeout(() => {
-            const backpack = document.getElementById('looter-backpack-container');
-            const rect = backpack?.getBoundingClientRect();
-            let xOffset = 0;
-            let yOffset = 0;
-            if (rect) {
-                const isDesktopSidePanel =
-                    window.innerWidth >= 768 &&
-                    rect.left < window.innerWidth * 0.35 &&
-                    rect.width < window.innerWidth * 0.8 &&
-                    rect.height > window.innerHeight * 0.55;
-                if (isDesktopSidePanel) {
-                    const visibleLeft = Math.min(Math.max(rect.right, 0), window.innerWidth);
-                    xOffset = (visibleLeft + window.innerWidth) / 2 - window.innerWidth / 2;
-                } else {
-                    const visibleMapHeight = Math.max(120, Math.min(rect.top, window.innerHeight));
-                    yOffset = window.innerHeight / 2 - visibleMapHeight / 2;
-                }
-            }
-            looterActions.centerOnBoat(yOffset, xOffset);
-        }, 140);
-        return () => window.clearTimeout(timer);
-    }, [isLooterGameMode, nav.mainTab, nav.isSheetExpanded, looterActions.centerOnBoat]);
 
     const handleDiscardPickupItem = async () => {
         if (!pickupRewardItem) return;

@@ -1,39 +1,18 @@
 import React from 'react';
 import { LocateFixed } from 'lucide-react';
 import { useLooterGame } from '../LooterGameContext';
+import { getVisibleBoatCameraOffsets } from '../utils/boatCameraFocus';
 
 export const LocateBoatButton: React.FC = () => {
     const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();
 
     if (!isLooterGameMode) return null;
 
-    const getVisibleMapOffsets = () => {
-        const backpack = document.getElementById('looter-backpack-container');
-        const rect = backpack?.getBoundingClientRect();
-        if (!rect) return { xOffset: 0, yOffset: 0 };
-
-        const isDesktopSidePanel =
-            window.innerWidth >= 768 &&
-            rect.left < window.innerWidth * 0.35 &&
-            rect.width < window.innerWidth * 0.8 &&
-            rect.height > window.innerHeight * 0.55;
-
-        if (isDesktopSidePanel) {
-            const visibleLeft = Math.min(Math.max(rect.right, 0), window.innerWidth);
-            const visibleCenterX = (visibleLeft + window.innerWidth) / 2;
-            return { xOffset: visibleCenterX - window.innerWidth / 2, yOffset: 0 };
-        }
-
-        const visibleMapHeight = Math.max(120, Math.min(rect.top, window.innerHeight));
-        const visibleCenterY = visibleMapHeight / 2;
-        return { xOffset: 0, yOffset: window.innerHeight / 2 - visibleCenterY };
-    };
-
     const handleLocateBoat = (e: React.MouseEvent | React.PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        const { xOffset, yOffset } = getVisibleMapOffsets();
+        const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
         if (encounter) {
             centerOnCombat(yOffset, xOffset);
         } else {

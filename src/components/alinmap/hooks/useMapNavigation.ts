@@ -29,6 +29,7 @@ import {
   getTiltAngleFromCameraZ,
   getVisualScaleFromCameraZ,
 } from '../constants';
+import { getVisibleBoatCameraOffsets } from '../looter-game/utils/boatCameraFocus';
 
 interface UseMapNavigationParams {
   initialMainTab: string;
@@ -79,6 +80,7 @@ export function useMapNavigation({
   const [cameraRotateYDeg, setCameraRotateYDeg] = useState(CAMERA_ROTATE_Y_DEFAULT_DEG);
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
+  const pendingBoatFocusRef = useRef(false);
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
@@ -195,19 +197,33 @@ export function useMapNavigation({
     animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY, planeYScale]);
 
-  const focusCurrentBoat = useCallback((yOffsetPx: number = 0) => {
+  const requestBoatAutoFocus = useCallback(() => {
+    pendingBoatFocusRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!pendingBoatFocusRef.current) return;
+    if (mainTab !== 'backpack' || !isSheetExpanded) return;
+
     const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
     const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
     if (targetLat == null || targetLng == null) return;
 
-    window.setTimeout(() => {
-      const backpack = document.getElementById('looter-backpack-container');
-      const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-      const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
-      const resolvedYOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : yOffsetPx;
-      handleCenterTo(targetLat, targetLng, resolvedYOffset);
-    }, 120);
-  }, [handleCenterTo, looterStateObj.currentLat, looterStateObj.currentLng, myObfPos]);
+    const timer = window.setTimeout(() => {
+      const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
+      looterActions.centerOnBoat(yOffset, xOffset);
+      pendingBoatFocusRef.current = false;
+    }, 140);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    mainTab,
+    isSheetExpanded,
+    looterStateObj.currentLat,
+    looterStateObj.currentLng,
+    myObfPos,
+    looterActions.centerOnBoat,
+  ]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {
     setRadius(newRadius);
@@ -228,7 +244,8 @@ export function useMapNavigation({
         setIsLooterGameMode(true);
         const nextIsExpanded = !isSheetExpanded;
         setIsSheetExpanded(nextIsExpanded);
-        if (nextIsExpanded) focusCurrentBoat();
+        if (nextIsExpanded) requestBoatAutoFocus();
+        else pendingBoatFocusRef.current = false;
       } else {
         setIsSheetExpanded((prev) => !prev);
       }
@@ -246,7 +263,7 @@ export function useMapNavigation({
       setMainTab('backpack');
       setIsLooterGameMode(true);
       setIsSheetExpanded(true);
-      focusCurrentBoat();
+      requestBoatAutoFocus();
     } else {
       setShowMinigame(null);
       setEncounter(null);
@@ -254,6 +271,7 @@ export function useMapNavigation({
       setShowCurseModal(false);
       setIsIntegratedStorageOpen(false);
       setIsLooterGameMode(false);
+      pendingBoatFocusRef.current = false;
       setMainTab(tabId as MainTab);
       setIsSheetExpanded(true);
     }
@@ -270,13 +288,12 @@ export function useMapNavigation({
     setIsLooterGameMode,
     initGame,
     loadWorldItems,
-    handleCenterTo,
     setShowMinigame,
     setEncounter,
     setCombatResult,
     setShowCurseModal,
     setIsIntegratedStorageOpen,
-    focusCurrentBoat,
+    requestBoatAutoFocus,
     isSheetExpanded,
   ]);
 
@@ -300,5 +317,6 @@ export function useMapNavigation({
     },
     setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(clamp(v, CAMERA_ROTATE_Y_MIN_DEG, CAMERA_ROTATE_Y_MAX_DEG)),
     handleUpdateRadius, handleTabClick,
+    requestBoatAutoFocus,
   };
 }
