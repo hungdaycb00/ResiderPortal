@@ -5,14 +5,21 @@ import { getVisibleBoatCameraOffsets } from '../utils/boatCameraFocus';
 
 export function useCombatCamera(
   encounter: Encounter | null,
-  centerOnCombat: (yOffset?: number) => void,
+  centerOnCombat: (yOffset?: number, xOffset?: number) => void,
   centerOnBoat: () => void,
   setCameraZ?: (z: number) => void,
   setMainTab?: (tab: any) => void,
   setIsSheetExpanded?: (v: boolean) => void,
-  isLooterGameMode: boolean = true
+  isLooterGameMode: boolean = true,
+  isSheetExpanded: boolean = false
 ) {
   const lastEncounterUid = useRef<string | null>(null);
+
+  const centerCombatInVisibleArea = () => {
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
+    centerOnCombat(isDesktop ? 0 : yOffset, xOffset);
+  };
 
   useEffect(() => {
     if (!isLooterGameMode) {
@@ -39,12 +46,20 @@ export function useCombatCamera(
 
       setCameraZ?.(CAMERA_Z_NEAR);
       window.requestAnimationFrame(() => {
-        const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-        const { yOffset } = getVisibleBoatCameraOffsets();
-        centerOnCombat(isDesktop ? 0 : yOffset);
+        centerCombatInVisibleArea();
       });
     }, 300);
 
     return () => window.clearTimeout(timer);
   }, [encounter, centerOnCombat, centerOnBoat, setCameraZ, setMainTab, setIsSheetExpanded, isLooterGameMode]);
+
+  useEffect(() => {
+    if (!isLooterGameMode || !encounter) return;
+
+    const timer = window.setTimeout(() => {
+      window.requestAnimationFrame(centerCombatInVisibleArea);
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [isSheetExpanded, encounter, centerOnCombat, isLooterGameMode]);
 }

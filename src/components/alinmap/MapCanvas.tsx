@@ -60,6 +60,7 @@ interface MapCanvasProps {
     selectedUser?: any;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts') => void;
+    isSheetExpanded: boolean;
     setIsSheetExpanded: (v: boolean) => void;
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     addLog: (msg: string) => void;
@@ -85,7 +86,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
-        requestLocation, selectedUser, setSelectedUser, setActiveTab, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
+        requestLocation, selectedUser, setSelectedUser, setActiveTab, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen
     } = props;
@@ -174,10 +175,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         looterBoat.centerOnCombat, 
         looterBoat.centerOnBoat,
         props.setCameraZ,
-        setMainTab,
-        setIsSheetExpanded,
-        !!isLooterGameMode
-    );
+	        setMainTab,
+	        setIsSheetExpanded,
+	        !!isLooterGameMode,
+	        isSheetExpanded
+	    );
 
     return (
         <div className="absolute inset-0 overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>

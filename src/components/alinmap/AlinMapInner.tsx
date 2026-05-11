@@ -237,8 +237,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     cameraHeightOffset={nav.cameraHeightOffset} cameraRotateDeg={nav.cameraRotateDeg}
                     cameraPitchOverride={nav.cameraPitchOverride} cameraRotateYDeg={nav.cameraRotateYDeg}
                     panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
-                    requestLocation={geo.requestLocation} selectedUser={nav.selectedUser} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
-                    setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
+	                    requestLocation={geo.requestLocation} selectedUser={nav.selectedUser} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
+	                    isSheetExpanded={nav.isSheetExpanded} setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
                     mapMode={nav.mapMode}
                     setContextMenu={setContextMenu}
                     isLooterGameMode={isLooterGameMode}
