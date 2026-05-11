@@ -32,51 +32,26 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   isSheetExpanded,
   panelWidth,
 }) => {
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    // Load recent searches
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
-      if (saved) {
-        setRecentSearches(JSON.parse(saved));
-      }
-    } catch (err) {
-      console.error('Failed to parse recent searches', err);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
+  });
+  const inputRef = useRef<HTMLInputElement>(null);
 
-    // Handle back button
-    window.history.pushState({ searchOverlay: true }, '');
-    
-    const handlePopState = (e: PopStateEvent) => {
-      onCloseRef.current();
-    };
-    
-    window.addEventListener('popstate', handlePopState);
-    
-    // Auto focus
+  useEffect(() => {
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      if (window.history.state?.searchOverlay) {
-        setTimeout(() => window.history.back(), 0);
-      }
-    };
   }, []);
 
   const saveRecentSearch = (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) return;
-    
+
     setRecentSearches(prev => {
       const updated = [trimmed, ...prev.filter(q => q !== trimmed)].slice(0, 10);
       localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
@@ -126,7 +101,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        
+
         <form onSubmit={handleSearchSubmit} className="flex-1">
           <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
             <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
@@ -139,12 +114,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
               onChange={(e) => setSearchTag(e.target.value)}
             />
             {searchTag && (
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   setSearchTag('');
                   inputRef.current?.focus();
-                }} 
+                }}
                 className="p-1 hover:bg-gray-200 rounded-full ml-1"
               >
                 <X className="w-3 h-3 text-gray-400" />
@@ -158,7 +133,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       <div className="flex-1 overflow-y-auto subtle-scrollbar bg-gray-50">
         {searchTag.trim().length >= 2 ? (
           <div className="bg-white min-h-full">
-             <SheetSearchResults 
+             <SheetSearchResults
                 searchTag={searchTag}
                 nearbyUsers={nearbyUsers}
                 setSelectedUser={setSelectedUser}
@@ -193,7 +168,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
                         </div>
                         <span className="text-[15px] text-gray-700 font-medium">{query}</span>
                       </div>
-                      <div 
+                      <div
                         onClick={(e) => removeRecentSearch(e, query)}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 md:opacity-100"
                       >

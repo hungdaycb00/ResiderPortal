@@ -142,6 +142,17 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   const handleSearchOverlayClose = useCallback(() => {
     setIsSearchOverlayOpen(false);
   }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isSearchOverlayOpen) {
+        setIsSearchOverlayOpen(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isSearchOverlayOpen]);
+
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   if (!portalTarget) return null;
