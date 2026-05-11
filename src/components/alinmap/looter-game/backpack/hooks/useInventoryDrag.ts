@@ -254,11 +254,16 @@ export function useInventoryDrag({
       return;
     }
 
+    // 2. Kiểm tra item có nằm trong vùng balo active không
+    if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
+      // Nằm ngoài balo -> Quay về vị trí cũ
+      setDraggingItem(null);
+      dispatchDrag({ type: 'RESET' });
+      return;
+    }
+
     let finalGx = gx;
     let finalGy = gy;
-
-    // Items nằm ngoài bag active vẫn được giữ trên grid.
-    // Chỉ bị vứt ra biển khi thuyền di chuyển (moveBoat xử lý).
 
     const newItems = items.map((i) =>
       i.uid === draggingItem.uid ? { ...i, gridX: finalGx, gridY: finalGy } : i
@@ -288,6 +293,11 @@ export function useInventoryDrag({
     onPointerMove,
     onPointerUp,
     checkOverlap,
-    isInvalidPosition: (gx: number, gy: number) => draggingItem ? checkOverlap(draggingItem, gx, gy, items) : false
+    isInvalidPosition: (gx: number, gy: number) => {
+      if (!draggingItem) return false;
+      if (checkOverlap(draggingItem, gx, gy, items)) return true;
+      if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) return true;
+      return false;
+    }
   };
 }
