@@ -104,8 +104,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     if (searchTag.trim()) {
       saveRecentSearch(searchTag);
     }
-    // Lịch sử state đã được dọn dẹp trong useEffect cleanup
-    window.history.back(); // Gọi window.history.back() thay vì onClose trực tiếp, vì popstate event sẽ trigger onClose
+    onClose();
   };
 
   const useDesktopPanel = isDesktop && isSheetExpanded;
@@ -121,8 +120,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 bg-white">
-        <button 
-          onClick={() => window.history.back()} 
+        <button
+          onClick={() => onClose()}
           className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95"
         >
           <ArrowLeft className="w-5 h-5" />

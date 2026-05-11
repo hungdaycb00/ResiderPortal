@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import BottomSheet from './BottomSheet';
@@ -139,6 +139,9 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
 }) => {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
+  const handleSearchOverlayClose = useCallback(() => {
+    setIsSearchOverlayOpen(false);
+  }, []);
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   if (!portalTarget) return null;
@@ -342,7 +345,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
             setActiveTab={nav.setActiveTab}
             setIsSheetExpanded={nav.setIsSheetExpanded}
             handlePlayGame={handlePlayGame}
-            onClose={() => setIsSearchOverlayOpen(false)}
+            onClose={handleSearchOverlayClose}
             isDesktop={isDesktop}
             isSheetExpanded={isSheetExpanded}
             panelWidth={panelWidth}
