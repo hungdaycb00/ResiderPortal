@@ -214,10 +214,35 @@ export default function SceneContent({
     : null;
   const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
 
-  const userRenderData = useMemo(() =>
-    filteredUsers.map((u) => ({ user: u, pos: worldToScene(origin, u) })),
-    [filteredUsers, origin.lat, origin.lng]
-  );
+  const userRenderData = useMemo(() => {
+    const raw = filteredUsers.map((u) => ({ user: u, pos: worldToScene(origin, u) }));
+    // Nhóm user theo vị trí (làm tròn 1 chữ số thập phân ~ 0.1 scene unit)
+    const groups = new Map<string, typeof raw>();
+    raw.forEach((item) => {
+      const key = `${item.pos.x.toFixed(1)},${item.pos.z.toFixed(1)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    });
+    // Offset user trùng vị trí theo vòng tròn lục giác
+    const SPACING = AVATAR_PLANE_SIZE * 0.6;
+    const result: typeof raw = [];
+    groups.forEach((group) => {
+      group.forEach((item, i) => {
+        if (i === 0) { result.push(item); return; }
+        const ring = Math.ceil(i / 6);
+        const angle = ((i - 1) % 6) * (Math.PI / 3);
+        const radius = ring * SPACING;
+        result.push({
+          user: item.user,
+          pos: {
+            x: item.pos.x + Math.cos(angle) * radius,
+            z: item.pos.z + Math.sin(angle) * radius,
+          },
+        });
+      });
+    });
+    return result;
+  }, [filteredUsers, origin.lat, origin.lng]);
 
   if (!position) return null;
 

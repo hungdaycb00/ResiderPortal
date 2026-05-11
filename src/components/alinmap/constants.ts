@@ -109,6 +109,8 @@ export interface SpatialNodeProps {
     onClick: () => void;
     mapScale: MotionValue<number>;
     onContextMenu?: (e: React.MouseEvent, user: any) => void;
+    offsetX?: number;
+    offsetY?: number;
 }
 
 export function getWeatherInfo(code: number): { icon: string; desc: string } {

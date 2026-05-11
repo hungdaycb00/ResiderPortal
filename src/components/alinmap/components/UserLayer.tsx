@@ -40,12 +40,34 @@ const UserLayer: React.FC<UserLayerProps> = ({
         return true;
     });
 
+    // Group users by position and compute offsets for overlapping users
+    const AVATAR_PX = 45; // ~kích thước avatar DOM (w-10 + margin)
+    const positionGroups = new Map<string, { user: any; offsetX: number; offsetY: number }[]>();
+    filteredUsers.forEach((u) => {
+        // Làm tròn vị trí để nhóm (~10m tolerance)
+        const key = `${u.lat.toFixed(4)},${u.lng.toFixed(4)}`;
+        if (!positionGroups.has(key)) positionGroups.set(key, []);
+        positionGroups.get(key)!.push({ user: u, offsetX: 0, offsetY: 0 });
+    });
+    positionGroups.forEach((group) => {
+        group.forEach((item, i) => {
+            if (i === 0) return;
+            const ring = Math.ceil(i / 6);
+            const angle = ((i - 1) % 6) * (Math.PI / 3);
+            const radius = ring * AVATAR_PX;
+            item.offsetX = Math.cos(angle) * radius;
+            item.offsetY = Math.sin(angle) * radius;
+        });
+    });
+    const usersWithOffset = Array.from(positionGroups.values()).flat();
+
     return (
         <>
-            {filteredUsers.map(u => (
+            {usersWithOffset.map(({ user: u, offsetX, offsetY }) => (
                 <div key={u.id} className={`transition-opacity duration-500 ${isLooterGameMode ? 'opacity-30 blur-[1px] pointer-events-none' : 'opacity-100'}`}>
                     <SpatialNode
                         user={u} myPos={myObfPos} mapScale={scale}
+                        offsetX={offsetX} offsetY={offsetY}
                         onClick={() => !isLooterGameMode && setSelectedUser(u)}
                         onContextMenu={(e, uData) => {
                             if (!isLooterGameMode) setContextMenu({ x: e.clientX, y: e.clientY, target: 'user', data: uData });

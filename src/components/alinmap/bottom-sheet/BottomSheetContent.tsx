@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, ShoppingBag } from 'lucide-react';
+import { Database, ShoppingBag, X } from 'lucide-react';
 import BackpackView from '../features/backpack/components/BackpackView';
 import CreatorTabView from '../features/creator/components/CreatorTabView';
 import DiscoverView from '../features/explore/components/DiscoverView';
@@ -98,7 +98,10 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
         fortressLng,
         worldTier,
         isItemDragging,
+        isIntegratedStorageOpen,
+        fortressStorageMode,
         openFortressStorage,
+        setIsIntegratedStorageOpen,
     } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
     const isAtFortress = worldTier === -1 || isLooterAtFortress({ currentLat, currentLng, fortressLat, fortressLng });
@@ -117,9 +120,15 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
         );
     }, []);
 
-    const handleOpenFortressStorage = React.useCallback(() => {
+    const isFortressStorageActive = isIntegratedStorageOpen && fortressStorageMode === 'fortress';
+
+    const handleToggleFortressStorage = React.useCallback(() => {
+        if (isFortressStorageActive) {
+            setIsIntegratedStorageOpen(false);
+            return;
+        }
         openFortressStorage('fortress');
-    }, [openFortressStorage]);
+    }, [isFortressStorageActive, openFortressStorage, setIsIntegratedStorageOpen]);
 
     const handleOpenShop = React.useCallback(() => {
         openFortressStorage('fortress');
@@ -137,24 +146,27 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                             <button
                                 type="button"
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onClick={handleOpenFortressStorage}
+                                onClick={handleToggleFortressStorage}
                                 disabled={isItemDragging}
-                                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-amber-400/35 bg-amber-500/15 px-3 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-200 shadow-[0_8px_20px_rgba(245,158,11,0.18)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                                title="Mở kho thành trì"
+                                aria-pressed={isFortressStorageActive}
+                                className={`flex min-h-12 flex-1 items-center justify-center rounded-2xl border px-3 py-2 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                    isFortressStorageActive
+                                        ? 'border-amber-200/90 bg-amber-300/25 text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.2),0_10px_26px_rgba(245,158,11,0.42)] ring-1 ring-amber-200/40'
+                                        : 'border-amber-400/35 bg-amber-500/15 text-amber-200 shadow-[0_8px_20px_rgba(245,158,11,0.18)]'
+                                }`}
+                                title={isFortressStorageActive ? 'Đóng kho thành trì' : 'Mở kho thành trì'}
                             >
-                                <Database className="h-4 w-4 shrink-0" />
-                                <span>Mở kho thành trì</span>
+                                {isFortressStorageActive ? <X className="h-4 w-4 shrink-0" /> : <Database className="h-4 w-4 shrink-0" />}
                             </button>
                             <button
                                 type="button"
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={handleOpenShop}
                                 disabled={isItemDragging}
-                                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-emerald-200 shadow-[0_8px_20px_rgba(16,185,129,0.16)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex min-h-12 flex-1 items-center justify-center rounded-2xl border border-emerald-300/40 bg-emerald-500/20 px-3 py-2 text-emerald-100 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_10px_26px_rgba(16,185,129,0.26)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                                 title="Mở shop thành trì"
                             >
                                 <ShoppingBag className="h-4 w-4 shrink-0" />
-                                <span>Shop</span>
                             </button>
                         </div>
                     </div>

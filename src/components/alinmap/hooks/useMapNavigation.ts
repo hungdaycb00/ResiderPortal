@@ -195,6 +195,20 @@ export function useMapNavigation({
     animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
   }, [myObfPos, panX, panY, planeYScale]);
 
+  const focusCurrentBoat = useCallback((yOffsetPx: number = 0) => {
+    const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
+    const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
+    if (targetLat == null || targetLng == null) return;
+
+    window.setTimeout(() => {
+      const backpack = document.getElementById('looter-backpack-container');
+      const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
+      const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
+      const resolvedYOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : yOffsetPx;
+      handleCenterTo(targetLat, targetLng, resolvedYOffset);
+    }, 120);
+  }, [handleCenterTo, looterStateObj.currentLat, looterStateObj.currentLng, myObfPos]);
+
   const handleUpdateRadius = useCallback((newRadius: number) => {
     setRadius(newRadius);
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -210,7 +224,14 @@ export function useMapNavigation({
     if (tabId === 'profile') setActiveTab('posts');
 
     if (mainTab === tabId) {
-      setIsSheetExpanded((prev) => !prev);
+      if (tabId === 'backpack') {
+        setIsLooterGameMode(true);
+        const nextIsExpanded = !isSheetExpanded;
+        setIsSheetExpanded(nextIsExpanded);
+        if (nextIsExpanded) focusCurrentBoat();
+      } else {
+        setIsSheetExpanded((prev) => !prev);
+      }
       return;
     }
 
@@ -225,18 +246,7 @@ export function useMapNavigation({
       setMainTab('backpack');
       setIsLooterGameMode(true);
       setIsSheetExpanded(true);
-
-      const targetLat = looterStateObj.currentLat ?? myObfPos?.lat;
-      const targetLng = looterStateObj.currentLng ?? myObfPos?.lng;
-      if (targetLat != null && targetLng != null) {
-        setTimeout(() => {
-          const backpack = document.getElementById('looter-backpack-container');
-          const backpackTop = backpack ? backpack.getBoundingClientRect().top : window.innerHeight;
-          const visibleMapHeight = Math.max(120, backpack ? backpackTop : window.innerHeight);
-          const yOffset = backpack ? (window.innerHeight / 2) - (visibleMapHeight / 2) : 0;
-          handleCenterTo(targetLat, targetLng, yOffset);
-        }, 120);
-      }
+      focusCurrentBoat();
     } else {
       setShowMinigame(null);
       setEncounter(null);
@@ -266,6 +276,8 @@ export function useMapNavigation({
     setCombatResult,
     setShowCurseModal,
     setIsIntegratedStorageOpen,
+    focusCurrentBoat,
+    isSheetExpanded,
   ]);
 
   return {

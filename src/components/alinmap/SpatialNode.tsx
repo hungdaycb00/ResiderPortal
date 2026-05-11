@@ -7,9 +7,9 @@ import { DEGREES_TO_PX, FEATURED_BILLBOARD_FAR_SCALE, LIKE_THRESHOLD_FOR_SCALE, 
 const billboardTransform = (_: unknown, generated: string) =>
     `${generated} scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
 
-const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu }) => {
-    const dx = (user.lng - myPos.lng) * DEGREES_TO_PX;
-    const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX; // CSS Y is inverted vs latitude
+const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu, offsetX = 0, offsetY = 0 }) => {
+    const dx = (user.lng - myPos.lng) * DEGREES_TO_PX + offsetX;
+    const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX + offsetY; // CSS Y is inverted vs latitude
     const likeCount = Number(user?.gallery?.likeCount ?? user?.gallery?.likes ?? user?.likeCount ?? user?.likes_count ?? 0);
     const isFeaturedBillboard = !!user?.gallery?.active && likeCount >= LIKE_THRESHOLD_FOR_SCALE;
     const featuredScale = useTransform(mapScale, (v) => {
