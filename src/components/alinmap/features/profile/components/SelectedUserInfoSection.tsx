@@ -5,7 +5,7 @@ interface SelectedUserInfoSectionProps {
     selectedUser: any;
     friends: any[];
     sentFriendRequests: any[];
-    handleAddFriend: () => void;
+    handleAddFriend: (targetUser?: any) => void;
     handleMessage: () => void;
     onLocateUser: (lat: number, lng: number) => void;
     isReporting: boolean;
@@ -45,12 +45,12 @@ const SelectedUserInfoSection: React.FC<SelectedUserInfoSectionProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-3 pb-8">
-            {!sentFriendRequests.includes(selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
-                <button onClick={handleAddFriend} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+            {!sentFriendRequests.some(r => r.id === selectedUser.id) && !friends.some(f => f.id === selectedUser.id) && (
+                <button onClick={() => handleAddFriend()} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
                     <UserPlus className="w-5 h-5" /> Add Friend
                 </button>
             )}
-            <div className={`flex gap-3 ${sentFriendRequests.includes(selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
+            <div className={`flex gap-3 ${sentFriendRequests.some(r => r.id === selectedUser.id) || friends.some(f => f.id === selectedUser.id) ? 'col-span-2' : ''}`}>
                 <button onClick={handleMessage} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-[20px] font-bold active:scale-95 transition-all shadow-sm">
                     <MessageCircle className="w-5 h-5" /> Message
                 </button>

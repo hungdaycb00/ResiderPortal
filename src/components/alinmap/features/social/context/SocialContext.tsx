@@ -1,8 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 interface SocialContextType {
-    sentFriendRequests: string[];
-    setSentFriendRequests: React.Dispatch<React.SetStateAction<string[]>>;
+    sentFriendRequests: any[];
+    setSentFriendRequests: React.Dispatch<React.SetStateAction<any[]>>;
+    incomingFriendRequests: any[];
+    fetchIncomingFriendRequests: () => Promise<void>;
+    handleAcceptFriendRequest: (targetId: string) => Promise<void>;
+    handleRejectFriendRequest: (targetId: string) => Promise<void>;
     friendIdInput: string;
     setFriendIdInput: React.Dispatch<React.SetStateAction<string>>;
     socialSection: 'friends' | 'nearby' | 'recent' | 'blocked';
@@ -37,7 +41,8 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
     onOpenChat,
     selectedUser
 }) => {
-    const [sentFriendRequests, setSentFriendRequests] = useState<string[]>([]);
+    const [sentFriendRequests, setSentFriendRequests] = useState<any[]>([]);
+    const [incomingFriendRequests, setIncomingFriendRequests] = useState<any[]>([]);
     const [friendIdInput, setFriendIdInput] = useState('');
     const [socialSection, setSocialSection] = useState<'friends' | 'nearby' | 'recent' | 'blocked'>('friends');
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -63,7 +68,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
             });
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok || !data.success) throw new Error(data.error || 'Failed to send friend request.');
-            setSentFriendRequests(prev => prev.includes(userToAdd.id) ? prev : [...prev, userToAdd.id]);
+            setSentFriendRequests(prev => prev.some(r => r.id === userToAdd.id) ? prev : [...prev, userToAdd]);
             showNotification?.(`Friend request sent to ${userToAdd.username || userToAdd.id}!`, 'success');
         } catch (err: any) {
             const msg = String(err.message ?? '');
@@ -80,12 +85,60 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({
         onOpenChat(userToMsg.id, userToMsg.username || 'User', userToMsg.avatar_url || userToMsg.photoURL || '');
     };
 
+    const fetchIncomingFriendRequests = useCallback(async () => {
+        try {
+            const resp = await fetch(`${apiBase}/api/friends`, {
+                headers: { 'X-Device-Id': externalApi.getDeviceId() },
+            });
+            const data = await resp.json();
+            if (data.requests) setIncomingFriendRequests(data.requests);
+        } catch (err) {
+            console.error('Fetch friend requests error:', err);
+        }
+    }, [apiBase, externalApi]);
+
+    const handleAcceptFriendRequest = async (targetId: string) => {
+        try {
+            const resp = await fetch(`${apiBase}/api/friends/accept`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId }),
+            });
+            if (resp.ok) {
+                setIncomingFriendRequests(prev => prev.filter(r => r.id !== targetId));
+                showNotification?.('Đã chấp nhận lời mời kết bạn!', 'success');
+            }
+        } catch (err: any) {
+            showNotification?.('Không thể chấp nhận lời mời', 'error');
+        }
+    };
+
+    const handleRejectFriendRequest = async (targetId: string) => {
+        try {
+            const resp = await fetch(`${apiBase}/api/friends/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId }),
+            });
+            if (resp.ok) {
+                setIncomingFriendRequests(prev => prev.filter(r => r.id !== targetId));
+                showNotification?.('Đã từ chối lời mời kết bạn', 'info');
+            }
+        } catch (err: any) {
+            showNotification?.('Không thể từ chối lời mời', 'error');
+        }
+    };
+
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
         <SocialContext.Provider value={{
             sentFriendRequests,
             setSentFriendRequests,
+            incomingFriendRequests,
+            fetchIncomingFriendRequests,
+            handleAcceptFriendRequest,
+            handleRejectFriendRequest,
             friendIdInput,
             setFriendIdInput,
             socialSection,

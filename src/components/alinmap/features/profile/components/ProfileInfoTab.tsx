@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronRight, Users, Ban, MessageCircle, UserPlus, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Users, Ban, MessageCircle, UserPlus, AlertTriangle, Mail, Check, X } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { useSocial } from '../../social/context/SocialContext';
 
@@ -17,8 +17,19 @@ interface ProfileInfoTabProps {
 const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
     myUserId, friends, games, setSelectedUser,
 }) => {
-    const { handleMessage } = useSocial();
-    const [activeList, setActiveList] = useState<'none' | 'friends' | 'blocked'>('none');
+    const {
+        handleMessage,
+        sentFriendRequests,
+        incomingFriendRequests,
+        fetchIncomingFriendRequests,
+        handleAcceptFriendRequest,
+        handleRejectFriendRequest,
+    } = useSocial();
+    const [activeList, setActiveList] = useState<'none' | 'friends' | 'blocked' | 'invites'>('none');
+
+    useEffect(() => {
+        fetchIncomingFriendRequests();
+    }, [fetchIncomingFriendRequests]);
 
     return (
         <div className="space-y-4">
@@ -32,8 +43,15 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                     <span className="text-xs font-bold">Bạn bè ({friends.length})</span>
                 </button>
                 <button
+                    onClick={() => setActiveList(activeList === 'invites' ? 'none' : 'invites')}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${activeList === 'invites' ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-200' : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'}`}
+                >
+                    <Mail className="w-4 h-4" />
+                    <span className="text-xs font-bold">Lời mời{incomingFriendRequests.length > 0 ? ` (${incomingFriendRequests.length})` : ''}</span>
+                </button>
+                <button
                     onClick={() => setActiveList(activeList === 'blocked' ? 'none' : 'blocked')}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${activeList === 'blocked' ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-200' : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'}`}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all col-span-2 ${activeList === 'blocked' ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-200' : 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50'}`}
                 >
                     <Ban className="w-4 h-4" />
                     <span className="text-xs font-bold">Đã chặn</span>
@@ -90,6 +108,97 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                     <div className="py-8 text-center bg-gray-50 rounded-3xl">
                         <AlertTriangle className="w-6 h-6 text-gray-200 mx-auto mb-2" />
                         <p className="text-gray-400 text-[11px] font-medium">Chưa chặn người dùng nào</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Invites View */}
+            {activeList === 'invites' && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-5">
+                    {/* Sent Requests */}
+                    <div>
+                        <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">
+                            Lời mời đã gửi ({sentFriendRequests.length})
+                        </h4>
+                        {sentFriendRequests.length > 0 ? (
+                            <div className="divide-y divide-gray-50 bg-white border border-gray-100 rounded-3xl p-1">
+                                {sentFriendRequests.map((req) => (
+                                    <div
+                                        key={req.id}
+                                        className="flex items-center gap-3 py-3 px-2"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                                            <img
+                                                src={normalizeImageUrl(req.avatar_url || req.photoURL || req.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username || req.displayName || req.name || 'U')}&background=amber-500&color=fff&size=100&bold=true`}
+                                                className="w-full h-full object-cover"
+                                                alt={req.username || req.displayName || req.name || 'User'}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username || req.displayName || req.name || 'U')}&background=amber-500&color=fff&size=100&bold=true`; }}
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-gray-900 text-sm truncate">{req.displayName || req.username || req.name || req.id}</h4>
+                                            <p className="text-[10px] text-amber-500 font-medium">Đang chờ phản hồi...</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-6 text-center bg-gray-50 rounded-3xl">
+                                <Mail className="w-5 h-5 text-gray-200 mx-auto mb-2" />
+                                <p className="text-gray-400 text-[11px] font-medium">Chưa gửi lời mời nào</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Incoming Requests */}
+                    <div>
+                        <h4 className="text-xs font-bold text-gray-500 mb-3 px-1 uppercase tracking-wider">
+                            Lời mời nhận được ({incomingFriendRequests.length})
+                        </h4>
+                        {incomingFriendRequests.length > 0 ? (
+                            <div className="divide-y divide-gray-50 bg-white border border-gray-100 rounded-3xl p-1">
+                                {incomingFriendRequests.map((req) => (
+                                    <div
+                                        key={req.id}
+                                        className="flex items-center gap-3 py-3 px-2"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                                            <img
+                                                src={normalizeImageUrl(req.photoURL || req.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.displayName || req.display_name || req.id)}&background=3b82f6&color=fff&size=100&bold=true`}
+                                                className="w-full h-full object-cover"
+                                                alt={req.displayName || req.display_name || req.id}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.displayName || req.display_name || req.id)}&background=3b82f6&color=fff&size=100&bold=true`; }}
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-gray-900 text-sm truncate">{req.displayName || req.display_name || req.id}</h4>
+                                            <p className="text-[10px] text-blue-500 font-medium">Muốn kết bạn với bạn</p>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button
+                                                onClick={() => handleAcceptFriendRequest(req.id)}
+                                                className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors active:scale-90"
+                                                title="Chấp nhận"
+                                            >
+                                                <Check className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleRejectFriendRequest(req.id)}
+                                                className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-xl transition-colors active:scale-90"
+                                                title="Từ chối"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-6 text-center bg-gray-50 rounded-3xl">
+                                <UserPlus className="w-5 h-5 text-gray-200 mx-auto mb-2" />
+                                <p className="text-gray-400 text-[11px] font-medium">Không có lời mời kết bạn nào</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

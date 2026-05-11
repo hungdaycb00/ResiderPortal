@@ -17,7 +17,7 @@ interface SelectedUserViewProps {
     onLocateUser: (lat: number, lng: number) => void;
     ws: React.MutableRefObject<WebSocket | null>;
     games: any[];
-    userPosts: any[];    
+    userPosts: any[];
     handleStarPost: (postId: string) => void;
     handleDeletePost: (postId: string) => void;
     externalApi: any;
@@ -35,7 +35,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
 
     return (
-        <div className="pt-20 md:pt-6 pb-24 md:pb-6 px-2">
+        <div className="pt-2 md:pt-6 pb-24 md:pb-6 px-2">
             <SelectedUserHeader selectedUser={selectedUser} setSelectedUser={setSelectedUser} />
             <SelectedUserTabs activeTab={activeTab} setActiveTab={setActiveTab} selectedUser={selectedUser} fetchUserPosts={fetchUserPosts} />
 
