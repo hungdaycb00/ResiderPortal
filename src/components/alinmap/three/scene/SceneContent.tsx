@@ -347,7 +347,7 @@ export default function SceneContent({
         {/* ─── Looter Game Elements ──────────────────────────────────────────── */}
         {/* Fortress */}
         {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-          <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} onClick={handleFortressClick} />
+          <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} scale={13.5} onClick={handleFortressClick} />
         ) : null}
 
         {/* Waypoint items (3 gần nhất) */}

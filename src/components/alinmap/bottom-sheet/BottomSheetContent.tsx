@@ -141,34 +141,32 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
         return (
             <div className="flex-1 relative z-[100] flex flex-col overflow-visible">
                 {!isDesktop && isAtFortress && (
-                    <div className="px-3 pt-2">
-                        <div className="flex items-stretch gap-2 rounded-3xl border border-amber-400/15 bg-black/35 p-2 backdrop-blur-xl shadow-[0_12px_30px_rgba(0,0,0,0.25)]">
+                    <div className="absolute left-3 top-2 z-[140] flex items-center gap-2">
                             <button
                                 type="button"
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={handleToggleFortressStorage}
                                 disabled={isItemDragging}
                                 aria-pressed={isFortressStorageActive}
-                                className={`flex min-h-12 flex-1 items-center justify-center rounded-2xl border px-3 py-2 transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                                className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent transition-all active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60 ${
                                     isFortressStorageActive
-                                        ? 'border-amber-200/90 bg-amber-300/25 text-amber-50 shadow-[0_0_0_1px_rgba(251,191,36,0.2),0_10px_26px_rgba(245,158,11,0.42)] ring-1 ring-amber-200/40'
-                                        : 'border-amber-400/35 bg-amber-500/15 text-amber-200 shadow-[0_8px_20px_rgba(245,158,11,0.18)]'
+                                        ? 'text-amber-50 ring-1 ring-amber-200/40'
+                                        : 'text-amber-200/90'
                                 }`}
                                 title={isFortressStorageActive ? 'Đóng kho thành trì' : 'Mở kho thành trì'}
                             >
-                                {isFortressStorageActive ? <X className="h-4 w-4 shrink-0" /> : <Database className="h-4 w-4 shrink-0" />}
+                                {isFortressStorageActive ? <X className="h-[18px] w-[18px] shrink-0" /> : <Database className="h-[18px] w-[18px] shrink-0" />}
                             </button>
                             <button
                                 type="button"
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={handleOpenShop}
                                 disabled={isItemDragging}
-                                className="flex min-h-12 flex-1 items-center justify-center rounded-2xl border border-emerald-300/40 bg-emerald-500/20 px-3 py-2 text-emerald-100 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_10px_26px_rgba(16,185,129,0.26)] transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-emerald-100/90 transition-all active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60"
                                 title="Mở shop thành trì"
                             >
-                                <ShoppingBag className="h-4 w-4 shrink-0" />
+                                <ShoppingBag className="h-[18px] w-[18px] shrink-0" />
                             </button>
-                        </div>
                     </div>
                 )}
                 <BackpackView onEnterWorld={onEnterWorld} readOnly={!!encounter} />
