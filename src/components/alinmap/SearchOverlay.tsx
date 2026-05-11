@@ -14,6 +14,9 @@ interface SearchOverlayProps {
   setIsSheetExpanded: (v: boolean) => void;
   handlePlayGame?: (game: any) => void;
   onClose: () => void;
+  isDesktop?: boolean;
+  isSheetExpanded?: boolean;
+  panelWidth?: number;
 }
 
 const SearchOverlay: React.FC<SearchOverlayProps> = ({
@@ -25,6 +28,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   setIsSheetExpanded,
   handlePlayGame,
   onClose,
+  isDesktop,
+  isSheetExpanded,
+  panelWidth,
 }) => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -103,8 +109,17 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     window.history.back(); // Gọi window.history.back() thay vì onClose trực tiếp, vì popstate event sẽ trigger onClose
   };
 
+  const useDesktopPanel = isDesktop && isSheetExpanded;
+
   return (
-    <div className="fixed inset-0 z-[400] bg-white flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div
+      className={`z-[400] bg-white flex flex-col animate-in fade-in duration-200 ${
+        useDesktopPanel
+          ? 'fixed top-0 bottom-0 rounded-l-[32px] shadow-[-4px_0_24px_rgba(0,0,0,0.05)] slide-in-from-left-2'
+          : 'fixed inset-0 slide-in-from-bottom-2'
+      }`}
+      style={useDesktopPanel ? { left: 72, width: panelWidth } : undefined}
+    >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 bg-white">
         <button 

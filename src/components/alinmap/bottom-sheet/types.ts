@@ -50,6 +50,8 @@ export interface BottomSheetProps {
     handleUpdateRadius: (v: number) => void;
     setIsSheetExpanded: (v: boolean) => void;
     setIsSearchOverlayOpen?: (v: boolean) => void;
+    panelWidth: number;
+    setPanelWidth: (v: number | ((prev: number) => number)) => void;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: BottomSheetActiveTab) => void;
     setMainTab: (tab: any) => void;

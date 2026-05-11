@@ -138,6 +138,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   camera,
 }) => {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(400);
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
 
   if (!portalTarget) return null;
@@ -257,6 +258,9 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setActiveTab={nav.setActiveTab}
         setMainTab={nav.setMainTab}
         setSearchTag={setSearchTag}
+        setIsSearchOverlayOpen={setIsSearchOverlayOpen}
+        panelWidth={panelWidth}
+        setPanelWidth={setPanelWidth}
         setMyDisplayName={wsCtx.setMyDisplayName}
         myAvatarUrl={wsCtx.myAvatarUrl}
         setMyAvatarUrl={wsCtx.setMyAvatarUrl}
@@ -339,6 +343,9 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
             setIsSheetExpanded={nav.setIsSheetExpanded}
             handlePlayGame={handlePlayGame}
             onClose={() => setIsSearchOverlayOpen(false)}
+            isDesktop={isDesktop}
+            isSheetExpanded={isSheetExpanded}
+            panelWidth={panelWidth}
           />
         </div>
       )}

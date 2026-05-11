@@ -23,6 +23,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         selectedUser,
         setSelectedUser,
         setIsSearchOverlayOpen,
+        panelWidth,
+        setPanelWidth,
     } = props;
 
     const {
@@ -33,7 +35,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         toggleIntegratedStorage,
     } = useLooterGame();
 
-    const [panelWidth, setPanelWidth] = React.useState(400);
     const [exploreSubTab, setExploreSubTab] = React.useState<ExploreSubTab>('games');
     const [socialSubTab, setSocialSubTab] = React.useState<SocialSubTab>('posts');
     const lastSocialFeedRequestRef = React.useRef('');
