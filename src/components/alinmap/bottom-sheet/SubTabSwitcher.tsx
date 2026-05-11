@@ -8,7 +8,7 @@ interface SubTabOption<T extends string> {
 interface SubTabSwitcherProps<T extends string> {
     value: T;
     options: SubTabOption<T>[];
-    onChange: (value: T) => void;
+    onChange: React.Dispatch<React.SetStateAction<T>>;
 }
 
 const SubTabSwitcher = <T extends string,>({

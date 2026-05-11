@@ -21,6 +21,7 @@ interface LooterInteractionParams {
   openFortressStorage?: (mode: string) => void;
   setShowMinigame?: (item: any) => void;
   pickupItem?: (spawnId: string, item: any, lat: number, lng: number) => void;
+  setIsTierSelectorOpen?: (v: boolean) => void;
 }
 
 export function useLooterInteraction(params: LooterInteractionParams) {
@@ -30,6 +31,7 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     boatOffsetX, boatOffsetY, itemClickLockRef,
     onRequestMove, onStopBoat, onSetArrivalAction,
     openFortressStorage, setShowMinigame, pickupItem,
+    setIsTierSelectorOpen,
   } = params;
 
   const getCurrentBoatLatLng = React.useCallback((): LatLng => {
@@ -136,12 +138,16 @@ export function useLooterInteraction(params: LooterInteractionParams) {
   const handleGroundClick = React.useCallback((groundMeshRef: React.RefObject<any>, point: Vector3) => {
     if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
     if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
+    if (looterStateObj?.worldTier === -1 && !encounter) {
+      setIsTierSelectorOpen?.(true);
+      return;
+    }
     const localPt = groundMeshRef.current.worldToLocal(point.clone());
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
     const lng = origin.lng + localPt.x / SCALE;
     const lat = origin.lat + localPt.y / SCALE;
     onRequestMove(lat, lng, 'map');
-  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef]);
+  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen]);
 
   // Waypoint: 3 item gần nhất, bypass culling
   const waypointItems = React.useMemo(() => {

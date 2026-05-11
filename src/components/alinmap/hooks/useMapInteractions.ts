@@ -7,13 +7,10 @@ interface UseMapInteractionsProps {
     panY: MotionValue<number>;
     scale: MotionValue<number>;
     isLooterGameMode: boolean;
-    looterStateObj: any;
-    isChallengeActive: boolean;
     myObfPos: { lat: number; lng: number } | null;
     looterBoat: any;
     encounter: any;
     isInteractionLocked?: boolean;
-    setIsTierSelectorOpen?: (v: boolean) => void;
     planeYScale?: MotionValue<number>;
     cameraZ?: MotionValue<number>;
     setCameraZ?: (z: number) => void;
@@ -21,8 +18,8 @@ interface UseMapInteractionsProps {
 
 export function useMapInteractions({
     panX, panY, scale,
-    isLooterGameMode, looterStateObj, isChallengeActive,
-    myObfPos, looterBoat, encounter, isInteractionLocked = false, setIsTierSelectorOpen,
+    isLooterGameMode,
+    myObfPos, looterBoat, encounter, isInteractionLocked = false,
     planeYScale, cameraZ, setCameraZ
 }: UseMapInteractionsProps) {
 
@@ -184,17 +181,13 @@ export function useMapInteractions({
 
              // --- Looter Challenge Initiation Logic ---
              // Chỉ mở tier selector khi đang ở thành trì và chưa chọn tier (worldTier === -1)
-             if (isLooterGameMode && looterStateObj && !isChallengeActive && !dragState.moved && looterStateObj?.worldTier === -1) {
-                  setIsTierSelectorOpen?.(true);
-                  return;
-             }
 
         // Trong looter mode, Ground onClick (R3F Raycaster) xử lý di chuyển.
         // Không gọi looterBoat.handlePointerUp để tránh double-fire với đường screenToWorld cũ.
         if (isLooterGameMode && !dragState.moved) return;
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, looterStateObj, isChallengeActive, encounter, isInteractionLocked, setIsTierSelectorOpen, panX, panY, scale, myObfPos]);
+    }, [looterBoat, isLooterGameMode, encounter, isInteractionLocked, panX, panY, scale, myObfPos]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;

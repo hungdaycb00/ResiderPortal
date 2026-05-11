@@ -161,10 +161,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         handleMapPointerCancel, handleMapClickCapture
     } = useMapInteractions({
         panX, panY, scale, isLooterGameMode: !!isLooterGameMode,
-        looterStateObj, isChallengeActive: !!isChallengeActive,
         myObfPos, looterBoat, encounter: looterState.encounter,
         isInteractionLocked: isMapInteractionLocked,
-        setIsTierSelectorOpen,
         planeYScale,
         cameraZ,
         setCameraZ: props.setCameraZ
@@ -247,6 +245,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         onStopBoat={looterBoat.stopBoat}
                         onSelfDragEnd={handleSelfDragEnd}
                         onSetArrivalAction={looterBoat.setOnArrivalAction}
+                        setIsTierSelectorOpen={setIsTierSelectorOpen}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={handleSelectSelf}

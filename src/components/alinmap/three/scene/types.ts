@@ -49,4 +49,5 @@ export interface AlinMapThreeSceneProps {
   onStopBoat?: () => void;
   onSelfDragEnd?: (newLat: number, newLng: number) => void;
   onSetArrivalAction?: (action: (() => void) | null) => void;
+  setIsTierSelectorOpen?: (v: boolean) => void;
 }

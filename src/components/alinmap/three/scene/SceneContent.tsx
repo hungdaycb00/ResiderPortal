@@ -74,6 +74,7 @@ export default function SceneContent({
   onStopBoat,
   onSelfDragEnd,
   onSetArrivalAction,
+  setIsTierSelectorOpen,
 }: AlinMapThreeSceneProps) {
   const tiltGroupRef = useRef<Group>(null);
   const moveGroupRef = useRef<Group>(null);
@@ -133,6 +134,7 @@ export default function SceneContent({
     openFortressStorage,
     setShowMinigame,
     pickupItem,
+    setIsTierSelectorOpen,
   });
 
   useEffect(() => {
