@@ -37,6 +37,9 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
     const [activeRoomName, setActiveRoomName] = useState('World Chat');
     const [activeRoomAvatar, setActiveRoomAvatar] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
+    const [initError, setInitError] = useState<string | null>(null);
+
+    const isDirectChat = !!targetUser;
 
     const activeRoomIdRef = useRef<number | null>(null);
 
@@ -74,7 +77,8 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 if (targetUser) {
                     setMobileView('chat');
                     return createOrGetPrivateRoom(targetUser.id).then(res => {
-                        return joinRoom('private', res.roomId);
+                        const roomId = res.roomId ?? res.room_id;
+                        return joinRoom('private', roomId);
                     });
                 } else {
                     return joinRoom('global');
@@ -82,14 +86,18 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
             })
             .then((data) => {
                 if (!mounted) return;
-                if (data && data.roomId) {
-                    setActiveRoom(data.roomId, targetUser ? targetUser.name : 'World Chat', targetUser?.avatarUrl || null);
+                if (data && (data.roomId || data.room_id)) {
+                    const roomId = data.roomId ?? data.room_id;
+                    setActiveRoom(roomId, targetUser ? targetUser.name : 'World Chat', targetUser?.avatarUrl || null);
                 }
                 setIsLoading(false);
             })
             .catch((error) => {
                 console.error('❌ Chat Error:', error);
-                if (mounted) setIsLoading(false);
+                if (mounted) {
+                    setInitError(error.message || 'Không thể kết nối chat');
+                    setIsLoading(false);
+                }
             });
 
         return () => {
@@ -165,20 +173,44 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
         return (
             <div className="flex flex-col items-center justify-center h-full min-h-[500px] bg-[#1a1d24] border border-gray-800 rounded-2xl shadow-2xl">
                 <div className="w-10 h-10 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-400 font-medium">Connecting to chat...</p>
+                <p className="text-gray-400 font-medium">Đang kết nối chat...</p>
+            </div>
+        );
+    }
+
+    if (initError && !activeRoomId) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full min-h-[500px] bg-[#1a1d24] border border-gray-800 rounded-2xl shadow-2xl px-6">
+                <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-2xl">⚠️</span>
+                </div>
+                <p className="text-gray-300 font-bold text-lg mb-2">Không thể kết nối</p>
+                <p className="text-gray-500 text-sm text-center mb-6">{initError}</p>
+                <button
+                    onClick={() => {
+                        setInitError(null);
+                        setIsLoading(true);
+                        window.location.reload();
+                    }}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors active:scale-95"
+                >
+                    Thử lại
+                </button>
             </div>
         );
     }
 
     return (
         <div className="flex w-full h-[80vh] min-h-[500px] bg-[#1a1d24] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            <ChatSidebar
-                friends={friends}
-                activeRoomName={activeRoomName}
-                mobileView={mobileView}
-                switchRoom={switchRoom}
-                startChatWithFriend={startChatWithFriend}
-            />
+            {!isDirectChat && (
+                <ChatSidebar
+                    friends={friends}
+                    activeRoomName={activeRoomName}
+                    mobileView={mobileView}
+                    switchRoom={switchRoom}
+                    startChatWithFriend={startChatWithFriend}
+                />
+            )}
             <ChatArea
                 messages={messages}
                 inputText={inputText}
@@ -187,7 +219,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 activeRoomId={activeRoomId}
                 activeRoomName={activeRoomName}
                 activeRoomAvatar={activeRoomAvatar}
-                mobileView={mobileView}
+                mobileView={isDirectChat ? 'chat' : mobileView}
                 authenticatedUserId={authenticatedUserId}
                 currentUserId={currentUserId}
                 deviceId={deviceId}
