@@ -1,4 +1,5 @@
 import React from 'react';
+import { Plus } from 'lucide-react';
 import SocialNearbySection from './SocialNearbySection';
 import SocialPostsSection from './SocialPostsSection';
 
@@ -51,7 +52,23 @@ const SocialView: React.FC<SocialViewProps> = ({
     return (
         <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 pb-20">
-                <h3 className="text-lg font-black text-gray-900 px-1">Social</h3>
+                <div className="flex items-center justify-between px-1">
+                    <h3 className="text-lg font-black text-gray-900">Social</h3>
+                    {socialSubTab === 'posts' && !isCreatingPost && (
+                        <button
+                            onClick={() => {
+                                setPostPrivacy('public');
+                                setPostIsStarred(false);
+                                setIsCreatingPost(true);
+                            }}
+                            className="flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                            aria-label="Create post"
+                            title="Tạo bài viết"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
 
                 {socialSubTab === 'posts' ? (
                     <SocialPostsSection

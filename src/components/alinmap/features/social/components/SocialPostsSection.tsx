@@ -58,20 +58,22 @@ const SocialPostsSection: React.FC<SocialPostsSectionProps> = ({
 
     return (
         <div className="space-y-4">
-            <div className="mb-4">
-                <CreatePostForm
-                    isCreatingPost={isCreatingPost}
-                    setIsCreatingPost={setIsCreatingPost}
-                    postTitle={postTitle}
-                    setPostTitle={setPostTitle}
-                    postPrivacy={postPrivacy}
-                    setPostPrivacy={setPostPrivacy}
-                    postIsStarred={postIsStarred}
-                    setPostIsStarred={setPostIsStarred}
-                    isSavingPost={isSavingPost}
-                    handleCreatePost={handleCreatePost}
-                />
-            </div>
+            {isCreatingPost && (
+                <div className="mb-4">
+                    <CreatePostForm
+                        isCreatingPost={isCreatingPost}
+                        setIsCreatingPost={setIsCreatingPost}
+                        postTitle={postTitle}
+                        setPostTitle={setPostTitle}
+                        postPrivacy={postPrivacy}
+                        setPostPrivacy={setPostPrivacy}
+                        postIsStarred={postIsStarred}
+                        setPostIsStarred={setPostIsStarred}
+                        isSavingPost={isSavingPost}
+                        handleCreatePost={handleCreatePost}
+                    />
+                </div>
+            )}
 
             {feedPosts.length > 0 ? (
                 <div className="space-y-0">
