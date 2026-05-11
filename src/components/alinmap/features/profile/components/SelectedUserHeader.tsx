@@ -1,5 +1,4 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 
 interface SelectedUserHeaderProps {
@@ -7,7 +6,7 @@ interface SelectedUserHeaderProps {
     setSelectedUser: (user: any) => void;
 }
 
-const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser, setSelectedUser }) => (
+const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser }) => (
     <div className="flex items-start gap-4 mb-6">
         <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar">
             <img
@@ -27,13 +26,6 @@ const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser, s
                         <p className="text-xs text-gray-500 font-medium">📍 {selectedUser.province}</p>
                     )}
                 </div>
-                <button
-                    onClick={() => setSelectedUser(null)}
-                    className="shrink-0 w-10 h-10 flex items-center justify-center -mr-2 -mt-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors relative z-10"
-                    aria-label="Đóng"
-                >
-                    <X className="w-6 h-6" />
-                </button>
             </div>
         </div>
     </div>
