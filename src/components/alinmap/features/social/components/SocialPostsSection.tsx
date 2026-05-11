@@ -22,6 +22,7 @@ interface SocialPostsSectionProps {
     fetchUserPosts: (uid: string) => void;
     externalApi: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    onPostClick?: (post: any) => void;
 }
 
 const SocialPostsSection: React.FC<SocialPostsSectionProps> = ({
@@ -43,6 +44,7 @@ const SocialPostsSection: React.FC<SocialPostsSectionProps> = ({
     fetchUserPosts,
     externalApi,
     requireAuth,
+    onPostClick,
 }) => {
     const [visiblePostCount, setVisiblePostCount] = React.useState(8);
 
@@ -82,6 +84,7 @@ const SocialPostsSection: React.FC<SocialPostsSectionProps> = ({
                             externalApi={externalApi}
                             fetchUserPosts={fetchUserPosts}
                             requireAuth={requireAuth}
+                            onClick={onPostClick ? () => onPostClick(post) : undefined}
                         />
                     ))}
                     {visiblePostCount < feedPosts.length && (

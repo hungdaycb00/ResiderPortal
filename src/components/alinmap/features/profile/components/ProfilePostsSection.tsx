@@ -16,6 +16,7 @@ interface ProfilePostsSectionProps {
     externalApi: any;
     fetchUserPosts: (uid: string) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    onPostClick?: (post: any) => void;
 }
 
 const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
@@ -32,6 +33,7 @@ const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
     externalApi,
     fetchUserPosts,
     requireAuth,
+    onPostClick,
 }) => {
     const visiblePosts = posts.slice(0, visibleCount);
     const isPostsMode = emptyType === 'posts';
@@ -62,6 +64,7 @@ const ProfilePostsSection: React.FC<ProfilePostsSectionProps> = ({
                         externalApi={externalApi}
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
+                        onClick={onPostClick ? () => onPostClick(post) : undefined}
                     />
                 ))}
                 {visibleCount < posts.length && (

@@ -86,6 +86,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     feedPosts,
     ws,
     logout,
+    onPostClick,
 }) => {
     const { encounter } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
@@ -139,6 +140,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                             handleDeletePost={handleDeletePost}
                             externalApi={externalApi}
                             requireAuth={requireAuth}
+                            onPostClick={onPostClick}
                         />
                     ) : (
                         <div className="pt-2">
@@ -203,6 +205,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         user={user}
                                         requireAuth={requireAuth}
                                         socialSubTab={socialSubTab}
+                                        onPostClick={onPostClick}
                                     />
 
                                     {!selectedUser && (
@@ -261,6 +264,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     setPostIsStarred={setPostIsStarred}
                                     isSavingPost={isSavingPost}
                                     handleCreatePost={handleCreatePost}
+                                    onPostClick={onPostClick}
                                 />
                             )}
 

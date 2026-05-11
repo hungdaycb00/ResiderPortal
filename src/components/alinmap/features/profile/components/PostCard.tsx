@@ -3,7 +3,7 @@ import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Globe, Users, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi, fetchUserPosts, requireAuth }: any) => {
+const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi, fetchUserPosts, requireAuth, onClick }: any) => {
     const API_BASE = externalApi.getBaseUrl ? externalApi.getBaseUrl() : 'https://api.alin.city';
     const [liked, setLiked] = useState(post.isLiked);
     const [likeCount, setLikeCount] = useState(post.likeCount || 0);
@@ -15,7 +15,8 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     const [loadingCmt, setLoadingCmt] = useState(false);
     const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
 
-    const toggleLike = async () => {
+    const toggleLike = async (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (requireAuth && !requireAuth('thich bai viet')) return;
         setLiked(!liked);
         setLikeCount(liked ? likeCount - 1 : likeCount + 1);
@@ -27,7 +28,8 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
         }
     };
 
-    const toggleArchive = async () => {
+    const toggleArchive = async (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (requireAuth && !requireAuth('luu bai viet')) return;
         setArchived(!archived);
         try {
@@ -87,7 +89,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     };
 
     return (
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4">
+        <div onClick={onClick} className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4 ${onClick ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                     <img 
@@ -186,7 +188,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                 <button onClick={toggleLike} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${liked ? 'text-red-500' : 'text-gray-500 hover:bg-gray-50'}`}>
                     <Heart className={`w-4 h-4 ${liked ? 'fill-red-500' : ''}`} /> Thích {likeCount > 0 && <span>({likeCount})</span>}
                 </button>
-                <button onClick={() => { setShowComments(!showComments); if (!showComments) fetchAllComments(); }} className="flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-colors active:scale-95">
+                <button onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); if (!showComments) fetchAllComments(); }} className="flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-colors active:scale-95">
                     <MessageCircle className="w-4 h-4" /> Bình luận {commentCount > 0 && <span>({commentCount})</span>}
                 </button>
                 <button onClick={toggleArchive} className={`flex-1 py-1 flex items-center justify-center gap-1.5 text-[11px] font-bold rounded-lg transition-colors active:scale-95 ${archived ? 'text-blue-500' : 'text-gray-500 hover:bg-gray-50'}`}>
@@ -215,8 +217,8 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                         )}
                     </div>
                     <div className="flex items-center gap-2 relative">
-                        <input type="text" value={newCmt} onChange={e => setNewCmt(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submitComment() }} placeholder="Viết bình luận..." className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-300 transition-colors" disabled={loadingCmt} />
-                        <button onClick={submitComment} disabled={!newCmt.trim() || loadingCmt} className={`w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all active:scale-90 ${(!newCmt.trim() || loadingCmt) ? 'opacity-50' : 'hover:bg-blue-500'}`}>
+                        <input type="text" value={newCmt} onChange={e => setNewCmt(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); } }} onClick={(e) => e.stopPropagation()} placeholder="Viết bình luận..." className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-300 transition-colors" disabled={loadingCmt} />
+                        <button onClick={(e) => { e.stopPropagation(); submitComment(); }} disabled={!newCmt.trim() || loadingCmt} className={`w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all active:scale-90 ${(!newCmt.trim() || loadingCmt) ? 'opacity-50' : 'hover:bg-blue-500'}`}>
                             <Navigation className="w-4 h-4 rotate-45 -ml-0.5" />
                         </button>
                     </div>

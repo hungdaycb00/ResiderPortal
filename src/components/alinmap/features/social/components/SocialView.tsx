@@ -34,6 +34,7 @@ interface SocialViewProps {
     galleryActive: boolean;
     user: any;
     socialSubTab: 'posts' | 'nearby';
+    onPostClick?: (post: any) => void;
 }
 
 const SocialView: React.FC<SocialViewProps> = ({
@@ -45,6 +46,7 @@ const SocialView: React.FC<SocialViewProps> = ({
     isSavingPost, handleCreatePost,
     handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts,
     externalApi, socialSubTab,
+    onPostClick,
 }) => {
     return (
         <div className="flex flex-col h-full relative">
@@ -71,6 +73,7 @@ const SocialView: React.FC<SocialViewProps> = ({
                         fetchUserPosts={fetchUserPosts}
                         externalApi={externalApi}
                         requireAuth={requireAuth}
+                        onPostClick={onPostClick}
                     />
                 ) : (
                     <SocialNearbySection

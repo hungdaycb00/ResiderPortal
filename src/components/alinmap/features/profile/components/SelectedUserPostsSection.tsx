@@ -9,6 +9,7 @@ interface SelectedUserPostsSectionProps {
     externalApi: any;
     fetchUserPosts: (uid: string) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    onPostClick?: (post: any) => void;
 }
 
 const INITIAL_POST_LIMIT = 8;
@@ -21,6 +22,7 @@ const SelectedUserPostsSection: React.FC<SelectedUserPostsSectionProps> = ({
     externalApi,
     fetchUserPosts,
     requireAuth,
+    onPostClick,
 }) => {
     const [visiblePostCount, setVisiblePostCount] = React.useState(INITIAL_POST_LIMIT);
 
@@ -55,6 +57,7 @@ const SelectedUserPostsSection: React.FC<SelectedUserPostsSectionProps> = ({
                         externalApi={externalApi}
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
+                        onClick={onPostClick ? () => onPostClick(post) : undefined}
                     />
                 ))}
                 {visiblePostCount < userPosts.length && (

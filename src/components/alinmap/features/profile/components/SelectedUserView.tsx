@@ -22,13 +22,14 @@ interface SelectedUserViewProps {
     handleDeletePost: (postId: string) => void;
     externalApi: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
+    onPostClick?: (post: any) => void;
 }
 
 const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     selectedUser, setSelectedUser, activeTab, setActiveTab, fetchUserPosts,
     friends,
     onLocateUser, ws,
-    games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth
+    games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth, onPostClick
 }) => {
     const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
@@ -65,6 +66,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         externalApi={externalApi}
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
+                        onPostClick={onPostClick}
                     />
                 </>
             )}

@@ -8,6 +8,7 @@ import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
 import SearchOverlay from './SearchOverlay';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
+import PostDetailOverlay from './features/profile/components/PostDetailOverlay';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
 import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
@@ -139,6 +140,11 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
 }) => {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+
+  const isSelectedPostSelf = selectedPost
+    ? (selectedPost.author?.id === wsCtx.myUserId || selectedPost.user_id === wsCtx.myUserId)
+    : false;
   const handleSearchOverlayClose = useCallback(() => {
     setIsSearchOverlayOpen(false);
   }, []);
@@ -296,6 +302,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         onPublishSuccess={handleRefresh}
         requestLocation={geo.requestLocation}
         externalApi={externalApi}
+        onPostClick={(post) => setSelectedPost(post)}
       />
 
       {contextMenu && (
@@ -318,6 +325,30 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
             item={pickupRewardItem}
             onDiscard={handleDiscardPickupItem}
             onOpenBackpack={handleOpenBackpackFromPickup}
+          />
+        </div>
+      )}
+
+      {selectedPost && (
+        <div className="pointer-events-auto">
+          <PostDetailOverlay
+            post={selectedPost}
+            isSelf={isSelectedPostSelf}
+            onClose={() => setSelectedPost(null)}
+            onAuthorClick={(author) => {
+              setSelectedPost(null);
+              nav.setSelectedUser(author);
+              nav.setActiveTab('posts');
+            }}
+            isDesktop={isDesktop}
+            isSheetExpanded={isSheetExpanded}
+            panelWidth={panelWidth}
+            externalApi={externalApi}
+            requireAuth={requireAuth}
+            onStar={posts.handleStarPost}
+            onDelete={posts.handleDeletePost}
+            onUpdatePrivacy={posts.handleUpdatePostPrivacy}
+            fetchUserPosts={posts.fetchUserPosts}
           />
         </div>
       )}

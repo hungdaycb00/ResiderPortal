@@ -25,6 +25,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         setIsSearchOverlayOpen,
         panelWidth,
         setPanelWidth,
+        onPostClick,
     } = props;
 
     const {
@@ -167,6 +168,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     setExploreSubTab={setExploreSubTab}
                     setSocialSubTab={setSocialSubTab}
                     onEnterWorld={handleEnterWorld}
+                    onPostClick={onPostClick}
                 />
             </motion.div>
         </div>

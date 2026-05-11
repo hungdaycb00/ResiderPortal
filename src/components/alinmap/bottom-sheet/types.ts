@@ -75,6 +75,7 @@ export interface BottomSheetProps {
     externalOpenList?: boolean;
     onOpenListChange?: (v: boolean) => void;
     onPublishSuccess?: () => void;
+    onPostClick?: (post: any) => void;
     requestLocation?: (
         forceInvisible?: boolean,
         wsRef?: React.MutableRefObject<WebSocket | null>,

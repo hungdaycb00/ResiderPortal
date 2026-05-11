@@ -50,6 +50,7 @@ interface MyProfileViewProps {
     setPostIsStarred?: (v: boolean) => void;
     isSavingPost?: boolean;
     handleCreatePost?: (files: File[]) => void;
+    onPostClick?: (post: any) => void;
 }
 
 const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
@@ -65,7 +66,8 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         friends, setSelectedUser,
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
         postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
-        isSavingPost, handleCreatePost
+        isSavingPost, handleCreatePost,
+        onPostClick
     } = props;
 
     const { 
@@ -235,6 +237,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                         externalApi={externalApi}
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
+                        onPostClick={onPostClick}
                     />
                 </div>
             ) : activeTab === 'info' ? (
@@ -258,6 +261,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     externalApi={externalApi}
                     fetchUserPosts={fetchUserPosts}
                     requireAuth={requireAuth}
+                    onPostClick={onPostClick}
                 />
             )}
         </div>
