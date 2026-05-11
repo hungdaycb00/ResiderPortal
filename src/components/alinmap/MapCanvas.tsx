@@ -148,6 +148,13 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         addLog(`Moved to: ${newLat.toFixed(4)}, ${newLng.toFixed(4)}`);
     }, [setMyObfPos, ws, selfDragX, selfDragY, addLog]);
 
+    const handleSelectSelf = useCallback(() => {
+        setSelectedUser(null);
+        setActiveTab('posts');
+        setMainTab?.('profile');
+        setIsSheetExpanded(true);
+    }, [setSelectedUser, setActiveTab, setMainTab, setIsSheetExpanded]);
+
     // Pointer Interactions Hook
     const {
         handleMapPointerDown, handleMapPointerMove, handleMapPointerUp,
@@ -170,7 +177,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         looterBoat.centerOnBoat,
         props.setCameraZ,
         setMainTab,
-        setIsSheetExpanded
+        setIsSheetExpanded,
+        !!isLooterGameMode
     );
 
     return (
@@ -241,7 +249,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         onSetArrivalAction={looterBoat.setOnArrivalAction}
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
-                        onSelectSelf={setSelectedUser}
+                        onSelectSelf={handleSelectSelf}
                     />
 
                     {/* Global Synchronizing Spinner */}
@@ -287,4 +295,3 @@ const LoadingSpinner = () => (
 );
 
 export default React.memo(MapCanvas);
-

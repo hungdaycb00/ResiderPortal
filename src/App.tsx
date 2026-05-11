@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { externalApi } from './services/externalApi';
 import { User } from './types';
 import { games } from './constants';
+import { setNotify } from './utils/notify';
 
 // Hooks
 import { useAuth } from './hooks/useAuth';
@@ -57,6 +58,10 @@ export default function App() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   }, []);
+
+  useEffect(() => {
+    setNotify(showNotification);
+  }, [showNotification]);
 
   // Custom Hooks Initialization
   const { serverStatus, serverError, cloudflareUrl, setCloudflareUrl, checkServer } = useServerConnection();

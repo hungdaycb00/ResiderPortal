@@ -56,6 +56,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const centerCombatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const [isItemDragging, setIsItemDragging] = useState(false);
   const [isTierSelectorOpen, setIsTierSelectorOpenState] = useState(false);
+  const isLooterGameModeRef = useRef(ui.isLooterGameMode);
 
 
   const setIsTierSelectorOpen = useCallback((v: boolean) => {
@@ -64,6 +65,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
 
   // Reset dragging state when game mode changes or unmounts
   useEffect(() => {
+    isLooterGameModeRef.current = ui.isLooterGameMode;
     if (!ui.isLooterGameMode) {
       setIsItemDragging(false);
     }
@@ -118,6 +120,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   runInQueueRef.current = runInQueue;
   const { saveInventory, saveBags, saveStorage, syncState } = useLooterData({ deviceId, apiUrl: API_URL, setState });
   const openBackpack = useCallback(() => {
+    if (!isLooterGameModeRef.current) return;
     if (typeof openBackpackHandler === 'function') openBackpackHandler();
   }, [openBackpackHandler]);
 

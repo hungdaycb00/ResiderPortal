@@ -1,4 +1,5 @@
 import { getSocket, disconnectSocket } from './socket';
+import { notify } from './notify';
 
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -9,18 +10,18 @@ export function setupSocketErrorHandlers() {
 
     socket.on('connect_error', (error) => {
         console.error('❌ Connection error:', error?.message || error);
-        
+
         if (error?.message?.includes('Authentication')) {
-            alert('Session expired. Please login again.');
+            notify('Session expired. Please login again.', 'error');
             disconnectSocket();
         }
     });
 
     socket.on('disconnect', (reason) => {
         console.warn('⚠️ Disconnected:', reason);
-        
+
         if (reason === 'io server disconnect') {
-            alert('Server disconnected. Reconnecting...');
+            notify('Server disconnected. Reconnecting...', 'info');
             socket.connect();
         }
     });
@@ -28,15 +29,15 @@ export function setupSocketErrorHandlers() {
     socket.on('reconnect_attempt', (attemptNumber) => {
         reconnectAttempts = attemptNumber;
         console.log(`🔄 Reconnecting (attempt ${attemptNumber}/${MAX_RECONNECT_ATTEMPTS})...`);
-        
+
         if (attemptNumber > MAX_RECONNECT_ATTEMPTS) {
-            alert('Could not reconnect to server. Please reload the page.');
+            notify('Could not reconnect to server. Please reload the page.', 'error');
         }
     });
 
     socket.on('reconnect_failed', () => {
         console.error('❌ Reconnect failed');
-        alert('Server connection lost. Please reload page (F5).');
+        notify('Server connection lost. Please reload page (F5).', 'error');
     });
 
     socket.on('error', (error) => {

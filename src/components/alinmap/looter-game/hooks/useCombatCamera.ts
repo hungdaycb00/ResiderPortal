@@ -8,11 +8,16 @@ export function useCombatCamera(
   centerOnBoat: () => void,
   setCameraZ?: (z: number) => void,
   setMainTab?: (tab: any) => void,
-  setIsSheetExpanded?: (v: boolean) => void
+  setIsSheetExpanded?: (v: boolean) => void,
+  isLooterGameMode: boolean = true
 ) {
   const lastEncounterUid = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!isLooterGameMode) {
+      return;
+    }
+
     if (!encounter) {
       if (lastEncounterUid.current) {
         lastEncounterUid.current = null;
@@ -39,5 +44,5 @@ export function useCombatCamera(
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [encounter, centerOnCombat, centerOnBoat, setCameraZ, setMainTab, setIsSheetExpanded]);
+  }, [encounter, centerOnCombat, centerOnBoat, setCameraZ, setMainTab, setIsSheetExpanded, isLooterGameMode]);
 }

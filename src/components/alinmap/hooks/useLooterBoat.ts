@@ -54,6 +54,9 @@ export function useLooterBoat({
     const curseVisual = useMotionValue(0);
     const [boatTargetPin, setBoatTargetPin] = useState<{lat: number, lng: number} | null>(null);
     const onArrivalActionRef = useRef<(() => void) | null>(null);
+    const movementRunIdRef = useRef(0);
+    const isLooterModeRef = useRef(isLooterGameMode);
+    const curseAnimationRef = useRef<{ stop: () => void } | null>(null);
 
     // Sub-hook: Boat Animation
     const {
@@ -70,6 +73,22 @@ export function useLooterBoat({
 
 
 
+
+    const cancelBoatMovement = useCallback(() => {
+        movementRunIdRef.current += 1;
+        stopAllAnimations();
+        curseAnimationRef.current?.stop();
+        curseAnimationRef.current = null;
+        setBoatTargetPin(null);
+        onArrivalActionRef.current = null;
+    }, [stopAllAnimations]);
+
+    useEffect(() => {
+        isLooterModeRef.current = isLooterGameMode;
+        if (!isLooterGameMode) {
+            cancelBoatMovement();
+        }
+    }, [isLooterGameMode, cancelBoatMovement]);
 
     // Sync boat position when state changes
     useEffect(() => {
@@ -91,7 +110,10 @@ export function useLooterBoat({
     }, [state?.cursePercent, curseVisual]);
 
     const stopBoat = useCallback(() => {
+        movementRunIdRef.current += 1;
         stopAllAnimations();
+        curseAnimationRef.current?.stop();
+        curseAnimationRef.current = null;
         setBoatTargetPin(null);
         onArrivalActionRef.current = null;
         if (myObfPos) {
@@ -106,6 +128,8 @@ export function useLooterBoat({
     }, []);
 
     const executeMoveToExact = useCallback((lat: number, lng: number, source: string = 'map') => {
+        if (!isLooterModeRef.current) return;
+
         if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
             const now = Date.now();
@@ -133,6 +157,10 @@ export function useLooterBoat({
         }
 
         if (!myObfPos) return;
+        const runId = movementRunIdRef.current + 1;
+        movementRunIdRef.current = runId;
+        curseAnimationRef.current?.stop();
+        curseAnimationRef.current = null;
 
         // Dừng animation cũ trước khi bắt đầu animation mới (tránh double execution)
         stopAllAnimations();
@@ -164,15 +192,16 @@ export function useLooterBoat({
         const curseGainMultiplier = state.activeCurses?.curse_gain ? 1.5 : 1;
         const expectedCurseGain = (totalDistMeters / 100) * curseGainMultiplier;
         const nextCurse = Math.min(100, currentCurse + expectedCurseGain);
-        animate(curseVisual, nextCurse, { duration, ease: "linear" });
+        curseAnimationRef.current = animate(curseVisual, nextCurse, { duration, ease: "linear" });
 
         // Animation Offline: Thuyền trượt mượt trên map, sau khi kết thúc mới gọi moveBoat cập nhật logic
         animateBoatTo(lat, lng, duration).then(() => {
             // Nếu animation bị dừng giữa chừng (ví dụ user click chỗ khác), thì isAnimatingRef sẽ là false
             // Không thực hiện update logic ở đích nữa vì stopBoat() đã ghi nhận vị trí rồi.
-            if (!isAnimatingRef.current) return;
+            if (movementRunIdRef.current !== runId || !isLooterModeRef.current) return;
             
             setBoatTargetPin(null);
+            curseAnimationRef.current = null;
             
             // Tính khoảng cách đã di chuyển (toàn bộ quãng đường tới đích)
             const curPxX = boatOffsetX.get();
@@ -183,6 +212,7 @@ export function useLooterBoat({
             
             // Update logic (Offline - gọi moveBoat để update react state, sinh curse, mở combat nếu có)
             moveBoat(lat, lng, false, finalDist).then(res => {
+                if (movementRunIdRef.current !== runId || !isLooterModeRef.current) return;
                 if (res?.curseTrigger) {
                     centerOnCombat();
                 } else {
@@ -190,7 +220,11 @@ export function useLooterBoat({
                     const arrivalAction = onArrivalActionRef.current;
                     onArrivalActionRef.current = null;
                     if (arrivalAction) {
-                        setTimeout(() => arrivalAction(), 300);
+                        setTimeout(() => {
+                            if (movementRunIdRef.current === runId && isLooterModeRef.current) {
+                                arrivalAction();
+                            }
+                        }, 300);
                     }
                 }
             });
@@ -295,11 +329,13 @@ export function useLooterBoat({
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin, setOnArrivalAction,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow,
+        cancelBoatMovement
     }), [
         boatOffsetX, boatOffsetY, curseVisual,
         boatTargetPin, setOnArrivalAction,
         handlePointerDown, handlePointerUp, handlePointerCancel,
-        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow
+        handleMapDoubleClick, executeMoveToExact, stopBoat, centerOnBoat, centerOnCombat, stopPanFollow,
+        cancelBoatMovement
     ]);
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initSocket, getSocket } from '../utils/socket';
 import { authenticateChat, joinRoom, sendMessage, getMyPrivateRooms, createOrGetPrivateRoom } from '../utils/chatService';
+import { notify } from '../utils/notify';
 import { useChat } from '../hooks/useChat';
 import ChatSidebar from './chat/ChatSidebar';
 import ChatArea from './chat/ChatArea';
@@ -130,7 +131,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 setInputText('');
                 getMyPrivateRooms().then(rooms => setPrivateRooms(rooms || []));
             } catch (error: any) {
-                alert('Error: ' + error.message);
+                notify('Error: ' + error.message, 'error');
             }
         }
     };
@@ -164,7 +165,7 @@ export default function ChatRoom({ deviceId, currentUserId, userName, userAvatar
                 switchRoom('private', data.room_id, friend.displayName || friend.username || friend.id, friend.photoURL || friend.avatar_url || null);
             })
             .catch((err) => {
-                alert('Không thể bắt đầu chat: ' + err.message);
+                notify('Không thể bắt đầu chat: ' + err.message, 'error');
                 setIsLoading(false);
             });
     };

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search, MapPin, Navigation, MessageCircle, User, UserPlus, Compass, Bell, Gamepad2, Package, ChevronUp, ChevronDown } from 'lucide-react';
 import { useSocial } from './features/social/context/SocialContext';
-import { useLooterGame } from './looter-game/LooterGameContext';
 
 interface NavigationBarProps {
     mainTab: string;
@@ -15,10 +14,9 @@ interface NavigationBarProps {
 const NavigationBar: React.FC<NavigationBarProps> = ({ mainTab, selectedUser, isDesktop, handleTabClick, user, isSheetExpanded }) => {
     const [showFullNav, setShowFullNav] = React.useState(false);
     const { unreadCount } = useSocial();
-    const { isItemDragging } = useLooterGame();
 
     return (
-        <div className={isItemDragging ? 'pointer-events-none' : 'pointer-events-auto'}>
+        <div className="pointer-events-auto">
             {/* Global Left Navigation (PC Only) */}
             <div className="hidden md:flex absolute top-0 left-0 bottom-0 w-[72px] bg-white border-r border-gray-100 flex-col items-center py-8 z-[150] shadow-[4px_0_24px_rgba(0,0,0,0.05)]">
                 <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg shadow-blue-600/20">

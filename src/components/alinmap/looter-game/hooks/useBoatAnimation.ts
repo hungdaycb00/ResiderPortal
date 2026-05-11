@@ -28,6 +28,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
   const stopAllAnimations = useCallback(() => {
     if (boatMoveXRef.current) { boatMoveXRef.current.stop(); boatMoveXRef.current = null; }
     if (boatMoveYRef.current) { boatMoveYRef.current.stop(); boatMoveYRef.current = null; }
+    if (panMoveXRef.current) { panMoveXRef.current.stop(); panMoveXRef.current = null; }
+    if (panMoveYRef.current) { panMoveYRef.current.stop(); panMoveYRef.current = null; }
     isAnimatingRef.current = false;
   }, []);
 

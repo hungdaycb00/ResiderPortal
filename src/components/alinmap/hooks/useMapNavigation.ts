@@ -57,6 +57,7 @@ export function useMapNavigation({
     setShowCurseModal,
     setShowMinigame,
     setIsIntegratedStorageOpen,
+    setIsItemDragging,
   } = looterActions;
   const { isLooterGameMode, isItemDragging, state: looterStateObj } = looterState;
 
@@ -234,7 +235,9 @@ export function useMapNavigation({
   }, [ws, handleRefresh]);
 
   const handleTabClick = useCallback((tabId: string) => {
-    if (isItemDragging) return;
+    if (isItemDragging) {
+      setIsItemDragging(false);
+    }
 
     setSelectedUser(null);
     if (tabId === 'profile') setActiveTab('posts');
@@ -293,6 +296,7 @@ export function useMapNavigation({
     setCombatResult,
     setShowCurseModal,
     setIsIntegratedStorageOpen,
+    setIsItemDragging,
     requestBoatAutoFocus,
     isSheetExpanded,
   ]);
