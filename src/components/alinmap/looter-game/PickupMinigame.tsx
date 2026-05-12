@@ -3,13 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import { FruitGame } from './minigames/FruitGame';
 import { MinesweeperGame } from './minigames/MinesweeperGame';
+import { PairImageGame } from './minigames/PairImageGame';
+
+type PickupMinigameType = 'fruit' | 'minesweeper' | 'pair-image';
+
+const PICKUP_MINIGAMES: PickupMinigameType[] = ['fruit', 'minesweeper', 'pair-image'];
 
 export const PickupMinigame: React.FC = () => {
     const { showMinigame, state, pregeneratedMinigames } = useLooterState();
     const { setShowMinigame, pickupItem, inflictMinigamePenalty, clearPregeneratedFruit, showNotification } = useLooterActions();
 
     // 1. Hooks MUST be at the top level
-    const gameTypeRef = useRef<'fruit' | 'minesweeper' | null>(null);
+    const gameTypeRef = useRef<PickupMinigameType | null>(null);
     const mountTimeRef = useRef<number>(0);
 
     // Calculate grid settings
@@ -23,8 +28,8 @@ export const PickupMinigame: React.FC = () => {
     React.useEffect(() => {
         if (showMinigame) {
             if (gameTypeRef.current === null) {
-                // Chest minigame triggers a random game (Fruit or Minesweeper)
-                gameTypeRef.current = Math.random() > 0.5 ? 'minesweeper' : 'fruit';
+                const randomIndex = Math.floor(Math.random() * PICKUP_MINIGAMES.length);
+                gameTypeRef.current = PICKUP_MINIGAMES[randomIndex];
             }
             mountTimeRef.current = Date.now();
         } else {
@@ -54,6 +59,7 @@ export const PickupMinigame: React.FC = () => {
     if (!showMinigame) return null;
 
     const isMinesweeper = gameTypeRef.current === 'minesweeper';
+    const isPairImage = gameTypeRef.current === 'pair-image';
 
     return (
         <AnimatePresence>
@@ -69,7 +75,14 @@ export const PickupMinigame: React.FC = () => {
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {!isMinesweeper ? (
+                    {isPairImage ? (
+                        <PairImageGame
+                            autoStart={true}
+                            customGrid={customGrid}
+                            onComplete={handleComplete}
+                            onActiveChange={() => {}}
+                        />
+                    ) : !isMinesweeper ? (
                         <FruitGame 
                             autoStart={true}
                             customGrid={customGrid}

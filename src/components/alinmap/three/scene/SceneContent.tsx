@@ -404,7 +404,7 @@ export default function SceneContent({
               boatPosRef.current[2]
             ]}
             type="enemy"
-            scale={2.4}
+            scale={2.4 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER}
           />
         ) : null}
 

@@ -39,7 +39,7 @@ export const FleeConfirmOverlay: React.FC<FleeConfirmOverlayProps> = ({ show, on
                             className="w-full py-4 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-400 font-bold rounded-2xl transition-all flex flex-col items-center leading-tight shadow-lg shadow-red-900/40"
                         >
                             <span className="text-sm uppercase">Đầu hàng</span>
-                            <span className="text-[9px] text-red-400/70">Mất 25% vật phẩm trong balo, tối thiểu 1 món</span>
+                            <span className="text-[9px] text-red-400/70">Mất 25% item</span>
                         </button>
                         <button
                             onClick={onCancel}

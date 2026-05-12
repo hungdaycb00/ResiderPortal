@@ -7,6 +7,7 @@ import { MAP_PLANE_SCALE } from '../../constants';
 import { pxToScene, AVATAR_PLANE_SIZE } from '../sceneUtils';
 import LootSprite from './LootSprite';
 import { getDistanceMeters } from '../../looter-game/backpack/utils';
+import { GAME_CONFIG } from '../../looter-game/gameConfig';
 
 interface ProceduralBoatProps {
     position: [number, number, number];
@@ -24,7 +25,7 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 4,
+    scale = 4 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER,
     offsetX,
     offsetY,
     currentLat,
