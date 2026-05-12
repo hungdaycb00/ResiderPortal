@@ -57,6 +57,7 @@ const CombatScreen: React.FC = () => {
         combat.setPhase('ready');
         combat.setInitialPlayerInventory([]);
         combat.setPendingResult(null);
+        setCombatResult(null);
         openBackpack?.();
         loadState();
     };
