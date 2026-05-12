@@ -4,12 +4,15 @@ import { useLooterState, useLooterActions } from '../looter-game/LooterGameConte
 import {
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
+  CAMERA_Z_FAR,
+  CAMERA_Z_NEAR,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
   CAMERA_HEIGHT_RATIO_DEFAULT,
   CAMERA_TILT_FAR_DEGREES,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   ROADMAP_VISUAL_SCALE_DEFAULT,
+  clamp,
   getDefaultVisualScaleForMapMode,
   getPerspectivePx,
   getCameraZForVisualScale,
@@ -72,6 +75,8 @@ export function useMapNavigation({
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
+  const WHEEL_ZOOM_STEP = 24;
+  const TRACKPAD_ZOOM_STEP = 12;
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
@@ -153,7 +158,12 @@ export function useMapNavigation({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
-    const nextZ = currentZ + (e.deltaY > 0 ? -5 : 5);
+    const step = e.deltaMode === 0 ? TRACKPAD_ZOOM_STEP : WHEEL_ZOOM_STEP;
+    const nextZ = clamp(
+      currentZ + (e.deltaY > 0 ? -step : step),
+      CAMERA_Z_FAR,
+      CAMERA_Z_NEAR
+    );
     animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
@@ -162,11 +172,11 @@ export function useMapNavigation({
   }, [cameraZ]);
 
   const zoomIn = useCallback(() => {
-    setCameraZ(cameraZ.get() + 5);
+    setCameraZ(clamp(cameraZ.get() + TRACKPAD_ZOOM_STEP, CAMERA_Z_FAR, CAMERA_Z_NEAR));
   }, [cameraZ, setCameraZ]);
 
   const zoomOut = useCallback(() => {
-    setCameraZ(cameraZ.get() - 5);
+    setCameraZ(clamp(cameraZ.get() - TRACKPAD_ZOOM_STEP, CAMERA_Z_FAR, CAMERA_Z_NEAR));
   }, [cameraZ, setCameraZ]);
 
   const setVisualScale = useCallback((visualScale: number) => {
