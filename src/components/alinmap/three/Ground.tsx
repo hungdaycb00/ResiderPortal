@@ -7,6 +7,7 @@ import type { AlinMapMode } from '../constants';
 
 interface GroundProps {
     mapMode: AlinMapMode;
+    roadmapWorldScale?: number;
     onGroundClick?: (point: THREE.Vector3) => void;
     groundRef?: React.RefObject<THREE.Mesh | null>;
 }
@@ -24,7 +25,7 @@ const ROAD_SEGMENTS: Array<{
     { position: [-1850, -0.955, -1120], rotationZ: Math.PI / 2.9, size: [4200, 42], color: '#e2e8f0', opacity: 0.56 },
 ];
 
-export default function Ground({ mapMode, onGroundClick, groundRef }: GroundProps) {
+export default function Ground({ mapMode, roadmapWorldScale = 1, onGroundClick, groundRef }: GroundProps) {
     const internalRef = useRef<THREE.Mesh>(null);
     const meshRef = groundRef || internalRef;
     const { camera } = useThree();
@@ -42,7 +43,7 @@ export default function Ground({ mapMode, onGroundClick, groundRef }: GroundProp
             </mesh>
             
             {mapMode === 'roadmap' && (
-                <group>
+                <group scale={[roadmapWorldScale, 1, roadmapWorldScale]}>
                     <mesh rotation-x={-Math.PI / 2} position={[0, -1.01, 0]}>
                         <planeGeometry args={[12000, 12000, 1, 1]} />
                         <meshBasicMaterial color="#dfe8dd" />

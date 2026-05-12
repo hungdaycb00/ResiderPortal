@@ -5,7 +5,7 @@ import { Fog, Color, Group, MathUtils, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
 import { GAME_CONFIG } from '../../looter-game/gameConfig';
-import { MAP_PLANE_SCALE } from '../../constants';
+import { MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
 
 // Sub-components
 import CameraRig from '../CameraRig';
@@ -99,6 +99,12 @@ export default function SceneContent({
   const performanceMode = performance?.mode ?? 'high';
   const labelMode = performance?.labelMode ?? 'full';
   const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
+  const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
+  const scaleScenePoint = (point: { x: number; z: number }) => ({
+    x: point.x * sceneWorldScale,
+    z: point.z * sceneWorldScale,
+  });
+  const pxToScaledScene = (px: number) => pxToScene(px) * sceneWorldScale;
 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
@@ -178,7 +184,11 @@ export default function SceneContent({
     const tilt = tiltAngle.get();
 
     if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
-      moveGroupRef.current.position.set(liftX * MAP_COORD_SCENE_SCALE, 0, liftZ * MAP_COORD_SCENE_SCALE);
+      moveGroupRef.current.position.set(
+        liftX * MAP_COORD_SCENE_SCALE * sceneWorldScale,
+        0,
+        liftZ * MAP_COORD_SCENE_SCALE * sceneWorldScale
+      );
       lastLiftXRef.current = liftX;
       lastLiftZRef.current = liftZ;
     }
@@ -196,11 +206,11 @@ export default function SceneContent({
       frameSkipRef.current = (frameSkipRef.current + 1) % 3;
       if (frameSkipRef.current === 0) {
         const origin2: LatLng = { lat: position[0], lng: position[1] };
-        const sp = worldToScene(origin2, origin2);
+        const sp = scaleScenePoint(worldToScene(origin2, origin2));
         const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
         const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
-        const nx = sp.x + pxToScene(visualBoatX);
-        const nz = sp.z + pxToScene(visualBoatY);
+        const nx = sp.x + pxToScaledScene(visualBoatX);
+        const nz = sp.z + pxToScaledScene(visualBoatY);
         const [lx, , lz] = lastBoatPosRef.current;
         if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
           // ⚠️ ĐỒNG BỘ Y=5.0: khớp với ProceduralBoat.tsx (bobbing Y offset +5)
@@ -211,17 +221,17 @@ export default function SceneContent({
     }
   });
 
-  const selfPos = worldToScene(origin, origin);
-  const selfLift = pxToScene(dragOffset.x);
-  const selfDepth = pxToScene(dragOffset.y);
-  const searchMarkerScene = searchMarkerPos ? worldToScene(origin, searchMarkerPos) : null;
+  const selfPos = scaleScenePoint(worldToScene(origin, origin));
+  const selfLift = pxToScaledScene(dragOffset.x);
+  const selfDepth = pxToScaledScene(dragOffset.y);
+  const searchMarkerScene = searchMarkerPos ? scaleScenePoint(worldToScene(origin, searchMarkerPos)) : null;
   const fortressScene = looterStateObj?.fortressLat && looterStateObj?.fortressLng
-    ? worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng })
+    ? scaleScenePoint(worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng }))
     : null;
-  const boatTargetScene = boatTargetPin ? worldToScene(origin, boatTargetPin) : null;
+  const boatTargetScene = boatTargetPin ? scaleScenePoint(worldToScene(origin, boatTargetPin)) : null;
 
   const userRenderData = useMemo(() => {
-    const raw = filteredUsers.map((u) => ({ user: u, pos: worldToScene(origin, u) }));
+    const raw = filteredUsers.map((u) => ({ user: u, pos: scaleScenePoint(worldToScene(origin, u)) }));
     // Nhóm user theo vị trí (làm tròn 1 chữ số thập phân ~ 0.1 scene unit)
     const groups = new Map<string, typeof raw>();
     raw.forEach((item) => {
@@ -248,7 +258,7 @@ export default function SceneContent({
       });
     });
     return result;
-  }, [filteredUsers, origin.lat, origin.lng]);
+  }, [filteredUsers, origin.lat, origin.lng, sceneWorldScale]);
 
   if (!position) return null;
 
@@ -258,13 +268,13 @@ export default function SceneContent({
     <group ref={tiltGroupRef}>
       <group ref={moveGroupRef}>
         {/* 1. Ground */}
-        <Ground mapMode={mapMode} groundRef={groundMeshRef}
+        <Ground mapMode={mapMode} roadmapWorldScale={sceneWorldScale} groundRef={groundMeshRef}
           onGroundClick={(point) => handleGroundClick(groundMeshRef, point)} />
 
         {/* Search Target Pin */}
         <group position={[0, 0.08, 0]}>
           <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
-            <circleGeometry args={[1200, 64]} />
+            <circleGeometry args={[1200 * sceneWorldScale, 64]} />
             <meshBasicMaterial color="#22d3ee" transparent opacity={0.05} />
           </mesh>
         </group>
@@ -320,7 +330,7 @@ export default function SceneContent({
         {/* Province marker */}
         {currentProvince ? (
           <MarkerBillboard
-            position={[selfPos.x + pxToScene(180), 0.5, selfPos.z - pxToScene(180)]}
+            position={[selfPos.x + pxToScaledScene(180), 0.5, selfPos.z - pxToScaledScene(180)]}
             icon="Province"
             label={currentProvince}
             accent="#0ea5e9"
@@ -402,7 +412,7 @@ export default function SceneContent({
         {isLooterGameMode && encounter ? (
           <LootSprite
             position={[
-              boatPosRef.current[0] + pxToScene(GAME_CONFIG.COMBAT_ENEMY_BOAT_OFFSET_PX),
+              boatPosRef.current[0] + pxToScaledScene(GAME_CONFIG.COMBAT_ENEMY_BOAT_OFFSET_PX),
               0.7,
               boatPosRef.current[2]
             ]}

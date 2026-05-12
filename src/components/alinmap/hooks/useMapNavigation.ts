@@ -179,13 +179,6 @@ export function useMapNavigation({
     setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
   }, [perspectivePx, setCameraZ]);
 
-  useEffect(() => {
-    if (isLooterGameMode || mapMode !== 'roadmap') return;
-    const currentVisualScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
-    if (currentVisualScale <= ROADMAP_VISUAL_SCALE_DEFAULT) return;
-    setCameraZ(getCameraZForVisualScale(ROADMAP_VISUAL_SCALE_DEFAULT, perspectivePx));
-  }, [cameraZ, isLooterGameMode, mapMode, perspectivePx, setCameraZ]);
-
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
     animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
