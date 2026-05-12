@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
+import type { AdaptivePerformanceProfile } from './useAdaptivePerformance';
 import {
   buildMapMoveFromPan,
   buildMapMovePayload,
@@ -28,6 +29,7 @@ interface UseAlinWebSocketParams {
   planeYScale?: MotionValue<number>;
   fetchNotifications: () => void;
   onStatusSync?: (status: string) => void;
+  performance?: AdaptivePerformanceProfile;
 }
 
 export function useAlinWebSocket({
@@ -46,6 +48,7 @@ export function useAlinWebSocket({
   planeYScale,
   fetchNotifications,
   onStatusSync,
+  performance,
 }: UseAlinWebSocketParams) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -116,13 +119,34 @@ export function useAlinWebSocket({
 
   // Heartbeat PING
   useEffect(() => {
-    const pingInterval = setInterval(() => {
+    const pingIntervalMs = performance?.wsPingIntervalMs ?? 45000;
+    const sendPing = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       if (ws.current?.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({ type: 'PING' }));
       }
-    }, 45000);
-    return () => clearInterval(pingInterval);
-  }, []);
+    };
+
+    sendPing();
+    const pingInterval = setInterval(sendPing, pingIntervalMs);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        sendPing();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(pingInterval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, [performance?.wsPingIntervalMs]);
 
   const hasPosition = Array.isArray(position) && position.length >= 2;
 
@@ -352,6 +376,7 @@ export function useAlinWebSocket({
     galleryImages,
     setGalleryImages,
     handleRefresh,
+    setIsConnecting,
   }), [
     isConnecting, wsStatus, myUserId, addLog, nearbyUsers, selectedUser, myDisplayName,
     myAvatarUrl, localMyStatus, statusInput, galleryActive, galleryTitle, galleryImages, handleRefresh,

@@ -86,6 +86,7 @@ interface InventoryGridProps {
   }, [activeBag, gridW, gridH]);
 
   const gridItems = React.useMemo(() => items.filter((i) => i.gridX >= 0), [items]);
+  const floatingItems = React.useMemo(() => items.filter((i) => i.gridX < 0), [items]);
 
   const outsideBagUids = React.useMemo(() => {
     if (!activeBag || activeBag.gridX < 0) return new Set<string>();
@@ -157,82 +158,120 @@ interface InventoryGridProps {
     >
 
       <div className="w-full h-full flex items-start justify-center pt-0 pointer-events-none">
-        <div
-          ref={containerRef}
-          className="pointer-events-auto relative shrink-0 mx-auto bg-[#040911] border-2 border-white/10"
-          style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
-          onPointerDown={(e) => onPointerDown(e)}
-        >
-          <GridBackground
-            gridW={gridW}
-            gridH={gridH}
-            cellSize={cellSize}
-            activeBag={activeBag}
-            bagOcc={bagOcc}
-            highlightCells={[]}
-          />
-
-          {gridItems.map((item) => (
-            <InventoryItem
-              key={item.uid}
-              item={item}
+        <div className="pointer-events-auto mx-auto flex flex-col items-center gap-3">
+          <div
+            ref={containerRef}
+            className="relative shrink-0 bg-[#040911] border-2 border-white/10"
+            style={{ width: gridW * cellSize, height: gridH * cellSize, touchAction: 'none' }}
+            onPointerDown={(e) => onPointerDown(e)}
+          >
+            <GridBackground
+              gridW={gridW}
+              gridH={gridH}
               cellSize={cellSize}
-              isDragging={draggingItem?.uid === item.uid}
-              outsideBag={outsideBagUids.has(item.uid)}
-              style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
-              onPointerDown={readOnly ? undefined : onPointerDown}
-              onDoubleClick={readOnly ? undefined : handleDoubleClick}
-              onClick={() => {
-                const pos = { x: item.gridX * cellSize, y: item.gridY * cellSize };
-                setSelectedItem(item);
-                setPopupPos(pos);
-                onItemClick?.(item, pos);
+              activeBag={activeBag}
+              bagOcc={bagOcc}
+              highlightCells={[]}
+            />
+
+            {gridItems.map((item) => (
+              <InventoryItem
+                key={item.uid}
+                item={item}
+                cellSize={cellSize}
+                isDragging={draggingItem?.uid === item.uid}
+                outsideBag={outsideBagUids.has(item.uid)}
+                style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
+                onPointerDown={readOnly ? undefined : onPointerDown}
+                onDoubleClick={readOnly ? undefined : handleDoubleClick}
+                onClick={() => {
+                  const pos = { x: item.gridX * cellSize, y: item.gridY * cellSize };
+                  setSelectedItem(item);
+                  setPopupPos(pos);
+                  onItemClick?.(item, pos);
+                }}
+              />
+            ))}
+
+            {/* Ghost Preview */}
+            {draggingItem && dragState.gridPos && (
+              <InventoryItem
+                key="ghost"
+                item={draggingItem}
+                cellSize={cellSize}
+                isGhost={true}
+                isInvalid={isInvalidPosition(dragState.gridPos.x, dragState.gridPos.y)}
+                style={{
+                  left: dragState.gridPos.x * cellSize,
+                  top: dragState.gridPos.y * cellSize,
+                }}
+              />
+            )}
+
+            {/* Active Dragging Item */}
+            {draggingItem && createPortal(
+              <InventoryItem
+                key="dragging"
+                item={draggingItem}
+                cellSize={cellSize}
+                style={{
+                  position: 'fixed',
+                  left: dragState.clientPos.x,
+                  top: dragState.clientPos.y,
+                  pointerEvents: 'none',
+                  zIndex: 999999,
+                  boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
+                }}
+              />,
+              document.body
+            )}
+
+            {/* Item Popup */}
+            <ItemPopup
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              style={{
+                left: Math.min(gridW * cellSize - 220, Math.max(0, popupPos.x)),
+                top: Math.min(gridH * cellSize - 200, Math.max(0, popupPos.y - 150)),
               }}
             />
-          ))}
+          </div>
 
-          {/* Ghost Preview */}
-          {draggingItem && dragState.gridPos && (
-            <InventoryItem
-              key="ghost"
-              item={draggingItem}
-              cellSize={cellSize}
-              isGhost={true}
-              isInvalid={isInvalidPosition(dragState.gridPos.x, dragState.gridPos.y)}
-              style={{
-                left: dragState.gridPos.x * cellSize,
-                top: dragState.gridPos.y * cellSize,
-              }}
-            />
+          {floatingItems.length > 0 && (
+            <div className="w-full max-w-full rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-red-300">Ngoài balo active</p>
+                <p className="text-[10px] text-gray-400">{floatingItems.length} món</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {floatingItems.map((item) => (
+                  <div
+                    key={item.uid}
+                    className="relative"
+                    style={{
+                      width: (item.gridW || 1) * cellSize,
+                      height: (item.gridH || 1) * cellSize,
+                    }}
+                  >
+                    <InventoryItem
+                      item={item}
+                      cellSize={cellSize}
+                      outsideBag
+                      style={{ left: 0, top: 0 }}
+                      onPointerDown={readOnly ? undefined : onPointerDown}
+                      onDoubleClick={readOnly ? undefined : handleDoubleClick}
+                      onClick={() => {
+                        const pos = { x: 0, y: 0 };
+                        setSelectedItem(item);
+                        setPopupPos(pos);
+                        onItemClick?.(item, pos);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-
-          {/* Active Dragging Item */}
-          {draggingItem && createPortal(
-            <InventoryItem
-              key="dragging"
-              item={draggingItem}
-              cellSize={cellSize}
-              style={{
-                position: 'fixed',
-                left: dragState.clientPos.x,
-                top: dragState.clientPos.y,
-                pointerEvents: 'none',
-                zIndex: 999999,
-                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
-              }}
-            />,
-            document.body
-          )}
-
-          {/* Item Popup */}
-          <ItemPopup 
-            item={selectedItem} 
-            onClose={() => setSelectedItem(null)} 
-            style={{
-              left: Math.min(gridW * cellSize - 220, Math.max(0, popupPos.x)),
-              top: Math.min(gridH * cellSize - 200, Math.max(0, popupPos.y - 150)),
-            }}
-          />
         </div>
       </div>
     </div>

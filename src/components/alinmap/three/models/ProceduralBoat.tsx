@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import type { MotionValue } from 'framer-motion';
@@ -18,15 +18,12 @@ interface ProceduralBoatProps {
     currentLng?: number | null;
     fortressLat?: number | null;
     fortressLng?: number | null;
+    reducedMotion?: boolean;
 }
 
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    // ⚠️ THAM SỐ ĐỒNG BỘ: scale, bobbing Y offset, và size phải khớp với
-    // AlinMapThreeScene.tsx (boatPosRef Y=5.0, DashedPath to Y=5.0, target pin Y=5.02).
-    // Nếu thay đổi scale thuyền hoặc độ cao Y, phải cập nhật đồng thời tất cả
-    // các vị trí Y của waypoint, loot item, target pin, enemy trong AlinMapThreeScene.
     scale = 4,
     offsetX,
     offsetY,
@@ -34,17 +31,21 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     currentLng,
     fortressLat,
     fortressLng,
+    reducedMotion = false,
 }) => {
     const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (!groupRef.current) return;
+
         const t = state.clock.getElapsedTime();
         const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE);
         const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE);
-        // Y offset +5: đồng bộ với boatPosRef Y=5.0 trong AlinMapThreeScene.useFrame
-        groupRef.current.position.set(x, position[1] + Math.sin(t * 2.1) * 1.5 + 5, z);
-        groupRef.current.rotation.z = Math.sin(t * 1.2) * 0.025;
+        const bobY = reducedMotion ? 0 : Math.sin(t * 2.1) * 1.5;
+        const rockZ = reducedMotion ? 0 : Math.sin(t * 1.2) * 0.025;
+
+        groupRef.current.position.set(x, position[1] + bobY + 5, z);
+        groupRef.current.rotation.z = rockZ;
     });
 
     const distToFortress = useMemo(() => {
@@ -54,7 +55,6 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
 
     return (
         <group position={position} rotation={rotation} ref={groupRef}>
-            {/* size đồng bộ với scale=4 */}
             <LootSprite
                 position={[0, 0, 0]}
                 type="boat"
@@ -64,7 +64,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 size={AVATAR_PLANE_SIZE * 1.1}
                 interactive={false}
             />
-            {distToFortress != null && (
+            {distToFortress != null && !reducedMotion && (
                 <Html position={[0, -9, 0]} center transform sprite distanceFactor={20} occlude={false}>
                     <div style={{ color: '#94a3b8', fontSize: 9, fontWeight: 700, textShadow: '0 0 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
                         {distToFortress}m → 🏰

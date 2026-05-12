@@ -1,5 +1,6 @@
 import type { MotionValue } from 'framer-motion';
 import type { LatLng } from '../sceneUtils';
+import type { AdaptivePerformanceProfile } from '../../hooks/useAdaptivePerformance';
 
 /**
  * Props chung dùng cho cả AlinMapThreeScene (Canvas wrapper) và SceneContent.
@@ -50,4 +51,5 @@ export interface AlinMapThreeSceneProps {
   onSelfDragEnd?: (newLat: number, newLng: number) => void;
   onSetArrivalAction?: (action: (() => void) | null) => void;
   setIsTierSelectorOpen?: (v: boolean) => void;
+  performance?: AdaptivePerformanceProfile;
 }

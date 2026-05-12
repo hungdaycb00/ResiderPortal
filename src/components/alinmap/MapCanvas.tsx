@@ -5,6 +5,7 @@ import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
+import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 
 // Sub-components
 import { LooterBackground } from './components/LooterBackground';
@@ -13,7 +14,6 @@ import {
     LooterLoadingOverlay, MapConnectionStatus 
 } from './components/MapUIOverlays';
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
-import UserLayer from './components/UserLayer';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
 import { BILLBOARD_UPRIGHT_PITCH_DEGREES } from './constants';
@@ -78,6 +78,7 @@ interface MapCanvasProps {
     setCameraRotateDeg: (v: number) => void;
     setCameraPitchOverride: (v: number | null) => void;
     setCameraRotateYDeg: (v: number) => void;
+    performance?: AdaptivePerformanceProfile;
 }
 
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
@@ -88,7 +89,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, selectedUser, setSelectedUser, setActiveTab, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
-        setBoatCenterHandler, setIsTierSelectorOpen
+        setBoatCenterHandler, setIsTierSelectorOpen, performance
     } = props;
 
     const looterState = useLooterState();
@@ -183,7 +184,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     return (
         <div className="absolute inset-0 overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
-            <LooterBackground />
+            <LooterBackground mode={performance?.backgroundMode} />
 
             {/* Location Consent Overlay */}
             {!position && isConsentOpen && (
@@ -251,6 +252,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={handleSelectSelf}
+                        performance={performance}
                     />
 
                     {/* Global Synchronizing Spinner */}
@@ -267,6 +269,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         activeCurses={looterStateObj?.activeCurses}
                         isExpanded={isCursesExpanded}
                         onToggle={() => setIsCursesExpanded(!isCursesExpanded)}
+                        reducedMotion={performance?.mode === 'low'}
                     />
                     <FortressWaypoint 
                         myObfPos={myObfPos} 
@@ -274,6 +277,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         panY={panY} 
                         scale={scale} 
                         planeYScale={planeYScale}
+                        performance={performance}
                     />
                 </>
             )}

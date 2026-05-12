@@ -76,6 +76,7 @@ export default function SceneContent({
   onSelfDragEnd,
   onSetArrivalAction,
   setIsTierSelectorOpen,
+  performance,
 }: AlinMapThreeSceneProps) {
   const tiltGroupRef = useRef<Group>(null);
   const moveGroupRef = useRef<Group>(null);
@@ -96,6 +97,9 @@ export default function SceneContent({
   );
   const { state: looterStateObj, encounter } = looterState;
   const { openFortressStorage, setShowMinigame, pickupItem } = looterActions;
+  const performanceMode = performance?.mode ?? 'high';
+  const labelMode = performance?.labelMode ?? 'full';
+  const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
@@ -165,8 +169,8 @@ export default function SceneContent({
       return true;
     });
     visible.sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
-    return visible.slice(0, isLooterGameMode ? 40 : 90);
-  }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, isLooterGameMode]);
+    return visible.slice(0, maxVisibleUsers);
+  }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, maxVisibleUsers]);
 
   useFrame(() => {
     if (!tiltGroupRef.current || !moveGroupRef.current) return;
@@ -274,6 +278,7 @@ export default function SceneContent({
             currentLng={looterStateObj?.currentLng}
             fortressLat={looterStateObj?.fortressLat}
             fortressLng={looterStateObj?.fortressLng}
+            reducedMotion={performanceMode === 'low'}
           />
         ) : (() => {
           const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
@@ -290,6 +295,7 @@ export default function SceneContent({
                 status={myStatus}
                 isVisibleOnMap={isVisibleOnMap}
                 isSelected={isSelfSelected}
+                labelMode={labelMode}
                 onClick={() => {
                   if (!selfDragRef.current.moved) {
                     onSelectSelf?.({
@@ -339,6 +345,7 @@ export default function SceneContent({
             status={isLooterGameMode ? undefined : u.status}
             isVisibleOnMap
             isSelected={!isLooterGameMode && selectedUser?.id === u.id}
+            labelMode={labelMode}
             onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
             showGallery={!isLooterGameMode && u.gallery?.active}
             galleryTitle={u.gallery?.title}

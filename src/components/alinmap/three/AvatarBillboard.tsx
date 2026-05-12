@@ -9,6 +9,7 @@ interface AvatarBillboardProps {
     position: [number, number, number];
     status?: string;
     isVisibleOnMap: boolean;
+    labelMode?: 'full' | 'name-only' | 'focus-only';
     onClick?: () => void;
     showGallery?: boolean;
     galleryTitle?: string;
@@ -24,6 +25,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     position,
     status,
     isVisibleOnMap,
+    labelMode = 'full',
     onClick,
     showGallery,
     galleryTitle,
@@ -34,6 +36,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
     const shouldShowDetails = isHovered || !!isSelected;
+    const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
@@ -72,29 +75,31 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                         />
                     </mesh>
                 )}
-                <Html
-                    position={[0, -3.65, 0]}
-                    center
-                    transform
-                    sprite
-                    distanceFactor={14}
-                    occlude={false}
-                >
-                    <div className="pointer-events-none flex flex-col items-center gap-1">
-                        <div className={`max-w-[180px] rounded-full border border-white/80 bg-white/95 px-3 py-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] backdrop-blur-md transition-transform duration-200 ${shouldShowDetails ? 'scale-105' : 'scale-100'}`}>
-                            <span className="block max-w-[150px] truncate text-[10px] font-extrabold tracking-tight text-slate-900 sm:text-[11px]">
-                                {name}
-                            </span>
-                        </div>
-                        {status ? (
-                            <div className={`max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-0.5 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md transition-all duration-200 ${shouldShowDetails ? 'opacity-100 translate-y-0' : 'opacity-85 translate-y-0.5'}`}>
-                                <span className="block max-w-[170px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]">
-                                    {status}
+                {shouldRenderLabel && (
+                    <Html
+                        position={[0, -3.65, 0]}
+                        center
+                        transform
+                        sprite
+                        distanceFactor={14}
+                        occlude={false}
+                    >
+                        <div className="pointer-events-none flex flex-col items-center gap-1">
+                            <div className={`max-w-[180px] rounded-full border border-white/80 bg-white/95 px-3 py-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] backdrop-blur-md transition-transform duration-200 ${shouldShowDetails ? 'scale-105' : 'scale-100'}`}>
+                                <span className="block max-w-[150px] truncate text-[10px] font-extrabold tracking-tight text-slate-900 sm:text-[11px]">
+                                    {name}
                                 </span>
                             </div>
-                        ) : null}
-                    </div>
-                </Html>
+                            {status && labelMode === 'full' ? (
+                                <div className={`max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-0.5 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md transition-all duration-200 ${shouldShowDetails ? 'opacity-100 translate-y-0' : 'opacity-85 translate-y-0.5'}`}>
+                                    <span className="block max-w-[170px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]">
+                                        {status}
+                                    </span>
+                                </div>
+                            ) : null}
+                        </div>
+                    </Html>
+                )}
                 {showGallery ? (
                     <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
                 ) : null}

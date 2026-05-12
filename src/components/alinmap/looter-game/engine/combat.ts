@@ -24,6 +24,32 @@ function getActiveCurses(activeCurses) {
     : {};
 }
 
+function getDroppableCombatItems(inventory) {
+  return getCombatInventory(inventory).filter((item) => !item.dropProtected);
+}
+
+function pickRandomSubset(items, count) {
+  const pool = [...items];
+  const picked = [];
+  const targetCount = Math.min(pool.length, Math.max(0, count));
+
+  for (let i = 0; i < targetCount; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+
+  return picked;
+}
+
+function rollProportionalDrops(inventory, dropRate) {
+  const droppableItems = getDroppableCombatItems(inventory);
+  if (!droppableItems.length) return [];
+
+  const clampedRate = Math.max(0, Math.min(1, toFiniteNumber(dropRate, 0)));
+  const dropCount = Math.max(1, Math.floor(droppableItems.length * clampedRate));
+  return pickRandomSubset(droppableItems, dropCount);
+}
+
 function calcTotalStats(inventory, bag, activeCurses = {}) {
   let totalHp = 0, totalWeight = 0, totalEnergyMax = 0, totalEnergyRegen = 0;
   for (const item of getCombatInventory(inventory)) {
@@ -126,25 +152,25 @@ function simulateCombat(playerA, playerB) {
 
   const winner = hpA.current > 0 ? 'A' : (hpB.current > 0 ? 'B' : 'DRAW');
 
-  // Loser drops: 50% roll per item
+  // Loser drops: roll by percentage of eligible items, minimum 1 item
   let droppedItems = [];
   if (winner === 'A') {
-    droppedItems = inventoryB.filter((item) => !item.dropProtected && Math.random() < 0.5);
+    droppedItems = rollProportionalDrops(inventoryB, 0.25);
   } else if (winner === 'B') {
-    droppedItems = inventoryA.filter((item) => !item.dropProtected && Math.random() < 0.5);
+    droppedItems = rollProportionalDrops(inventoryA, 0.25);
   }
 
   return { winner, combatLog, droppedItems, finalHpA: hpA.current, finalHpB: hpB.current, totalTicks: tick };
 }
 
 function rollDeathDrops(inventory) {
-  // 75% roll per item
-  return getCombatInventory(inventory).filter((item) => !item.dropProtected && Math.random() < 0.75);
+  // Lose 25% of eligible items, minimum 1
+  return rollProportionalDrops(inventory, 0.25);
 }
 
-function rollFleeDrops(inventory, dropRate = 0.5) {
-  // Configurable drop rate per item
-  return getCombatInventory(inventory).filter((item) => !item.dropProtected && Math.random() < dropRate);
+function rollFleeDrops(inventory, dropRate = 0.25) {
+  // Lose a proportional share of eligible items, minimum 1
+  return rollProportionalDrops(inventory, dropRate);
 }
 
 export { 

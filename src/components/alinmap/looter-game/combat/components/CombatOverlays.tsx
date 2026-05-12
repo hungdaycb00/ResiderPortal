@@ -28,20 +28,20 @@ export const FleeConfirmOverlay: React.FC<FleeConfirmOverlayProps> = ({ show, on
                     <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/40">
                         <X className="w-8 h-8 text-red-500" />
                     </div>
-                    <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Thoát khỏi Ghost?</h3>
+                    <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Đầu hàng Ghost?</h3>
                     <p className="text-xs text-gray-400 mb-6 leading-relaxed">
-                        Bạn đang cố gắng chạy trốn! Cái giá của sự hèn nhát là không hề nhỏ.
+                        Bạn có thể đầu hàng để rút lui, nhưng sẽ mất một phần vật phẩm trong balo.
                     </p>
-                    
+
                     <div className="flex flex-col gap-3">
-                        <button 
+                        <button
                             onClick={onFlee}
                             className="w-full py-4 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-400 font-bold rounded-2xl transition-all flex flex-col items-center leading-tight shadow-lg shadow-red-900/40"
                         >
-                            <span className="text-sm uppercase">Chấp nhận số phận</span>
-                            <span className="text-[9px] text-red-400/70">Mất 75% vật phẩm trong Balo</span>
+                            <span className="text-sm uppercase">Đầu hàng</span>
+                            <span className="text-[9px] text-red-400/70">Mất 25% vật phẩm trong balo, tối thiểu 1 món</span>
                         </button>
-                        <button 
+                        <button
                             onClick={onCancel}
                             className="w-full py-3 text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-gray-300 transition-colors mt-2"
                         >
@@ -81,7 +81,7 @@ export const CombatResultOverlay: React.FC<CombatResultOverlayProps> = ({
                 >
                     <span className="text-6xl block mb-4">{result.result === 'win' ? '🏆' : '💀'}</span>
                     <h3 className="text-3xl font-black mb-3 text-white tracking-tighter">{result.result === 'win' ? 'CHIẾN THẮNG!' : 'THẤT BẠI'}</h3>
-                    
+
                     {result.result === 'win' && result.loot?.length ? (
                         <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
                             <p className="text-xs font-bold text-amber-300 uppercase tracking-widest mb-3">Vật phẩm thu được</p>
@@ -111,7 +111,7 @@ export const CombatResultOverlay: React.FC<CombatResultOverlayProps> = ({
                         </div>
                     ) : result.result === 'lose' && result.droppedItems?.length ? (
                         <div className="mb-6 bg-black/30 p-4 rounded-2xl border border-white/5">
-                            <p className="text-xs font-bold text-red-300 uppercase tracking-widest mb-3">Vật phẩm bị mất (75%)</p>
+                            <p className="text-xs font-bold text-red-300 uppercase tracking-widest mb-3">Vật phẩm bị mất (25%)</p>
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {result.droppedItems.map((item: any) => (
                                     <div key={item.uid} className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-xl opacity-40" title={item.name}>{item.icon}</div>
@@ -121,9 +121,9 @@ export const CombatResultOverlay: React.FC<CombatResultOverlayProps> = ({
                     ) : (
                         <div className="mb-6 min-h-[40px]" />
                     )}
-                    
-                    <button 
-                        onClick={onClose} 
+
+                    <button
+                        onClick={onClose}
                         className={`w-full py-5 rounded-2xl font-black transition-all active:scale-95 shadow-xl uppercase tracking-tighter ${
                             result.result === 'lose' ? 'bg-white text-black hover:bg-gray-200' : 'bg-amber-500 text-black hover:bg-amber-400'
                         }`}

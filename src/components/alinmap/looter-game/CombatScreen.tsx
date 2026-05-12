@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLooterState, useLooterActions } from './LooterGameContext';
 import { useCombatLoop } from './combat/hooks/useCombatLoop';
+import { rollFleeDrops } from './engine/combat';
 
 // Sub-components
 import { CombatScene } from './combat/components/CombatScene';
@@ -15,7 +16,7 @@ const CombatScreen: React.FC = () => {
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
         curseChoice, showNotification, setIsChallengeActive, moveBoat,
-        returnToFortress, dropCombatLoot, openBackpack
+        returnToFortress, dropCombatLoot, openBackpack, saveInventory
     } = useLooterActions();
     
     const [showFleeConfirm, setShowFleeConfirm] = useState(false);
@@ -63,11 +64,28 @@ const CombatScreen: React.FC = () => {
     const handleFlee = async () => {
         setShowFleeConfirm(false);
         if (combat.frameRef.current) cancelAnimationFrame(combat.frameRef.current);
+
+        const sourceInventory = combat.initialPlayerInventory.length > 0 ? combat.initialPlayerInventory : state.inventory;
+        const droppedItems = rollFleeDrops(sourceInventory, 0.25);
+        const droppedUids = new Set(droppedItems.map((item) => item.uid));
+        const nextInventory = state.inventory.filter((item) => !droppedUids.has(item.uid));
+
+        saveInventory(nextInventory);
         await curseChoice('flee');
-        setEncounter(null);
-        combat.setPhase('ready');
-        combat.setInitialPlayerInventory([]);
-        setCombatResult(null);
+
+        const fleeResult = {
+            result: 'lose' as const,
+            combatLog: [],
+            droppedItems,
+            finalHp: 0,
+            finalHpA: 0,
+            finalHpB: combat.hpB,
+            totalTicks: 0,
+        };
+
+        combat.setPendingResult(fleeResult);
+        setCombatResult(fleeResult);
+        combat.setPhase('result');
     };
 
     return (

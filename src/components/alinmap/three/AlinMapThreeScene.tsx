@@ -11,15 +11,21 @@ export type { AlinMapThreeSceneProps };
 
 // ─── Canvas Entry Point ───────────────────────────────────────────────────────
 const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
+  const dprRange = props.performance?.dpr ?? (props.isDesktop ? [1, 1.5] : [0.85, 1]);
+  const maxDpr = props.performance?.maxDevicePixelRatio ?? (props.isDesktop ? 1.5 : 1);
+  const powerPreference = props.performance?.powerPreference ?? 'high-performance';
+  const antialias = props.performance?.antialias ?? props.isDesktop;
+  const isMinimalMode = props.performance?.mode === 'low';
+
   return (
     <Canvas
-      dpr={props.isDesktop ? [1, 1.5] : [0.85, 1]}
+      dpr={dprRange}
       frameloop="demand"
       shadows={false}
       gl={{
-        antialias: props.isDesktop,
+        antialias,
         alpha: true,
-        powerPreference: 'high-performance',
+        powerPreference,
         preserveDrawingBuffer: false,
       }}
       camera={{ fov: 46, near: 0.5, far: 120000, position: [0, 1600, 2200] }}
@@ -28,12 +34,14 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
         gl.outputColorSpace = SRGBColorSpace;
         gl.toneMapping = NoToneMapping;
         gl.toneMappingExposure = 1;
-        gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, props.isDesktop ? 1.5 : 1));
+        gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
       }}
     >
-      <ambientLight intensity={1.4} />
-      <directionalLight position={[4000, 8000, 6000]} intensity={1.1} color="#dbeafe" />
-      <directionalLight position={[-4000, 2000, -3000]} intensity={0.35} color="#22d3ee" />
+      <ambientLight intensity={isMinimalMode ? 1.05 : 1.35} />
+      <directionalLight position={[4000, 8000, 6000]} intensity={isMinimalMode ? 0.85 : 1.05} color="#dbeafe" />
+      {!isMinimalMode && (
+        <directionalLight position={[-4000, 2000, -3000]} intensity={0.28} color="#22d3ee" />
+      )}
       <Suspense
         fallback={
           <Html center>

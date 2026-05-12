@@ -11,6 +11,7 @@ import { SocialProvider } from './features/social/context/SocialContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useMapNavigation } from './hooks/useMapNavigation';
+import { useAdaptivePerformance } from './hooks/useAdaptivePerformance';
 import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
 
 export const AlinMapInner: React.FC<AlinMapProps> = ({
@@ -37,6 +38,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Geolocation / Weather / Province ---
     const geo = useGeolocation();
+    const performance = useAdaptivePerformance();
     const location = useLocation();
 
     const [searchTag, setSearchTag] = useState('');
@@ -77,6 +79,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         panY: undefined as any,
         fetchNotifications,
         onStatusSync, // We will update ProfileContext from children or a separate effect if needed
+        performance,
     });
     const resolvedMyUserId = wsCtx.myUserId || profileUserId || localStorage.getItem('alin_profile_user_id') || null;
     const resolvedMyStatus = profileStatus || wsCtx.myStatus || '';
@@ -117,12 +120,15 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     // Patch wsCtx with actual panX/panY (circular dep workaround)
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
     const handleRefresh = useCallback(() => {
-        if (wsCtx.ws.current && wsCtx.ws.current.readyState === WebSocket.OPEN && geo.myObfPos) {
-            const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
-            const scanLat = geo.myObfPos.lat + (nav.panY.get() / nav.planeYScale.get() / DEGREES_TO_PX);
-            wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
-        }
-    }, [wsCtx.ws, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
+        if (!wsCtx.ws.current || wsCtx.ws.current.readyState !== WebSocket.OPEN) return;
+        if (!geo.myObfPos) return;
+
+        wsCtx.setIsConnecting(true);
+        const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
+        const scanLat = geo.myObfPos.lat + (nav.panY.get() / nav.planeYScale.get() / DEGREES_TO_PX);
+        wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
+        setTimeout(() => wsCtx.setIsConnecting(false), 1000);
+    }, [wsCtx.ws, wsCtx.setIsConnecting, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
 
     // --- Posts CRUD ---
     const posts = usePosts({
@@ -219,11 +225,11 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         >
         <div className="alinmap-viewport fixed inset-0 z-[100] isolate overflow-hidden bg-[#13151a] select-none">
             <div className="absolute inset-0 z-0">
-                <MapCanvas
-                    position={geo.position} isConsentOpen={geo.isConsentOpen}
-                    nearbyUsers={wsCtx.nearbyUsers} friends={friends}
-                    myUserId={resolvedMyUserId} user={user}
-                    myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
+            <MapCanvas
+                position={geo.position} isConsentOpen={geo.isConsentOpen}
+                nearbyUsers={wsCtx.nearbyUsers} friends={friends}
+                myUserId={resolvedMyUserId} user={user}
+                myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
                     myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isConnecting={wsCtx.isConnecting}
                     isDesktop={nav.isDesktop}
                     currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
@@ -247,6 +253,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     setCameraRotateDeg={nav.setCameraRotateDeg}
                     setCameraPitchOverride={nav.setCameraPitchOverride}
                     setCameraRotateYDeg={nav.setCameraRotateYDeg}
+                    performance={performance}
                 />
             </div>
 

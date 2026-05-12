@@ -241,16 +241,28 @@ export async function dropCombatLoot(
   const { deviceId, state, saveInventory, notify, openBackpack } = deps;
   if (!deviceId || items.length === 0) return;
 
-  const itemsWithStaging = items.map(item => ({
-    ...item, gridX: -1, gridY: -1,
-    stagingX: Math.random() * 200, stagingY: Math.random() * 300
-  }));
-  const newInventory = [...state.inventory, ...itemsWithStaging];
-  const itemUids = items.map(i => i.uid);
+  const currentBag = state.bags?.[0];
+  const workingInventory = [...state.inventory];
+  const itemsWithLayout = items.map((item, index) => {
+    const slot = currentBag ? findEmptySlotFor(item, workingInventory, currentBag) : null;
+    const laidOutItem: LooterItem = slot
+      ? { ...item, gridX: slot.x, gridY: slot.y }
+      : {
+          ...item,
+          gridX: -1,
+          gridY: -1,
+          stagingX: Math.random() * 200,
+          stagingY: Math.random() * 140 + index * 20,
+        };
+
+    workingInventory.push(laidOutItem);
+    return laidOutItem;
+  });
+  const newInventory = [...state.inventory, ...itemsWithLayout];
 
   const success = await saveInventory(newInventory);
   if (!success) { notify('Lỗi khi chuẩn bị rơi đồ!', 'error'); return; }
 
-  await dropItems(itemUids, state.currentLat || 0, state.currentLng || 0, deps);
   openBackpack?.();
+  notify(items.length > 1 ? `Đã nhận ${items.length} vật phẩm chiến lợi phẩm` : `Đã nhận 1 vật phẩm chiến lợi phẩm`, 'success');
 }

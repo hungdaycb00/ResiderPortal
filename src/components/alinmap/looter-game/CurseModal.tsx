@@ -33,7 +33,6 @@ const CurseModal: React.FC = () => {
           <p className="text-sm text-purple-300/60 mt-1">Bạn gặp phải {encounter.name}</p>
         </div>
 
-        {/* Stats comparison */}
         <div className="flex items-center gap-4 mb-6 bg-purple-900/20 rounded-xl p-3 border border-purple-700/30">
           <div className="flex-1 text-center">
             <p className="text-[10px] text-cyan-400 font-bold uppercase mb-1">Bạn</p>
@@ -48,7 +47,6 @@ const CurseModal: React.FC = () => {
           </div>
         </div>
 
-        {/* 2 choices */}
         <div className="flex flex-col gap-3">
           <button
             onClick={async () => { await curseChoice('challenge'); setShowCurseModal(false); }}
@@ -58,7 +56,7 @@ const CurseModal: React.FC = () => {
               <Shield className="w-5 h-5 text-amber-400 group-hover:text-amber-300" />
               <div>
                 <p className="text-sm font-bold text-amber-200">Chiến Đấu</p>
-                <p className="text-[10px] text-amber-400/70">Chiến đấu! Thắng lấy 50% đồ đối thủ</p>
+                <p className="text-[10px] text-amber-400/70">Thắng lấy 50% đồ đối thủ</p>
               </div>
             </div>
           </button>
@@ -71,7 +69,7 @@ const CurseModal: React.FC = () => {
               <Wind className="w-5 h-5 text-gray-400 group-hover:text-white" />
               <div>
                 <p className="text-sm font-bold text-white">Đầu Hàng</p>
-                <p className="text-[10px] text-gray-400">Mất 25% đồ (random mỗi item)</p>
+                <p className="text-[10px] text-gray-400">Mất 25% đồ, lấy theo tỷ lệ và tối thiểu 1 món</p>
               </div>
             </div>
           </button>

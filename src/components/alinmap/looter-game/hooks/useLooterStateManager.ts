@@ -240,7 +240,7 @@ export function useLooterStateManager({
              syncState(nextState);
              return nextState;
           });
-          notify('Bạn đã bỏ trốn thành công', 'info');
+          notify('Bạn đã đầu hàng', 'info');
       }
     } catch (err) {
       console.error('[LooterGame] curseChoice error:', err);
