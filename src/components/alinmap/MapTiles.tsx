@@ -1,7 +1,6 @@
 import React from 'react';
-import { MotionValue } from 'framer-motion';
-import { useMotionValueEvent } from 'framer-motion';
-import type { AlinMapMode } from './constants';
+import { MotionValue, useMotionValueEvent } from 'framer-motion';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, type AlinMapMode } from './constants';
 
 interface MapTilesProps {
   panX: MotionValue<number>;
@@ -13,8 +12,9 @@ interface MapTilesProps {
 }
 
 const TILE_SIZE = 256;
-const MIN_ZOOM = 8;
-const MAX_ZOOM = 17;
+const MIN_ZOOM = 3;
+const MAX_ZOOM = 19;
+const DEFAULT_PROVIDER = 'carto';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const modulo = (value: number, divisor: number) => ((value % divisor) + divisor) % divisor;
@@ -29,10 +29,16 @@ const latToTileY = (lat: number, zoom: number) => {
 
 const getTileZoom = (visualScale: number) => {
   const safeScale = Math.max(visualScale || 1, 0.05);
-  return clamp(Math.round(13 + Math.log2(safeScale / 1.35) * 1.35), MIN_ZOOM, MAX_ZOOM);
+  return clamp(Math.round(14 + Math.log2(safeScale / 1.35) * 1.45), MIN_ZOOM, MAX_ZOOM);
 };
 
 const getTileUrl = (x: number, y: number, z: number) => {
+  const provider = (import.meta.env.VITE_MAP_TILE_PROVIDER || DEFAULT_PROVIDER).toLowerCase();
+  if (provider === 'osm') {
+    const subdomains = ['a', 'b', 'c'];
+    const subdomain = subdomains[Math.abs(x + y) % subdomains.length];
+    return `https://${subdomain}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  }
   const subdomains = ['a', 'b', 'c', 'd'];
   const subdomain = subdomains[Math.abs(x + y) % subdomains.length];
   return `https://${subdomain}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
@@ -53,25 +59,35 @@ const useViewportSize = () => {
   return size;
 };
 
-const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }) => {
+const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myObfPos, mode }) => {
   const viewport = useViewportSize();
   const [pan, setPan] = React.useState({ x: panX.get(), y: panY.get() });
   const [visualScale, setVisualScale] = React.useState(scale.get());
+  const [currentPlaneYScale, setCurrentPlaneYScale] = React.useState(planeYScale.get());
 
   useMotionValueEvent(panX, 'change', (value) => setPan((prev) => ({ ...prev, x: value })));
   useMotionValueEvent(panY, 'change', (value) => setPan((prev) => ({ ...prev, y: value })));
   useMotionValueEvent(scale, 'change', setVisualScale);
+  useMotionValueEvent(planeYScale, 'change', setCurrentPlaneYScale);
+
+  const attribution = React.useMemo(() => {
+    const provider = (import.meta.env.VITE_MAP_TILE_PROVIDER || DEFAULT_PROVIDER).toLowerCase();
+    return provider === 'osm' ? '© OpenStreetMap' : '© OpenStreetMap © CARTO';
+  }, []);
 
   const tiles = React.useMemo(() => {
     if (!myObfPos || mode !== 'roadmap') return [];
 
     const zoom = getTileZoom(visualScale);
+    const safePlaneYScale = Math.max(currentPlaneYScale || 0, 0.1);
+    const centerLat = clamp(myObfPos.lat + pan.y / safePlaneYScale / DEGREES_TO_PX, -85.05112878, 85.05112878);
+    const centerLng = myObfPos.lng - pan.x / MAP_PLANE_SCALE / DEGREES_TO_PX;
     const worldTileCount = 2 ** zoom;
-    const centerTileX = lngToTileX(myObfPos.lng, zoom);
-    const centerTileY = latToTileY(myObfPos.lat, zoom);
+    const centerTileX = lngToTileX(centerLng, zoom);
+    const centerTileY = latToTileY(centerLat, zoom);
     const centerPixelX = centerTileX * TILE_SIZE;
     const centerPixelY = centerTileY * TILE_SIZE;
-    const tileScale = clamp(visualScale / 1.15, 0.75, 2.35);
+    const tileScale = clamp(visualScale / 1.25, 0.9, 2.4);
     const tileSize = TILE_SIZE * tileScale;
     const cols = Math.ceil(viewport.width / tileSize) + 5;
     const rows = Math.ceil(viewport.height / tileSize) + 5;
@@ -86,8 +102,8 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
         if (rawY < 0 || rawY >= worldTileCount) continue;
         const tileX = modulo(rawX, worldTileCount);
         const tileY = rawY;
-        const left = viewport.width / 2 + (rawX * TILE_SIZE - centerPixelX) * tileScale + pan.x * 0.38;
-        const top = viewport.height / 2 + (rawY * TILE_SIZE - centerPixelY) * tileScale + pan.y * 0.38;
+        const left = viewport.width / 2 + (rawX * TILE_SIZE - centerPixelX) * tileScale;
+        const top = viewport.height / 2 + (rawY * TILE_SIZE - centerPixelY) * tileScale;
         result.push({
           key: `${zoom}-${tileX}-${tileY}`,
           src: getTileUrl(tileX, tileY, zoom),
@@ -99,12 +115,12 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
     }
 
     return result;
-  }, [mode, myObfPos?.lat, myObfPos?.lng, pan.x, pan.y, viewport.height, viewport.width, visualScale]);
+  }, [currentPlaneYScale, mode, myObfPos?.lat, myObfPos?.lng, pan.x, pan.y, viewport.height, viewport.width, visualScale]);
 
   if (!myObfPos || mode !== 'roadmap') return null;
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#dfe8dd] pointer-events-none select-none">
+    <div className="absolute inset-0 overflow-hidden bg-[#eef3ed] pointer-events-none select-none">
       {tiles.map((tile) => (
         <img
           key={tile.key}
@@ -121,8 +137,8 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, myObfPos, mode }
           }}
         />
       ))}
-      <div className="absolute bottom-1 left-[76px] rounded bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 shadow-sm">
-        © OpenStreetMap © CARTO
+      <div className="absolute bottom-1 left-[76px] rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 shadow-sm">
+        {attribution}
       </div>
     </div>
   );
