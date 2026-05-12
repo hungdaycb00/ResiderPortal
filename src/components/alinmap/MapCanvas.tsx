@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
+import { LoaderCircle } from 'lucide-react';
 
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
@@ -292,10 +293,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
 const LoadingSpinner = () => (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
-            <span className="text-blue-500 font-bold text-xs animate-pulse uppercase tracking-widest">Synchronizing Spatial Data...</span>
-        </div>
+        <LoaderCircle className="h-10 w-10 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" strokeWidth={2.2} />
     </div>
 );
 

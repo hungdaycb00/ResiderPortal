@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
+import { LoaderCircle } from 'lucide-react';
 import { SRGBColorSpace, NoToneMapping } from 'three';
 
 import SceneContent from './scene/SceneContent';
@@ -45,9 +46,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
       <Suspense
         fallback={
           <Html center>
-            <div className="rounded-full border border-white/10 bg-slate-950/80 px-4 py-2 text-xs font-bold text-white shadow-lg backdrop-blur-md">
-              Loading Three.js scene...
-            </div>
+            <LoaderCircle className="h-8 w-8 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.15)]" strokeWidth={2.25} />
           </Html>
         }
       >
