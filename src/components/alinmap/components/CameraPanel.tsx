@@ -5,6 +5,7 @@ import {
   getCameraZForVisualScale,
   getDefaultVisualScaleForMapMode,
   getTiltAngleFromCameraZ,
+  getVisualScaleFromCameraZ,
   type AlinMapMode,
 } from '../constants';
 
@@ -47,6 +48,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   const autoTilt = Math.round(getTiltAngleFromCameraZ(zDisplay));
   const effectivePitch = cameraPitchOverride ?? autoTilt;
   const isAutoPitch = cameraPitchOverride === null;
+  const zoomPercent = Math.round(getVisualScaleFromCameraZ(zDisplay, perspectivePx) * 100);
 
   const resetAll = useCallback(() => {
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
@@ -142,6 +144,14 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
 
       {/* Nút toggle */}
       <div className="flex flex-col gap-2 md:gap-3">
+        <div className="rounded-full border border-cyan-400/30 bg-[#06111f]/85 px-2.5 py-1 text-center shadow-[0_0_14px_rgba(8,145,178,0.18)] backdrop-blur-md">
+          <div className="text-[9px] font-black uppercase tracking-[0.14em] text-cyan-200/90">
+            Zoom
+          </div>
+          <div className="mt-0.5 text-[10px] font-mono font-bold text-cyan-100">
+            Z {zDisplay} / {zoomPercent}%
+          </div>
+        </div>
         <button
           onClick={toggleExpanded}
           className={`w-8 h-8 md:w-10 md:h-10 rounded-[10px] md:rounded-xl flex items-center justify-center active:scale-95 transition-all backdrop-blur-md shadow-md
