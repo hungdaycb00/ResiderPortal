@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Billboard, Text } from '@react-three/drei';
+import { Billboard, Html } from '@react-three/drei';
 import GalleryImage from './GalleryImage';
 import { makeAvatarTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from './sceneUtils';
 
@@ -33,6 +33,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
+    const shouldShowDetails = isHovered || !!isSelected;
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
@@ -71,21 +72,29 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                         />
                     </mesh>
                 )}
-                {status ? (
-                    <Text
-                        position={[0, -3.5, 0]}
-                        fontSize={2.1}
-                        color="white"
-                        anchorX="center"
-                        anchorY="middle"
-                        outlineWidth={0.18}
-                        outlineColor="#000000"
-                        maxWidth={30}
-                        textAlign={"center" as const}
-                    >
-                        {status}
-                    </Text>
-                ) : null}
+                <Html
+                    position={[0, -3.65, 0]}
+                    center
+                    transform
+                    sprite
+                    distanceFactor={14}
+                    occlude={false}
+                >
+                    <div className="pointer-events-none flex flex-col items-center gap-1">
+                        <div className={`max-w-[180px] rounded-full border border-white/80 bg-white/95 px-3 py-1 shadow-[0_8px_24px_rgba(15,23,42,0.18)] backdrop-blur-md transition-transform duration-200 ${shouldShowDetails ? 'scale-105' : 'scale-100'}`}>
+                            <span className="block max-w-[150px] truncate text-[10px] font-extrabold tracking-tight text-slate-900 sm:text-[11px]">
+                                {name}
+                            </span>
+                        </div>
+                        {status ? (
+                            <div className={`max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-0.5 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md transition-all duration-200 ${shouldShowDetails ? 'opacity-100 translate-y-0' : 'opacity-85 translate-y-0.5'}`}>
+                                <span className="block max-w-[170px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]">
+                                    {status}
+                                </span>
+                            </div>
+                        ) : null}
+                    </div>
+                </Html>
                 {showGallery ? (
                     <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
                 ) : null}

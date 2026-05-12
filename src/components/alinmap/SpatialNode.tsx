@@ -19,6 +19,7 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
     });
     const [hoverScale, setHoverScale] = useState(1.1);
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    const displayName = String(user.displayName || user.username || 'User');
     const animationTiming = React.useRef({
         duration: 3 + Math.random() * 2,
         delay: Math.random() * 5,
@@ -108,14 +109,20 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                     </div>
                 )}
 
-                {/* Labels under avatar to prevent blocking billboard */}
-                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                    {/* Status Tooltip */}
-                    {user.status && (
-                        <div className="whitespace-nowrap bg-white/90 backdrop-blur border border-gray-200/50 px-2 py-1 rounded-full shadow-lg pointer-events-none">
-                            <span className="text-[9px] font-bold text-gray-600 block max-w-[120px] truncate">{user.status}</span>
+                {/* Google Maps-like label: name rõ, status phụ trợ */}
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none">
+                    <div className="max-w-[180px] rounded-full border border-white/80 bg-white/95 px-3 py-1 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md">
+                        <span className="block max-w-[150px] truncate text-[10px] font-extrabold tracking-tight text-slate-900 sm:text-[11px]">
+                            {displayName}
+                        </span>
+                    </div>
+                    {user.status ? (
+                        <div className="max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-0.5 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md">
+                            <span className="block max-w-[170px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]">
+                                {user.status}
+                            </span>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
         </motion.div>
