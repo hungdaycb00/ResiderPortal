@@ -13,6 +13,9 @@ export const CAMERA_Z_FAR = -100000;
 export const CAMERA_Z_DEFAULT = 0;
 export const CAMERA_Z_WATER_DEFAULT = 38; // ~95% zoom trên slider
 export const CAMERA_Z_NEAR = 260;
+export const ROADMAP_VISUAL_SCALE_DEFAULT = 0.74;
+export const SATELLITE_VISUAL_SCALE_DEFAULT = 0.92;
+export const LOOTER_VISUAL_SCALE_DEFAULT = 1.08;
 export const CAMERA_HEIGHT_DEFAULT_PCT = 42;
 export const CAMERA_HEIGHT_MIN_PCT = 20;
 export const CAMERA_HEIGHT_MAX_PCT = 80;
@@ -49,6 +52,11 @@ export const BILLBOARD_VISIBLE_DISTANCE_KM = 3.5;
 export type AlinMapMode = 'roadmap' | 'satellite';
 
 export const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+export const getDefaultVisualScaleForMapMode = (mapMode: AlinMapMode, isLooterGameMode = false) => {
+    if (isLooterGameMode) return LOOTER_VISUAL_SCALE_DEFAULT;
+    return mapMode === 'satellite' ? SATELLITE_VISUAL_SCALE_DEFAULT : ROADMAP_VISUAL_SCALE_DEFAULT;
+};
 
 export const interpolate = (value: number, input: [number, number], output: [number, number]) => {
     const [inMin, inMax] = input;
