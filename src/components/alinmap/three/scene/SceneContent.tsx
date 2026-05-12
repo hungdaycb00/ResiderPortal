@@ -305,12 +305,14 @@ export default function SceneContent({
           onGroundClick={(point) => handleGroundClick(groundMeshRef, point)} />
 
         {/* Search Target Pin */}
-        <group position={[0, 0.08, 0]}>
-          <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
-            <circleGeometry args={[160 * sceneWorldScale, 64]} />
-            <meshBasicMaterial color="#22d3ee" transparent opacity={0.025} depthWrite={false} />
-          </mesh>
-        </group>
+        {!isRoadmapOverlay && (
+          <group position={[0, 0.08, 0]}>
+            <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
+              <circleGeometry args={[160 * sceneWorldScale, 64]} />
+              <meshBasicMaterial color="#22d3ee" transparent opacity={0.025} depthWrite={false} />
+            </mesh>
+          </group>
+        )}
 
         {/* Self avatar / Boat */}
         {isLooterGameMode ? (
@@ -324,7 +326,7 @@ export default function SceneContent({
             fortressLng={looterStateObj?.fortressLng}
             reducedMotion={performanceMode === 'low'}
           />
-        ) : (() => {
+        ) : !isRoadmapOverlay && (() => {
           const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
           return (
             <group
@@ -361,7 +363,7 @@ export default function SceneContent({
         })()}
 
         {/* Province marker */}
-        {currentProvince ? (
+        {!isRoadmapOverlay && currentProvince ? (
           <MarkerBillboard
             position={[selfPos.x + pxToScaledScene(180), 0.5, selfPos.z - pxToScaledScene(180)]}
             icon="Province"
@@ -371,7 +373,7 @@ export default function SceneContent({
         ) : null}
 
         {/* Search marker */}
-        {searchMarkerPos ? (
+        {!isRoadmapOverlay && searchMarkerPos ? (
           <MarkerBillboard
             position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
             icon="Pin"
@@ -381,7 +383,7 @@ export default function SceneContent({
         ) : null}
 
         {/* Nearby users */}
-        {userRenderData.map(({ user: u, pos }) => (
+        {!isRoadmapOverlay && userRenderData.map(({ user: u, pos }) => (
           <AvatarBillboard
             key={u.id}
             name={u.displayName || u.username || 'U'}

@@ -7,9 +7,19 @@ import { DEGREES_TO_PX, FEATURED_BILLBOARD_FAR_SCALE, LIKE_THRESHOLD_FOR_SCALE, 
 const billboardTransform = (_: unknown, generated: string) =>
     `${generated} scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
 
-const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScale, onContextMenu, offsetX = 0, offsetY = 0 }) => {
-    const dx = (user.lng - myPos.lng) * DEGREES_TO_PX + offsetX;
-    const dy = -(user.lat - myPos.lat) * DEGREES_TO_PX + offsetY; // CSS Y is inverted vs latitude
+const SpatialNode: React.FC<SpatialNodeProps> = ({
+    user,
+    myPos,
+    onClick,
+    mapScale,
+    onContextMenu,
+    offsetX = 0,
+    offsetY = 0,
+    screenPosition,
+    pixelsPerDegree = DEGREES_TO_PX,
+}) => {
+    const dx = screenPosition ? screenPosition.x : (user.lng - myPos.lng) * pixelsPerDegree + offsetX;
+    const dy = screenPosition ? screenPosition.y : -(user.lat - myPos.lat) * pixelsPerDegree + offsetY;
     const likeCount = Number(user?.gallery?.likeCount ?? user?.gallery?.likes ?? user?.likeCount ?? user?.likes_count ?? 0);
     const isFeaturedBillboard = !!user?.gallery?.active && likeCount >= LIKE_THRESHOLD_FOR_SCALE;
     const featuredScale = useTransform(mapScale, (v) => {
@@ -27,7 +37,7 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
 
     return (
         <motion.div
-            onPointerDown={(e) => e.stopPropagation()} // Prevent dragging the floor when clicking this
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onClick(); }}
             onContextMenu={(e) => {
                 e.preventDefault();
@@ -40,8 +50,8 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
             }}
             className="absolute w-10 h-10 -ml-5 -mt-10 cursor-pointer group hover:z-50 pointer-events-auto alin-map-billboard"
             style={{
-                left: `calc(50% + ${dx}px)`,
-                top: `calc(50% + ${dy}px)`,
+                left: screenPosition ? `${dx}px` : `calc(50% + ${dx}px)`,
+                top: screenPosition ? `${dy}px` : `calc(50% + ${dy}px)`,
                 transformOrigin: 'center bottom',
                 '--alin-map-featured-scale': featuredScale,
             } as any}
@@ -69,16 +79,13 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                     />
                 </div>
 
-                {/* Hologram base shadow/glow */}
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-blue-500/50 blur-sm rounded-full -z-10" />
 
-                {/* Billboard Container (Positioned Above Avatar) */}
                 {user.gallery?.active && (
                     <div
                         onClick={(e) => { e.stopPropagation(); onClick(); }}
                         className="absolute -top-24 left-1/2 -translate-x-1/2 w-44 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
                     >
-                        {/* Header */}
                         <div className="bg-slate-900/80 px-2 py-1 border-b border-slate-700/50">
                             <p className="text-[9px] font-black text-blue-100 truncate text-center uppercase tracking-wider">
                                 {user.gallery?.title || 'SPECIAL OFFER'}
@@ -100,7 +107,6 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                             </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent mix-blend-overlay" />
-                        {/* Glowing scanning line effect */}
                         <motion.div
                             animate={{ top: ['0%', '100%', '0%'] }}
                             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
@@ -109,7 +115,6 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
                     </div>
                 )}
 
-                {/* Google Maps-like label: name rõ, status phụ trợ */}
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none">
                     <div className="max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md">
                         <span className="block max-w-[360px] truncate text-[50px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[55px]">

@@ -134,6 +134,8 @@ export interface SpatialNodeProps {
     onContextMenu?: (e: React.MouseEvent, user: any) => void;
     offsetX?: number;
     offsetY?: number;
+    screenPosition?: { x: number; y: number };
+    pixelsPerDegree?: number;
 }
 
 export function getWeatherInfo(code: number): { icon: string; desc: string } {

@@ -6,6 +6,7 @@ import { useLooterState, useLooterActions } from './looter-game/LooterGameContex
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
 import MapTiles from './MapTiles';
+import RoadmapAvatarLayer from './components/RoadmapAvatarLayer';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
@@ -241,6 +242,34 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             planeYScale={planeYScale}
                             myObfPos={myObfPos}
                             mode={mapMode}
+                        />
+                    )}
+
+                    {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
+                        <RoadmapAvatarLayer
+                            nearbyUsers={nearbyUsers}
+                            myUserId={myUserId}
+                            user={user}
+                            myDisplayName={myDisplayName}
+                            myAvatarUrl={myAvatarUrl}
+                            myStatus={myStatus}
+                            myObfPos={myObfPos}
+                            searchTag={searchTag}
+                            filterDistance={filterDistance}
+                            filterAgeMin={filterAgeMin}
+                            filterAgeMax={filterAgeMax}
+                            scale={scale}
+                            panX={panX}
+                            panY={panY}
+                            planeYScale={planeYScale}
+                            mapMode={mapMode}
+                            onSelectUser={setSelectedUser}
+                            onSelectSelf={() => {
+                                setSelectedUser(null);
+                                setActiveTab('posts');
+                                setMainTab?.('profile');
+                                setIsSheetExpanded(true);
+                            }}
                         />
                     )}
 
