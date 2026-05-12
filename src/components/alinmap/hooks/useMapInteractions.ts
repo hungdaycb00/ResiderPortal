@@ -1,6 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import type { AlinMapMode } from '../constants';
 
 interface UseMapInteractionsProps {
     panX: MotionValue<number>;
@@ -14,13 +15,14 @@ interface UseMapInteractionsProps {
     planeYScale?: MotionValue<number>;
     cameraZ?: MotionValue<number>;
     setCameraZ?: (z: number) => void;
+    mapMode?: AlinMapMode;
 }
 
 export function useMapInteractions({
     panX, panY, scale,
     isLooterGameMode,
     myObfPos, looterBoat, encounter, isInteractionLocked = false,
-    planeYScale, cameraZ, setCameraZ
+    planeYScale, cameraZ, setCameraZ, mapMode,
 }: UseMapInteractionsProps) {
 
     const mapDragRef = useRef<{
@@ -128,9 +130,10 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
+        const dragSpeedMultiplier = mapMode === 'roadmap' ? 10 : 1;
         
-        const deltaX = (e.clientX - dragState.startX) / currentScale;
-        const deltaY = (e.clientY - dragState.startY) / currentScale;
+        const deltaX = ((e.clientX - dragState.startX) / currentScale) * dragSpeedMultiplier;
+        const deltaY = ((e.clientY - dragState.startY) / currentScale) * dragSpeedMultiplier;
         if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
             dragState.moved = true;
         }
@@ -139,7 +142,7 @@ export function useMapInteractions({
         panX.set(dragState.startPanX + deltaX / mapPlaneScale);
         panY.set(dragState.startPanY + deltaY / currentPlaneYScale);
         e.preventDefault();
-    }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked]);
+    }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked, mapMode]);
 
     const handleMapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;

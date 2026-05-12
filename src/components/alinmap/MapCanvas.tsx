@@ -193,7 +193,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         isInteractionLocked: isMapInteractionLocked,
         planeYScale,
         cameraZ,
-        setCameraZ: props.setCameraZ
+        setCameraZ: props.setCameraZ,
+        mapMode,
     });
     
     // Auto-focus camera on combat center
