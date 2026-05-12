@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
+import { motion, MotionValue, useMotionTemplate, useTransform, useMotionValueEvent } from 'framer-motion';
 
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
@@ -16,7 +16,7 @@ import {
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import { BILLBOARD_UPRIGHT_PITCH_DEGREES, type AlinMapMode } from './constants';
+import { BILLBOARD_UPRIGHT_PITCH_DEGREES, ROADMAP_WORLD_SCALE, type AlinMapMode } from './constants';
 
 
 interface MapCanvasProps {
@@ -111,6 +111,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     });
 
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
+    const [debugCameraZ, setDebugCameraZ] = React.useState(() => Math.round(cameraZ.get()));
+    const [debugScale, setDebugScale] = React.useState(() => scale.get());
     const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
     const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
     const billboardPitchDeg = useTransform(
@@ -118,6 +120,29 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         (v) => `${-v + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
     );
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
+    const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
+    const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
+
+    useMotionValueEvent(cameraZ, 'change', (latest) => {
+        setDebugCameraZ(Math.round(latest));
+    });
+
+    useMotionValueEvent(scale, 'change', (latest) => {
+        setDebugScale(latest);
+    });
+
+    useEffect(() => {
+        if (!showRoadmapDiagnostics || !position || mapMode !== 'roadmap') return;
+
+        const timer = window.setTimeout(() => {
+            const scalePct = Math.round(debugScale * 100);
+            const message = `[RoadmapDiag] cameraZ=${debugCameraZ} scale=${scalePct}% worldScale=${sceneWorldScale.toFixed(2)} tilt=${Math.round(tiltAngle.get())}deg`;
+            addLog(message);
+            console.info(message);
+        }, 250);
+
+        return () => window.clearTimeout(timer);
+    }, [addLog, debugCameraZ, debugScale, mapMode, position, sceneWorldScale, showRoadmapDiagnostics, tiltAngle]);
 
     // Sync Boat Center Handler to Context
     useEffect(() => {
@@ -295,6 +320,20 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
             {isSocketConnecting && (
                 <div className="absolute inset-0 z-[210] flex items-center justify-center pointer-events-none">
                     <AlinMapLoadingIcon className="h-8 w-8 animate-spin text-white/30 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" />
+                </div>
+            )}
+
+            {showRoadmapDiagnostics && position && mapMode === 'roadmap' && (
+                <div className="absolute left-3 bottom-[112px] z-[230] pointer-events-none rounded-2xl border border-cyan-400/20 bg-slate-950/80 px-3 py-2 text-[11px] text-cyan-100 shadow-[0_10px_28px_rgba(2,8,23,0.35)] backdrop-blur-md">
+                    <div className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-300/90">
+                        Roadmap diag
+                    </div>
+                    <div className="mt-1 space-y-0.5 font-mono leading-tight">
+                        <div>Z {debugCameraZ}</div>
+                        <div>Scale {Math.round(debugScale * 100)}%</div>
+                        <div>World {sceneWorldScale.toFixed(2)}</div>
+                        <div>Tilt {Math.round(tiltAngle.get())}deg</div>
+                    </div>
                 </div>
             )}
         </div>
