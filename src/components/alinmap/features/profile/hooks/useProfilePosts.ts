@@ -94,7 +94,7 @@ export function useProfilePosts({
       if (data.success) {
         const posts = sortNewestFirst(Array.isArray(data.posts) ? data.posts : []);
         setUserPosts(posts);
-        if (userId !== 'saved') {
+        if (userId !== 'saved' && (userId === 'me' || userId === 'self' || userId === resolvedMyUserId)) {
           syncGalleryFromPosts(posts);
         }
       }
