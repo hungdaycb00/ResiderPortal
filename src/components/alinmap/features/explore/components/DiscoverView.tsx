@@ -95,7 +95,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 <h3 className="truncate text-[20px] font-black uppercase tracking-tighter italic text-gray-900">
                     Explore
                 </h3>
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="hidden md:flex items-center gap-2 min-w-0">
                     <button
                         type="button"
                         onClick={onSearchClick}
@@ -201,6 +201,18 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                         </button>
                     ))}
                 </div>
+            </div>
+
+            {/* Mobile action bar */}
+            <div className="md:hidden sticky bottom-0 py-2.5 bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-end">
+                <button
+                    type="button"
+                    onClick={onSearchClick}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                    aria-label="Search"
+                >
+                    <Search className="h-4 w-4" />
+                </button>
             </div>
         </div>
     );

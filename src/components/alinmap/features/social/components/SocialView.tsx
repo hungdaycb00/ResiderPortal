@@ -55,33 +55,31 @@ const SocialView: React.FC<SocialViewProps> = ({
         <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 pb-20">
                 <div className="flex items-center justify-between px-1">
-                    <div className="flex flex-1 min-w-0 items-center gap-2">
+                    <h3 className="truncate text-lg font-black text-gray-900">Social</h3>
+                    <div className="hidden md:flex items-center gap-2">
                         <button
                             type="button"
                             onClick={onSearchClick}
-                            className="inline-flex order-last ml-auto h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
                             aria-label="Search"
-                            title="Search"
                         >
                             <Search className="h-4 w-4" />
                         </button>
-                        <h3 className="truncate text-lg font-black text-gray-900">Social</h3>
+                        {socialSubTab === 'posts' && !isCreatingPost && (
+                            <button
+                                onClick={() => {
+                                    if (requireAuth && !requireAuth('tao bai viet')) return;
+                                    setPostPrivacy('public');
+                                    setPostIsStarred(false);
+                                    setIsCreatingPost(true);
+                                }}
+                                className="flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                                aria-label="Create post"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
-                    {socialSubTab === 'posts' && !isCreatingPost && (
-                        <button
-                            onClick={() => {
-                                if (requireAuth && !requireAuth('tao bai viet')) return;
-                                setPostPrivacy('public');
-                                setPostIsStarred(false);
-                                setIsCreatingPost(true);
-                            }}
-                            className="flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/20"
-                            aria-label="Create post"
-                            title="Tạo bài viết"
-                        >
-                            <Plus className="w-4 h-4" />
-                        </button>
-                    )}
                 </div>
 
                 {socialSubTab === 'posts' ? (
@@ -121,6 +119,32 @@ const SocialView: React.FC<SocialViewProps> = ({
                         ws={ws}
                     />
                 )}
+
+                {/* Mobile action bar */}
+                <div className="md:hidden sticky bottom-0 py-2.5 bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onSearchClick}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        aria-label="Search"
+                    >
+                        <Search className="h-4 w-4" />
+                    </button>
+                    {socialSubTab === 'posts' && !isCreatingPost && (
+                        <button
+                            onClick={() => {
+                                if (requireAuth && !requireAuth('tao bai viet')) return;
+                                setPostPrivacy('public');
+                                setPostIsStarred(false);
+                                setIsCreatingPost(true);
+                            }}
+                            className="flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+                            aria-label="Create post"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

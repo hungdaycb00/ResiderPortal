@@ -274,8 +274,8 @@ export default function SceneContent({
         {/* Search Target Pin */}
         <group position={[0, 0.08, 0]}>
           <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
-            <circleGeometry args={[1200 * sceneWorldScale, 64]} />
-            <meshBasicMaterial color="#22d3ee" transparent opacity={0.05} />
+            <circleGeometry args={[160 * sceneWorldScale, 64]} />
+            <meshBasicMaterial color="#22d3ee" transparent opacity={0.025} depthWrite={false} />
           </mesh>
         </group>
 

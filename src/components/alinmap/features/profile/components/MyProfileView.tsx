@@ -152,35 +152,34 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between px-1 mb-2">
-                <div className="flex flex-1 min-w-0 items-center gap-2">
+                <h3 className="truncate text-lg font-black text-gray-900">My Profile</h3>
+                <div className="hidden md:flex items-center gap-2">
                     <button
                         type="button"
                         onClick={onSearchClick}
-                        className="inline-flex order-last ml-auto h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
                         aria-label="Search"
-                        title="Search"
                     >
                         <Search className="h-4 w-4" />
                     </button>
-                    <h3 className="truncate text-lg font-black text-gray-900">My Profile</h3>
+                    {user ? (
+                        <button
+                            onClick={() => logout?.()}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                        >
+                            <LogOut className="w-3.5 h-3.5" />
+                            Đăng xuất
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => triggerAuth?.(() => {})}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                        >
+                            <LogIn className="w-3.5 h-3.5" />
+                            Đăng nhập
+                        </button>
+                    )}
                 </div>
-                {user ? (
-                    <button
-                        onClick={() => logout?.()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
-                    >
-                        <LogOut className="w-3.5 h-3.5" />
-                        Đăng xuất
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => triggerAuth?.(() => {})}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
-                    >
-                        <LogIn className="w-3.5 h-3.5" />
-                        Đăng nhập
-                    </button>
-                )}
             </div>
 
             <ProfileHeader
@@ -279,6 +278,35 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     onAuthorClick={setSelectedUser}
                 />
             )}
+
+            {/* Mobile action bar */}
+            <div className="md:hidden sticky bottom-0 py-2.5 bg-white/95 backdrop-blur-md border-t border-gray-100 flex justify-end gap-2">
+                <button
+                    type="button"
+                    onClick={onSearchClick}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                    aria-label="Search"
+                >
+                    <Search className="h-4 w-4" />
+                </button>
+                {user ? (
+                    <button
+                        onClick={() => logout?.()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Đăng xuất
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => triggerAuth?.(() => {})}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                    >
+                        <LogIn className="w-3.5 h-3.5" />
+                        Đăng nhập
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
