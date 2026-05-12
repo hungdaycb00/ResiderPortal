@@ -130,8 +130,8 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
-        const dragSpeedMultiplierX = mapMode === 'roadmap' ? 10 : 1;
-        const dragSpeedMultiplierY = mapMode === 'roadmap' ? 5 : 1;
+        const dragSpeedMultiplierX = mapMode === 'roadmap' ? (10 / 3) : (1 / 3);
+        const dragSpeedMultiplierY = mapMode === 'roadmap' ? (5 / 3) : (1 / 3);
 
         const deltaX = ((e.clientX - dragState.startX) / currentScale) * dragSpeedMultiplierX;
         const deltaY = ((e.clientY - dragState.startY) / currentScale) * dragSpeedMultiplierY;
