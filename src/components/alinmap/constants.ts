@@ -49,6 +49,14 @@ export const CAMERA_HEIGHT_RATIO_DEFAULT = 0.22 + CAMERA_HEIGHT_DEFAULT_PCT / 62
 export const LIKE_THRESHOLD_FOR_SCALE = 20;
 export const FEATURED_BILLBOARD_FAR_SCALE = 1.35;
 export const BILLBOARD_VISIBLE_DISTANCE_KM = 3.5;
+export const ROADMAP_TILE_SIZE = 256;
+export const ROADMAP_MIN_ZOOM = 3;
+export const ROADMAP_MAX_ZOOM = 20;
+export const ROADMAP_TILE_SCALE_MIN = 0.9;
+export const ROADMAP_TILE_SCALE_MAX = 2.4;
+export const ROADMAP_ZOOM_BASE = 15.6;
+export const ROADMAP_ZOOM_SCALE_FACTOR = 1.25;
+export const ROADMAP_ZOOM_SLOPE = 1.7;
 
 export type AlinMapMode = 'roadmap' | 'satellite';
 
@@ -66,6 +74,18 @@ export const getRoadmapCenterFromPan = (
         lng: base.lng - panX / MAP_PLANE_SCALE / DEGREES_TO_PX,
     };
 };
+
+export const getRoadmapTileZoom = (visualScale: number) => {
+    const safeScale = Math.max(visualScale || 1, 0.05);
+    return clamp(
+        Math.round(ROADMAP_ZOOM_BASE + Math.log2(safeScale / ROADMAP_ZOOM_SCALE_FACTOR) * ROADMAP_ZOOM_SLOPE),
+        ROADMAP_MIN_ZOOM,
+        ROADMAP_MAX_ZOOM
+    );
+};
+
+export const getRoadmapTileScale = (visualScale: number) =>
+    clamp((visualScale || 1) / 1.25, ROADMAP_TILE_SCALE_MIN, ROADMAP_TILE_SCALE_MAX);
 
 export const getDefaultVisualScaleForMapMode = (mapMode: AlinMapMode, isLooterGameMode = false) => {
     if (isLooterGameMode) return LOOTER_VISUAL_SCALE_DEFAULT;

@@ -116,6 +116,37 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
                     </div>
                 )}
 
+                {isRoadmapNode && user?.gallery?.active ? (
+                    <div
+                        onClick={(e) => { e.stopPropagation(); onClick(); }}
+                        className={`absolute -top-11 left-1/2 -translate-x-1/2 w-[118px] overflow-hidden rounded-2xl border bg-white/95 px-2 py-1.5 shadow-[0_8px_18px_rgba(15,23,42,0.12)] backdrop-blur-md pointer-events-auto ${isFeaturedBillboard ? 'border-amber-200' : 'border-white/75'}`}
+                    >
+                        <div className="flex items-center gap-1.5">
+                            {user.gallery.images?.[0] ? (
+                                <img
+                                    src={normalizeImageUrl(user.gallery.images[0])}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="h-5 w-5 shrink-0 rounded-md object-cover"
+                                    alt=""
+                                />
+                            ) : (
+                                <div className={`h-5 w-5 shrink-0 rounded-md text-[8px] font-black leading-5 text-center ${isFeaturedBillboard ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'}`}>
+                                    {String(user.gallery?.title || 'AD').slice(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                                <div className="truncate text-[8px] font-black uppercase leading-tight text-slate-500">
+                                    {isFeaturedBillboard ? 'Featured' : 'Billboard'}
+                                </div>
+                                <div className="truncate text-[10px] font-extrabold leading-tight text-slate-900">
+                                    {String(user.gallery?.title || displayName)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
                 <div className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none ${isRoadmapNode ? '-bottom-8 gap-0.5' : '-bottom-10 gap-1'}`}>
                     <div className={`${isRoadmapNode ? 'max-w-[140px] rounded-full border border-white/85 bg-white/96 px-3 py-1.5 shadow-[0_6px_14px_rgba(15,23,42,0.12)] backdrop-blur-md' : 'max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md'}`}>
                         <span className={`block truncate leading-none font-extrabold tracking-tight text-slate-900 ${isRoadmapNode ? 'max-w-[110px] text-[12px]' : 'max-w-[360px] text-[50px] sm:text-[55px]'}`}>

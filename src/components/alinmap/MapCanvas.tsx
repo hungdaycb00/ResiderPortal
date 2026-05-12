@@ -253,6 +253,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             myDisplayName={myDisplayName}
                             myAvatarUrl={myAvatarUrl}
                             myStatus={myStatus}
+                            galleryActive={galleryActive}
+                            galleryTitle={galleryTitle}
+                            galleryImages={galleryImages}
                             myObfPos={myObfPos}
                             searchTag={searchTag}
                             filterDistance={filterDistance}
@@ -271,6 +274,14 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 setIsSheetExpanded(true);
                             }}
                         />
+                    )}
+
+                    {!isLooterGameMode && mapMode === 'roadmap' && (
+                        <div className="pointer-events-none absolute left-1/2 top-4 z-[14] -translate-x-1/2">
+                            <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
+                                {mapMode} / {currentProvince || 'Global'}
+                            </div>
+                        </div>
                     )}
 
                     <AlinMapThreeScene

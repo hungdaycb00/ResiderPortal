@@ -473,11 +473,13 @@ export default function SceneContent({
         ))}
 
         {/* Mode label */}
-        <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
-          <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
-            {mapMode} / {currentProvince || 'Global'}
-          </div>
-        </Html>
+        {!isRoadmapOverlay && (
+          <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
+            <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
+              {mapMode} / {currentProvince || 'Global'}
+            </div>
+          </Html>
+        )}
       </group>
 
       <CameraRig

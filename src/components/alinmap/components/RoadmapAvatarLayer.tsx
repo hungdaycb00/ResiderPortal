@@ -1,7 +1,14 @@
 import React from 'react';
 import { MotionValue } from 'framer-motion';
 import SpatialNode from '../SpatialNode';
-import { clamp, getRoadmapCenterFromPan, type AlinMapMode } from '../constants';
+import {
+  clamp,
+  getRoadmapCenterFromPan,
+  getRoadmapTileScale,
+  getRoadmapTileZoom,
+  ROADMAP_TILE_SIZE,
+  type AlinMapMode,
+} from '../constants';
 
 interface RoadmapAvatarLayerProps {
   nearbyUsers: any[];
@@ -10,6 +17,9 @@ interface RoadmapAvatarLayerProps {
   myDisplayName: string;
   myAvatarUrl: string;
   myStatus: string;
+  galleryActive: boolean;
+  galleryTitle: string;
+  galleryImages: string[];
   myObfPos: { lat: number; lng: number } | null;
   searchTag: string;
   filterDistance: number;
@@ -24,10 +34,6 @@ interface RoadmapAvatarLayerProps {
   onSelectUser?: (user: any) => void;
   onSelectSelf?: (user: any) => void;
 }
-
-const TILE_SIZE = 256;
-const MIN_ZOOM = 3;
-const MAX_ZOOM = 19;
 
 const useViewportSize = () => {
   const [size, setSize] = React.useState(() => ({
@@ -78,29 +84,24 @@ const latToTileY = (lat: number, zoom: number) => {
   return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * 2 ** zoom;
 };
 
-const getTileZoom = (visualScale: number) => {
-  const safeScale = Math.max(visualScale || 1, 0.05);
-  return clamp(Math.round(14 + Math.log2(safeScale / 1.35) * 1.45), MIN_ZOOM, MAX_ZOOM);
-};
-
 const toScreenPosition = (
   center: { lat: number; lng: number },
   target: { lat: number; lng: number },
   visualScale: number,
   viewport: { width: number; height: number }
 ) => {
-  const zoom = getTileZoom(visualScale);
-  const tileScale = clamp(visualScale / 1.25, 0.9, 2.4);
+  const zoom = getRoadmapTileZoom(visualScale);
+  const tileScale = getRoadmapTileScale(visualScale);
   const centerTileX = lngToTileX(center.lng, zoom);
   const centerTileY = latToTileY(center.lat, zoom);
   const targetTileX = lngToTileX(target.lng, zoom);
   const targetTileY = latToTileY(target.lat, zoom);
-  const centerPixelX = centerTileX * TILE_SIZE;
-  const centerPixelY = centerTileY * TILE_SIZE;
+  const centerPixelX = centerTileX * ROADMAP_TILE_SIZE;
+  const centerPixelY = centerTileY * ROADMAP_TILE_SIZE;
 
   return {
-    x: viewport.width / 2 + (targetTileX * TILE_SIZE - centerPixelX) * tileScale,
-    y: viewport.height / 2 + (targetTileY * TILE_SIZE - centerPixelY) * tileScale,
+    x: viewport.width / 2 + (targetTileX * ROADMAP_TILE_SIZE - centerPixelX) * tileScale,
+    y: viewport.height / 2 + (targetTileY * ROADMAP_TILE_SIZE - centerPixelY) * tileScale,
   };
 };
 
@@ -111,6 +112,9 @@ const RoadmapAvatarLayer: React.FC<RoadmapAvatarLayerProps> = ({
   myDisplayName,
   myAvatarUrl,
   myStatus,
+  galleryActive,
+  galleryTitle,
+  galleryImages,
   myObfPos,
   searchTag,
   filterDistance,
@@ -139,6 +143,12 @@ const RoadmapAvatarLayer: React.FC<RoadmapAvatarLayerProps> = ({
   const nodes = React.useMemo(() => {
     if (!center || !myObfPos) return [];
     const term = String(searchTag || '').toLowerCase();
+    const userGallery = user?.gallery ?? {};
+    const selfGalleryActive = galleryActive || !!userGallery.active;
+    const selfGalleryTitle = galleryTitle || String(userGallery.title || '');
+    const selfGalleryImages = galleryImages.length > 0
+      ? galleryImages
+      : (Array.isArray(userGallery.images) ? userGallery.images : []);
     const filtered = nearbyUsers.filter((u) => {
       if (u.id === myUserId || u.id === user?.uid) return false;
       if (u.lat == null || u.lng == null || Number.isNaN(u.lat) || Number.isNaN(u.lng)) return false;
@@ -161,6 +171,11 @@ const RoadmapAvatarLayer: React.FC<RoadmapAvatarLayerProps> = ({
       username: myDisplayName || user?.displayName || 'Me',
       avatar_url: myAvatarUrl || user?.photoURL || '',
       status: myStatus,
+      gallery: selfGalleryActive ? {
+        active: true,
+        title: selfGalleryTitle,
+        images: selfGalleryImages,
+      } : { active: false, title: '', images: [] },
       isSelf: true,
     };
 
@@ -171,7 +186,30 @@ const RoadmapAvatarLayer: React.FC<RoadmapAvatarLayerProps> = ({
       ...entry,
       screenPosition: toScreenPosition(center, entry.pos, visualScale, viewport),
     }));
-  }, [center, myObfPos, nearbyUsers, myDisplayName, myAvatarUrl, myStatus, myUserId, user?.uid, user?.displayName, user?.photoURL, searchTag, filterDistance, filterAgeMin, filterAgeMax, visualScale, viewport]);
+  }, [
+    center,
+    myObfPos,
+    nearbyUsers,
+    myDisplayName,
+    myAvatarUrl,
+    myStatus,
+    galleryActive,
+    galleryTitle,
+    galleryImages,
+    myUserId,
+    user?.uid,
+    user?.displayName,
+    user?.photoURL,
+    user?.gallery?.active,
+    user?.gallery?.title,
+    user?.gallery?.images,
+    searchTag,
+    filterDistance,
+    filterAgeMin,
+    filterAgeMax,
+    visualScale,
+    viewport,
+  ]);
 
   if (mapMode !== 'roadmap' || isLooterGameMode || !center || !myObfPos) return null;
 
