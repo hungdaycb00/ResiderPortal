@@ -55,11 +55,11 @@ const SocialView: React.FC<SocialViewProps> = ({
         <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 pb-20">
                 <div className="flex items-center justify-between px-1">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex flex-1 min-w-0 items-center gap-2">
                         <button
                             type="button"
                             onClick={onSearchClick}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                            className="order-last ml-auto inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
                             aria-label="Search"
                             title="Search"
                         >

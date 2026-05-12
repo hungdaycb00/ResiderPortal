@@ -152,11 +152,11 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between px-1 mb-2">
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex flex-1 min-w-0 items-center gap-2">
                     <button
                         type="button"
                         onClick={onSearchClick}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        className="order-last ml-auto inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
                         aria-label="Search"
                         title="Search"
                     >
