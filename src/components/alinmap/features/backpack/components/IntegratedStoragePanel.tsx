@@ -227,6 +227,7 @@ export default function IntegratedStoragePanel({ variant = 'overlay' }: Integrat
 
           <div
             ref={scrollRef}
+            data-immersive-scroll
             className={`flex-1 min-h-0 overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''} ${isTransporting ? 'pointer-events-none' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -396,6 +397,7 @@ export default function IntegratedStoragePanel({ variant = 'overlay' }: Integrat
 
           <div 
             ref={scrollRef}
+            data-immersive-scroll
             className={`h-[calc(40vh-56px)] overflow-y-auto subtle-scrollbar cursor-grab active:cursor-grabbing ${isDraggingScroll ? 'select-none' : ''} ${isTransporting ? 'pointer-events-none' : ''}`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}

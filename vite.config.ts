@@ -6,6 +6,9 @@ import {defineConfig, loadEnv} from 'vite';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   const stylesheetVersion = Date.now().toString(36);
+  const buildVersion = mode === 'development'
+    ? 'dev'
+    : new Date().toISOString();
   return {
     plugins: [
       react(),
@@ -25,6 +28,7 @@ export default defineConfig(({mode}) => {
     ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      __APP_BUILD_VERSION__: JSON.stringify(buildVersion),
     },
     resolve: {
       alias: {

@@ -221,7 +221,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             onOpenChat={onOpenChat}
             selectedUser={nav.selectedUser}
         >
-        <div className="fixed inset-0 z-[100] isolate overflow-hidden bg-[#13151a] select-none">
+        <div className="alinmap-viewport fixed inset-0 z-[100] isolate overflow-hidden bg-[#13151a] select-none">
             <div className="absolute inset-0 z-0">
                 <MapCanvas
                     position={geo.position} isConsentOpen={geo.isConsentOpen}

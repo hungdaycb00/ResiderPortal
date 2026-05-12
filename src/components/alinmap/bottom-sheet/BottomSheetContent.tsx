@@ -183,6 +183,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
 
     return (
         <div
+            data-immersive-scroll
             className="flex-1 overflow-y-auto px-4 pb-32 md:pb-6 md:pt-[76px] relative z-[100] subtle-scrollbar"
             style={{ direction: 'rtl' }}
             onPointerDown={(e) => e.stopPropagation()}

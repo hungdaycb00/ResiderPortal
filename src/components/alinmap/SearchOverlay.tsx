@@ -130,7 +130,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto subtle-scrollbar bg-gray-50">
+      <div className="flex-1 overflow-y-auto subtle-scrollbar bg-gray-50" data-immersive-scroll>
         {searchTag.trim().length >= 2 ? (
           <div className="bg-white min-h-full">
              <SheetSearchResults

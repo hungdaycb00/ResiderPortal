@@ -16,6 +16,7 @@ interface InventoryItemProps {
   isDragging?: boolean;
   isGhost?: boolean;
   isInvalid?: boolean;
+  outsideBag?: boolean;
   onPointerDown?: (e: React.PointerEvent, item: LooterItem) => void;
   onDoubleClick?: (item: LooterItem) => void;
   onClick?: () => void;
@@ -29,6 +30,7 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
   isDragging = false,
   isGhost = false,
   isInvalid = false,
+  outsideBag = false,
   onPointerDown,
   onDoubleClick,
   onClick,
@@ -48,10 +50,11 @@ const InventoryItem: React.FC<InventoryItemProps> = React.memo(({
 
   return (
     <motion.div
-      className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm 
-        ${isDragging ? 'opacity-20 z-10' : 'z-20'} 
+      className={`absolute cursor-grab active:cursor-grabbing border rounded-sm shadow-sm
+        ${isDragging ? 'opacity-20 z-10' : 'z-20'}
         ${isGhost ? 'opacity-40 pointer-events-none z-10' : ''}
-        ${isInvalid ? 'border-red-500 bg-red-500/20' : (ITEM_RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')} 
+        ${outsideBag && !isDragging && !isGhost ? 'opacity-75 border-dashed' : ''}
+        ${isInvalid ? 'border-red-500 bg-red-500/20' : (ITEM_RARITY_COLORS[item.rarity]?.split(' ')[0] || 'border-white/20')}
         ${className}`}
       style={{
         ...style,

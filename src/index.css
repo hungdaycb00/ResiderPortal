@@ -126,9 +126,22 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Hỗ trợ tính năng Fullscreen cuộn ẩn thanh địa chỉ */
-  min-height: 200vh;
   width: 100vw;
+}
+
+html.alinmap-immersive-root,
+body.alinmap-immersive-shell {
+  overscroll-behavior: none;
+}
+
+body.alinmap-immersive-shell {
+  min-height: 200vh;
+  overflow-x: hidden;
+}
+
+.alinmap-viewport {
+  height: 100dvh;
+  height: var(--alinmap-vvh, 100dvh);
 }
 
 /* Custom animations for the portal */

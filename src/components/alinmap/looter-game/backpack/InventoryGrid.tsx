@@ -6,6 +6,7 @@ import InventoryItem from './components/InventoryItem';
 import GridBackground from './components/GridBackground';
 import ItemPopup from './components/ItemPopup';
 import { useInventoryDrag } from './hooks/useInventoryDrag';
+import { isItemFullyInsideBag } from '../utils/looterHelpers';
 
 interface InventoryGridProps {
   items: LooterItem[];
@@ -86,6 +87,15 @@ interface InventoryGridProps {
 
   const gridItems = React.useMemo(() => items.filter((i) => i.gridX >= 0), [items]);
 
+  const outsideBagUids = React.useMemo(() => {
+    if (!activeBag || activeBag.gridX < 0) return new Set<string>();
+    return new Set(
+      items
+        .filter(i => i.gridX >= 0 && !isItemFullyInsideBag(i, activeBag))
+        .map(i => i.uid)
+    );
+  }, [items, activeBag]);
+
   React.useEffect(() => {
     const staging = items.filter(i => i.gridX < 0);
     if (staging.length === 0) return;
@@ -111,6 +121,11 @@ interface InventoryGridProps {
       for (let y = 0; y <= gridH - h; y++) {
         for (let x = 0; x <= gridW - w; x++) {
           if (canUseSpot(x, y, true, false)) return { x, y };
+        }
+      }
+      for (let y = 0; y <= gridH - h; y++) {
+        for (let x = 0; x <= gridW - w; x++) {
+          if (canUseSpot(x, y, false, true)) return { x, y };
         }
       }
       return null;
@@ -163,6 +178,7 @@ interface InventoryGridProps {
               item={item}
               cellSize={cellSize}
               isDragging={draggingItem?.uid === item.uid}
+              outsideBag={outsideBagUids.has(item.uid)}
               style={{ left: item.gridX * cellSize, top: item.gridY * cellSize }}
               onPointerDown={readOnly ? undefined : onPointerDown}
               onDoubleClick={readOnly ? undefined : handleDoubleClick}

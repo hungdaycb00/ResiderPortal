@@ -45,10 +45,6 @@
         }
 
         function clearLegacyBrowserCaches() {
-          const key = 'legacy_asset_cache_cleanup_v3';
-          if (localStorage.getItem(key) === 'done') return;
-          localStorage.setItem(key, 'done');
-
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
               registrations.forEach(function(registration) {

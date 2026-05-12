@@ -28,6 +28,7 @@ import { AppModals } from './components/AppModals';
 export type { User };
 
 export default function App() {
+  const appVersion = typeof window !== 'undefined' ? (window.__BUILD_VERSION__ || 'dev') : 'dev';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGameListOpen, setIsGameListOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
@@ -190,6 +191,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#13151a] text-white font-sans md:pb-0 relative overflow-x-hidden">
+      <div className="fixed left-3 top-3 z-[1000] pointer-events-none">
+        <div className="rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[11px] font-medium tracking-[0.18em] text-white/70 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.22)]">
+          {appVersion}
+        </div>
+      </div>
+
       {/* Premium Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse-slow" />

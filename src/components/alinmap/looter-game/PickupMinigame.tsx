@@ -64,6 +64,7 @@ export const PickupMinigame: React.FC = () => {
                 className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-950/90 p-3 backdrop-blur-md md:p-6"
             >
                 <div
+                    data-immersive-scroll
                     className="flex max-h-[92dvh] w-full max-w-[min(94vw,720px)] items-center justify-center overflow-auto rounded-2xl border border-cyan-500/30 bg-slate-950/95 p-3 shadow-2xl md:p-5"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}

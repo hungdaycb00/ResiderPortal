@@ -1,17 +1,14 @@
-import {lazy, StrictMode, Suspense} from 'react';
-
-// Build version identifier — changing this forces new asset hashes
-import {createRoot} from 'react-dom/client';
-import {BrowserRouter} from 'react-router-dom';
+import React, { lazy, StrictMode, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 import { checkAppVersion } from './utils/cacheBuster';
 
-// Build version identifier — changing this forces storage cleanup
-export const BUILD_VERSION = '2026.05.11.1';
+declare const __APP_BUILD_VERSION__: string;
 
-// Kiểm tra và dọn dẹp dữ liệu cũ nếu phát hiện phiên bản mới
-checkAppVersion(BUILD_VERSION);
+// Build version identifier - injected at build time
+export const BUILD_VERSION = __APP_BUILD_VERSION__ || 'dev';
 
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
@@ -45,20 +42,31 @@ if (typeof window !== 'undefined' && 'ontouchstart' in window) {
   );
 }
 
-const DevClickToComponent = import.meta.env.DEV
-  ? lazy(() => import('click-to-react-component').then(module => ({default: module.ClickToComponent})))
-  : null;
+async function bootstrap() {
+  // Kiểm tra và dọn cache cũ nếu phát hiện phiên bản mới
+  const shouldReload = await checkAppVersion(BUILD_VERSION);
+  if (shouldReload) {
+    return;
+  }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      {DevClickToComponent && (
-        <Suspense fallback={null}>
-          <DevClickToComponent />
-        </Suspense>
-      )}
-      <App />
-    </BrowserRouter>
-  </StrictMode>,
-);
-window.__BUILD_VERSION__ = BUILD_VERSION;
+  window.__BUILD_VERSION__ = BUILD_VERSION;
+
+  const DevClickToComponent = import.meta.env.DEV
+    ? lazy(() => import('click-to-react-component').then((module) => ({ default: module.ClickToComponent })))
+    : null;
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <BrowserRouter>
+        {DevClickToComponent && (
+          <Suspense fallback={null}>
+            <DevClickToComponent />
+          </Suspense>
+        )}
+        <App />
+      </BrowserRouter>
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

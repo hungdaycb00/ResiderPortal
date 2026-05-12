@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import BottomSheet from './BottomSheet';
 import ContextMenu from './ContextMenu';
+import FullscreenToggle from './components/FullscreenToggle';
 import MapControls from './MapControls';
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
@@ -12,7 +13,7 @@ import PostDetailOverlay from './features/profile/components/PostDetailOverlay';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
 import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
-import { useLooterActions } from './looter-game/LooterGameContext';
+import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { usePosts } from './features/profile/hooks/usePosts';
@@ -141,6 +142,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const looterUi = useLooterState();
 
   const isSelectedPostSelf = selectedPost
     ? (selectedPost.author?.id === wsCtx.myUserId || selectedPost.user_id === wsCtx.myUserId)
@@ -160,11 +162,27 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   }, [isSearchOverlayOpen]);
 
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
+  const shouldHideFullscreenHandle = !!(
+    isSearchOverlayOpen ||
+    selectedPost ||
+    contextMenu ||
+    pickupRewardItem ||
+    isTierSelectorOpen ||
+    looterUi.encounter ||
+    looterUi.combatResult ||
+    looterUi.showCurseModal ||
+    looterUi.showMinigame ||
+    looterUi.isItemDragging
+  );
 
   if (!portalTarget) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[320] isolate pointer-events-none">
+      <div className="pointer-events-auto">
+        <FullscreenToggle isDesktop={isDesktop} blocked={shouldHideFullscreenHandle} />
+      </div>
+
       <SearchHeader
         searchTag={searchTag}
         setSearchTag={setSearchTag}

@@ -76,7 +76,7 @@ export function useInventoryDrag({
         if (!shape || shape[r][c]) {
           const bagR = gy + r - bag.gridY;
           const bagC = gx + c - bag.gridX;
-          
+
           if (bagShape && (!bagShape[bagR] || !bagShape[bagR][bagC])) {
             return false;
           }
@@ -85,6 +85,24 @@ export function useInventoryDrag({
     }
 
     return true;
+  }, []);
+
+  const doesItemOverlapBag = useCallback((item: LooterItem, gx: number, gy: number, bag: BagItem) => {
+    const w = item.gridW || 1;
+    const h = item.gridH || 1;
+    const shape = item.shape;
+
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        if (shape && !shape[r][c]) continue;
+        const bagR = gy + r - bag.gridY;
+        const bagC = gx + c - bag.gridX;
+        if (bagR >= 0 && bagR < bag.height && bagC >= 0 && bagC < bag.width && bag.shape?.[bagR]?.[bagC]) {
+          return true;
+        }
+      }
+    }
+    return false;
   }, []);
 
   const checkOverlap = useCallback((item: LooterItem, gridX: number, gridY: number, currentItems: LooterItem[]) => {
@@ -254,9 +272,10 @@ export function useInventoryDrag({
       return;
     }
 
-    // 2. Kiểm tra item có nằm trong vùng balo active không
-    if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
-      // Nằm ngoài balo -> Quay về vị trí cũ
+    // 2. Nếu item chạm vào vùng balo -> phải nằm hoàn toàn trong balo
+    //    Nếu item nằm ngoài vùng balo -> cho phép đặt tự do (không ràng buộc)
+    if (activeBag && doesItemOverlapBag(draggingItem, gx, gy, activeBag) && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) {
+      // Chạm balo nhưng không nằm gọn -> Quay về vị trí cũ
       setDraggingItem(null);
       dispatchDrag({ type: 'RESET' });
       return;
@@ -272,7 +291,7 @@ export function useInventoryDrag({
 
     setDraggingItem(null);
     dispatchDrag({ type: 'RESET' });
-  }, [draggingItem, dragState.gridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemCompletelyInBag]);
+  }, [draggingItem, dragState.gridPos, items, checkOverlap, onItemLayoutChange, onDropOutside, activeBag, isItemCompletelyInBag, doesItemOverlapBag]);
 
   useEffect(() => {
     if (dragStartInfo || draggingItem || panStart) {
@@ -296,7 +315,7 @@ export function useInventoryDrag({
     isInvalidPosition: (gx: number, gy: number) => {
       if (!draggingItem) return false;
       if (checkOverlap(draggingItem, gx, gy, items)) return true;
-      if (activeBag && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) return true;
+      if (activeBag && doesItemOverlapBag(draggingItem, gx, gy, activeBag) && !isItemCompletelyInBag(draggingItem, gx, gy, activeBag)) return true;
       return false;
     }
   };
