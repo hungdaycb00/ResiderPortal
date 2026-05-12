@@ -34,6 +34,11 @@ const getImmersiveScrollOffset = () => {
   return Math.max(MIN_SCROLL_OFFSET_PX, Math.round(viewportHeight * 0.75));
 };
 
+const getFullscreenElement = () => {
+  if (typeof document === 'undefined') return null;
+  return document.fullscreenElement as Element | null;
+};
+
 const isElementScrollable = (element: HTMLElement) => {
   return element.scrollHeight > element.clientHeight + 1;
 };
@@ -78,10 +83,27 @@ export function useMobileImmersiveMode({
       bodyClass: document.body.classList.contains(BODY_CLASS),
       rootClass: document.documentElement.classList.contains(HTML_CLASS),
       viewportHeight: window.visualViewport?.height || window.innerHeight,
+      fullscreenEnabled: document.fullscreenEnabled,
+      fullscreenElement: !!document.fullscreenElement,
     });
 
     window.visualViewport?.addEventListener('resize', updateViewportHeight);
     window.addEventListener('resize', updateViewportHeight);
+    const handleFullscreenChange = () => {
+      logImmersive('fullscreenchange', {
+        fullscreenElement: !!document.fullscreenElement,
+        fullscreenEnabled: document.fullscreenEnabled,
+      });
+      setIsImmersive(!!document.fullscreenElement || window.scrollY > 24);
+    };
+    const handleFullscreenError = () => {
+      logImmersive('fullscreenerror', {
+        fullscreenEnabled: document.fullscreenEnabled,
+        fullscreenElement: !!document.fullscreenElement,
+      });
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('fullscreenerror', handleFullscreenError);
 
     return () => {
       document.body.classList.remove(BODY_CLASS);
@@ -89,6 +111,8 @@ export function useMobileImmersiveMode({
       document.documentElement.style.removeProperty('--alinmap-vvh');
       window.visualViewport?.removeEventListener('resize', updateViewportHeight);
       window.removeEventListener('resize', updateViewportHeight);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('fullscreenerror', handleFullscreenError);
       window.scrollTo({ top: 0, behavior: 'auto' });
       logImmersive('unmount');
     };
@@ -178,6 +202,41 @@ export function useMobileImmersiveMode({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [enabled]);
 
+  const requestNativeFullscreen = React.useCallback(async () => {
+    if (typeof document === 'undefined') return false;
+    if (!document.fullscreenEnabled) {
+      logImmersive('fullscreen-not-enabled');
+      return false;
+    }
+    if (getFullscreenElement()) {
+      logImmersive('fullscreen-already-active');
+      return true;
+    }
+
+    try {
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      logImmersive('fullscreen-requested');
+      return true;
+    } catch (error) {
+      logImmersive('fullscreen-request-failed', error);
+      return false;
+    }
+  }, []);
+
+  const exitNativeFullscreen = React.useCallback(async () => {
+    if (typeof document === 'undefined') return false;
+    if (!getFullscreenElement()) return false;
+
+    try {
+      await document.exitFullscreen();
+      logImmersive('fullscreen-exit-requested');
+      return true;
+    } catch (error) {
+      logImmersive('fullscreen-exit-failed', error);
+      return false;
+    }
+  }, []);
+
   const stopDragging = React.useCallback(() => {
     setIsDragging(false);
     setDragOffsetY(0);
@@ -228,14 +287,30 @@ export function useMobileImmersiveMode({
     const now = Date.now();
     if (now >= coolDownUntilRef.current && dragOffsetY <= -SWIPE_THRESHOLD_PX) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
-      window.scrollTo({ top: getImmersiveScrollOffset(), behavior: 'smooth' });
-      setIsImmersive(true);
+      void requestNativeFullscreen().then((didFullscreen) => {
+        if (!didFullscreen) {
+          window.scrollTo({ top: getImmersiveScrollOffset(), behavior: 'smooth' });
+          setIsImmersive(true);
+          logImmersive('swipe-up-fallback-scroll', {
+            dragOffsetY,
+            targetScroll: getImmersiveScrollOffset(),
+          });
+          return;
+        }
+        setIsImmersive(true);
+      });
       logImmersive('swipe-up', {
         dragOffsetY,
         targetScroll: getImmersiveScrollOffset(),
       });
     } else if (now >= coolDownUntilRef.current && dragOffsetY >= SWIPE_THRESHOLD_PX) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
+      void exitNativeFullscreen().then((didExit) => {
+        if (!didExit) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        setIsImmersive(false);
+      });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setIsImmersive(false);
       logImmersive('swipe-down', {
