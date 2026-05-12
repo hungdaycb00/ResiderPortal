@@ -11,7 +11,6 @@ import SearchOverlay from './SearchOverlay';
 import PickupRewardModal from './looter-game/components/PickupRewardModal';
 import PostDetailOverlay from './features/profile/components/PostDetailOverlay';
 import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
-import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
@@ -36,7 +35,6 @@ interface AlinMapUiOverlayProps {
   nav: ReturnType<typeof useMapNavigation>;
   geo: ReturnType<typeof useGeolocation>;
   wsCtx: ReturnType<typeof useAlinWebSocket>;
-  search: ReturnType<typeof useDesktopSearch>;
   posts: ReturnType<typeof usePosts>;
   user: any;
   friends: any[];
@@ -90,7 +88,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   nav,
   geo,
   wsCtx,
-  search,
   posts,
   user,
   friends,
@@ -183,27 +180,15 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         <FullscreenToggle isDesktop={isDesktop} blocked={shouldHideFullscreenHandle} />
       </div>
 
-      <SearchHeader
-        searchTag={searchTag}
-        setSearchTag={setSearchTag}
-        isDesktop={isDesktop}
-        isSheetExpanded={isSheetExpanded}
-        setIsSheetExpanded={nav.setIsSheetExpanded}
-        setIsSearchOverlayOpen={setIsSearchOverlayOpen}
-        isLooterGameMode={isLooterGameMode}
-        mainTab={mainTab}
+        <SearchHeader
+          isDesktop={isDesktop}
+          isSheetExpanded={isSheetExpanded}
+          setIsSearchOverlayOpen={setIsSearchOverlayOpen}
+          isLooterGameMode={isLooterGameMode}
+          mainTab={mainTab}
         myAvatarUrl={myAvatarUrl}
         myDisplayName={myDisplayName}
         handleTabClick={nav.handleTabClick}
-        showDesktopResults={search.showDesktopResults}
-        setShowDesktopResults={search.setShowDesktopResults}
-        isSearchingDesktop={search.isSearchingDesktop}
-        desktopSearchResults={search.desktopSearchResults}
-        nearbyUsers={wsCtx.nearbyUsers}
-        setSelectedUser={nav.setSelectedUser}
-        setActiveTab={nav.setActiveTab}
-        handlePlayGame={handlePlayGame}
-        weatherData={geo.weatherData}
         currentProvince={currentProvince}
         myObfPos={myObfPos}
         onWeatherClick={() => setIsWeatherWidgetExpanded(true)}

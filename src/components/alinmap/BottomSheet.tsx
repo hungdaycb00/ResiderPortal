@@ -147,6 +147,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     shouldRenderSheetContent={shouldRenderSheetContent}
                     setExploreSubTab={setExploreSubTab}
                     setSocialSubTab={setSocialSubTab}
+                    onSearchClick={() => setIsSearchOverlayOpen?.(true)}
                     onEnterWorld={handleEnterWorld}
                     onPostClick={onPostClick}
                 />

@@ -9,7 +9,6 @@ import { ProfileProvider } from './features/profile/context/ProfileContext';
 import { usePosts } from './features/profile/hooks/usePosts';
 import { SocialProvider } from './features/social/context/SocialContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
-import { useDesktopSearch } from './hooks/useDesktopSearch';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
@@ -140,9 +139,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setGalleryImages: wsCtx.setGalleryImages,
     });
 
-    // --- Desktop Search ---
-    const search = useDesktopSearch(searchTag, nav.isDesktop);
-
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
         if (!user && Array.isArray(geo.position) && geo.position.length >= 2 && !geo.myObfPos) {
@@ -258,7 +254,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 nav={nav}
                 geo={geo}
                 wsCtx={wsCtx}
-                search={search}
                 posts={posts}
                 user={user}
                 friends={friends}

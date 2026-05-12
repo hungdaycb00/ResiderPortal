@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Brain, Zap, Sword, Trophy } from 'lucide-react';
+import { Brain, Plus, Search, Sword, Trophy, Zap } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 import GameCard from '../../../../GameCard';
 import GameSlider from '../../../../GameSlider';
@@ -9,6 +9,7 @@ interface DiscoverViewProps {
     nearbyUsers: any[];
     setSearchTag: (tag: string) => void;
     handlePlayGame?: (game: any) => void;
+    onSearchClick?: () => void;
 }
 
 const FEATURED_LIMIT = 8;
@@ -31,7 +32,7 @@ const keywordsMap: Record<string, string[]> = {
 const getGameTitle = (game: any) => game.title || game.name || 'Untitled Game';
 const getGameImage = (game: any) => game.image || game.thumbnail || game.cover || '';
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame, onSearchClick }) => {
     const gameList = React.useMemo(() => Array.isArray(games) ? games.filter(Boolean) : [], [games]);
 
     const uniqueHighRated = React.useMemo(() => (
@@ -77,6 +78,23 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
 
     return (
         <div className="flex flex-col gap-6 pb-20">
+            <div className="flex items-center justify-between px-1 pt-1">
+                <h3 className="truncate text-[20px] font-black uppercase tracking-tighter italic text-gray-900">
+                    Explore
+                </h3>
+                <div className="flex items-center gap-2 min-w-0">
+                    <button
+                        type="button"
+                        onClick={onSearchClick}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        aria-label="Search"
+                        title="Search"
+                    >
+                        <Search className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
             {uniqueHighRated.length > 0 && (
                 <section className="mb-2 content-auto">
                     <div className="flex items-center justify-between mb-4">

@@ -21,6 +21,7 @@ interface BottomSheetContentProps extends BottomSheetProps {
     shouldRenderSheetContent: boolean;
     setExploreSubTab: (tab: ExploreSubTab) => void;
     setSocialSubTab: (tab: SocialSubTab) => void;
+    onSearchClick: () => void;
     onEnterWorld: () => void;
 }
 
@@ -77,6 +78,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     setSelectedUser,
     setExploreSubTab,
     setSocialSubTab,
+    onSearchClick,
     shouldHideSearch,
     shouldRenderSheetContent,
     showNotification,
@@ -229,8 +231,14 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                         <div className="pt-2">
                             {mainTab === 'discover' && (
                                 <div className="flex flex-col h-full">
-                                    {exploreSubTab === 'games' ? (
-                                        <DiscoverView games={games} nearbyUsers={nearbyUsers} setSearchTag={setSearchTag} handlePlayGame={handlePlayGame} />
+                            {exploreSubTab === 'games' ? (
+                                        <DiscoverView
+                                            games={games}
+                                            nearbyUsers={nearbyUsers}
+                                            setSearchTag={setSearchTag}
+                                            handlePlayGame={handlePlayGame}
+                                            onSearchClick={onSearchClick}
+                                        />
                                     ) : (
                                         <CreatorTabView
                                             user={user}
@@ -277,6 +285,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         user={user}
                                         requireAuth={requireAuth}
                                         socialSubTab={socialSubTab}
+                                        onSearchClick={onSearchClick}
                                         onPostClick={onPostClick}
                                     />
 
@@ -326,6 +335,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     setPostIsStarred={setPostIsStarred}
                                     isSavingPost={isSavingPost}
                                     handleCreatePost={handleCreatePost}
+                                    onSearchClick={onSearchClick}
                                     onPostClick={onPostClick}
                                 />
                             )}

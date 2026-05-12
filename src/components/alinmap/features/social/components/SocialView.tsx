@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import SocialNearbySection from './SocialNearbySection';
 import SocialPostsSection from './SocialPostsSection';
 
@@ -35,6 +35,7 @@ interface SocialViewProps {
     galleryActive: boolean;
     user: any;
     socialSubTab: 'posts' | 'nearby';
+    onSearchClick?: () => void;
     onPostClick?: (post: any) => void;
 }
 
@@ -47,13 +48,25 @@ const SocialView: React.FC<SocialViewProps> = ({
     isSavingPost, handleCreatePost,
     handleUpdatePostPrivacy, handleStarPost, handleDeletePost, fetchUserPosts,
     externalApi, socialSubTab,
+    onSearchClick,
     onPostClick,
 }) => {
     return (
         <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 pb-20">
                 <div className="flex items-center justify-between px-1">
-                    <h3 className="text-lg font-black text-gray-900">Social</h3>
+                    <div className="flex min-w-0 items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onSearchClick}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                            aria-label="Search"
+                            title="Search"
+                        >
+                            <Search className="h-4 w-4" />
+                        </button>
+                        <h3 className="truncate text-lg font-black text-gray-900">Social</h3>
+                    </div>
                     {socialSubTab === 'posts' && !isCreatingPost && (
                         <button
                             onClick={() => {

@@ -20,6 +20,12 @@ const HTML_CLASS = 'alinmap-immersive-root';
 const SWIPE_THRESHOLD_PX = 40;
 const MIN_SCROLL_OFFSET_PX = 320;
 const COOL_DOWN_MS = 850;
+const DEBUG_IMMERSIVE = true;
+
+const logImmersive = (...args: unknown[]) => {
+  if (!DEBUG_IMMERSIVE) return;
+  console.info('[AlinMapImmersive]', ...args);
+};
 
 const getImmersiveScrollOffset = () => {
   if (typeof window === 'undefined') return MIN_SCROLL_OFFSET_PX;
@@ -67,6 +73,12 @@ export function useMobileImmersiveMode({
     document.body.classList.add(BODY_CLASS);
     document.documentElement.classList.add(HTML_CLASS);
     updateViewportHeight();
+    logImmersive('mount', {
+      enabled,
+      bodyClass: document.body.classList.contains(BODY_CLASS),
+      rootClass: document.documentElement.classList.contains(HTML_CLASS),
+      viewportHeight: window.visualViewport?.height || window.innerHeight,
+    });
 
     window.visualViewport?.addEventListener('resize', updateViewportHeight);
     window.addEventListener('resize', updateViewportHeight);
@@ -78,6 +90,7 @@ export function useMobileImmersiveMode({
       window.visualViewport?.removeEventListener('resize', updateViewportHeight);
       window.removeEventListener('resize', updateViewportHeight);
       window.scrollTo({ top: 0, behavior: 'auto' });
+      logImmersive('unmount');
     };
   }, [enabled]);
 
@@ -86,6 +99,17 @@ export function useMobileImmersiveMode({
 
     const handleGlobalTouchStart = (event: TouchEvent) => {
       globalTouchStartYRef.current = event.touches[0]?.clientY ?? 0;
+      if (DEBUG_IMMERSIVE) {
+        const target = event.target;
+        if (target instanceof Element) {
+          logImmersive('global-touchstart', {
+            target: target.tagName,
+            id: target.id || null,
+            immersiveScroll: !!target.closest('[data-immersive-scroll]'),
+            ignore: !!target.closest('[data-immersive-ignore]'),
+          });
+        }
+      }
     };
 
     const handleGlobalTouchMove = (event: TouchEvent) => {
@@ -99,9 +123,27 @@ export function useMobileImmersiveMode({
       if (scrollRegion) {
         const touchY = event.touches[0]?.clientY ?? globalTouchStartYRef.current;
         const deltaY = touchY - globalTouchStartYRef.current;
-        if (shouldAllowScrollBoundary(scrollRegion, deltaY)) return;
+        if (shouldAllowScrollBoundary(scrollRegion, deltaY)) {
+          if (DEBUG_IMMERSIVE) {
+            logImmersive('allow-scroll', {
+              region: scrollRegion.id || scrollRegion.className || scrollRegion.tagName,
+              deltaY,
+              scrollTop: scrollRegion.scrollTop,
+              clientHeight: scrollRegion.clientHeight,
+              scrollHeight: scrollRegion.scrollHeight,
+            });
+          }
+          return;
+        }
       }
 
+      logImmersive('prevent-touchmove', {
+        target: target.tagName,
+        id: target.id || null,
+        immersiveScroll: !!target.closest('[data-immersive-scroll]'),
+        touchY: event.touches[0]?.clientY ?? null,
+        startY: globalTouchStartYRef.current,
+      });
       event.preventDefault();
     };
 
@@ -118,7 +160,16 @@ export function useMobileImmersiveMode({
     if (!enabled || typeof window === 'undefined') return;
 
     const handleScroll = () => {
-      setIsImmersive(window.scrollY > 24);
+      const nextImmersive = window.scrollY > 24;
+      setIsImmersive((prev) => {
+        if (prev !== nextImmersive) {
+          logImmersive('scroll-state', {
+            scrollY: window.scrollY,
+            immersive: nextImmersive,
+          });
+        }
+        return nextImmersive;
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -139,6 +190,10 @@ export function useMobileImmersiveMode({
     setIsDragging(true);
     setDragOffsetY(0);
     setDragDirection(null);
+    logImmersive('handle-touchstart', {
+      startY: dragStartYRef.current,
+      blocked,
+    });
   }, [blocked, enabled]);
 
   const handleTouchMove = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
@@ -155,10 +210,17 @@ export function useMobileImmersiveMode({
     } else {
       setDragDirection(null);
     }
+
+    logImmersive('handle-touchmove', {
+      currentY,
+      deltaY,
+      direction: deltaY <= -8 ? 'up' : deltaY >= 8 ? 'down' : 'none',
+    });
   }, [blocked, isDragging]);
 
   const handleTouchEnd = React.useCallback(() => {
     if (!isDragging || blocked) {
+      logImmersive('handle-touchend-skip', { isDragging, blocked });
       stopDragging();
       return;
     }
@@ -168,10 +230,24 @@ export function useMobileImmersiveMode({
       coolDownUntilRef.current = now + COOL_DOWN_MS;
       window.scrollTo({ top: getImmersiveScrollOffset(), behavior: 'smooth' });
       setIsImmersive(true);
+      logImmersive('swipe-up', {
+        dragOffsetY,
+        targetScroll: getImmersiveScrollOffset(),
+      });
     } else if (now >= coolDownUntilRef.current && dragOffsetY >= SWIPE_THRESHOLD_PX) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setIsImmersive(false);
+      logImmersive('swipe-down', {
+        dragOffsetY,
+        targetScroll: 0,
+      });
+    } else {
+      logImmersive('touchend-noop', {
+        dragOffsetY,
+        coolDownUntil: coolDownUntilRef.current,
+        now,
+      });
     }
 
     stopDragging();

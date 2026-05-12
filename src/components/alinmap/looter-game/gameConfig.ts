@@ -29,7 +29,7 @@ export const GAME_CONFIG = {
 
   // Tiers
   TIER_MAX: 5,
-  TIER_COSTS: [0, 50, 150, 450, 1000, 2500],
+  TIER_COSTS: [0, 10, 100, 1000, 10000, 100000],
 
   // Spawn
   SPAWN_MIN_DISTANCE_FROM_FORTRESS: 1500,

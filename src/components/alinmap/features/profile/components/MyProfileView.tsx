@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, LogOut } from 'lucide-react';
+import { LogIn, LogOut, Search } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
 import ProfilePresenceSection from './ProfilePresenceSection';
@@ -50,6 +50,7 @@ interface MyProfileViewProps {
     setPostIsStarred?: (v: boolean) => void;
     isSavingPost?: boolean;
     handleCreatePost?: (files: File[]) => void;
+    onSearchClick?: () => void;
     onPostClick?: (post: any) => void;
 }
 
@@ -67,6 +68,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
         postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
         isSavingPost, handleCreatePost,
+        onSearchClick,
         onPostClick
     } = props;
 
@@ -150,7 +152,18 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between px-1 mb-2">
-                <h3 className="text-lg font-black text-gray-900">My Profile</h3>
+                <div className="flex min-w-0 items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onSearchClick}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        aria-label="Search"
+                        title="Search"
+                    >
+                        <Search className="h-4 w-4" />
+                    </button>
+                    <h3 className="truncate text-lg font-black text-gray-900">My Profile</h3>
+                </div>
                 {user ? (
                     <button
                         onClick={() => logout?.()}
