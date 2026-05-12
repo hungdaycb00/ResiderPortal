@@ -5,24 +5,14 @@ import {
   CAMERA_Z_DEFAULT,
   CAMERA_Z_WATER_DEFAULT,
   CAMERA_Z_FAR,
-  CAMERA_Z_NEAR,
   CAMERA_HEIGHT_DEFAULT_PCT,
   CAMERA_ROTATE_DEFAULT_DEG,
-  CAMERA_ROTATE_MIN_DEG,
-  CAMERA_ROTATE_MAX_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
-  CAMERA_ROTATE_Y_MIN_DEG,
-  CAMERA_ROTATE_Y_MAX_DEG,
-  CAMERA_PITCH_MIN_DEG,
-  CAMERA_PITCH_MAX_DEG,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
-  CAMERA_HEIGHT_OFFSET_MIN,
-  CAMERA_HEIGHT_OFFSET_MAX,
   CAMERA_HEIGHT_RATIO_DEFAULT,
   CAMERA_TILT_FAR_DEGREES,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
-  clamp,
   getPerspectivePx,
   getCameraZForVisualScale,
   getPlaneYScaleFromTilt,
@@ -163,12 +153,12 @@ export function useMapNavigation({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
-    const nextZ = Math.min(CAMERA_Z_NEAR, currentZ + (e.deltaY > 0 ? -5 : 5));
+    const nextZ = currentZ + (e.deltaY > 0 ? -5 : 5);
     animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
   const setCameraZ = useCallback((z: number) => {
-    animate(cameraZ, Math.min(CAMERA_Z_NEAR, z), { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+    animate(cameraZ, z, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
   const zoomIn = useCallback(() => {
@@ -313,13 +303,13 @@ export function useMapNavigation({
     isBackpackLoading, setIsBackpackLoading,
     handleWheel, handleCenter, handleCenterTo,
     setCameraZ, setVisualScale, zoomIn, zoomOut,
-    setCameraHeightOffset: (v: number) => setCameraHeightOffset(clamp(v, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX)),
-    setCameraRotateDeg: (v: number) => setCameraRotateDeg(clamp(v, CAMERA_ROTATE_MIN_DEG, CAMERA_ROTATE_MAX_DEG)),
+    setCameraHeightOffset: (v: number) => setCameraHeightOffset(v),
+    setCameraRotateDeg: (v: number) => setCameraRotateDeg(v),
     setCameraPitchOverride: (v: number | null) => {
       if (v === null) setCameraPitchOverride(null);
-      else setCameraPitchOverride(clamp(v, CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG));
+      else setCameraPitchOverride(v);
     },
-    setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(clamp(v, CAMERA_ROTATE_Y_MIN_DEG, CAMERA_ROTATE_Y_MAX_DEG)),
+    setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(v),
     handleUpdateRadius, handleTabClick,
     requestBoatAutoFocus,
   };

@@ -1,10 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import {
-  CAMERA_Z_WATER_DEFAULT, CAMERA_Z_NEAR,
-  CAMERA_HEIGHT_OFFSET_DEFAULT, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX,
-  CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG,
-  clamp, getTiltAngleFromCameraZ,
+  CAMERA_Z_WATER_DEFAULT,
+  CAMERA_HEIGHT_OFFSET_DEFAULT,
+  getTiltAngleFromCameraZ,
 } from '../constants';
 
 interface CameraPanelProps {
@@ -70,13 +69,11 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <input
               type="number"
-              min={5}
-              max={CAMERA_Z_NEAR}
               step={1}
               value={zDisplay}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraZ(clamp(v, 5, CAMERA_Z_NEAR));
+                if (!isNaN(v)) setCameraZ(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
@@ -104,13 +101,11 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <input
               type="number"
-              min={CAMERA_PITCH_MIN_DEG}
-              max={CAMERA_PITCH_MAX_DEG}
               step={1}
               value={effectivePitch}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraPitchOverride(clamp(v, CAMERA_PITCH_MIN_DEG, CAMERA_PITCH_MAX_DEG));
+                if (!isNaN(v)) setCameraPitchOverride(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
@@ -124,13 +119,11 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <input
               type="number"
-              min={CAMERA_HEIGHT_OFFSET_MIN}
-              max={CAMERA_HEIGHT_OFFSET_MAX}
               step={10}
               value={cameraHeightOffset}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraHeightOffset(clamp(v, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX));
+                if (!isNaN(v)) setCameraHeightOffset(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
