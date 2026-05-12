@@ -27,7 +27,8 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
         const t = Math.min(Math.max((1 - (v || 1)) / 0.75, 0), 1);
         return 1 + (FEATURED_BILLBOARD_FAR_SCALE - 1) * t;
     });
-    const [hoverScale, setHoverScale] = useState(1.1);
+    const isRoadmapNode = !!screenPosition;
+    const [hoverScale, setHoverScale] = useState(isRoadmapNode ? 1.03 : 1.1);
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
     const displayName = String(user.displayName || user.username || 'User');
     const animationTiming = React.useRef({
@@ -46,9 +47,9 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
             }}
             onPointerEnter={() => {
                 const s = mapScale.get();
-                setHoverScale(isDesktop ? Math.max(1.1, 1.2 / s) : 1.1);
+                setHoverScale(isRoadmapNode ? Math.max(1.02, 1.08 / s) : (isDesktop ? Math.max(1.1, 1.2 / s) : 1.1));
             }}
-            className="absolute w-10 h-10 -ml-5 -mt-10 cursor-pointer group hover:z-50 pointer-events-auto alin-map-billboard"
+            className={`absolute cursor-pointer group hover:z-50 pointer-events-auto alin-map-billboard ${isRoadmapNode ? 'w-8 h-8 -ml-4 -mt-8' : 'w-10 h-10 -ml-5 -mt-10'}`}
             style={{
                 left: screenPosition ? `${dx}px` : `calc(50% + ${dx}px)`,
                 top: screenPosition ? `${dy}px` : `calc(50% + ${dy}px)`,
@@ -69,7 +70,7 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
             whileTap={{ scale: 0.95 }}
         >
             <div className="relative w-full h-full alin-map-upright-sprite">
-                <div className="w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.4)] border-cyan-500 bg-[#1a1d24]">
+                <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.4)] border-cyan-500 bg-[#1a1d24] ${isRoadmapNode ? 'shadow-[0_0_10px_rgba(34,211,238,0.28)]' : ''}`}>
                     <img
                         src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
                         loading="lazy"
@@ -79,9 +80,9 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
                     />
                 </div>
 
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-blue-500/50 blur-sm rounded-full -z-10" />
+                {!isRoadmapNode && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-blue-500/50 blur-sm rounded-full -z-10" />}
 
-                {user.gallery?.active && (
+                {user.gallery?.active && !isRoadmapNode && (
                     <div
                         onClick={(e) => { e.stopPropagation(); onClick(); }}
                         className="absolute -top-24 left-1/2 -translate-x-1/2 w-44 aspect-video bg-white/10 backdrop-blur-md rounded-lg overflow-hidden border border-white/20 shadow-2xl shadow-blue-500/20 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
@@ -115,13 +116,13 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
                     </div>
                 )}
 
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none">
-                    <div className="max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md">
-                        <span className="block max-w-[360px] truncate text-[50px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[55px]">
+                <div className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none ${isRoadmapNode ? '-bottom-8 gap-0.5' : '-bottom-10 gap-1'}`}>
+                    <div className={`${isRoadmapNode ? 'max-w-[140px] rounded-full border border-white/85 bg-white/96 px-3 py-1.5 shadow-[0_6px_14px_rgba(15,23,42,0.12)] backdrop-blur-md' : 'max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md'}`}>
+                        <span className={`block truncate leading-none font-extrabold tracking-tight text-slate-900 ${isRoadmapNode ? 'max-w-[110px] text-[12px]' : 'max-w-[360px] text-[50px] sm:text-[55px]'}`}>
                             {displayName}
                         </span>
                     </div>
-                    {user.status ? (
+                    {user.status && !isRoadmapNode ? (
                         <div className="max-w-[260px] rounded-full border border-sky-100 bg-sky-50/95 px-3 py-1 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md">
                             <span className="block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]">
                                 {user.status}
