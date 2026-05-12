@@ -1,6 +1,7 @@
 import type { MotionValue } from 'framer-motion';
 import type { LatLng } from '../sceneUtils';
 import type { AdaptivePerformanceProfile } from '../../hooks/useAdaptivePerformance';
+import type { AlinMapMode } from '../../constants';
 
 /**
  * Props chung dùng cho cả AlinMapThreeScene (Canvas wrapper) và SceneContent.
@@ -38,7 +39,7 @@ export interface AlinMapThreeSceneProps {
   panY: MotionValue<number>;
   selfDragX: MotionValue<number>;
   selfDragY: MotionValue<number>;
-  mapMode: 'grid' | 'satellite';
+  mapMode: AlinMapMode;
   isLooterGameMode?: boolean;
   boatTargetPin?: LatLng | null;
   boatOffsetX?: MotionValue<number>;

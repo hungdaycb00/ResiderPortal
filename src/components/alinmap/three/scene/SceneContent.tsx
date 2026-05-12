@@ -143,8 +143,8 @@ export default function SceneContent({
   });
 
   useEffect(() => {
-    scene.fog = isLooterGameMode ? null : new Fog('#08111b', 1800, 22000);
-    scene.background = new Color(mapMode === 'satellite' ? '#020b12' : '#071018');
+    scene.fog = isLooterGameMode ? null : new Fog(mapMode === 'satellite' ? '#08111b' : '#dbe7dc', 1800, 22000);
+    scene.background = new Color(mapMode === 'satellite' ? '#020b12' : '#dbe7dc');
   }, [mapMode, scene, isLooterGameMode]);
 
   // ── Filtered & sorted nearby users ───────────────────────────────────────

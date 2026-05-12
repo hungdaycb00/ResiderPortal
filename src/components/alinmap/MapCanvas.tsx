@@ -16,7 +16,7 @@ import {
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import { BILLBOARD_UPRIGHT_PITCH_DEGREES } from './constants';
+import { BILLBOARD_UPRIGHT_PITCH_DEGREES, type AlinMapMode } from './constants';
 
 
 interface MapCanvasProps {
@@ -65,7 +65,7 @@ interface MapCanvasProps {
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
     addLog: (msg: string) => void;
     handleWheel: (e: React.WheelEvent) => void;
-    mapMode: 'grid' | 'satellite';
+    mapMode: AlinMapMode;
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
     isLooterGameMode?: boolean;
     isBackpackLoading?: boolean;

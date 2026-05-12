@@ -28,8 +28,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         onPostClick,
     } = props;
 
-    const [exploreSubTab, setExploreSubTab] = React.useState<ExploreSubTab>('games');
-    const [socialSubTab, setSocialSubTab] = React.useState<SocialSubTab>('posts');
+    const [_exploreSubTab, _setExploreSubTab] = React.useState<ExploreSubTab>('games');
+    const [_socialSubTab, _setSocialSubTab] = React.useState<SocialSubTab>('posts');
+    const exploreSubTab = (props.exploreSubTab as ExploreSubTab) ?? _exploreSubTab;
+    const socialSubTab = (props.socialSubTab as SocialSubTab) ?? _socialSubTab;
+    const setExploreSubTab = props.onExploreSubTabChange ?? _setExploreSubTab;
+    const setSocialSubTab = props.onSocialSubTabChange ?? _setSocialSubTab;
     const lastSocialFeedRequestRef = React.useRef('');
     const shouldHideSearch = ['creator', 'backpack', 'discover', 'friends', 'profile'].includes(mainTab);
     const deferredSearchTag = React.useDeferredValue(searchTag);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { MotionValue } from 'framer-motion';
+import type { AlinMapMode } from './constants';
 
 interface MapTilesProps {
   panX: MotionValue<number>;
@@ -7,7 +8,7 @@ interface MapTilesProps {
   scale: MotionValue<number>;
   planeYScale: MotionValue<number>;
   myObfPos: { lat: number; lng: number } | null;
-  mode: 'grid' | 'satellite';
+  mode: AlinMapMode;
 }
 
 const MapTiles: React.FC<MapTilesProps> = () => {

@@ -5,6 +5,8 @@ import BottomSheet from './BottomSheet';
 import ContextMenu from './ContextMenu';
 import FullscreenToggle from './components/FullscreenToggle';
 import MapControls from './MapControls';
+import MobileTabActions from './components/MobileTabActions';
+import MobileSubTabBar from './components/MobileSubTabBar';
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
 import SearchOverlay from './SearchOverlay';
@@ -139,6 +141,8 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [exploreSubTab, setExploreSubTab] = useState<string>('games');
+  const [socialSubTab, setSocialSubTab] = useState<string>('posts');
   const looterUi = useLooterState();
 
   const isSelectedPostSelf = selectedPost
@@ -205,8 +209,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         filterAgeMin={13}
         filterAgeMax={99}
         searchTag={searchTag}
-        zoomIn={nav.zoomIn}
-        zoomOut={nav.zoomOut}
         mapMode={nav.mapMode}
         setIsSidebarOpen={() => {}}
         setFriendLocInput={setFriendIdInput}
@@ -228,6 +230,34 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isWidgetExpanded={isWeatherWidgetExpanded}
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
+      />
+
+      <MobileTabActions
+        mainTab={nav.mainTab}
+        socialSubTab={socialSubTab}
+        user={user}
+        isCreatingPost={posts.isCreatingPost}
+        isSheetExpanded={isSheetExpanded}
+        isLooterGameMode={isLooterGameMode}
+        onSearchClick={() => setIsSearchOverlayOpen(true)}
+        onCreatePostClick={() => {
+          if (requireAuth && !requireAuth('tao bai viet')) return;
+          posts.setPostPrivacy('public');
+          posts.setPostIsStarred(false);
+          posts.setIsCreatingPost(true);
+        }}
+        onLoginClick={() => triggerAuth?.(() => {})}
+        onLogoutClick={() => logout?.()}
+      />
+
+      <MobileSubTabBar
+        mainTab={nav.mainTab}
+        exploreSubTab={exploreSubTab}
+        socialSubTab={socialSubTab}
+        isLooterGameMode={isLooterGameMode}
+        isSheetExpanded={isSheetExpanded}
+        onExploreSubTabChange={setExploreSubTab}
+        onSocialSubTabChange={setSocialSubTab}
       />
 
       <NavigationBar
@@ -306,6 +336,10 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         requestLocation={geo.requestLocation}
         externalApi={externalApi}
         onPostClick={(post) => setSelectedPost(post)}
+        exploreSubTab={exploreSubTab}
+        socialSubTab={socialSubTab}
+        onExploreSubTabChange={setExploreSubTab}
+        onSocialSubTabChange={setSocialSubTab}
       />
 
       {contextMenu && (

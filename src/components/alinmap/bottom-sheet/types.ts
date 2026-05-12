@@ -76,6 +76,10 @@ export interface BottomSheetProps {
     onOpenListChange?: (v: boolean) => void;
     onPublishSuccess?: () => void;
     onPostClick?: (post: any) => void;
+    exploreSubTab?: string;
+    socialSubTab?: string;
+    onExploreSubTabChange?: (v: string) => void;
+    onSocialSubTabChange?: (v: string) => void;
     requestLocation?: (
         forceInvisible?: boolean,
         wsRef?: React.MutableRefObject<WebSocket | null>,

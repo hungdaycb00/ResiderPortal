@@ -5,6 +5,7 @@ import MapControlsQuickActions from './MapControlsQuickActions';
 import MapControlsWeatherWidget from './MapControlsWeatherWidget';
 import MapControlsFiltersSidebar from './MapControlsFiltersSidebar';
 import CameraPanel from './components/CameraPanel';
+import type { AlinMapMode } from './constants';
 
 interface MapControlsProps {
     isSocketConnecting: boolean;
@@ -17,9 +18,7 @@ interface MapControlsProps {
     filterAgeMin: number;
     filterAgeMax: number;
     searchTag: string;
-    zoomIn: () => void;
-    zoomOut: () => void;
-    mapMode: 'grid' | 'satellite';
+    mapMode: AlinMapMode;
     setIsSidebarOpen: (v: boolean) => void;
     setFriendLocInput: (v: string) => void;
     setSearchMarkerPos: (pos: { lat: number; lng: number } | null) => void;
@@ -30,7 +29,7 @@ interface MapControlsProps {
     handleRefresh: () => void;
     handleCenter: () => void;
     handleCenterTo: (lat: number, lng: number, offset?: number) => void;
-    setMapMode: (v: 'grid' | 'satellite') => void;
+    setMapMode: (v: AlinMapMode) => void;
     cameraZ: MotionValue<number>;
     setCameraZ: (z: number) => void;
     cameraHeightOffset: number;
@@ -53,8 +52,6 @@ const MapControls: React.FC<MapControlsProps> = ({
     filterAgeMin,
     filterAgeMax,
     searchTag,
-    zoomIn,
-    zoomOut,
     mapMode,
     setIsSidebarOpen,
     setFriendLocInput,
@@ -96,8 +93,6 @@ const MapControls: React.FC<MapControlsProps> = ({
                         isLooterGameMode={isLooterGameMode}
                         mapMode={mapMode}
                         handleRefresh={handleRefresh}
-                        zoomIn={zoomIn}
-                        zoomOut={zoomOut}
                         handleCenter={handleCenter}
                         setMapMode={setMapMode}
                     />

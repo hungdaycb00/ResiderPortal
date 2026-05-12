@@ -18,6 +18,7 @@ import {
   getPlaneYScaleFromTilt,
   getTiltAngleFromCameraZ,
   getVisualScaleFromCameraZ,
+  type AlinMapMode,
 } from '../constants';
 import { getVisibleBoatCameraOffsets } from '../looter-game/utils/boatCameraFocus';
 
@@ -62,7 +63,7 @@ export function useMapNavigation({
   const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 720);
   const [mainTab, setMainTab] = useState<MainTab>((initialMainTab as MainTab) === 'creator' ? 'discover' : (initialMainTab as MainTab) || 'discover');
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
-  const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('satellite');
+  const [mapMode, setMapMode] = useState<AlinMapMode>('roadmap');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isBackpackLoading, setIsBackpackLoading] = useState(false);
   const [radius, setRadius] = useState(50);
