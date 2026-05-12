@@ -41,6 +41,20 @@ const ItemPopup: React.FC<ItemPopupProps> = ({ item, onClose, style }) => {
     setAdjustedStyle({ ...style, left: newLeft, top: newTop });
   }, [item, style]);
 
+  useEffect(() => {
+    if (!item) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (popupRef.current?.contains(target)) return;
+      onClose();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [item, onClose]);
+
   if (!item) return null;
 
   const bagDef = BAG_DEFAULTS[item.id] || null;
