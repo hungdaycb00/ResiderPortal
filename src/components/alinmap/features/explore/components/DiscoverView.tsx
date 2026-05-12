@@ -95,7 +95,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 <h3 className="truncate text-[20px] font-black uppercase tracking-tighter italic text-gray-900">
                     Explore
                 </h3>
-                <div className="hidden md:flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                     <button
                         type="button"
                         onClick={onSearchClick}

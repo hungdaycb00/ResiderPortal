@@ -5,7 +5,6 @@ import BottomSheet from './BottomSheet';
 import ContextMenu from './ContextMenu';
 import FullscreenToggle from './components/FullscreenToggle';
 import MapControls from './MapControls';
-import MobileTabActions from './components/MobileTabActions';
 import MobileSubTabBar from './components/MobileSubTabBar';
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
@@ -231,24 +230,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isWidgetExpanded={isWeatherWidgetExpanded}
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
-      />
-
-      <MobileTabActions
-        mainTab={nav.mainTab}
-        socialSubTab={socialSubTab}
-        user={user}
-        isCreatingPost={posts.isCreatingPost}
-        isSheetExpanded={isSheetExpanded}
-        isLooterGameMode={isLooterGameMode}
-        onSearchClick={() => setIsSearchOverlayOpen(true)}
-        onCreatePostClick={() => {
-          if (requireAuth && !requireAuth('tao bai viet')) return;
-          posts.setPostPrivacy('public');
-          posts.setPostIsStarred(false);
-          posts.setIsCreatingPost(true);
-        }}
-        onLoginClick={() => triggerAuth?.(() => {})}
-        onLogoutClick={() => logout?.()}
       />
 
       <MobileSubTabBar

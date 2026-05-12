@@ -156,7 +156,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     <button
                         type="button"
                         onClick={onSearchClick}
-                        className="hidden md:inline-flex order-last ml-auto h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
+                        className="inline-flex order-last ml-auto h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
                         aria-label="Search"
                         title="Search"
                     >
@@ -167,7 +167,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 {user ? (
                     <button
                         onClick={() => logout?.()}
-                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
                     >
                         <LogOut className="w-3.5 h-3.5" />
                         Đăng xuất
@@ -175,7 +175,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 ) : (
                     <button
                         onClick={() => triggerAuth?.(() => {})}
-                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
                     >
                         <LogIn className="w-3.5 h-3.5" />
                         Đăng nhập
