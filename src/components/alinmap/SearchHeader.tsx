@@ -29,7 +29,7 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
   myObfPos,
   onWeatherClick,
 }) => {
-  const shouldHideSearch = isLooterGameMode || ['creator', 'backpack'].includes(mainTab);
+  const shouldHideSearchButton = isLooterGameMode || ['creator', 'backpack', 'discover', 'friends', 'profile'].includes(mainTab);
 
   const openSearch = React.useCallback(() => {
     if (isDesktop && !isSheetExpanded) {
@@ -43,17 +43,19 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
       className={`absolute top-4 left-4 z-[180] flex items-start gap-2 pointer-events-auto transition-all duration-300
       ${isDesktop && isSheetExpanded ? 'md:top-5 md:left-[72px]' : 'md:left-[88px] md:top-6'}
       ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'}
-      ${shouldHideSearch ? 'hidden' : ''}`}
+      `}
     >
-      <button
-        type="button"
-        onClick={openSearch}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 text-gray-700 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-all active:scale-95 hover:bg-white"
-        aria-label="Search"
-        title="Search"
-      >
-        <Search className="h-4 w-4" />
-      </button>
+      {!shouldHideSearchButton && (
+        <button
+          type="button"
+          onClick={openSearch}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 text-gray-700 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-all active:scale-95 hover:bg-white"
+          aria-label="Search"
+          title="Search"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      )}
 
       <button
         type="button"

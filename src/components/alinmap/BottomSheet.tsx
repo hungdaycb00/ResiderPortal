@@ -31,7 +31,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const [exploreSubTab, setExploreSubTab] = React.useState<ExploreSubTab>('games');
     const [socialSubTab, setSocialSubTab] = React.useState<SocialSubTab>('posts');
     const lastSocialFeedRequestRef = React.useRef('');
-    const shouldHideSearch = ['creator', 'backpack'].includes(mainTab);
+    const shouldHideSearch = ['creator', 'backpack', 'discover', 'friends', 'profile'].includes(mainTab);
     const deferredSearchTag = React.useDeferredValue(searchTag);
     const shouldRenderSheetContent = isDesktop || isSheetExpanded || !!selectedUser || mainTab === 'backpack';
     const { isItemDragging } = useLooterGame();
