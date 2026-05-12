@@ -106,7 +106,11 @@ export default function MultiTaskButton({ activeTab, setActiveTab, isInGame = fa
   };
 
   return (
-    <div className={`fixed inset-0 ${isDragging ? 'pointer-events-auto' : 'pointer-events-none'} ${className || 'z-[300]'}`} ref={constraintsRef}>
+    <div
+      className={`fixed inset-0 ${isDragging ? 'pointer-events-auto' : 'pointer-events-none'} ${className || 'z-[300]'}`}
+      ref={constraintsRef}
+      data-immersive-ignore
+    >
       <motion.div
         ref={buttonRef}
         drag

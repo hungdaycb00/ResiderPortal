@@ -18,6 +18,7 @@ interface UseMobileImmersiveModeResult {
 const BODY_CLASS = 'alinmap-immersive-shell';
 const HTML_CLASS = 'alinmap-immersive-root';
 const SWIPE_THRESHOLD_PX = 40;
+const TAP_MOVE_TOLERANCE_PX = 10;
 const MIN_SCROLL_OFFSET_PX = 320;
 const COOL_DOWN_MS = 850;
 const DEBUG_IMMERSIVE = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugImmersive') === '1';
@@ -143,10 +144,23 @@ export function useMobileImmersiveMode({
       if (target.closest('#fullscreen-touch-zone')) return;
       if (target.closest('[data-immersive-ignore]')) return;
 
+      const touchY = event.touches[0]?.clientY ?? globalTouchStartYRef.current;
+      const deltaY = touchY - globalTouchStartYRef.current;
+      const isTapMovement = Math.abs(deltaY) <= TAP_MOVE_TOLERANCE_PX;
+      const interactiveTarget = target.closest(
+        'button,a,input,textarea,select,label,[role="button"],[data-immersive-interactive]'
+      );
+      if (interactiveTarget && isTapMovement) {
+        logImmersive('allow-interactive-tap', {
+          target: target.tagName,
+          id: target.id || null,
+          deltaY,
+        });
+        return;
+      }
+
       const scrollRegion = target.closest('[data-immersive-scroll]') as HTMLElement | null;
       if (scrollRegion) {
-        const touchY = event.touches[0]?.clientY ?? globalTouchStartYRef.current;
-        const deltaY = touchY - globalTouchStartYRef.current;
         if (shouldAllowScrollBoundary(scrollRegion, deltaY)) {
           if (DEBUG_IMMERSIVE) {
             logImmersive('allow-scroll', {
