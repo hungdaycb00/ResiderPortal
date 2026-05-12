@@ -5,7 +5,7 @@ import { Fog, Color, Group, MathUtils, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
 import { GAME_CONFIG } from '../../looter-game/gameConfig';
-import { MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
+import { getRoadmapCenterFromPan, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
 
 // Sub-components
 import CameraRig from '../CameraRig';
@@ -99,7 +99,8 @@ export default function SceneContent({
   const performanceMode = performance?.mode ?? 'high';
   const labelMode = performance?.labelMode ?? 'full';
   const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
-  const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
+  const isRoadmapOverlay = mapMode === 'roadmap' && !isLooterGameMode;
+  const sceneWorldScale = isRoadmapOverlay ? ROADMAP_WORLD_SCALE : 1;
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
     z: point.z * sceneWorldScale,
@@ -107,10 +108,36 @@ export default function SceneContent({
   const pxToScaledScene = (px: number) => pxToScene(px) * sceneWorldScale;
 
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [roadmapView, setRoadmapView] = useState(() => ({
+    panX: panX.get(),
+    panY: panY.get(),
+    planeYScale: planeYScale.get(),
+  }));
   useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
   useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
+  useMotionValueEvent(panX, 'change', (v) => {
+    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, panX: v }));
+  });
+  useMotionValueEvent(panY, 'change', (v) => {
+    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, panY: v }));
+  });
+  useMotionValueEvent(planeYScale, 'change', (v) => {
+    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, planeYScale: v }));
+  });
 
-  const origin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
+  useEffect(() => {
+    if (!isRoadmapOverlay) return;
+    setRoadmapView({
+      panX: panX.get(),
+      panY: panY.get(),
+      planeYScale: planeYScale.get(),
+    });
+  }, [isRoadmapOverlay, panX, panY, planeYScale]);
+
+  const baseOrigin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
+  const origin: LatLng = isRoadmapOverlay
+    ? getRoadmapCenterFromPan(baseOrigin, roadmapView.panX, roadmapView.panY, roadmapView.planeYScale)
+    : baseOrigin;
 
   const { selfDragRef, handleSelfPointerDown, handleSelfPointerMove, handleSelfPointerUp } = useDragHandlers({
     isLooterGameMode: !!isLooterGameMode,
@@ -183,7 +210,13 @@ export default function SceneContent({
     const liftZ = panY.get();
     const tilt = tiltAngle.get();
 
-    if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
+    if (isRoadmapOverlay) {
+      if (lastLiftXRef.current !== 0 || lastLiftZRef.current !== 0) {
+        moveGroupRef.current.position.set(0, 0, 0);
+        lastLiftXRef.current = 0;
+        lastLiftZRef.current = 0;
+      }
+    } else if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
       moveGroupRef.current.position.set(
         liftX * MAP_COORD_SCENE_SCALE * sceneWorldScale,
         0,
@@ -221,7 +254,7 @@ export default function SceneContent({
     }
   });
 
-  const selfPos = scaleScenePoint(worldToScene(origin, origin));
+  const selfPos = scaleScenePoint(worldToScene(origin, baseOrigin));
   const selfLift = pxToScaledScene(dragOffset.x);
   const selfDepth = pxToScaledScene(dragOffset.y);
   const searchMarkerScene = searchMarkerPos ? scaleScenePoint(worldToScene(origin, searchMarkerPos)) : null;
@@ -313,8 +346,8 @@ export default function SceneContent({
                     onSelectSelf?.({
                       id: user?.uid || myUserId || 'self',
                       username: myDisplayName,
-                      lat: origin.lat,
-                      lng: origin.lng,
+                      lat: baseOrigin.lat,
+                      lng: baseOrigin.lng,
                       isSelf: true,
                     });
                   }

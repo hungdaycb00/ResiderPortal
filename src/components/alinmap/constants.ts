@@ -54,6 +54,19 @@ export type AlinMapMode = 'roadmap' | 'satellite';
 
 export const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+export const getRoadmapCenterFromPan = (
+    base: { lat: number; lng: number },
+    panX: number,
+    panY: number,
+    planeYScale: number
+) => {
+    const safePlaneYScale = Math.max(planeYScale || 0, 0.1);
+    return {
+        lat: clamp(base.lat + panY / safePlaneYScale / DEGREES_TO_PX, -85.05112878, 85.05112878),
+        lng: base.lng - panX / MAP_PLANE_SCALE / DEGREES_TO_PX,
+    };
+};
+
 export const getDefaultVisualScaleForMapMode = (mapMode: AlinMapMode, isLooterGameMode = false) => {
     if (isLooterGameMode) return LOOTER_VISUAL_SCALE_DEFAULT;
     return mapMode === 'satellite' ? SATELLITE_VISUAL_SCALE_DEFAULT : ROADMAP_VISUAL_SCALE_DEFAULT;

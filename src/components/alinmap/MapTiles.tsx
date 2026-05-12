@@ -1,6 +1,6 @@
 import React from 'react';
-import { MotionValue, useMotionValueEvent } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, type AlinMapMode } from './constants';
+import { MotionValue } from 'framer-motion';
+import { getRoadmapCenterFromPan, type AlinMapMode } from './constants';
 
 interface MapTilesProps {
   panX: MotionValue<number>;
@@ -59,16 +59,36 @@ const useViewportSize = () => {
   return size;
 };
 
+const useMotionValueSnapshot = (value: MotionValue<number>) => {
+  const frameRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => () => {
+    if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  return React.useSyncExternalStore(
+    React.useCallback((notify) => value.on('change', () => {
+      if (typeof window === 'undefined') {
+        notify();
+        return;
+      }
+      if (frameRef.current !== null) return;
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        notify();
+      });
+    }), [value]),
+    React.useCallback(() => value.get(), [value]),
+    React.useCallback(() => value.get(), [value])
+  );
+};
+
 const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myObfPos, mode }) => {
   const viewport = useViewportSize();
-  const [pan, setPan] = React.useState({ x: panX.get(), y: panY.get() });
-  const [visualScale, setVisualScale] = React.useState(scale.get());
-  const [currentPlaneYScale, setCurrentPlaneYScale] = React.useState(planeYScale.get());
-
-  useMotionValueEvent(panX, 'change', (value) => setPan((prev) => ({ ...prev, x: value })));
-  useMotionValueEvent(panY, 'change', (value) => setPan((prev) => ({ ...prev, y: value })));
-  useMotionValueEvent(scale, 'change', setVisualScale);
-  useMotionValueEvent(planeYScale, 'change', setCurrentPlaneYScale);
+  const currentPanX = useMotionValueSnapshot(panX);
+  const currentPanY = useMotionValueSnapshot(panY);
+  const visualScale = useMotionValueSnapshot(scale);
+  const currentPlaneYScale = useMotionValueSnapshot(planeYScale);
 
   const attribution = React.useMemo(() => {
     const provider = (import.meta.env.VITE_MAP_TILE_PROVIDER || DEFAULT_PROVIDER).toLowerCase();
@@ -79,12 +99,10 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myO
     if (!myObfPos || mode !== 'roadmap') return [];
 
     const zoom = getTileZoom(visualScale);
-    const safePlaneYScale = Math.max(currentPlaneYScale || 0, 0.1);
-    const centerLat = clamp(myObfPos.lat + pan.y / safePlaneYScale / DEGREES_TO_PX, -85.05112878, 85.05112878);
-    const centerLng = myObfPos.lng - pan.x / MAP_PLANE_SCALE / DEGREES_TO_PX;
+    const center = getRoadmapCenterFromPan(myObfPos, currentPanX, currentPanY, currentPlaneYScale);
     const worldTileCount = 2 ** zoom;
-    const centerTileX = lngToTileX(centerLng, zoom);
-    const centerTileY = latToTileY(centerLat, zoom);
+    const centerTileX = lngToTileX(center.lng, zoom);
+    const centerTileY = latToTileY(center.lat, zoom);
     const centerPixelX = centerTileX * TILE_SIZE;
     const centerPixelY = centerTileY * TILE_SIZE;
     const tileScale = clamp(visualScale / 1.25, 0.9, 2.4);
@@ -115,7 +133,7 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myO
     }
 
     return result;
-  }, [currentPlaneYScale, mode, myObfPos?.lat, myObfPos?.lng, pan.x, pan.y, viewport.height, viewport.width, visualScale]);
+  }, [currentPanX, currentPanY, currentPlaneYScale, mode, myObfPos?.lat, myObfPos?.lng, viewport.height, viewport.width, visualScale]);
 
   if (!myObfPos || mode !== 'roadmap') return null;
 
