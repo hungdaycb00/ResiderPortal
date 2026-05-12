@@ -5,6 +5,7 @@ import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
+import MapTiles from './MapTiles';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
@@ -231,6 +232,17 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     onPointerCancel={handleMapPointerCancel}
                     onClickCapture={handleMapClickCapture}
                 >
+                    {!isLooterGameMode && (
+                        <MapTiles
+                            panX={panX}
+                            panY={panY}
+                            scale={scale}
+                            planeYScale={planeYScale}
+                            myObfPos={myObfPos}
+                            mode={mapMode}
+                        />
+                    )}
+
                     <AlinMapThreeScene
                         position={position}
                         nearbyUsers={nearbyUsers}
