@@ -36,7 +36,7 @@ export const makeAvatarTexture = (name: string, imageUrl?: string | null): THREE
         ctx.restore();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 92px system-ui, -apple-system, sans-serif';
+        ctx.font = '800 92px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.35)';
@@ -106,7 +106,7 @@ export const makeBadgeTexture = (title: string, subtitle?: string, accent = '#22
     ctx.fillRect(0, 0, width, 20);
 
     ctx.fillStyle = '#e2e8f0';
-    ctx.font = '800 42px system-ui, -apple-system, sans-serif';
+    ctx.font = '800 42px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
@@ -115,7 +115,7 @@ export const makeBadgeTexture = (title: string, subtitle?: string, accent = '#22
 
     if (subtitle) {
         ctx.fillStyle = '#cbd5e1';
-        ctx.font = '800 22px Inter, system-ui, sans-serif';
+        ctx.font = '800 22px system-ui, sans-serif';
         ctx.fillText(subtitle, width / 2, height * 0.72);
     }
 
@@ -165,7 +165,7 @@ export const makeLootSpriteTexture = (type: string, title?: string, accent = '#2
         ctx.lineWidth = 5;
         ctx.strokeStyle = `${accent}cc`;
         ctx.stroke();
-        ctx.font = '800 112px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+        ctx.font = '800 112px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.55)';
@@ -251,7 +251,7 @@ export const makeLootSpriteTexture = (type: string, title?: string, accent = '#2
 
     if (title) {
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 24px system-ui, -apple-system, sans-serif';
+    ctx.font = '800 24px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -277,7 +277,7 @@ export const createTextCanvasTexture = (text: string, size = 128): THREE.CanvasT
 
     if (ctx) {
         ctx.clearRect(0, 0, size, size);
-        ctx.font = `${size * 0.7}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.font = `${size * 0.7}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 

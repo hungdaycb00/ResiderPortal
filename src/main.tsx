@@ -10,6 +10,13 @@ declare const __APP_BUILD_VERSION__: string;
 // Build version identifier - injected at build time
 export const BUILD_VERSION = __APP_BUILD_VERSION__ || 'dev';
 
+if (import.meta.env.PROD && typeof window !== 'undefined') {
+  const noop = () => {};
+  console.log = noop;
+  console.info = noop;
+  console.debug = noop;
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     if (event.reason && event.reason.message && event.reason.message.includes('Failed to fetch dynamically imported module')) {

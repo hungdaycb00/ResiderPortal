@@ -3,10 +3,15 @@ let reconnectTimeout: any = null;
 let reconnectAttempts = 0;
 const eventHandlers = new Map<string, Set<Function>>();
 const messageQueue: Array<{ event: string; data: any }> = [];
+const SOCKET_DEBUG = import.meta.env.DEV;
+
+const socketLog = (...args: unknown[]) => {
+    if (SOCKET_DEBUG) console.log(...args);
+};
 
 function flushMessageQueue() {
     if (messageQueue.length === 0) return;
-    console.log(`📤 Flushing ${messageQueue.length} queued messages`);
+    socketLog(`📤 Flushing ${messageQueue.length} queued messages`);
     while (messageQueue.length > 0) {
         const msg = messageQueue.shift()!;
         if (socket?.readyState === WebSocket.OPEN) {
@@ -22,30 +27,26 @@ export function initSocket(): WebSocket {
 
     const cloudflareUrl = localStorage.getItem('cloudflareUrl') || '';
     let SOCKET_URL = cloudflareUrl || import.meta.env.VITE_SOCKET_URL || '';
-    
+
     if (!SOCKET_URL) {
         SOCKET_URL = window.location.origin;
     }
 
-    // Convert http/https to ws/wss
     let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    // If we're using a specific cloudflare URL, check if it's https
+
     if (SOCKET_URL.startsWith('https://')) {
         protocol = 'wss:';
     }
 
     const cleanBaseUrl = SOCKET_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    
-    // Ensure we don't have double /ws 
     const wsUrl = `${protocol}//${cleanBaseUrl}/ws`.replace(/\/ws\/ws$/, '/ws');
-    
-    console.log('🔌 Initializing Native WebSocket at:', wsUrl);
+
+    socketLog('🔌 Initializing Native WebSocket at:', wsUrl);
 
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-        console.log('✅ WebSocket connected successfully');
+        socketLog('✅ WebSocket connected successfully');
         reconnectAttempts = 0;
         if (reconnectTimeout) {
             clearTimeout(reconnectTimeout);
@@ -56,16 +57,14 @@ export function initSocket(): WebSocket {
     };
 
     socket.onclose = (event) => {
-        // Only log warning if it's not a normal closure
         if (event.code !== 1000) {
-            console.warn('❌ WebSocket closed:', event.code, event.reason);
+            if (SOCKET_DEBUG) console.warn('❌ WebSocket closed:', event.code, event.reason);
         } else {
-            console.log('🔌 WebSocket connection closed normally');
+            socketLog('🔌 WebSocket connection closed normally');
         }
-        
+
         emitInternal('disconnect', event.reason);
-        
-        // Auto-reconnect with Exponential Backoff + Jitter
+
         if (event.code !== 1000 && !reconnectTimeout) {
             const baseDelay = 2000;
             const maxDelay = 30000;
@@ -74,16 +73,15 @@ export function initSocket(): WebSocket {
 
             reconnectTimeout = setTimeout(() => {
                 reconnectTimeout = null;
-                console.log(`🔄 Attempting to reconnect socket (attempt ${reconnectAttempts})...`);
+                socketLog(`🔄 Attempting to reconnect socket (attempt ${reconnectAttempts})...`);
                 initSocket();
             }, delay);
         }
     };
 
     socket.onerror = (error) => {
-        // Console error can be noisy during reconnection, so we use a more subtle log if it's during reconnect
         if (reconnectTimeout) {
-            console.log('⚠️ WebSocket connection retry failed...');
+            socketLog('⚠️ WebSocket connection retry failed...');
         } else {
             console.error('⚠️ WebSocket connection error');
         }
@@ -107,8 +105,7 @@ export function initSocket(): WebSocket {
 
 export function getSocket(): any {
     if (!socket) return null;
-    
-    // Polyfill for Socket.io syntax to minimize breakage
+
     return {
         connected: socket.readyState === WebSocket.OPEN,
         active: socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN,
@@ -120,10 +117,10 @@ export function getSocket(): any {
             if (socket?.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: event, ...data }));
             } else if (socket?.readyState === WebSocket.CONNECTING) {
-                console.log(`⏳ Buffering message "${event}" — socket is connecting`);
+                socketLog(`⏳ Buffering message "${event}" — socket is connecting`);
                 messageQueue.push({ event, data });
             } else {
-                console.warn('⚠️ WebSocket not ready to send:', event, 'readyState:', socket?.readyState);
+                if (SOCKET_DEBUG) console.warn('⚠️ WebSocket not ready to send:', event, 'readyState:', socket?.readyState);
             }
         },
         on: (event: string, callback: Function) => {
@@ -156,7 +153,7 @@ export function disconnectSocket() {
         socket.close();
         socket = null;
         messageQueue.length = 0;
-        console.log('🔌 WebSocket disconnected');
+        socketLog('🔌 WebSocket disconnected');
     }
 }
 

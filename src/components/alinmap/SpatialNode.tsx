@@ -111,14 +111,14 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({ user, myPos, onClick, mapScal
 
                 {/* Google Maps-like label: name rõ, status phụ trợ */}
                 <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none">
-                    <div className="max-w-[180px] rounded-full border border-white/80 bg-white/95 px-3 py-1 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md">
-                        <span className="block max-w-[150px] truncate text-[10px] font-extrabold tracking-tight text-slate-900 sm:text-[11px]">
+                    <div className="max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.16)] backdrop-blur-md">
+                        <span className="block max-w-[360px] truncate text-[50px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[55px]">
                             {displayName}
                         </span>
                     </div>
                     {user.status ? (
-                        <div className="max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-0.5 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md">
-                            <span className="block max-w-[170px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]">
+                        <div className="max-w-[260px] rounded-full border border-sky-100 bg-sky-50/95 px-3 py-1 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md">
+                            <span className="block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]">
                                 {user.status}
                             </span>
                         </div>

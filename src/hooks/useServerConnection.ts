@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { externalApi, normalizeImageUrl } from '../services/externalApi';
 import { initSocket, disconnectSocket, getSocket } from '../utils/socket';
 import { setupSocketErrorHandlers } from '../utils/socketErrorHandler';
+const SERVER_CONNECTION_DEBUG = import.meta.env.DEV;
+
+const serverConnectionLog = (...args: unknown[]) => {
+    if (SERVER_CONNECTION_DEBUG) console.log(...args);
+};
 
 export function useServerConnection() {
     const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
@@ -47,7 +52,7 @@ export function useServerConnection() {
     // Socket reconnect on URL change
     useEffect(() => {
         if (cloudflareUrl !== lastSocketUrlRef.current) {
-            console.log(`🔌 URL Changed: ${lastSocketUrlRef.current} -> ${cloudflareUrl}. Re-initializing socket...`);
+            serverConnectionLog(`🔌 URL Changed: ${lastSocketUrlRef.current} -> ${cloudflareUrl}. Re-initializing socket...`);
             lastSocketUrlRef.current = cloudflareUrl;
             disconnectSocket();
             initSocket();

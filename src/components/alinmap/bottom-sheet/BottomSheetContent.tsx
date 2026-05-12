@@ -103,6 +103,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
         isIntegratedStorageOpen,
         fortressStorageMode,
         openFortressStorage,
+        setIsFortressStorageOpen,
         setIsIntegratedStorageOpen,
     } = useLooterGame();
     const { isVisibleOnMap, setIsVisibleOnMap } = useProfile();
@@ -138,6 +139,12 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
             pulseSellZone();
         }, 220);
     }, [openFortressStorage, pulseSellZone]);
+
+    const handleCloseBackpackTab = React.useCallback(() => {
+        setIsFortressStorageOpen(false);
+        setIsIntegratedStorageOpen(false);
+        (window as any).collapseLooterTab?.();
+    }, [setIsFortressStorageOpen, setIsIntegratedStorageOpen]);
 
     if (mainTab === 'backpack') {
         return (
@@ -177,7 +184,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                     </div>
                 )}
                 <div className={`${isDesktop && isIntegratedStorageOpen ? 'flex-[0.56] min-h-0' : 'flex-1 min-h-0'}`}>
-                    <BackpackView onEnterWorld={onEnterWorld} readOnly={!!encounter} />
+                    <BackpackView onEnterWorld={onEnterWorld} onCloseTab={handleCloseBackpackTab} readOnly={!!encounter} />
                 </div>
             </div>
         );

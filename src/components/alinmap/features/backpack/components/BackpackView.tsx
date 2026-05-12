@@ -19,10 +19,11 @@ const formatBagTooltip = (bag: any) =>
 
 interface BackpackViewProps {
   onEnterWorld?: () => void;
+  onCloseTab?: () => void;
   readOnly?: boolean;
 }
 
-const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = false }) => {
+const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, onCloseTab, readOnly = false }) => {
   const {
     state, saveInventory, saveBags, equipBag, dropItems,
     isIntegratedStorageOpen,
@@ -201,7 +202,13 @@ const BackpackView: React.FC<BackpackViewProps> = ({ onEnterWorld, readOnly = fa
             <span className="text-xl leading-none">{activeBag?.icon || 'ðŸŽ’'}</span>
           </div>
           <button
-            onClick={() => (window as any).collapseLooterTab?.()}
+            onClick={() => {
+              if (onCloseTab) {
+                onCloseTab();
+                return;
+              }
+              (window as any).collapseLooterTab?.();
+            }}
             className="p-2 text-white/40 hover:text-white transition-colors"
           >
             <ChevronDown className="w-5 h-5" />

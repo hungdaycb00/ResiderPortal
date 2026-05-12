@@ -20,7 +20,7 @@ const HTML_CLASS = 'alinmap-immersive-root';
 const SWIPE_THRESHOLD_PX = 40;
 const MIN_SCROLL_OFFSET_PX = 320;
 const COOL_DOWN_MS = 850;
-const DEBUG_IMMERSIVE = true;
+const DEBUG_IMMERSIVE = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugImmersive') === '1';
 
 const logImmersive = (...args: unknown[]) => {
   if (!DEBUG_IMMERSIVE) return;
