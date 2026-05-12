@@ -15,7 +15,7 @@ const CombatScreen: React.FC = () => {
     const { state, encounter } = useLooterState();
     const { 
         setEncounter, executeCombat, setCombatResult, loadState, 
-        curseChoice, showNotification, setIsChallengeActive, moveBoat,
+        showNotification, setIsChallengeActive, moveBoat,
         returnToFortress, dropCombatLoot, openBackpack, saveInventory
     } = useLooterActions();
     
@@ -71,7 +71,6 @@ const CombatScreen: React.FC = () => {
         const nextInventory = state.inventory.filter((item) => !droppedUids.has(item.uid));
 
         saveInventory(nextInventory);
-        await curseChoice('flee');
 
         const fleeResult = {
             result: 'lose' as const,
