@@ -23,6 +23,12 @@ const MIN_SCROLL_OFFSET_PX = 320;
 const COOL_DOWN_MS = 850;
 const DEBUG_IMMERSIVE = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugImmersive') === '1';
 
+const isIOSSafari = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+};
+
 const logImmersive = (...args: unknown[]) => {
   if (!DEBUG_IMMERSIVE) return;
   console.info('[AlinMapImmersive]', ...args);
@@ -291,6 +297,27 @@ export function useMobileImmersiveMode({
     });
   }, [blocked, isDragging]);
 
+  const applyImmersiveScroll = React.useCallback((targetY: number) => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    // Call scrollTo synchronously first — essential for iOS Safari which
+    // requires the scroll to be triggered within the same user-gesture context.
+    const el = document.scrollingElement || document.documentElement;
+    if (el && el.scrollTo) {
+      el.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+
+    // Double-tap with requestAnimationFrame as a safety net for cases
+    // where the synchronous call gets ignored by the browser.
+    requestAnimationFrame(() => {
+      if (el && el.scrollTo) {
+        el.scrollTo({ top: targetY, behavior: 'smooth' });
+      }
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    });
+  }, []);
+
   const handleTouchEnd = React.useCallback(() => {
     if (!isDragging || blocked) {
       logImmersive('handle-touchend-skip', { isDragging, blocked });
@@ -299,38 +326,61 @@ export function useMobileImmersiveMode({
     }
 
     const now = Date.now();
-    if (now >= coolDownUntilRef.current && dragOffsetY <= -SWIPE_THRESHOLD_PX) {
+    const swipeUp = dragOffsetY <= -SWIPE_THRESHOLD_PX;
+    const swipeDown = dragOffsetY >= SWIPE_THRESHOLD_PX;
+    const isIOS = isIOSSafari();
+
+    if (now >= coolDownUntilRef.current && swipeUp) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
-      void requestNativeFullscreen().then((didFullscreen) => {
-        if (!didFullscreen) {
-          window.scrollTo({ top: getImmersiveScrollOffset(), behavior: 'smooth' });
-          setIsImmersive(true);
-          logImmersive('swipe-up-fallback-scroll', {
-            dragOffsetY,
-            targetScroll: getImmersiveScrollOffset(),
-          });
-          return;
-        }
+
+      // iOS Safari does not support the Fullscreen API - skip the async attempt entirely
+      if (isIOS || !document.fullscreenEnabled) {
+        applyImmersiveScroll(getImmersiveScrollOffset());
         setIsImmersive(true);
-      });
-      logImmersive('swipe-up', {
-        dragOffsetY,
-        targetScroll: getImmersiveScrollOffset(),
-      });
-    } else if (now >= coolDownUntilRef.current && dragOffsetY >= SWIPE_THRESHOLD_PX) {
+        logImmersive('swipe-up-ios-scroll', {
+          dragOffsetY,
+          isIOS,
+          fullscreenEnabled: document.fullscreenEnabled,
+          targetScroll: getImmersiveScrollOffset(),
+        });
+      } else {
+        void requestNativeFullscreen().then((didFullscreen) => {
+          if (!didFullscreen) {
+            applyImmersiveScroll(getImmersiveScrollOffset());
+            setIsImmersive(true);
+            logImmersive('swipe-up-fallback-scroll', {
+              dragOffsetY,
+              targetScroll: getImmersiveScrollOffset(),
+            });
+            return;
+          }
+          setIsImmersive(true);
+        });
+        logImmersive('swipe-up', {
+          dragOffsetY,
+          targetScroll: getImmersiveScrollOffset(),
+        });
+      }
+    } else if (now >= coolDownUntilRef.current && swipeDown) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
-      void exitNativeFullscreen().then((didExit) => {
-        if (!didExit) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        setIsImmersive(false);
-      });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       setIsImmersive(false);
-      logImmersive('swipe-down', {
-        dragOffsetY,
-        targetScroll: 0,
-      });
+
+      if (isIOS || !document.fullscreenEnabled) {
+        applyImmersiveScroll(0);
+        logImmersive('swipe-down-ios-scroll', {
+          dragOffsetY,
+          isIOS,
+          fullscreenEnabled: document.fullscreenEnabled,
+        });
+      } else {
+        void exitNativeFullscreen().then((didExit) => {
+          if (!didExit) {
+            applyImmersiveScroll(0);
+          }
+        });
+        applyImmersiveScroll(0);
+        logImmersive('swipe-down', { dragOffsetY });
+      }
     } else {
       logImmersive('touchend-noop', {
         dragOffsetY,
@@ -340,7 +390,7 @@ export function useMobileImmersiveMode({
     }
 
     stopDragging();
-  }, [blocked, dragOffsetY, isDragging, stopDragging]);
+  }, [blocked, dragOffsetY, isDragging, stopDragging, applyImmersiveScroll, requestNativeFullscreen, exitNativeFullscreen]);
 
   return {
     isImmersive,
