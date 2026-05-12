@@ -43,6 +43,7 @@ export default defineConfig(({mode}) => {
     build: {
       // Empty the outDir before build to keep it clean.
       emptyOutDir: true,
+      chunkSizeWarningLimit: 800,
       rollupOptions: {
         output: {
           entryFileNames: 'assets/app-[hash].js',
@@ -60,13 +61,16 @@ export default defineConfig(({mode}) => {
               if (normalizedId.includes('/src/hooks/') || normalizedId.includes('/src/services/') || normalizedId.includes('/src/utils/')) return 'app-services';
               return undefined;
             }
-            if (id.includes('three') || id.includes('@react-three') || id.includes('three-stdlib')) return 'vendor-three';
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) return 'vendor-react';
-            if (id.includes('firebase/')) return 'vendor-firebase';
-            if (id.includes('framer-motion') || id.includes('motion/')) return 'vendor-motion';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('socket.io')) return 'vendor-socket';
-            if (id.includes('@google/genai') || id.includes('jszip')) return 'vendor-tools';
+            if (normalizedId.includes('/node_modules/@react-three/fiber/')) return 'vendor-r3f-fiber';
+            if (normalizedId.includes('/node_modules/@react-three/drei/')) return 'vendor-r3f-drei';
+            if (normalizedId.includes('/node_modules/three/examples/jsm/')) return 'vendor-three-examples';
+            if (normalizedId.includes('/node_modules/three/')) return 'vendor-three-core';
+            if (normalizedId.includes('/node_modules/react/') || normalizedId.includes('/node_modules/react-dom/') || normalizedId.includes('/node_modules/react-router-dom/')) return 'vendor-react';
+            if (normalizedId.includes('/node_modules/firebase/')) return 'vendor-firebase';
+            if (normalizedId.includes('/node_modules/framer-motion/') || normalizedId.includes('/node_modules/motion/')) return 'vendor-motion';
+            if (normalizedId.includes('/node_modules/lucide-react/')) return 'vendor-icons';
+            if (normalizedId.includes('/node_modules/socket.io')) return 'vendor-socket';
+            if (normalizedId.includes('/node_modules/@google/genai/') || normalizedId.includes('/node_modules/jszip/')) return 'vendor-tools';
             return undefined;
           },
         },

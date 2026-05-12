@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ArrowLeft, Clock, Search, TrendingUp, X } from 'lucide-react';
 import SheetSearchResults from './SheetSearchResults';
+import { fetchAlinSearch } from './search';
 
 const TRENDING_TOPICS = ['#looter', '#trading', 'Chợ phiên', '#chill', 'Săn rồng'];
 const RECENT_SEARCHES_KEY = 'alin_recent_searches';
@@ -55,7 +56,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 
     void (async () => {
       try {
-        const { fetchAlinSearch } = await import('./search');
         const result = await fetchAlinSearch('', controller.signal);
         if (alive) {
           setTrendingTags(Array.isArray(result.tags) ? result.tags.slice(0, 8) : []);

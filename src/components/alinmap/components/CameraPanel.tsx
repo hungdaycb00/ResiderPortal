@@ -1,13 +1,18 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import {
-  CAMERA_Z_WATER_DEFAULT,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
+  getCameraZForVisualScale,
+  getDefaultVisualScaleForMapMode,
   getTiltAngleFromCameraZ,
+  type AlinMapMode,
 } from '../constants';
 
 interface CameraPanelProps {
   cameraZ: MotionValue<number>;
+  mapMode: AlinMapMode;
+  isLooterGameMode: boolean;
+  perspectivePx: number;
   cameraHeightOffset: number;
   cameraPitchOverride: number | null;
   setCameraZ: (z: number) => void;
@@ -17,6 +22,9 @@ interface CameraPanelProps {
 
 const CameraPanel: React.FC<CameraPanelProps> = ({
   cameraZ,
+  mapMode,
+  isLooterGameMode,
+  perspectivePx,
   cameraHeightOffset,
   cameraPitchOverride,
   setCameraZ,
@@ -41,10 +49,11 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   const isAutoPitch = cameraPitchOverride === null;
 
   const resetAll = useCallback(() => {
-    setCameraZ(CAMERA_Z_WATER_DEFAULT);
+    const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
+    setCameraZ(getCameraZForVisualScale(targetVisualScale, perspectivePx));
     setCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
     setCameraPitchOverride(null);
-  }, [setCameraZ, setCameraHeightOffset, setCameraPitchOverride]);
+  }, [mapMode, isLooterGameMode, perspectivePx, setCameraZ, setCameraHeightOffset, setCameraPitchOverride]);
 
   return (
     <div className="flex items-end gap-0">

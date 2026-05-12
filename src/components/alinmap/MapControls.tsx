@@ -31,6 +31,7 @@ interface MapControlsProps {
     handleCenterTo: (lat: number, lng: number, offset?: number) => void;
     setMapMode: (v: AlinMapMode) => void;
     cameraZ: MotionValue<number>;
+    perspectivePx: number;
     setCameraZ: (z: number) => void;
     cameraHeightOffset: number;
     cameraPitchOverride: number | null;
@@ -65,6 +66,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     handleCenterTo,
     setMapMode,
     cameraZ,
+    perspectivePx,
     setCameraZ,
     cameraHeightOffset,
     cameraPitchOverride,
@@ -81,6 +83,9 @@ const MapControls: React.FC<MapControlsProps> = ({
             <div className={`absolute right-2 md:right-8 z-[360] flex items-end gap-0 transition-all duration-500 ${isSheetExpanded ? 'opacity-0 pointer-events-none translate-x-4 md:opacity-100 md:pointer-events-auto md:translate-x-0' : 'opacity-100 translate-x-0 pointer-events-auto'} ${isLooterGameMode ? 'bottom-[42%]' : 'bottom-[75px] md:bottom-12'}`}>
                 <CameraPanel
                     cameraZ={cameraZ}
+                    mapMode={mapMode}
+                    isLooterGameMode={isLooterGameMode}
+                    perspectivePx={perspectivePx}
                     cameraHeightOffset={cameraHeightOffset}
                     cameraPitchOverride={cameraPitchOverride}
                     setCameraZ={setCameraZ}

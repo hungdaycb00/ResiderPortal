@@ -2,10 +2,6 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useMotionValue, animate, useTransform, useMotionValueEvent } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import {
-  CAMERA_Z_DEFAULT,
-  CAMERA_Z_WATER_DEFAULT,
-  CAMERA_Z_FAR,
-  CAMERA_HEIGHT_DEFAULT_PCT,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
@@ -13,6 +9,8 @@ import {
   CAMERA_TILT_FAR_DEGREES,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
+  ROADMAP_VISUAL_SCALE_DEFAULT,
+  getDefaultVisualScaleForMapMode,
   getPerspectivePx,
   getCameraZForVisualScale,
   getPlaneYScaleFromTilt,
@@ -52,9 +50,10 @@ export function useMapNavigation({
   } = looterActions;
   const { isLooterGameMode, isItemDragging, state: looterStateObj } = looterState;
 
+  const initialPerspectivePx = getPerspectivePx(typeof window !== 'undefined' ? window.innerHeight : 720);
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
-  const cameraZ = useMotionValue(CAMERA_Z_WATER_DEFAULT);
+  const cameraZ = useMotionValue(getCameraZForVisualScale(ROADMAP_VISUAL_SCALE_DEFAULT, initialPerspectivePx));
   const selfDragX = useMotionValue(0);
   const selfDragY = useMotionValue(0);
 
@@ -174,11 +173,19 @@ export function useMapNavigation({
     setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
   }, [perspectivePx, setCameraZ]);
 
+  useEffect(() => {
+    if (isLooterGameMode || mapMode !== 'roadmap') return;
+    const currentVisualScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
+    if (currentVisualScale <= ROADMAP_VISUAL_SCALE_DEFAULT) return;
+    setCameraZ(getCameraZForVisualScale(ROADMAP_VISUAL_SCALE_DEFAULT, perspectivePx));
+  }, [cameraZ, isLooterGameMode, mapMode, perspectivePx, setCameraZ]);
+
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
     animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
-    animate(cameraZ, CAMERA_Z_WATER_DEFAULT, { duration: 0.8, ease: "easeInOut" });
-  }, [panX, panY, cameraZ]);
+    const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
+    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 0.8, ease: "easeInOut" });
+  }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
     if (!myObfPos) return;

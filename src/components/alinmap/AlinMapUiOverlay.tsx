@@ -222,6 +222,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         handleCenterTo={nav.handleCenterTo}
         setMapMode={nav.setMapMode}
         cameraZ={camera.cameraZ}
+        perspectivePx={nav.perspectivePx}
         setCameraZ={camera.setCameraZ}
         cameraHeightOffset={camera.cameraHeightOffset}
         cameraPitchOverride={camera.cameraPitchOverride}

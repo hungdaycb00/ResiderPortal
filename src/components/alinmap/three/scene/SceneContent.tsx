@@ -51,7 +51,6 @@ export default function SceneContent({
   filterAgeMax,
   searchMarkerPos,
   scale,
-  cameraZ,
   tiltAngle,
   planeYScale,
   perspectivePx,
@@ -253,6 +252,8 @@ export default function SceneContent({
 
   if (!position) return null;
 
+  const avatarPresentation = mapMode === 'roadmap' ? 'roadmap' : 'default';
+
   return (
     <group ref={tiltGroupRef}>
       <group ref={moveGroupRef}>
@@ -296,6 +297,7 @@ export default function SceneContent({
                 isVisibleOnMap={isVisibleOnMap}
                 isSelected={isSelfSelected}
                 labelMode={labelMode}
+                presentation={avatarPresentation}
                 onClick={() => {
                   if (!selfDragRef.current.moved) {
                     onSelectSelf?.({
@@ -346,6 +348,7 @@ export default function SceneContent({
             isVisibleOnMap
             isSelected={!isLooterGameMode && selectedUser?.id === u.id}
             labelMode={labelMode}
+            presentation={avatarPresentation}
             onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
             showGallery={!isLooterGameMode && u.gallery?.active}
             galleryTitle={u.gallery?.title}
@@ -434,9 +437,9 @@ export default function SceneContent({
 
       <CameraRig
         scale={scale}
-        cameraZ={cameraZ}
         cameraHeightOffset={cameraHeightOffset}
         perspectivePx={perspectivePx}
+        minDistance={isLooterGameMode ? 95 : 140}
       />
     </group>
   );

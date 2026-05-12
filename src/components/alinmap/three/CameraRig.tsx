@@ -6,19 +6,19 @@ import { clamp, CAMERA_HEIGHT_RATIO_DEFAULT } from '../constants';
 
 interface CameraRigProps {
     scale: MotionValue<number>;
-    cameraZ: MotionValue<number>;
     cameraHeightOffset: number;
     perspectivePx: number;
+    minDistance?: number;
 }
 
-export default function CameraRig({ scale, cameraZ, cameraHeightOffset, perspectivePx }: CameraRigProps) {
+export default function CameraRig({ scale, cameraHeightOffset, perspectivePx, minDistance = 140 }: CameraRigProps) {
     const { camera } = useThree();
     const targetPosRef = useRef(new THREE.Vector3());
 
     useFrame((_, delta) => {
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
-        const distance = clamp(depthFit / zoom - (cameraZ.get() || 0) * 5, 95, 9000);
+        const distance = clamp(depthFit / zoom, minDistance, 9000);
         const baseHeight = distance * CAMERA_HEIGHT_RATIO_DEFAULT;
         const height = baseHeight + cameraHeightOffset;
 
