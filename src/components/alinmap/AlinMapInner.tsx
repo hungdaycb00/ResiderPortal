@@ -103,7 +103,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- Auto-focus Camera after initial load ---
     useEffect(() => {
-        if (!wsCtx.isConnecting && wsCtx.wsStatus === 'OPEN' && !hasInitialCenteredRef.current) {
+        if (!wsCtx.isSocketConnecting && wsCtx.wsStatus === 'OPEN' && !hasInitialCenteredRef.current) {
             hasInitialCenteredRef.current = true;
             
             // Wait a bit for map layers to settle
@@ -115,7 +115,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 }
             }, 500);
         }
-    }, [wsCtx.isConnecting, wsCtx.wsStatus, isLooterGameMode, looterActions.centerOnBoat, nav]);
+    }, [wsCtx.isSocketConnecting, wsCtx.wsStatus, isLooterGameMode, looterActions.centerOnBoat, nav]);
 
     // Patch wsCtx with actual panX/panY (circular dep workaround)
     // The handleRefresh in wsCtx uses panX/panY, so we re-bind it here
@@ -123,12 +123,12 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         if (!wsCtx.ws.current || wsCtx.ws.current.readyState !== WebSocket.OPEN) return;
         if (!geo.myObfPos) return;
 
-        wsCtx.setIsConnecting(true);
+        wsCtx.setIsSocketConnecting(true);
         const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
         const scanLat = geo.myObfPos.lat + (nav.panY.get() / nav.planeYScale.get() / DEGREES_TO_PX);
         wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
-        setTimeout(() => wsCtx.setIsConnecting(false), 1000);
-    }, [wsCtx.ws, wsCtx.setIsConnecting, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
+        setTimeout(() => wsCtx.setIsSocketConnecting(false), 1000);
+    }, [wsCtx.ws, wsCtx.setIsSocketConnecting, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
 
     // --- Posts CRUD ---
     const posts = usePosts({
@@ -230,7 +230,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 nearbyUsers={wsCtx.nearbyUsers} friends={friends}
                 myUserId={resolvedMyUserId} user={user}
                 myObfPos={geo.myObfPos} myDisplayName={wsCtx.myDisplayName} myAvatarUrl={wsCtx.myAvatarUrl}
-                    myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isConnecting={wsCtx.isConnecting}
+                    myStatus={resolvedMyStatus} isVisibleOnMap={wsCtx.isVisibleOnMap} isSocketConnecting={wsCtx.isSocketConnecting}
                     isDesktop={nav.isDesktop}
                     currentProvince={geo.currentProvince} galleryActive={wsCtx.galleryActive} galleryTitle={wsCtx.galleryTitle}
                     galleryImages={wsCtx.galleryImages} searchTag={searchTag} filterDistance={50}
@@ -244,7 +244,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     mapMode={nav.mapMode}
                     setContextMenu={setContextMenu}
                     isLooterGameMode={isLooterGameMode}
-                    isLooterLoading={nav.isLooterLoading}
+                    isBackpackLoading={nav.isBackpackLoading}
                     setMainTab={nav.setMainTab}
                     showNotification={showNotification}
                     setIsTierSelectorOpen={setIsTierSelectorOpen}
@@ -305,7 +305,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 currentProvince={geo.currentProvince}
                 weatherData={geo.weatherData}
                 isDesktop={nav.isDesktop}
-                isConnecting={wsCtx.isConnecting}
+                isSocketConnecting={wsCtx.isSocketConnecting}
                 isSheetExpanded={nav.isSheetExpanded}
                 camera={{
                     cameraZ: nav.cameraZ,

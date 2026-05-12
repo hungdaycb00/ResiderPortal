@@ -40,12 +40,35 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       return [];
     }
   });
+  const [trendingTags, setTrendingTags] = useState<Array<{ tag: string; count?: number }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let alive = true;
+
+    void (async () => {
+      try {
+        const { fetchAlinSearch } = await import('./search');
+        const result = await fetchAlinSearch('', controller.signal);
+        if (alive) {
+          setTrendingTags(Array.isArray(result.tags) ? result.tags.slice(0, 8) : []);
+        }
+      } catch {
+        if (alive) setTrendingTags([]);
+      }
+    })();
+
+    return () => {
+      alive = false;
+      controller.abort();
+    };
   }, []);
 
   const saveRecentSearch = (query: string) => {
@@ -184,9 +207,22 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
             <div>
               <h3 className="text-sm font-bold text-gray-900 mb-3">Xu hướng tìm kiếm</h3>
               <div className="flex flex-wrap gap-2">
-                {TRENDING_TOPICS.map((topic, idx) => (
+                {trendingTags.length > 0 ? trendingTags.map((item) => (
                   <button
-                    key={idx}
+                    key={item.tag}
+                    onClick={() => {
+                      setSearchTag(item.tag);
+                      saveRecentSearch(item.tag);
+                    }}
+                    className="inline-flex items-center gap-2 bg-blue-50/50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    {item.tag}
+                    {item.count ? <span className="text-[10px] text-blue-400">x{item.count}</span> : null}
+                  </button>
+                )) : TRENDING_TOPICS.map((topic) => (
+                  <button
+                    key={topic}
                     onClick={() => {
                       setSearchTag(topic);
                       saveRecentSearch(topic);

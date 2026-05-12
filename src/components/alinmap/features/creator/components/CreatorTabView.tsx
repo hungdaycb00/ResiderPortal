@@ -55,7 +55,7 @@ export default function CreatorTabView({
   const [updatingGameId, setUpdatingGameId] = useState<string | null>(null);
   const [viewingFeedbackGame, setViewingFeedbackGame] = useState<any>(null);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
-  const [isLoadingFeedbacks, setIsLoadingFeedbacks] = useState(false);
+  const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
   const [showPasteCodeModal, setShowPasteCodeModal] = useState(false);
@@ -101,7 +101,7 @@ export default function CreatorTabView({
     setEditCategories,
     setViewingFeedbackGame,
     setFeedbacks,
-    setIsLoadingFeedbacks,
+    setIsFetchingFeedbacks,
     setIsPublishing,
     setUploadProgress,
     setPublishStatus,
@@ -275,7 +275,7 @@ export default function CreatorTabView({
         <FeedbackModal
           game={viewingFeedbackGame}
           feedbacks={feedbacks}
-          isLoading={isLoadingFeedbacks}
+          isFetching={isFetchingFeedbacks}
           onClose={() => setViewingFeedbackGame(null)}
         />
       )}

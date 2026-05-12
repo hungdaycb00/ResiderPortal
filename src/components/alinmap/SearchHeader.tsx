@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigation, Search } from 'lucide-react';
 import { normalizeImageUrl } from '../../services/externalApi';
+import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
 interface SearchHeaderProps {
   isDesktop: boolean;
@@ -90,9 +91,13 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
               {currentProvince || 'My location'}
             </span>
             <div className="w-[1px] h-2.5 bg-white/30 mx-1 shadow-sm" />
-            <span className="text-[10px] font-bold text-white/80 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-              {myObfPos ? `${myObfPos.lat.toFixed(4)}, ${myObfPos.lng.toFixed(4)}` : 'Loading...'}
-            </span>
+            {myObfPos ? (
+              <span className="text-[10px] font-bold text-white/80 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                {myObfPos.lat.toFixed(4)}, {myObfPos.lng.toFixed(4)}
+              </span>
+            ) : (
+              <AlinMapLoadingIcon className="h-3.5 w-3.5 animate-spin text-white/60 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" strokeWidth={2.6} />
+            )}
           </div>
         </div>
       )}

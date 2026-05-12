@@ -74,7 +74,7 @@ export function useMapNavigation({
   const [activeTab, setActiveTab] = useState<'info' | 'posts' | 'saved'>('posts');
   const [mapMode, setMapMode] = useState<'grid' | 'satellite'>('satellite');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
-  const [isLooterLoading, setIsSeaLoading] = useState(false);
+  const [isBackpackLoading, setIsBackpackLoading] = useState(false);
   const [radius, setRadius] = useState(50);
   const [cameraHeightOffset, setCameraHeightOffset] = useState(CAMERA_HEIGHT_OFFSET_DEFAULT);
   const [cameraRotateDeg, setCameraRotateDeg] = useState(CAMERA_ROTATE_DEFAULT_DEG);
@@ -149,13 +149,13 @@ export function useMapNavigation({
     if (looterStateObj.initialized || !myObfPos || looterBootstrapRef.current) return;
 
     looterBootstrapRef.current = true;
-    setIsSeaLoading(true);
+    setIsBackpackLoading(true);
     void (async () => {
       try {
         await initGame(myObfPos.lat, myObfPos.lng);
         await loadWorldItems(true);
       } finally {
-        setIsSeaLoading(false);
+        setIsBackpackLoading(false);
         looterBootstrapRef.current = false;
       }
     })();
@@ -310,7 +310,7 @@ export function useMapNavigation({
     mapMode, setMapMode,
     selectedUser, setSelectedUser,
     radius, setRadius,
-    isLooterLoading, setIsSeaLoading,
+    isBackpackLoading, setIsBackpackLoading,
     handleWheel, handleCenter, handleCenterTo,
     setCameraZ, setVisualScale, zoomIn, zoomOut,
     setCameraHeightOffset: (v: number) => setCameraHeightOffset(clamp(v, CAMERA_HEIGHT_OFFSET_MIN, CAMERA_HEIGHT_OFFSET_MAX)),

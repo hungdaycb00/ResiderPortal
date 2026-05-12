@@ -6,12 +6,12 @@ import { FeedbackData } from '../types';
 interface FeedbackModalProps {
   game: any;
   feedbacks: FeedbackData[];
-  isLoading: boolean;
+  isFetching: boolean;
   onClose: () => void;
 }
 
 export default function FeedbackModal({
-  game, feedbacks, isLoading, onClose,
+  game, feedbacks, isFetching, onClose,
 }: FeedbackModalProps) {
   if (!game) return null;
 
@@ -44,7 +44,7 @@ export default function FeedbackModal({
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-          {isLoading ? (
+          {isFetching ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-600">
               <Loader2 className="w-8 h-8 animate-spin mb-2" />
               <p className="text-sm">Đang tải đóng góp...</p>

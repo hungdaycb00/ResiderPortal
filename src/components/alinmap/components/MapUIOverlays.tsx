@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, RefreshCw } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
 
 export const LocationConsentOverlay: React.FC<{
@@ -113,26 +113,3 @@ export const CurseIndicator: React.FC<{
         </div>
     );
 };
-
-export const LooterLoadingOverlay: React.FC = () => (
-    <div className="absolute inset-0 z-[200] bg-[#001424]/95 backdrop-blur-md flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-            <div className="relative w-20 h-20">
-                <div className="absolute inset-0 border-4 border-cyan-500/20 rounded-full" />
-                <div className="absolute inset-0 border-4 border-transparent border-t-cyan-400 rounded-full animate-spin" />
-                <div className="absolute inset-2 border-4 border-transparent border-b-amber-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                <span className="absolute inset-0 flex items-center justify-center text-3xl">⛵</span>
-            </div>
-            <div className="text-center">
-                <p className="text-cyan-300 font-bold text-sm tracking-widest uppercase animate-pulse">Khởi tạo thế giới...</p>
-                <p className="text-cyan-500/50 text-[10px] mt-1">Đang sinh tài nguyên và chuẩn bị hành trình</p>
-            </div>
-        </div>
-    </div>
-);
-
-export const MapConnectionStatus: React.FC = () => (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[210] flex items-center justify-center opacity-30 pointer-events-none">
-        <RefreshCw className="w-8 h-8 animate-spin text-white" />
-    </div>
-);

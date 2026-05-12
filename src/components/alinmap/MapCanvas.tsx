@@ -1,18 +1,17 @@
 import React, { useCallback, useEffect } from 'react';
 import { motion, MotionValue, useMotionTemplate, useTransform } from 'framer-motion';
-import { LoaderCircle } from 'lucide-react';
 
 import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
+import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
 // Sub-components
 import { LooterBackground } from './components/LooterBackground';
 import { 
-    LocationConsentOverlay, CurseIndicator, 
-    LooterLoadingOverlay, MapConnectionStatus 
+    LocationConsentOverlay, CurseIndicator 
 } from './components/MapUIOverlays';
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import FortressWaypoint from './components/FortressWaypoint';
@@ -31,7 +30,7 @@ interface MapCanvasProps {
     myAvatarUrl: string;
     myStatus: string;
     isVisibleOnMap: boolean;
-    isConnecting: boolean;
+    isSocketConnecting: boolean;
     isDesktop: boolean;
     friends?: any[];
     currentProvince: string | null;
@@ -69,7 +68,7 @@ interface MapCanvasProps {
     mapMode: 'grid' | 'satellite';
     setContextMenu: (menu: { x: number, y: number, target: 'map' | 'user', data: any } | null) => void;
     isLooterGameMode?: boolean;
-    isLooterLoading?: boolean;
+    isBackpackLoading?: boolean;
     setMainTab?: (tab: string) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
     setBoatCenterHandler?: (fn: (() => void) | null) => void;
@@ -85,11 +84,11 @@ interface MapCanvasProps {
 const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const {
         position, isConsentOpen, myObfPos, nearbyUsers, myUserId, user, myDisplayName, myAvatarUrl, myStatus,
-        isVisibleOnMap, isConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
+        isVisibleOnMap, isSocketConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, selectedUser, setSelectedUser, setActiveTab, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
-        mapMode, setContextMenu, isLooterLoading, setMainTab, showNotification,
+        mapMode, setContextMenu, isBackpackLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen, performance
     } = props;
 
@@ -216,7 +215,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         myAvatarUrl={myAvatarUrl}
                         myStatus={myStatus}
                         isVisibleOnMap={isVisibleOnMap}
-                        isConnecting={isConnecting}
+                        isSocketConnecting={isSocketConnecting}
                         isDesktop={isDesktop}
                         currentProvince={currentProvince}
                         galleryActive={galleryActive}
@@ -257,7 +256,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     />
 
                     {/* Global Synchronizing Spinner */}
-                    {!myObfPos && <LoadingSpinner />}
+                    {!myObfPos && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <AlinMapLoadingIcon className="h-10 w-10 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -283,18 +286,19 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                 </>
             )}
 
-            {isLooterGameMode && isLooterLoading && <LooterLoadingOverlay />}
+            {isLooterGameMode && isBackpackLoading && (
+                <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px] pointer-events-none">
+                    <AlinMapLoadingIcon className="h-10 w-10 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" />
+                </div>
+            )}
 
-            {/* Connection Status */}
-            {isConnecting && <MapConnectionStatus />}
+            {isSocketConnecting && (
+                <div className="absolute inset-0 z-[210] flex items-center justify-center pointer-events-none">
+                    <AlinMapLoadingIcon className="h-8 w-8 animate-spin text-white/30 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" />
+                </div>
+            )}
         </div>
     );
 };
-
-const LoadingSpinner = () => (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <LoaderCircle className="h-10 w-10 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]" strokeWidth={2.2} />
-    </div>
-);
 
 export default React.memo(MapCanvas);

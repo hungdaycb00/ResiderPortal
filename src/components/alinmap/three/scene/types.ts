@@ -14,7 +14,7 @@ export interface AlinMapThreeSceneProps {
   myAvatarUrl: string;
   myStatus: string;
   isVisibleOnMap: boolean;
-  isConnecting: boolean;
+  isSocketConnecting: boolean;
   isDesktop: boolean;
   currentProvince: string | null;
   galleryActive: boolean;

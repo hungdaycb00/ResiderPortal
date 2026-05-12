@@ -31,6 +31,16 @@ const keywordsMap: Record<string, string[]> = {
 
 const getGameTitle = (game: any) => game.title || game.name || 'Untitled Game';
 const getGameImage = (game: any) => game.image || game.thumbnail || game.cover || '';
+const normalizeTagKey = (value: string) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return '';
+    const prefixed = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+    return prefixed
+        .replace(/[^\p{L}\p{N}#_-]/gu, '')
+        .toLowerCase();
+};
+
+const extractTagsFromText = (value: string) => (String(value || '').match(/#[\p{L}\p{N}_-]+/gu) || []);
 
 const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame, onSearchClick }) => {
     const gameList = React.useMemo(() => Array.isArray(games) ? games.filter(Boolean) : [], [games]);
@@ -63,17 +73,20 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
     const trendingTags = React.useMemo(() => {
         const tagCounts: Record<string, number> = {};
         nearbyUsers.forEach(u => {
-            const words = (u.status || '').split(' ').filter((w: string) => w.startsWith('#'));
-            words.forEach((w: string) => {
-                const clean = w
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-zA-Z0-9#]/g, '')
-                    .toUpperCase();
-                if (clean.length > 1) tagCounts[clean] = (tagCounts[clean] || 0) + 1;
+            extractTagsFromText(u.status).forEach((tag) => {
+                const key = normalizeTagKey(tag);
+                if (key.length > 1) tagCounts[key] = (tagCounts[key] || 0) + 1;
+            });
+
+            const userTags = Array.isArray(u.tags) ? u.tags : [];
+            userTags.forEach((tag: string) => {
+                const key = normalizeTagKey(tag);
+                if (key.length > 1) tagCounts[key] = (tagCounts[key] || 0) + 1;
             });
         });
-        return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, TRENDING_TAG_LIMIT);
+        return Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+            .slice(0, TRENDING_TAG_LIMIT);
     }, [nearbyUsers]);
 
     return (
@@ -175,14 +188,14 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                     <span className="text-[11px] font-bold text-gray-400">{nearbyUsers.length} users nearby</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {trendingTags.length === 0 ? (
+                        {trendingTags.length === 0 ? (
                         <p className="text-[12px] text-gray-400 italic py-2">No trending tags yet.</p>
                     ) : trendingTags.map(([tag, count]) => (
-                        <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setSearchTag(tag)}
-                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-bold rounded-full border border-blue-100 transition-colors active:scale-95"
+                            <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setSearchTag(tag)}
+                                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-bold rounded-full border border-blue-100 transition-colors active:scale-95"
                         >
                             {tag} <span className="text-blue-400 ml-1">x{count}</span>
                         </button>

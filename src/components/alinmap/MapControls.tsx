@@ -7,7 +7,7 @@ import MapControlsFiltersSidebar from './MapControlsFiltersSidebar';
 import CameraPanel from './components/CameraPanel';
 
 interface MapControlsProps {
-    isConnecting: boolean;
+    isSocketConnecting: boolean;
     isSidebarOpen: boolean;
     weatherData: { temp: number; desc: string; icon: string; humidity?: number; feelsLike?: number } | null;
     currentProvince?: string | null;
@@ -43,7 +43,7 @@ interface MapControlsProps {
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
-    isConnecting,
+    isSocketConnecting,
     isSidebarOpen,
     weatherData,
     currentProvince,
@@ -92,7 +92,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                 />
                 <div className="flex flex-col gap-2 md:gap-3 ml-2">
                     <MapControlsQuickActions
-                        isConnecting={isConnecting}
+                        isSocketConnecting={isSocketConnecting}
                         isLooterGameMode={isLooterGameMode}
                         mapMode={mapMode}
                         handleRefresh={handleRefresh}

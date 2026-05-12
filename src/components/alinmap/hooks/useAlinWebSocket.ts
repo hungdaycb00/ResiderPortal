@@ -50,7 +50,7 @@ export function useAlinWebSocket({
   onStatusSync,
   performance,
 }: UseAlinWebSocketParams) {
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isSocketConnecting, setIsSocketConnecting] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [wsStatus, setWsStatus] = useState('IDLE');
   const [myUserId, setMyUserId] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export function useAlinWebSocket({
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const reconnectEnabled = useRef(false);
   const isMounted = useRef(true);
-  const isConnectingRef = useRef(false);
+  const isSocketConnectingRef = useRef(false);
   const hasOpenedOnceRef = useRef(false);
   const joinCompletedRef = useRef(false);
   const pendingJoinRef = useRef(false);
@@ -105,7 +105,7 @@ export function useAlinWebSocket({
   useEffect(() => { userRef.current = user; }, [user?.uid, user?.displayName, user?.photoURL]);
   useEffect(() => { currentProvinceRef.current = currentProvince; }, [currentProvince]);
   useEffect(() => { externalApiRef.current = externalApi; }, [externalApi]);
-  useEffect(() => { isConnectingRef.current = isConnecting; }, [isConnecting]);
+  useEffect(() => { isSocketConnectingRef.current = isSocketConnecting; }, [isSocketConnecting]);
   useEffect(() => { if (user?.displayName) setMyDisplayName(user.displayName); }, [user?.displayName]);
   useEffect(() => { if (user?.photoURL !== undefined) setMyAvatarUrl(user.photoURL || ''); }, [user?.photoURL]);
   useEffect(() => {
@@ -205,7 +205,7 @@ export function useAlinWebSocket({
   const connectWS = useCallback(() => {
     const currentPosition = positionRef.current;
     if (!Array.isArray(currentPosition) || currentPosition.length < 2) return;
-    if (isConnectingRef.current) return;
+    if (isSocketConnectingRef.current) return;
     if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) return;
 
     const wsUrl = buildWsUrl();
@@ -215,8 +215,8 @@ export function useAlinWebSocket({
     hasOpenedOnceRef.current = false;
     joinCompletedRef.current = false;
     pendingJoinRef.current = false;
-    setIsConnecting(true);
-    isConnectingRef.current = true;
+    setIsSocketConnecting(true);
+    isSocketConnectingRef.current = true;
     addLog(`Connecting to ${wsUrl}...`);
     setWsStatus('CONNECTING');
 
@@ -226,8 +226,8 @@ export function useAlinWebSocket({
     } catch (e: any) {
       addLog(`WebSocket create failed: ${e?.message || 'unknown error'}`);
       setWsStatus('ERROR');
-      setIsConnecting(false);
-      isConnectingRef.current = false;
+      setIsSocketConnecting(false);
+      isSocketConnectingRef.current = false;
       reconnectEnabled.current = false;
       return;
     }
@@ -238,8 +238,8 @@ export function useAlinWebSocket({
       reconnectAttemptsRef.current = 0;
       hasOpenedOnceRef.current = true;
       addLog('Connected, sending join payload...');
-      setIsConnecting(false);
-      isConnectingRef.current = false;
+      setIsSocketConnecting(false);
+      isSocketConnectingRef.current = false;
       setWsStatus('OPEN');
 
       const joined = sendJoinPayload(socket);
@@ -253,8 +253,8 @@ export function useAlinWebSocket({
 
     socket.onclose = () => {
       ws.current = null;
-      setIsConnecting(false);
-      isConnectingRef.current = false;
+      setIsSocketConnecting(false);
+      isSocketConnectingRef.current = false;
       if (!isMounted.current || !reconnectEnabled.current) return;
       if (!hasOpenedOnceRef.current) {
         addLog('Initial WebSocket connect failed; retry paused.');
@@ -274,8 +274,8 @@ export function useAlinWebSocket({
     };
 
     socket.onerror = () => {
-      setIsConnecting(false);
-      isConnectingRef.current = false;
+      setIsSocketConnecting(false);
+      isSocketConnectingRef.current = false;
       if (!hasOpenedOnceRef.current) {
         addLog('Initial WebSocket error; retry paused.');
         reconnectEnabled.current = false;
@@ -343,16 +343,16 @@ export function useAlinWebSocket({
   // ── Handle manual refresh ─────────────────────────────────────────────────
   const handleRefresh = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN && myObfPos) {
-      setIsConnecting(true);
+      setIsSocketConnecting(true);
       const scan = buildMapMoveFromPan({ myObfPos, panX: panX?.get?.() ?? 0, panY: panY?.get?.() ?? 0, planeYScale: planeYScale?.get?.() ?? 1 });
       ws.current.send(JSON.stringify(buildMapMovePayload(scan.lat, scan.lng)));
-      setTimeout(() => setIsConnecting(false), 1000);
+      setTimeout(() => setIsSocketConnecting(false), 1000);
     }
   }, [myObfPos, panX, panY, planeYScale]);
 
   return React.useMemo(() => ({
     ws,
-    isConnecting,
+    isSocketConnecting,
     wsStatus,
     isVisibleOnMap: isVisibleOnMapRef.current,
     myUserId,
@@ -376,9 +376,9 @@ export function useAlinWebSocket({
     galleryImages,
     setGalleryImages,
     handleRefresh,
-    setIsConnecting,
+    setIsSocketConnecting,
   }), [
-    isConnecting, wsStatus, myUserId, addLog, nearbyUsers, selectedUser, myDisplayName,
+    isSocketConnecting, wsStatus, myUserId, addLog, nearbyUsers, selectedUser, myDisplayName,
     myAvatarUrl, localMyStatus, statusInput, galleryActive, galleryTitle, galleryImages, handleRefresh,
   ]);
 }

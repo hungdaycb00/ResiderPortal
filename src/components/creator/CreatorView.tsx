@@ -58,7 +58,7 @@ export default function CreatorView({
   // Feedback Modal
   const [viewingFeedbackGame, setViewingFeedbackGame] = useState<any>(null);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
-  const [isLoadingFeedbacks, setIsLoadingFeedbacks] = useState(false);
+  const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
 
   // Category & paste code
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -87,7 +87,7 @@ export default function CreatorView({
     setServerGames, setIsMyGamesListOpen, setUpdatingGameId, setGameName,
     setSelectedCategories, setThumbnailPreview, setEditingGame, setEditGameName,
     setEditNameError, setEditCategories, setViewingFeedbackGame, setFeedbacks,
-    setIsLoadingFeedbacks, setIsPublishing, setUploadProgress, setPublishStatus,
+    setIsFetchingFeedbacks, setIsPublishing, setUploadProgress, setPublishStatus,
     setPublishStatusType, setIsPreviewingOnServer, setServerPreviewUrl,
     setIsDownloadingDoc, setShowDocOptionsModal,
     createZipBlob, fileInputRef,
@@ -231,7 +231,7 @@ export default function CreatorView({
           <FeedbackModal
             game={viewingFeedbackGame}
             feedbacks={feedbacks}
-            isLoading={isLoadingFeedbacks}
+            isFetching={isFetchingFeedbacks}
             onClose={() => setViewingFeedbackGame(null)}
           />
         )}

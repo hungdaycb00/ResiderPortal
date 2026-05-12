@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
 import { Html } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { LoaderCircle } from 'lucide-react';
 import { SRGBColorSpace, NoToneMapping } from 'three';
 
+import AlinMapLoadingIcon from '../components/AlinMapLoadingIcon';
 import SceneContent from './scene/SceneContent';
 import type { AlinMapThreeSceneProps } from './scene/types';
 
@@ -46,7 +46,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
       <Suspense
         fallback={
           <Html center>
-            <LoaderCircle className="h-8 w-8 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.15)]" strokeWidth={2.25} />
+            <AlinMapLoadingIcon className="h-8 w-8 animate-spin text-white/35 drop-shadow-[0_0_14px_rgba(255,255,255,0.15)]" />
           </Html>
         }
       >

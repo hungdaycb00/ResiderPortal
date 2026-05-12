@@ -79,7 +79,7 @@ interface AlinMapUiOverlayProps {
   currentProvince: string | null;
   weatherData: { temp: number; desc: string; icon: string; humidity?: number; feelsLike?: number } | null;
   isDesktop: boolean;
-  isConnecting: boolean;
+  isSocketConnecting: boolean;
   isSheetExpanded: boolean;
   camera: CameraLabState;
 }
@@ -132,7 +132,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   currentProvince,
   weatherData,
   isDesktop,
-  isConnecting,
+  isSocketConnecting,
   isSheetExpanded,
   camera,
 }) => {
@@ -195,7 +195,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
       />
 
       <MapControls
-        isConnecting={isConnecting}
+        isSocketConnecting={isSocketConnecting}
         isSidebarOpen={false}
         weatherData={weatherData}
         currentProvince={currentProvince}

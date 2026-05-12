@@ -21,7 +21,7 @@ interface UseGameManagerParams {
   setEditCategories: (cats: string[]) => void;
   setViewingFeedbackGame: (game: any) => void;
   setFeedbacks: (feedbacks: any[]) => void;
-  setIsLoadingFeedbacks: (loading: boolean) => void;
+  setIsFetchingFeedbacks: (fetching: boolean) => void;
   setIsPublishing: (publishing: boolean) => void;
   setUploadProgress: (progress: number) => void;
   setPublishStatus: (status: string | null) => void;
@@ -41,7 +41,7 @@ export function useGameManager(params: UseGameManagerParams) {
     setServerGames, setIsMyGamesListOpen, setUpdatingGameId, setGameName,
     setSelectedCategories, setThumbnailPreview, setEditingGame, setEditGameName,
     setEditNameError, setEditCategories, setViewingFeedbackGame, setFeedbacks,
-    setIsLoadingFeedbacks, setIsPublishing, setUploadProgress, setPublishStatus,
+    setIsFetchingFeedbacks, setIsPublishing, setUploadProgress, setPublishStatus,
     setPublishStatusType, setIsPreviewingOnServer, setServerPreviewUrl,
     setIsDownloadingDoc, setShowDocOptionsModal,
     createZipBlob, fileInputRef,
@@ -141,7 +141,7 @@ export function useGameManager(params: UseGameManagerParams) {
 
   const handleViewFeedbackClick = async (game: any) => {
     setViewingFeedbackGame(game);
-    setIsLoadingFeedbacks(true);
+    setIsFetchingFeedbacks(true);
     setFeedbacks([]);
     try {
       const res = await externalApi.getGameReviews(game.id);
@@ -149,7 +149,7 @@ export function useGameManager(params: UseGameManagerParams) {
     } catch (err: any) {
       showNotification('Lỗi tải đánh giá: ' + err.message, 'error');
     } finally {
-      setIsLoadingFeedbacks(false);
+      setIsFetchingFeedbacks(false);
     }
   };
 

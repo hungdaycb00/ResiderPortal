@@ -4,7 +4,7 @@ import { LocateBoatButton } from './looter-game/components/LocateBoatButton';
 import BoatSpeedPanel from './looter-game/components/BoatSpeedPanel';
 
 interface MapControlsQuickActionsProps {
-    isConnecting: boolean;
+    isSocketConnecting: boolean;
     isLooterGameMode: boolean;
     mapMode: 'grid' | 'satellite';
     handleRefresh: () => void;
@@ -15,7 +15,7 @@ interface MapControlsQuickActionsProps {
 }
 
 const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
-    isConnecting,
+    isSocketConnecting,
     isLooterGameMode,
     mapMode,
     handleRefresh,
@@ -34,11 +34,11 @@ const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
                 <>
                     <button
                         onClick={handleRefresh}
-                        disabled={isConnecting}
+                        disabled={isSocketConnecting}
                         className="w-8 h-8 md:w-10 md:h-10 bg-white/60 md:bg-white backdrop-blur-md rounded-[10px] md:rounded-xl shadow-md md:shadow-[0_4px_15px_rgba(0,0,0,0.1)] flex items-center justify-center text-gray-700 hover:text-blue-600 active:scale-95 transition-all disabled:opacity-50"
                         title="Refresh"
                     >
-                        <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isConnecting ? 'animate-spin text-blue-600' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 md:w-5 md:h-5 ${isSocketConnecting ? 'animate-spin text-blue-600' : ''}`} />
                     </button>
                     <button
                         onClick={() => setMapMode(mapMode === 'grid' ? 'satellite' : 'grid')}

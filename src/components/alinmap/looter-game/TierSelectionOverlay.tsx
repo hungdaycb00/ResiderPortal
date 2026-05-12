@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, X, TrendingUp, Coins } from 'lucide-react';
 import { GAME_CONFIG } from './gameConfig';
+import AlinMapLoadingIcon from '../components/AlinMapLoadingIcon';
 
 interface TierSelectionOverlayProps {
   isOpen: boolean;
@@ -30,16 +31,16 @@ const buildTierLabels = () => {
 
 const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onClose, currentGold, onSelectTier }) => {
   const [selected, setSelected] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isTierSelectionSubmitting, setIsTierSelectionSubmitting] = useState(false);
   const tierLabels = useMemo(() => buildTierLabels(), []);
 
   const handleStart = async () => {
-    if (isLoading || !canAfford) return;
-    setIsLoading(true);
+    if (isTierSelectionSubmitting || !canAfford) return;
+    setIsTierSelectionSubmitting(true);
     try {
       await onSelectTier(selected);
     } finally {
-      setIsLoading(false);
+      setIsTierSelectionSubmitting(false);
     }
   };
 
@@ -126,16 +127,16 @@ const TierSelectionOverlay: React.FC<TierSelectionOverlayProps> = ({ isOpen, onC
 
             <div className="relative z-10">
               <button
-                disabled={!canAfford || isLoading}
+                disabled={!canAfford || isTierSelectionSubmitting}
                 onClick={handleStart}
                 className={`w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-[14px] font-black transition-all active:scale-95 ${
-                  canAfford && !isLoading
+                  canAfford && !isTierSelectionSubmitting
                   ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:bg-amber-400'
                   : 'bg-white/5 text-white/30 cursor-not-allowed'
                 }`}
               >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                {isTierSelectionSubmitting ? (
+                  <AlinMapLoadingIcon className="h-5 w-5 animate-spin text-black/35" strokeWidth={2.6} />
                 ) : (
                   <>
                     BẮT ĐẦU <span className="opacity-70 font-bold ml-1">({selectedData.label} VÀNG)</span>

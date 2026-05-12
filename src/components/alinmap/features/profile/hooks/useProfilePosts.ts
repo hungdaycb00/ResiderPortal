@@ -41,7 +41,7 @@ export function useProfilePosts({
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [isSavingPost, setIsSavingPost] = useState(false);
   const [userGames, setUserGames] = useState<any[]>([]);
-  const [isLoadingGames, setIsLoadingGames] = useState(false);
+  const [isFetchingGames, setIsFetchingGames] = useState(false);
 
   const activeProfileRequestRef = useRef(0);
   const activePostsSourceRef = useRef<string | null>(selfPostsIdentifier);
@@ -229,7 +229,7 @@ export function useProfilePosts({
     if (selectedUser) {
       const requestId = Date.now();
       activeProfileRequestRef.current = requestId;
-      setIsLoadingGames(true);
+      setIsFetchingGames(true);
       setUserPosts([]);
       setUserGames([]);
 
@@ -242,10 +242,10 @@ export function useProfilePosts({
           })
           .catch(console.error)
           .finally(() => {
-            if (activeProfileRequestRef.current === requestId) setIsLoadingGames(false);
+            if (activeProfileRequestRef.current === requestId) setIsFetchingGames(false);
           });
       } else {
-        setIsLoadingGames(false);
+        setIsFetchingGames(false);
       }
 
       const targetId = selectedUser.isSelf ? (resolvedMyUserId || selectedUser.id || 'me') : selectedUser.id;
@@ -253,12 +253,12 @@ export function useProfilePosts({
     } else if (resolvedMyUserId || user) {
       const requestId = Date.now();
       activeProfileRequestRef.current = requestId;
-      setIsLoadingGames(false);
+      setIsFetchingGames(false);
       setUserGames([]);
       fetchUserPosts(selfPostsIdentifier, requestId);
     } else {
       activeProfileRequestRef.current = Date.now();
-      setIsLoadingGames(false);
+      setIsFetchingGames(false);
       setUserGames([]);
       setUserPosts([]);
       setGalleryActive(false);

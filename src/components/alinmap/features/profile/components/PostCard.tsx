@@ -12,7 +12,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     const [comments, setComments] = useState<any[]>(post.comments || []);
     const [showComments, setShowComments] = useState(false);
     const [newCmt, setNewCmt] = useState('');
-    const [loadingCmt, setLoadingCmt] = useState(false);
+    const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
     const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
 
     const toggleLike = async (e: React.MouseEvent) => {
@@ -50,7 +50,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     const submitComment = async () => {
         if (!newCmt.trim()) return;
         if (requireAuth && !requireAuth('binh luan bai viet')) return;
-        setLoadingCmt(true);
+        setIsCommentSubmitting(true);
         try {
             const r = await fetch(`${API_BASE}/api/user/post/${post.id}/comment`, {
                 method: 'POST',
@@ -64,7 +64,7 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                 setNewCmt('');
             }
         } catch (e) {}
-        finally { setLoadingCmt(false); }
+        finally { setIsCommentSubmitting(false); }
     };
 
     const handlePrivacyChange = (newPrivacy: string) => {
@@ -87,6 +87,17 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
             default: return 'Công khai';
         }
     };
+
+    if (post.isDeleted) {
+        return (
+            <div className="bg-gray-50 border border-red-100 rounded-2xl overflow-hidden shadow-sm mb-4">
+                <div className="px-4 py-6 text-center">
+                    <p className="text-sm font-bold text-red-500">Bài viết đã bị xóa bởi quản trị viên</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Nội dung này không còn khả dụng</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div onClick={onClick} className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4 ${onClick ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}>
@@ -223,8 +234,8 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                         )}
                     </div>
                     <div className="flex items-center gap-2 relative">
-                        <input type="text" value={newCmt} onChange={e => setNewCmt(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); } }} onClick={(e) => e.stopPropagation()} placeholder="Viết bình luận..." className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-300 transition-colors" disabled={loadingCmt} />
-                        <button onClick={(e) => { e.stopPropagation(); submitComment(); }} disabled={!newCmt.trim() || loadingCmt} className={`w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all active:scale-90 ${(!newCmt.trim() || loadingCmt) ? 'opacity-50' : 'hover:bg-blue-500'}`}>
+                        <input type="text" value={newCmt} onChange={e => setNewCmt(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); } }} onClick={(e) => e.stopPropagation()} placeholder="Viết bình luận..." className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-300 transition-colors" disabled={isCommentSubmitting} />
+                        <button onClick={(e) => { e.stopPropagation(); submitComment(); }} disabled={!newCmt.trim() || isCommentSubmitting} className={`w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all active:scale-90 ${(!newCmt.trim() || isCommentSubmitting) ? 'opacity-50' : 'hover:bg-blue-500'}`}>
                             <Navigation className="w-4 h-4 rotate-45 -ml-0.5" />
                         </button>
                     </div>
