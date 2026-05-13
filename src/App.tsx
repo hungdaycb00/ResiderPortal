@@ -167,9 +167,9 @@ export default function App() {
 
     if (location.pathname !== newPath && !playingGame?.gameUrl.includes('looter-game')) {
       // Note: Looter Game is handled inside AlinMap.tsx
-      window.history.replaceState(null, '', newPath);
+      navigate(newPath, { replace: true });
     }
-  }, [playingGame, activeTab, location.pathname]);
+  }, [playingGame, activeTab, location.pathname, navigate]);
 
   // --- Auto-Play from URL Slug ---
   useEffect(() => {

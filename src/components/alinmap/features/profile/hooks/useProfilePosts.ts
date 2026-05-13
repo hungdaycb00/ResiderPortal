@@ -216,7 +216,12 @@ export function useProfilePosts({
       });
       const data = await resp.json();
       if (data.success) {
+        // Refresh current view
         fetchUserPosts(activePostsSourceRef.current || selfPostsIdentifier);
+        // Always sync own gallery (activePostsSourceRef may point to another user)
+        if (activePostsSourceRef.current !== selfPostsIdentifier && selfPostsIdentifier !== 'me') {
+          fetchUserPosts(selfPostsIdentifier);
+        }
         onPostsChanged?.();
         sendGallerySync();
       }

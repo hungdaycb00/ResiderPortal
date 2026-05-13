@@ -128,6 +128,14 @@ export function useWsMessageHandler({
       }
     }
 
+    // ── GALLERY_UPDATED ───────────────────────────────────────────────────────
+    if (data.type === 'GALLERY_UPDATED') {
+      const g = data.payload || {};
+      setGalleryTitle(g.title || '');
+      setGalleryImages(g.images || []);
+      setGalleryActive(g.active || false);
+    }
+
     // ── NEW_NOTIFICATION ─────────────────────────────────────────────────────
     if (data.type === 'NEW_NOTIFICATION') {
       fetchNotifications();

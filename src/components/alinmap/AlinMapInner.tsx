@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../services/externalApi';
 import { extractExploreGame } from '../../utils/routing';
 import MapCanvas from './MapCanvas';
@@ -40,6 +40,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const geo = useGeolocation();
     const performance = useAdaptivePerformance();
     const location = useLocation();
+    const navigate = useNavigate();
 
     const [searchTag, setSearchTag] = useState('');
     const [friendIdInput, setFriendIdInput] = useState('');
@@ -160,8 +161,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             nav.setMainTab('backpack');
             nav.setIsSheetExpanded(true);
             nav.requestBoatAutoFocus();
+        } else if (subGame !== 'looter-game' && isLooterGameMode && nav.mainTab !== 'backpack') {
+            looterActions.setIsLooterGameMode(false);
         }
-    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus]);
+    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.mainTab, nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus]);
 
     useEffect(() => {
         const subGame = extractExploreGame(location.pathname);
@@ -179,9 +182,9 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         }
 
         if (location.pathname !== newPath) {
-            window.history.replaceState(null, '', newPath);
+            navigate(newPath, { replace: true });
         }
-    }, [isLooterGameMode, nav.mainTab, location.pathname]);
+    }, [isLooterGameMode, nav.mainTab, location.pathname, navigate]);
 
     // Combat HUD & Camera Sync logic has been moved to useCombatCamera hook inside MapCanvas
     // to prevent redundant animations and circular dependency issues.
