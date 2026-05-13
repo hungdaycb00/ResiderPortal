@@ -188,7 +188,9 @@ export function useMobileImmersiveMode({
         touchY: event.touches[0]?.clientY ?? null,
         startY: globalTouchStartYRef.current,
       });
-      event.preventDefault();
+      if (event.cancelable) {
+        event.preventDefault();
+      }
     };
 
     document.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
