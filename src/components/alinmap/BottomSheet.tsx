@@ -158,20 +158,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onPostClick={onPostClick}
                 />
 
-                {/* Mobile: subtab bar at bottom of sheet, above scroll area */}
-                {!isDesktop && isSheetExpanded && !selectedUser && (
-                    <MobileSubTabBar
-                        mainTab={mainTab}
-                        exploreSubTab={exploreSubTab}
-                        socialSubTab={socialSubTab}
-                        isLooterGameMode={false}
-                        onExploreSubTabChange={setExploreSubTab}
-                        onSocialSubTabChange={setSocialSubTab}
-                    />
-                )}
-
-                {/* Desktop: fixed SubTabSwitcher outside scrollable area */}
-                {isSheetExpanded && !selectedUser && isDesktop && mainTab === 'discover' && (
+                {/* Desktop: SubTabSwitcher inside sheet (static positioning) */}
+                {isDesktop && isSheetExpanded && !selectedUser && mainTab === 'discover' && (
                     <SubTabSwitcher
                         value={exploreSubTab}
                         onChange={setExploreSubTab}
@@ -181,7 +169,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         ]}
                     />
                 )}
-                {isSheetExpanded && !selectedUser && isDesktop && mainTab === 'friends' && (
+                {isDesktop && isSheetExpanded && !selectedUser && mainTab === 'friends' && (
                     <SubTabSwitcher
                         value={socialSubTab}
                         onChange={setSocialSubTab}
@@ -192,6 +180,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     />
                 )}
             </motion.div>
+
+            {/* Mobile: subtab bar outside sheet, fixed positioning */}
+            {!isDesktop && isSheetExpanded && !selectedUser && (
+                <MobileSubTabBar
+                    mainTab={mainTab}
+                    exploreSubTab={exploreSubTab}
+                    socialSubTab={socialSubTab}
+                    isLooterGameMode={false}
+                    onExploreSubTabChange={setExploreSubTab}
+                    onSocialSubTabChange={setSocialSubTab}
+                />
+            )}
         </div>
     );
 };

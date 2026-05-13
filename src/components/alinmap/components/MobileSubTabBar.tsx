@@ -42,21 +42,23 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
   if (!tabs) return null;
 
   return (
-    <div className="shrink-0 flex justify-center pt-2 pb-3">
-      <div className="flex bg-gray-100 rounded-full p-1 gap-0.5">
-        {tabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => onTabChange?.(tab.value)}
-            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all active:scale-95 ${
-              activeValue === tab.value
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="fixed bottom-[64px] left-0 right-0 z-[190] px-6 pb-4 pointer-events-none">
+      <div className="flex justify-center">
+        <div className="flex bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1 gap-0.5 pointer-events-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => onTabChange?.(tab.value)}
+              className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all active:scale-95 ${
+                activeValue === tab.value
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
