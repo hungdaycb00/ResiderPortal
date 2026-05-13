@@ -237,25 +237,13 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                     ) : (
                         <div className="pt-2">
                             {mainTab === 'discover' && (
-                                <div className="flex flex-col h-full">
-                            {exploreSubTab === 'games' ? (
-                                        <DiscoverView
-                                            games={games}
-                                            nearbyUsers={nearbyUsers}
-                                            setSearchTag={setSearchTag}
-                                            handlePlayGame={handlePlayGame}
-                                            onSearchClick={onSearchClick}
-                                        />
-                                    ) : (
-                                        <CreatorTabView
-                                            user={user}
-                                            externalApi={externalApi}
-                                            showNotification={showNotification}
-                                            cloudflareUrl={cloudflareUrl}
-                                            onPublishSuccess={onPublishSuccess}
-                                        />
-                                    )}
-                                </div>
+                                <DiscoverView
+                                    games={games}
+                                    nearbyUsers={nearbyUsers}
+                                    setSearchTag={setSearchTag}
+                                    handlePlayGame={handlePlayGame}
+                                    onSearchClick={onSearchClick}
+                                />
                             )}
 
                             {mainTab === 'friends' && (

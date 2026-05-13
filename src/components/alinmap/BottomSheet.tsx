@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BottomSheetContent from './bottom-sheet/BottomSheetContent';
 import SheetHeader from './bottom-sheet/SheetHeader';
-import SubTabSwitcher from './bottom-sheet/SubTabSwitcher';
+
 import { useLooterGame } from './looter-game/LooterGameContext';
 
 import type { BottomSheetProps, ExploreSubTab, SocialSubTab } from './bottom-sheet/types';
@@ -156,27 +156,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onPostClick={onPostClick}
                 />
 
-                {/* SubTabSwitcher rendered outside scrollable area so it stays fixed on desktop */}
-                {!selectedUser && mainTab === 'discover' && (
-                    <SubTabSwitcher
-                        value={exploreSubTab}
-                        onChange={setExploreSubTab}
-                        options={[
-                            { value: 'games', label: 'Games' },
-                            { value: 'creator', label: 'Creator' },
-                        ]}
-                    />
-                )}
-                {!selectedUser && mainTab === 'friends' && (
-                    <SubTabSwitcher
-                        value={socialSubTab}
-                        onChange={setSocialSubTab}
-                        options={[
-                            { value: 'posts', label: 'Posts' },
-                            { value: 'nearby', label: 'Nearby' },
-                        ]}
-                    />
-                )}
             </motion.div>
         </div>
     );
