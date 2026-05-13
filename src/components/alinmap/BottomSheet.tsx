@@ -188,8 +188,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     exploreSubTab={exploreSubTab}
                     socialSubTab={socialSubTab}
                     isLooterGameMode={false}
+                    isSheetExpanded={isSheetExpanded}
+                    isCreatingPost={props.isCreatingPost}
+                    user={props.user}
                     onExploreSubTabChange={setExploreSubTab}
                     onSocialSubTabChange={setSocialSubTab}
+                    onSearchClick={() => props.setIsSearchOverlayOpen?.(true)}
+                    onCreatePostClick={() => props.setIsCreatingPost(true)}
+                    onLoginClick={() => props.triggerAuth?.(() => {})}
+                    onLogoutClick={() => props.logout?.()}
                 />
             )}
         </div>
