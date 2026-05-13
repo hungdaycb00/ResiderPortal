@@ -16,7 +16,6 @@ import {
     LocationConsentOverlay, CurseIndicator 
 } from './components/MapUIOverlays';
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
-import FortressWaypoint from './components/FortressWaypoint';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
 import { BILLBOARD_UPRIGHT_PITCH_DEGREES, ROADMAP_WORLD_SCALE, type AlinMapMode } from './constants';
 
@@ -354,14 +353,6 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         isExpanded={isCursesExpanded}
                         onToggle={() => setIsCursesExpanded(!isCursesExpanded)}
                         reducedMotion={performance?.mode === 'low'}
-                    />
-                    <FortressWaypoint 
-                        myObfPos={myObfPos} 
-                        panX={panX} 
-                        panY={panY} 
-                        scale={scale} 
-                        planeYScale={planeYScale}
-                        performance={performance}
                     />
                 </>
             )}

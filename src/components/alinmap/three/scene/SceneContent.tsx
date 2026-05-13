@@ -1,35 +1,31 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Fog, Color, Group, MathUtils, Mesh } from 'three';
+import { Group, MathUtils, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
-import { GAME_CONFIG } from '../../looter-game/gameConfig';
 import { getRoadmapCenterFromPan, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
 
 // Sub-components
-import CameraRig from '../CameraRig';
 import Ground from '../Ground';
-import AvatarBillboard from '../AvatarBillboard';
-import MarkerBillboard from '../MarkerBillboard';
-import ProceduralBoat from '../models/ProceduralBoat';
-import ProceduralFortress from '../models/ProceduralFortress';
-import LootSprite from '../models/LootSprite';
-import DashedPath from '../models/DashedPath';
+import CameraRig from '../CameraRig';
+
+// Layers
+import UserLayers from './UserLayers';
+import LooterLayers from './LooterLayers';
+import SceneMarkers from './SceneMarkers';
 
 // Hooks
 import { useLooterInteraction } from './looterInteraction';
-import { useDragHandlers } from './useDragHandlers';
 
 // Utils
-import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
+import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, type LatLng } from '../sceneUtils';
 
 // Types
 import type { AlinMapThreeSceneProps } from './types';
 
 /**
- * SceneContent: toàn bộ logic render bên trong Canvas.
- * Tách ra khỏi AlinMapThreeScene.tsx để file entry point chỉ chứa Canvas setup.
+ * SceneContent: điều phối render bên trong Canvas.
+ * Fog/Background đã bị loại bỏ theo yêu cầu.
  */
 export default function SceneContent({
   position,
@@ -87,7 +83,7 @@ export default function SceneContent({
   const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
   const frameSkipRef = useRef(0);
   const groundMeshRef = useRef<Mesh>(null);
-  const { scene } = useThree();
+
   const looterState = useLooterState();
   const looterActions = useLooterActions();
   const safeWorldItems = useMemo(
@@ -96,9 +92,7 @@ export default function SceneContent({
   );
   const { state: looterStateObj, encounter } = looterState;
   const { openFortressStorage, setShowMinigame, pickupItem } = looterActions;
-  const performanceMode = performance?.mode ?? 'high';
-  const labelMode = performance?.labelMode ?? 'full';
-  const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
+
   const isRoadmapOverlay = mapMode === 'roadmap' && !isLooterGameMode;
   const sceneWorldScale = isRoadmapOverlay ? ROADMAP_WORLD_SCALE : 1;
   const scaleScenePoint = (point: { x: number; z: number }) => ({
@@ -107,14 +101,17 @@ export default function SceneContent({
   });
   const pxToScaledScene = (px: number) => pxToScene(px) * sceneWorldScale;
 
+  // ── Drag offset state ──────────────────────────────────────────────────────
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
+  useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
+
+  // ── Roadmap pan state ──────────────────────────────────────────────────────
   const [roadmapView, setRoadmapView] = useState(() => ({
     panX: panX.get(),
     panY: panY.get(),
     planeYScale: planeYScale.get(),
   }));
-  useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
-  useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
   useMotionValueEvent(panX, 'change', (v) => {
     if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, panX: v }));
   });
@@ -124,7 +121,6 @@ export default function SceneContent({
   useMotionValueEvent(planeYScale, 'change', (v) => {
     if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, planeYScale: v }));
   });
-
   useEffect(() => {
     if (!isRoadmapOverlay) return;
     setRoadmapView({
@@ -134,26 +130,17 @@ export default function SceneContent({
     });
   }, [isRoadmapOverlay, panX, panY, planeYScale]);
 
+  // ── Origin calculation ─────────────────────────────────────────────────────
   const baseOrigin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
   const origin: LatLng = isRoadmapOverlay
     ? getRoadmapCenterFromPan(baseOrigin, roadmapView.panX, roadmapView.panY, roadmapView.planeYScale)
     : baseOrigin;
 
-  const { selfDragRef, handleSelfPointerDown, handleSelfPointerMove, handleSelfPointerUp } = useDragHandlers({
-    isLooterGameMode: !!isLooterGameMode,
-    position,
-    scale,
-    planeYScale,
-    selfDragX,
-    selfDragY,
-    onSelfDragEnd,
-  });
-
+  // ── Looter interaction ─────────────────────────────────────────────────────
   const {
     getWorldItemIcon, getWorldItemType, getWorldItemAccent,
     handleWorldItemClick, handleFortressClick, handleGroundClick,
-    waypointItems, waypointSpawnIds, renderedWorldItems,
-    itemRenderData, waypointRenderData,
+    waypointRenderData, itemRenderData,
   } = useLooterInteraction({
     isLooterGameMode: !!isLooterGameMode,
     isDesktop,
@@ -174,36 +161,7 @@ export default function SceneContent({
     setIsTierSelectorOpen,
   });
 
-  useEffect(() => {
-    scene.fog = isLooterGameMode || mapMode === 'roadmap' ? null : new Fog('#08111b', 1800, 22000);
-    scene.background = isLooterGameMode || mapMode === 'roadmap' ? null : new Color('#020b12');
-  }, [mapMode, scene, isLooterGameMode]);
-
-  // ── Filtered & sorted nearby users ───────────────────────────────────────
-  const filteredUsers = useMemo(() => {
-    const baseLat = position?.[0] ?? 0;
-    const baseLng = position?.[1] ?? 0;
-    const visible = nearbyUsers.filter((u) => {
-      if (u.id === myUserId || u.id === user?.uid) return false;
-      if (searchTag) {
-        const term = String(searchTag || '').toLowerCase();
-        const matchesName = String(u.displayName || u.username || '').toLowerCase().includes(term);
-        const tagsStr = (Array.isArray(u.tags) ? u.tags.join(' ') : String(u.tags || '')).toLowerCase();
-        const statusStr = String(u.status || '').toLowerCase();
-        if (!matchesName && !tagsStr.includes(term) && !statusStr.includes(term)) return false;
-      }
-      if (u.lat == null || u.lng == null || Number.isNaN(u.lat) || Number.isNaN(u.lng)) return false;
-      const distKm = Math.sqrt(((u.lat - baseLat) ** 2) + ((u.lng - baseLng) ** 2)) * 111;
-      if (distKm > filterDistance) return false;
-      const age = u.birthdate ? (new Date().getFullYear() - new Date(u.birthdate).getFullYear()) : 20;
-      if (age < filterAgeMin || age > filterAgeMax) return false;
-      u.distKm = distKm;
-      return true;
-    });
-    visible.sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
-    return visible.slice(0, maxVisibleUsers);
-  }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, maxVisibleUsers]);
-
+  // ── Per-frame tilt/move sync ───────────────────────────────────────────────
   useFrame(() => {
     if (!tiltGroupRef.current || !moveGroupRef.current) return;
     const liftX = panX.get();
@@ -246,7 +204,6 @@ export default function SceneContent({
         const nz = sp.z + pxToScaledScene(visualBoatY);
         const [lx, , lz] = lastBoatPosRef.current;
         if (Math.abs(nx - lx) > 0.01 || Math.abs(nz - lz) > 0.01) {
-          // ⚠️ ĐỒNG BỘ Y=5.0: khớp với ProceduralBoat.tsx (bobbing Y offset +5)
           boatPosRef.current = [nx, 5.0, nz];
           lastBoatPosRef.current = [nx, 0, nz];
         }
@@ -254,57 +211,28 @@ export default function SceneContent({
     }
   });
 
+  // ── Derived scene positions ────────────────────────────────────────────────
   const selfPos = scaleScenePoint(worldToScene(origin, baseOrigin));
-  const selfLift = pxToScaledScene(dragOffset.x);
-  const selfDepth = pxToScaledScene(dragOffset.y);
   const searchMarkerScene = searchMarkerPos ? scaleScenePoint(worldToScene(origin, searchMarkerPos)) : null;
   const fortressScene = looterStateObj?.fortressLat && looterStateObj?.fortressLng
     ? scaleScenePoint(worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng }))
     : null;
   const boatTargetScene = boatTargetPin ? scaleScenePoint(worldToScene(origin, boatTargetPin)) : null;
 
-  const userRenderData = useMemo(() => {
-    const raw = filteredUsers.map((u) => ({ user: u, pos: scaleScenePoint(worldToScene(origin, u)) }));
-    // Nhóm user theo vị trí (làm tròn 1 chữ số thập phân ~ 0.1 scene unit)
-    const groups = new Map<string, typeof raw>();
-    raw.forEach((item) => {
-      const key = `${item.pos.x.toFixed(1)},${item.pos.z.toFixed(1)}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(item);
-    });
-    // Offset user trùng vị trí theo vòng tròn lục giác
-    const SPACING = AVATAR_PLANE_SIZE * 0.6;
-    const result: typeof raw = [];
-    groups.forEach((group) => {
-      group.forEach((item, i) => {
-        if (i === 0) { result.push(item); return; }
-        const ring = Math.ceil(i / 6);
-        const angle = ((i - 1) % 6) * (Math.PI / 3);
-        const radius = ring * SPACING;
-        result.push({
-          user: item.user,
-          pos: {
-            x: item.pos.x + Math.cos(angle) * radius,
-            z: item.pos.z + Math.sin(angle) * radius,
-          },
-        });
-      });
-    });
-    return result;
-  }, [filteredUsers, origin.lat, origin.lng, sceneWorldScale]);
-
   if (!position) return null;
-
-  const avatarPresentation = mapMode === 'roadmap' ? 'roadmap' : 'default';
 
   return (
     <group ref={tiltGroupRef}>
       <group ref={moveGroupRef}>
-        {/* 1. Ground */}
-        <Ground mapMode={mapMode} roadmapWorldScale={sceneWorldScale} groundRef={groundMeshRef}
-          onGroundClick={(point) => handleGroundClick(groundMeshRef, point)} />
+        {/* Ground */}
+        <Ground
+          mapMode={mapMode}
+          roadmapWorldScale={sceneWorldScale}
+          groundRef={groundMeshRef}
+          onGroundClick={(point) => handleGroundClick(groundMeshRef, point)}
+        />
 
-        {/* Search Target Pin */}
+        {/* Search area ring */}
         {!isRoadmapOverlay && (
           <group position={[0, 0.08, 0]}>
             <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
@@ -314,172 +242,74 @@ export default function SceneContent({
           </group>
         )}
 
-        {/* Self avatar / Boat */}
-        {isLooterGameMode ? (
-          <ProceduralBoat
-            position={[selfPos.x, 0, selfPos.z]}
-            offsetX={boatOffsetX}
-            offsetY={boatOffsetY}
-            currentLat={looterStateObj?.currentLat}
-            currentLng={looterStateObj?.currentLng}
-            fortressLat={looterStateObj?.fortressLat}
-            fortressLng={looterStateObj?.fortressLng}
-            reducedMotion={performanceMode === 'low'}
-          />
-        ) : !isRoadmapOverlay && (() => {
-          const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
-          return (
-            <group
-              onPointerDown={handleSelfPointerDown}
-              onPointerMove={handleSelfPointerMove}
-              onPointerUp={handleSelfPointerUp}
-            >
-              <AvatarBillboard
-                name={myDisplayName || user?.displayName || 'Me'}
-                avatarUrl={myAvatarUrl || user?.photoURL}
-                position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
-                status={myStatus}
-                isVisibleOnMap={isVisibleOnMap}
-                isSelected={isSelfSelected}
-                labelMode={labelMode}
-                presentation={avatarPresentation}
-                onClick={() => {
-                  if (!selfDragRef.current.moved) {
-                    onSelectSelf?.({
-                      id: user?.uid || myUserId || 'self',
-                      username: myDisplayName,
-                      lat: baseOrigin.lat,
-                      lng: baseOrigin.lng,
-                      isSelf: true,
-                    });
-                  }
-                }}
-                showGallery={galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode))}
-                galleryTitle={galleryTitle}
-                galleryImages={galleryImages}
-              />
-            </group>
-          );
-        })()}
+        {/* User layers (Self + Nearby avatars / Boat) */}
+        <UserLayers
+          origin={origin}
+          baseOrigin={baseOrigin}
+          sceneWorldScale={sceneWorldScale}
+          myUserId={myUserId}
+          user={user}
+          myDisplayName={myDisplayName}
+          myAvatarUrl={myAvatarUrl}
+          myStatus={myStatus}
+          isVisibleOnMap={isVisibleOnMap}
+          nearbyUsers={nearbyUsers}
+          selectedUser={selectedUser}
+          filterDistance={filterDistance}
+          filterAgeMin={filterAgeMin}
+          filterAgeMax={filterAgeMax}
+          searchTag={searchTag}
+          galleryActive={galleryActive}
+          galleryTitle={galleryTitle}
+          galleryImages={galleryImages}
+          mapMode={mapMode}
+          isLooterGameMode={!!isLooterGameMode}
+          isRoadmapOverlay={isRoadmapOverlay}
+          scale={scale}
+          planeYScale={planeYScale}
+          selfDragX={selfDragX}
+          selfDragY={selfDragY}
+          dragOffset={dragOffset}
+          position={position}
+          onSelfDragEnd={onSelfDragEnd}
+          boatOffsetX={boatOffsetX}
+          boatOffsetY={boatOffsetY}
+          looterStateObj={looterStateObj}
+          onSelectUser={onSelectUser}
+          onSelectSelf={onSelectSelf}
+          performance={performance}
+        />
 
-        {/* Province marker */}
-        {!isRoadmapOverlay && currentProvince ? (
-          <MarkerBillboard
-            position={[selfPos.x + pxToScaledScene(180), 0.5, selfPos.z - pxToScaledScene(180)]}
-            icon="Province"
-            label={currentProvince}
-            accent="#0ea5e9"
-          />
-        ) : null}
+        {/* Scene markers (Province, Search, Mode label) */}
+        <SceneMarkers
+          isRoadmapOverlay={isRoadmapOverlay}
+          currentProvince={currentProvince}
+          selfSceneX={selfPos.x}
+          selfSceneZ={selfPos.z}
+          pxToScaledScene={pxToScaledScene}
+          searchMarkerPos={searchMarkerPos}
+          searchMarkerScene={searchMarkerScene}
+          mapMode={mapMode}
+        />
 
-        {/* Search marker */}
-        {!isRoadmapOverlay && searchMarkerPos ? (
-          <MarkerBillboard
-            position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
-            icon="Pin"
-            label="Search"
-            accent="#fb7185"
-          />
-        ) : null}
-
-        {/* Nearby users */}
-        {!isRoadmapOverlay && userRenderData.map(({ user: u, pos }) => (
-          <AvatarBillboard
-            key={u.id}
-            name={u.displayName || u.username || 'U'}
-            avatarUrl={isLooterGameMode ? null : u.avatar_url}
-            position={[pos.x, 0.22, pos.z]}
-            status={isLooterGameMode ? undefined : u.status}
-            isVisibleOnMap
-            isSelected={!isLooterGameMode && selectedUser?.id === u.id}
-            labelMode={labelMode}
-            presentation={avatarPresentation}
-            onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
-            showGallery={!isLooterGameMode && u.gallery?.active}
-            galleryTitle={u.gallery?.title}
-            galleryImages={u.gallery?.images}
-            dimmed={isLooterGameMode}
-          />
-        ))}
-
-        {/* ─── Looter Game Elements ──────────────────────────────────────────── */}
-        {/* Fortress */}
-        {isLooterGameMode && !encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-          <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} scale={20} onClick={handleFortressClick} />
-        ) : null}
-
-        {/* Waypoint items (3 gần nhất) */}
-        {waypointRenderData.map(({ item, pos }: any) => (
-          <LootSprite
-            key={`wp-${item.spawnId}`}
-            position={[pos.x, 3.5, pos.z]}
-            type={getWorldItemType(item)}
-            icon={getWorldItemIcon(item)}
-            title={item?.item?.name || 'Loot'}
-            accent={getWorldItemAccent(item)}
-            scale={2.4}
-            size={AVATAR_PLANE_SIZE * 2.0}
-            renderOrder={50}
-            onClick={() => handleWorldItemClick(item)}
-          />
-        ))}
-
-        {/* Dashed path từ thuyền → target */}
-        {isLooterGameMode && !encounter && boatTargetPin && boatTargetScene ? (
-          <DashedPath
-            from={boatPosRef.current}
-            to={[boatTargetScene.x, 5.0, boatTargetScene.z]}
-            color="#22d3ee"
-          />
-        ) : null}
-
-        {/* Boat target pin */}
-        {isLooterGameMode && !encounter && boatTargetPin ? (
-          <LootSprite
-            position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
-            type="target"
-            size={AVATAR_PLANE_SIZE * 0.2}
-            scale={2}
-          />
-        ) : null}
-
-        {/* Enemy */}
-        {isLooterGameMode && encounter ? (
-          <LootSprite
-            position={[
-              boatPosRef.current[0] + pxToScaledScene(GAME_CONFIG.COMBAT_ENEMY_BOAT_OFFSET_PX),
-              0.7,
-              boatPosRef.current[2]
-            ]}
-            type="enemy"
-            scale={2.4 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER}
-          />
-        ) : null}
-
-        {/* World loot items */}
-        {itemRenderData.map(({ item, pos }: any) => (
-          <LootSprite
-            key={item.spawnId}
-            position={[pos.x, 3.0, pos.z]}
-            type={getWorldItemType(item)}
-            icon={getWorldItemIcon(item)}
-            title={item?.item?.name || 'Loot'}
-            accent={getWorldItemAccent(item)}
-            scale={2}
-            size={AVATAR_PLANE_SIZE * 1.8}
-            renderOrder={40}
-            onClick={() => handleWorldItemClick(item)}
-          />
-        ))}
-
-        {/* Mode label */}
-        {!isRoadmapOverlay && (
-          <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
-            <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
-              {mapMode} / {currentProvince || 'Global'}
-            </div>
-          </Html>
-        )}
+        {/* Looter game layers */}
+        <LooterLayers
+          isLooterGameMode={!!isLooterGameMode}
+          encounter={encounter}
+          sceneWorldScale={sceneWorldScale}
+          boatPosRef={boatPosRef}
+          looterStateObj={looterStateObj}
+          fortressScene={fortressScene}
+          handleFortressClick={handleFortressClick}
+          boatTargetPin={boatTargetPin}
+          boatTargetScene={boatTargetScene}
+          waypointRenderData={waypointRenderData}
+          itemRenderData={itemRenderData}
+          getWorldItemType={getWorldItemType}
+          getWorldItemIcon={getWorldItemIcon}
+          getWorldItemAccent={getWorldItemAccent}
+          handleWorldItemClick={handleWorldItemClick}
+        />
       </group>
 
       <CameraRig
