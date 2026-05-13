@@ -23,7 +23,7 @@ export default function CameraRig({ scale, cameraHeightOffset, perspectivePx, mi
         const height = baseHeight + cameraHeightOffset;
 
         targetPosRef.current.set(0, height, distance);
-        camera.position.lerp(targetPosRef.current, Math.min(1, delta * 12));
+        camera.position.lerp(targetPosRef.current, Math.min(1, delta * 6));
         camera.lookAt(0, cameraHeightOffset, 0);
     });
 

@@ -60,28 +60,6 @@ export function useGeolocation() {
 
   // Tự động lấy GPS khi mount — không cần user tương tác
   // Nếu browser đã có permission (từ lần trước), getCurrentPosition sẽ thành công ngay
-  const autoLocationRequestedRef = useRef(false);
-  useEffect(() => {
-    if (autoLocationRequestedRef.current) return;
-    const lastPos = localStorage.getItem('alin_last_position');
-    // Chỉ auto-request nếu chưa có vị trí thật trong localStorage
-    if (lastPos) return;
-    if (!('geolocation' in navigator)) return;
-    autoLocationRequestedRef.current = true;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setPosition([latitude, longitude]);
-        setMyObfPos({ lat: latitude, lng: longitude });
-        localStorage.setItem('alin_last_position', JSON.stringify([latitude, longitude]));
-      },
-      () => {
-        // Silent fail — user chưa cấp quyền hoặc bị từ chối
-      },
-      { timeout: 5000, maximumAge: 300000 }
-    );
-  }, []);
-
   const fetchProvinceName = useCallback(async (lat: number, lng: number) => {
     const cacheKey = `alin_province_${lat.toFixed(3)}_${lng.toFixed(3)}`;
     const cached = readCache<string>(cacheKey);

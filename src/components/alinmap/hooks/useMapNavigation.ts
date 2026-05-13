@@ -73,8 +73,8 @@ export function useMapNavigation({
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
-  const WHEEL_ZOOM_STEP = 2400;
-  const TRACKPAD_ZOOM_STEP = 1200;
+  const WHEEL_ZOOM_STEP = 1200;
+  const TRACKPAD_ZOOM_STEP = 600;
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
@@ -180,19 +180,19 @@ export function useMapNavigation({
   }, [perspectivePx, setCameraZ]);
 
   const handleCenter = useCallback(() => {
-    animate(panX, 0, { duration: 0.8, ease: "easeInOut" });
-    animate(panY, 0, { duration: 0.8, ease: "easeInOut" });
+    animate(panX, 0, { duration: 1.6, ease: "easeInOut" });
+    animate(panY, 0, { duration: 1.6, ease: "easeInOut" });
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
-    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 0.8, ease: "easeInOut" });
+    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
   }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
     if (!myObfPos) return;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
-    animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 1.5, ease: "easeInOut" });
+    animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 3.0, ease: "easeInOut" });
     // Reverse yOffsetPx sign: subtract to push the boat UP on screen when sheet is open
-    animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 1.5, ease: "easeInOut" });
+    animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 3.0, ease: "easeInOut" });
   }, [myObfPos, panX, panY, planeYScale]);
 
   const requestBoatAutoFocus = useCallback(() => {

@@ -116,7 +116,7 @@ export function useMapInteractions({
             // Adjust zoom sensitivity based on need
             // Moving fingers apart (scaleDiff > 1) -> zoom in (larger cameraZ)
             // Moving fingers together (scaleDiff < 1) -> zoom out (smaller cameraZ)
-            const zoomDelta = (scaleDiff - 1) * 250; 
+            const zoomDelta = (scaleDiff - 1) * 125;
             if (setCameraZ) {
                 setCameraZ(initialCameraZRef.current + zoomDelta);
             }
@@ -130,8 +130,8 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
-        const dragSpeedMultiplierX = mapMode === 'roadmap' ? (10 / 3) : (1 / 3);
-        const dragSpeedMultiplierY = mapMode === 'roadmap' ? (5 / 3) : (1 / 3);
+        const dragSpeedMultiplierX = mapMode === 'roadmap' ? (5 / 3) : (1 / 6);
+        const dragSpeedMultiplierY = mapMode === 'roadmap' ? (5 / 6) : (1 / 6);
 
         const deltaX = ((e.clientX - dragState.startX) / currentScale) * dragSpeedMultiplierX;
         const deltaY = ((e.clientY - dragState.startY) / currentScale) * dragSpeedMultiplierY;

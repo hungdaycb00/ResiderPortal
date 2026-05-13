@@ -95,8 +95,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
     }
 
     // Di chuyển camera (pan) đến vị trí đó
-    animate(panX, -pxX * MAP_PLANE_SCALE + xOffsetPx, { duration: 0.45, ease: 'easeInOut' });
-    animate(panY, -pxY * MAP_PLANE_SCALE - yOffsetPx, { duration: 0.45, ease: 'easeInOut' });
+    animate(panX, -pxX * MAP_PLANE_SCALE + xOffsetPx, { duration: 0.9, ease: 'easeInOut' });
+    animate(panY, -pxY * MAP_PLANE_SCALE - yOffsetPx, { duration: 0.9, ease: 'easeInOut' });
   }, [myObfPos, currentLat, currentLng, boatOffsetX, boatOffsetY, panX, panY]);
 
   const stopPanFollow = useCallback(() => {
@@ -120,8 +120,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
     const boatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
     const midX = boatX + GAME_CONFIG.COMBAT_MIDPOINT_OFFSET_PX;
     const midY = boatY;
-    animate(panX, -midX + xOffsetPx, { duration: 0.8, ease: 'easeInOut' });
-    animate(panY, -midY - yOffsetPx, { duration: 0.8, ease: 'easeInOut' });
+    animate(panX, -midX + xOffsetPx, { duration: 1.6, ease: 'easeInOut' });
+    animate(panY, -midY - yOffsetPx, { duration: 1.6, ease: 'easeInOut' });
   }, [stopAllAnimations, boatOffsetX, boatOffsetY, panX, panY]);
 
   return {
