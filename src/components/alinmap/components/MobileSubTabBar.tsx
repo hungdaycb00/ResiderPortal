@@ -47,8 +47,8 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
     <div
       className={`md:hidden fixed left-0 right-0 z-[370] flex justify-center transition-all duration-300 ${
         isSheetExpanded
-          ? 'opacity-0 pointer-events-none translate-y-2'
-          : 'opacity-100 pointer-events-auto translate-y-0'
+          ? 'opacity-100 pointer-events-auto translate-y-0'
+          : 'opacity-0 pointer-events-none translate-y-2'
       }`}
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 8px) + 56px)' }}
     >

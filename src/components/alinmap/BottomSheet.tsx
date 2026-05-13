@@ -158,7 +158,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 />
 
                 {/* SubTabSwitcher rendered outside scrollable area so it stays fixed on desktop */}
-                {!selectedUser && mainTab === 'discover' && (
+                {isSheetExpanded && !selectedUser && mainTab === 'discover' && (
                     <SubTabSwitcher
                         value={exploreSubTab}
                         onChange={setExploreSubTab}
@@ -168,7 +168,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         ]}
                     />
                 )}
-                {!selectedUser && mainTab === 'friends' && (
+                {isSheetExpanded && !selectedUser && mainTab === 'friends' && (
                     <SubTabSwitcher
                         value={socialSubTab}
                         onChange={setSocialSubTab}
