@@ -299,25 +299,41 @@ export function useMobileImmersiveMode({
     });
   }, [blocked, isDragging]);
 
+  // ── Android: smooth scroll (hoạt động tốt, giữ nguyên) ─────────────────────
   const applyImmersiveScroll = React.useCallback((targetY: number) => {
     if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
-    // Call scrollTo synchronously first — essential for iOS Safari which
-    // requires the scroll to be triggered within the same user-gesture context.
     const el = document.scrollingElement || document.documentElement;
     if (el && el.scrollTo) {
       el.scrollTo({ top: targetY, behavior: 'smooth' });
     }
     window.scrollTo({ top: targetY, behavior: 'smooth' });
 
-    // Double-tap with requestAnimationFrame as a safety net for cases
-    // where the synchronous call gets ignored by the browser.
+    // Safety net — gọi lại qua rAF cho Chrome/Android
     requestAnimationFrame(() => {
       if (el && el.scrollTo) {
         el.scrollTo({ top: targetY, behavior: 'smooth' });
       }
       window.scrollTo({ top: targetY, behavior: 'smooth' });
     });
+  }, []);
+
+  // ── iOS Safari: instant scroll, PHẢI gọi đồng bộ trong gesture handler ──────
+  // Lý do: iOS bỏ qua `behavior:'smooth'` khi nằm ngoài user-gesture context,
+  // và rAF sẽ thoát khỏi context đó. Dùng 'instant' + scrollingElement trực tiếp.
+  const applyImmersiveScrollIOS = React.useCallback((targetY: number) => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    // `document.scrollingElement` là cách đúng nhất trên iOS Safari
+    const el = document.scrollingElement || document.documentElement;
+
+    // Gọi đồng bộ, không dùng behavior:'smooth' để không thoát khỏi gesture context
+    if (el && el.scrollTo) {
+      el.scrollTo({ top: targetY, behavior: 'instant' as ScrollBehavior });
+    }
+    window.scrollTo(0, targetY); // fallback dạng (x, y) — iOS cũ hơn hiểu được
+
+    logImmersive('ios-scroll-applied', { targetY, scrollY: window.scrollY });
   }, []);
 
   const handleTouchEnd = React.useCallback(() => {
@@ -335,22 +351,30 @@ export function useMobileImmersiveMode({
     if (now >= coolDownUntilRef.current && swipeUp) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
 
-      // iOS Safari does not support the Fullscreen API - skip the async attempt entirely
-      if (isIOS || !document.fullscreenEnabled) {
+      if (isIOS) {
+        // ── iOS Safari: dùng scroll trick riêng (instant, sync) ────────────────
+        // KHÔNG gọi requestFullscreen vì iOS không hỗ trợ
+        applyImmersiveScrollIOS(getImmersiveScrollOffset());
+        setIsImmersive(true);
+        logImmersive('swipe-up-ios', {
+          dragOffsetY,
+          targetScroll: getImmersiveScrollOffset(),
+        });
+      } else if (!document.fullscreenEnabled) {
+        // ── Fallback cho các browser không có Fullscreen API (non-iOS) ──────────
         applyImmersiveScroll(getImmersiveScrollOffset());
         setIsImmersive(true);
-        logImmersive('swipe-up-ios-scroll', {
+        logImmersive('swipe-up-no-fullscreen', {
           dragOffsetY,
-          isIOS,
-          fullscreenEnabled: document.fullscreenEnabled,
           targetScroll: getImmersiveScrollOffset(),
         });
       } else {
+        // ── Android / Desktop: dùng Fullscreen API ─────────────────────────────
         void requestNativeFullscreen().then((didFullscreen) => {
           if (!didFullscreen) {
             applyImmersiveScroll(getImmersiveScrollOffset());
             setIsImmersive(true);
-            logImmersive('swipe-up-fallback-scroll', {
+            logImmersive('swipe-up-android-fallback', {
               dragOffsetY,
               targetScroll: getImmersiveScrollOffset(),
             });
@@ -358,30 +382,29 @@ export function useMobileImmersiveMode({
           }
           setIsImmersive(true);
         });
-        logImmersive('swipe-up', {
-          dragOffsetY,
-          targetScroll: getImmersiveScrollOffset(),
-        });
+        logImmersive('swipe-up-android', { dragOffsetY });
       }
     } else if (now >= coolDownUntilRef.current && swipeDown) {
       coolDownUntilRef.current = now + COOL_DOWN_MS;
       setIsImmersive(false);
 
-      if (isIOS || !document.fullscreenEnabled) {
+      if (isIOS) {
+        // ── iOS Safari: scroll về 0, đồng bộ, instant ──────────────────────────
+        applyImmersiveScrollIOS(0);
+        logImmersive('swipe-down-ios', { dragOffsetY });
+      } else if (!document.fullscreenEnabled) {
+        // ── Fallback không có Fullscreen API (non-iOS) ──────────────────────────
         applyImmersiveScroll(0);
-        logImmersive('swipe-down-ios-scroll', {
-          dragOffsetY,
-          isIOS,
-          fullscreenEnabled: document.fullscreenEnabled,
-        });
+        logImmersive('swipe-down-no-fullscreen', { dragOffsetY });
       } else {
+        // ── Android / Desktop: thoát Fullscreen API ────────────────────────────
         void exitNativeFullscreen().then((didExit) => {
           if (!didExit) {
             applyImmersiveScroll(0);
           }
         });
         applyImmersiveScroll(0);
-        logImmersive('swipe-down', { dragOffsetY });
+        logImmersive('swipe-down-android', { dragOffsetY });
       }
     } else {
       logImmersive('touchend-noop', {
@@ -392,7 +415,7 @@ export function useMobileImmersiveMode({
     }
 
     stopDragging();
-  }, [blocked, dragOffsetY, isDragging, stopDragging, applyImmersiveScroll, requestNativeFullscreen, exitNativeFullscreen]);
+  }, [blocked, dragOffsetY, isDragging, stopDragging, applyImmersiveScroll, applyImmersiveScrollIOS, requestNativeFullscreen, exitNativeFullscreen]);
 
   return {
     isImmersive,
