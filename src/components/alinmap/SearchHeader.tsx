@@ -41,7 +41,8 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
 
   return (
     <div
-      className={`absolute top-4 left-4 z-[180] flex items-start gap-2 pointer-events-auto transition-all duration-300
+      className={`absolute z-[180] flex items-start gap-2 pointer-events-auto transition-all duration-300
+      left-4 bottom-[64px] md:top-4 md:bottom-auto
       ${isDesktop && isSheetExpanded ? 'md:top-5 md:left-[72px]' : 'md:left-[88px] md:top-6'}
       ${!isDesktop && isSheetExpanded ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'}
       `}

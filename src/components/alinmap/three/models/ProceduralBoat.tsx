@@ -25,7 +25,7 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 4 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER,
+    scale = 2 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER,
     offsetX,
     offsetY,
     currentLat,
