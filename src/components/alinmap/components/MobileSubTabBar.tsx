@@ -42,7 +42,7 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
   if (!tabs) return null;
 
   return (
-    <div className="flex justify-center pt-3 pb-2">
+    <div className="shrink-0 flex justify-center pt-2 pb-3">
       <div className="flex bg-gray-100 rounded-full p-1 gap-0.5">
         {tabs.map((tab) => (
           <button

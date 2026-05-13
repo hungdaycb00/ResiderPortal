@@ -144,18 +144,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     setSearchTag={setSearchTag}
                 />
 
-                {/* Mobile: subtab bar at top of sheet, below header */}
-                {!isDesktop && isSheetExpanded && !selectedUser && (
-                    <MobileSubTabBar
-                        mainTab={mainTab}
-                        exploreSubTab={exploreSubTab}
-                        socialSubTab={socialSubTab}
-                        isLooterGameMode={false}
-                        onExploreSubTabChange={setExploreSubTab}
-                        onSocialSubTabChange={setSocialSubTab}
-                    />
-                )}
-
                 <BottomSheetContent
                     {...props}
                     deferredSearchTag={deferredSearchTag}
@@ -169,6 +157,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onEnterWorld={handleEnterWorld}
                     onPostClick={onPostClick}
                 />
+
+                {/* Mobile: subtab bar at bottom of sheet, above scroll area */}
+                {!isDesktop && isSheetExpanded && !selectedUser && (
+                    <MobileSubTabBar
+                        mainTab={mainTab}
+                        exploreSubTab={exploreSubTab}
+                        socialSubTab={socialSubTab}
+                        isLooterGameMode={false}
+                        onExploreSubTabChange={setExploreSubTab}
+                        onSocialSubTabChange={setSocialSubTab}
+                    />
+                )}
 
                 {/* Desktop: fixed SubTabSwitcher outside scrollable area */}
                 {isSheetExpanded && !selectedUser && isDesktop && mainTab === 'discover' && (
