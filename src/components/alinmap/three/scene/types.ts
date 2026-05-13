@@ -52,5 +52,6 @@ export interface AlinMapThreeSceneProps {
   onSelfDragEnd?: (newLat: number, newLng: number) => void;
   onSetArrivalAction?: (action: (() => void) | null) => void;
   setIsTierSelectorOpen?: (v: boolean) => void;
+  cameraFov?: number;
   performance?: AdaptivePerformanceProfile;
 }

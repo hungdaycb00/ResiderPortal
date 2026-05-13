@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useMotionValue, animate, useTransform, useMotionValueEvent } from 'framer-motion';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import {
+  CAMERA_FOV_DEGREES,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
   CAMERA_Z_NEAR,
@@ -70,14 +71,17 @@ export function useMapNavigation({
   const [cameraHeightOffset, setCameraHeightOffset] = useState(CAMERA_HEIGHT_OFFSET_DEFAULT);
   const [cameraRotateDeg, setCameraRotateDeg] = useState(CAMERA_ROTATE_DEFAULT_DEG);
   const [cameraRotateYDeg, setCameraRotateYDeg] = useState(CAMERA_ROTATE_Y_DEFAULT_DEG);
+  const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
+  const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
+  useMotionValueEvent(cameraFov, 'change', (v) => setCameraFovValue(v));
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;
   const TRACKPAD_ZOOM_STEP = 150;
 
-  const perspectivePx = getPerspectivePx(viewportHeight);
-  const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));
+  const perspectivePx = useTransform(cameraFov, (fov) => getPerspectivePx(viewportHeight, fov));
+  const scale = useTransform([cameraZ, perspectivePx], ([z, p]) => getVisualScaleFromCameraZ(z, p));
   const effectiveTiltAngle = useMotionValue(CAMERA_TILT_FAR_DEGREES);
   const pitchOverrideRef = useRef<number | null>(null);
   pitchOverrideRef.current = cameraPitchOverride;
@@ -176,14 +180,14 @@ export function useMapNavigation({
   }, [cameraZ, setCameraZ]);
 
   const setVisualScale = useCallback((visualScale: number) => {
-    setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
+    setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx.get()));
   }, [perspectivePx, setCameraZ]);
 
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 1.6, ease: "easeInOut" });
     animate(panY, 0, { duration: 1.6, ease: "easeInOut" });
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
-    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
+    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx.get()), { duration: 1.6, ease: "easeInOut" });
   }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
@@ -300,7 +304,7 @@ export function useMapNavigation({
 
   return {
     panX, panY, scale, cameraZ, effectiveTiltAngle, planeYScale, perspectivePx, selfDragX, selfDragY,
-    cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg,
+    cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, cameraFov: cameraFovValue,
     isSheetExpanded, setIsSheetExpanded,
     isDesktop, mainTab, setMainTab: (tab: string) => setMainTab(tab as MainTab),
     activeTab, setActiveTab,
@@ -317,6 +321,9 @@ export function useMapNavigation({
       else setCameraPitchOverride(v);
     },
     setCameraRotateYDeg: (v: number) => setCameraRotateYDeg(v),
+    setCameraFov: (v: number) => {
+      cameraFov.set(v);
+    },
     handleUpdateRadius, handleTabClick,
     requestBoatAutoFocus,
   };

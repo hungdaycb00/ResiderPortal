@@ -29,7 +29,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
         powerPreference,
         preserveDrawingBuffer: false,
       }}
-      camera={{ fov: 46, near: 0.5, far: 120000, position: [0, 1600, 2200] }}
+      camera={{ fov: props.cameraFov || 46, near: 0.5, far: 120000, position: [0, 1600, 2200] }}
       onCreated={({ gl }) => {
         gl.setClearColor('#071018', 0);
         gl.outputColorSpace = SRGBColorSpace;

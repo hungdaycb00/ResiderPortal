@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { MotionValue, useMotionValueEvent } from 'framer-motion';
 import {
+  CAMERA_FOV_DEGREES,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
   getCameraZForVisualScale,
   getDefaultVisualScaleForMapMode,
@@ -19,6 +20,8 @@ interface CameraPanelProps {
   setCameraZ: (z: number) => void;
   setCameraHeightOffset: (v: number) => void;
   setCameraPitchOverride: (v: number | null) => void;
+  setCameraFov: (v: number) => void;
+  cameraFov: number;
 }
 
 const CameraPanel: React.FC<CameraPanelProps> = ({
@@ -31,6 +34,8 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   setCameraZ,
   setCameraHeightOffset,
   setCameraPitchOverride,
+  cameraFov,
+  setCameraFov,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [zDisplay, setZDisplay] = useState(() => Math.round(cameraZ.get()));
@@ -55,7 +60,8 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
     setCameraZ(getCameraZForVisualScale(targetVisualScale, perspectivePx));
     setCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
     setCameraPitchOverride(null);
-  }, [mapMode, isLooterGameMode, perspectivePx, setCameraZ, setCameraHeightOffset, setCameraPitchOverride]);
+    setCameraFov(CAMERA_FOV_DEGREES);
+  }, [mapMode, isLooterGameMode, perspectivePx, setCameraZ, setCameraHeightOffset, setCameraPitchOverride, setCameraFov]);
 
   return (
     <div className="flex items-end gap-0">
@@ -135,6 +141,33 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
                 if (!isNaN(v)) setCameraHeightOffset(v);
+              }}
+              className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
+            />
+          </div>
+          
+          {/* Tầm nhìn (Perspective/FOV) */}
+          <div className="mb-0 pt-3 border-t border-slate-700/50">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Perspective</span>
+              <span className="text-[10px] font-mono font-bold text-cyan-300">{cameraFov}°</span>
+            </div>
+            <input
+              type="range"
+              min="20"
+              max="110"
+              step="1"
+              value={cameraFov}
+              onChange={(e) => setCameraFov(parseInt(e.target.value, 10))}
+              className="w-full accent-cyan-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-2"
+            />
+            <input
+              type="number"
+              step={1}
+              value={cameraFov}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) setCameraFov(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />

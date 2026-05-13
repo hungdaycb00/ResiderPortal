@@ -100,9 +100,9 @@ export const interpolate = (value: number, input: [number, number], output: [num
     return outMin + (outMax - outMin) * t;
 };
 
-export const getPerspectivePx = (viewportHeight: number) => {
+export const getPerspectivePx = (viewportHeight: number, fov: number = CAMERA_FOV_DEGREES) => {
     const safeHeight = Math.max(viewportHeight || 0, 320);
-    return safeHeight / (2 * Math.tan((CAMERA_FOV_DEGREES / 2) * Math.PI / 180));
+    return safeHeight / (2 * Math.tan((fov / 2) * Math.PI / 180));
 };
 
 export const getVisualScaleFromCameraZ = (cameraZ: number, perspectivePx: number) => {

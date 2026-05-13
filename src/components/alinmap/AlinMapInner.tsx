@@ -258,6 +258,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     setCameraRotateDeg={nav.setCameraRotateDeg}
                     setCameraPitchOverride={nav.setCameraPitchOverride}
                     setCameraRotateYDeg={nav.setCameraRotateYDeg}
+                    setCameraFov={nav.setCameraFov}
+                    cameraFov={nav.cameraFov}
                     performance={performance}
                 />
             </div>
@@ -319,11 +321,13 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     cameraRotateDeg: nav.cameraRotateDeg,
                     cameraPitchOverride: nav.cameraPitchOverride,
                     cameraRotateYDeg: nav.cameraRotateYDeg,
+                    cameraFov: nav.cameraFov,
                     setCameraZ: nav.setCameraZ,
                     setCameraHeightOffset: nav.setCameraHeightOffset,
                     setCameraRotateDeg: nav.setCameraRotateDeg,
                     setCameraPitchOverride: nav.setCameraPitchOverride,
                     setCameraRotateYDeg: nav.setCameraRotateYDeg,
+                    setCameraFov: nav.setCameraFov,
                 }}
             />
         </div>

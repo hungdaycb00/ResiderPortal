@@ -80,6 +80,8 @@ interface MapCanvasProps {
     setCameraRotateDeg: (v: number) => void;
     setCameraPitchOverride: (v: number | null) => void;
     setCameraRotateYDeg: (v: number) => void;
+    setCameraFov: (v: number) => void;
+    cameraFov: number;
     performance?: AdaptivePerformanceProfile;
 }
 
@@ -91,7 +93,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
         requestLocation, selectedUser, setSelectedUser, setActiveTab, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isBackpackLoading, setMainTab, showNotification,
-        setBoatCenterHandler, setIsTierSelectorOpen, performance
+        setBoatCenterHandler, setIsTierSelectorOpen, performance,
+        setCameraFov, cameraFov,
     } = props;
 
     const looterState = useLooterState();
@@ -328,6 +331,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selectedUser={selectedUser}
                         onSelectUser={setSelectedUser}
                         onSelectSelf={handleSelectSelf}
+                        cameraFov={cameraFov}
                         performance={performance}
                     />
 
@@ -384,6 +388,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         <div>Scale {Math.round(debugScale * 100)}%</div>
                         <div>World {sceneWorldScale.toFixed(2)}</div>
                         <div>Tilt {Math.round(tiltAngle.get())}deg</div>
+                        <div>FOV {cameraFov}°</div>
                     </div>
                 </div>
             )}

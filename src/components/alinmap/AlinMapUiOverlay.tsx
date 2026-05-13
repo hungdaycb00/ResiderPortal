@@ -30,6 +30,8 @@ type CameraLabState = {
   setCameraRotateDeg: (v: number) => void;
   setCameraPitchOverride: (v: number | null) => void;
   setCameraRotateYDeg: (v: number) => void;
+  setCameraFov: (v: number) => void;
+  cameraFov: number;
 };
 
 interface AlinMapUiOverlayProps {
