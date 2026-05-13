@@ -205,7 +205,7 @@ const RoadmapAvatarLayer: React.FC<RoadmapAvatarLayerProps> = ({
   if (mapMode !== 'roadmap' || isLooterGameMode || !center || !myObfPos) return null;
 
   return (
-    <div className="absolute inset-0 z-[12] pointer-events-none">
+    <div className="absolute inset-0 z-[30] pointer-events-none">
       {nodes.map((entry) => (
         <SpatialNode
           key={entry.key}
