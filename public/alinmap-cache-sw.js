@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alinmap-openfreemap-v1';
+const CACHE_NAME = 'alinmap-openfreemap-v2';
 const MAP_HOSTS = new Set(['tiles.openfreemap.org']);
 
 self.addEventListener('install', (event) => {
