@@ -146,7 +146,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 
   const trendingSection = (
     !searchTag.trim() && (
-      <div className="px-4 pt-3 pb-3 bg-white border-t border-gray-100">
+      <div className="px-4 pt-3 pb-3 bg-white">
         <h3 className="text-xs font-bold text-gray-500 mb-2">Xu hướng tìm kiếm</h3>
         <div className="flex flex-wrap gap-2">
           {trendingTags.length > 0 ? trendingTags.map((item) => (
@@ -251,9 +251,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         </>
       ) : (
         <>
-          {contentArea}
+          <div className="border-b border-gray-100">{searchBar}</div>
           {trendingSection}
-          <div className="border-t border-gray-100 pb-[env(safe-area-inset-bottom,8px)]">{searchBar}</div>
+          {contentArea}
         </>
       )}
     </div>
