@@ -16,6 +16,12 @@ export default defineConfig(({mode}) => {
       {
         name: 'version-stylesheet-assets',
         transformIndexHtml(html) {
+          // Inject build version meta tag for proactive cache busting
+          html = html.replace(
+            /<meta charset/,
+            `<meta name="build-version" content="${buildVersion}">\n    <meta charset`,
+          );
+          // Add cache-bust param to CSS links
           return html.replace(/<link\b[^>]*>/g, (tag) => {
             if (!/\brel=["']stylesheet["']/.test(tag)) return tag;
             return tag.replace(

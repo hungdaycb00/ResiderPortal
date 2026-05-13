@@ -29,6 +29,48 @@ const LEVELS = {
 
 type LevelKey = keyof typeof LEVELS;
 
+interface FruitTheme {
+  name: string;
+  emoji: string;
+  hue: number;
+  accent: number;
+}
+
+const FRUIT_THEMES: FruitTheme[] = [
+  { name: 'Apple', emoji: '🍎', hue: 350, accent: 24 },
+  { name: 'Banana', emoji: '🍌', hue: 52, accent: 32 },
+  { name: 'Orange', emoji: '🍊', hue: 28, accent: 12 },
+  { name: 'Lemon', emoji: '🍋', hue: 55, accent: 18 },
+  { name: 'Watermelon', emoji: '🍉', hue: 140, accent: 8 },
+  { name: 'Grapes', emoji: '🍇', hue: 272, accent: 50 },
+  { name: 'Strawberry', emoji: '🍓', hue: 344, accent: 14 },
+  { name: 'Peach', emoji: '🍑', hue: 14, accent: 28 },
+  { name: 'Pear', emoji: '🍐', hue: 98, accent: 34 },
+  { name: 'Cherry', emoji: '🍒', hue: 356, accent: 18 },
+  { name: 'Kiwi', emoji: '🥝', hue: 110, accent: 40 },
+  { name: 'Pineapple', emoji: '🍍', hue: 46, accent: 26 },
+  { name: 'Coconut', emoji: '🥥', hue: 26, accent: 10 },
+  { name: 'Blueberry', emoji: '🫐', hue: 228, accent: 56 },
+  { name: 'Mango', emoji: '🥭', hue: 36, accent: 20 },
+  { name: 'Avocado', emoji: '🥑', hue: 102, accent: 18 },
+  { name: 'Papaya', emoji: '🧡', hue: 16, accent: 24 },
+  { name: 'Raspberry', emoji: '🩷', hue: 336, accent: 28 },
+  { name: 'Blackberry', emoji: '🫐', hue: 262, accent: 44 },
+  { name: 'Plum', emoji: '🟣', hue: 286, accent: 48 },
+  { name: 'Guava', emoji: '💚', hue: 128, accent: 20 },
+  { name: 'Lychee', emoji: '🤍', hue: 344, accent: 12 },
+  { name: 'Dragonfruit', emoji: '🐉', hue: 320, accent: 36 },
+  { name: 'Durian', emoji: '💛', hue: 46, accent: 30 },
+  { name: 'Jackfruit', emoji: '💚', hue: 104, accent: 26 },
+  { name: 'Fig', emoji: '🟣', hue: 275, accent: 52 },
+  { name: 'Tangerine', emoji: '🍊', hue: 20, accent: 14 },
+  { name: 'Starfruit', emoji: '⭐', hue: 58, accent: 22 },
+  { name: 'Passionfruit', emoji: '💜', hue: 288, accent: 54 },
+  { name: 'Pomegranate', emoji: '❤️', hue: 2, accent: 20 },
+  { name: 'Apricot', emoji: '🟠', hue: 30, accent: 16 },
+  { name: 'Lime', emoji: '💚', hue: 92, accent: 24 },
+];
+
 const shuffle = <T,>(items: T[]): T[] => {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i -= 1) {
@@ -39,24 +81,24 @@ const shuffle = <T,>(items: T[]): T[] => {
 };
 
 const createArtwork = (pairId: number): string => {
-  const hue = (pairId * 47 + 178) % 360;
-  const hueAlt = (hue + 72) % 360;
-  const shape = pairId % 4;
-  const number = String(pairId + 1).padStart(2, '0');
-  const shapeMarkup = [
-    `<circle cx="64" cy="62" r="31" fill="hsla(${hueAlt}, 88%, 64%, 0.86)" />`,
-    `<rect x="34" y="32" width="60" height="60" rx="18" fill="hsla(${hueAlt}, 88%, 64%, 0.86)" transform="rotate(12 64 62)" />`,
-    `<path d="M64 24 L101 88 H27 Z" fill="hsla(${hueAlt}, 88%, 64%, 0.86)" />`,
-    `<path d="M64 25 C82 44 100 45 103 65 C82 71 79 90 64 102 C49 90 46 71 25 65 C28 45 46 44 64 25 Z" fill="hsla(${hueAlt}, 88%, 64%, 0.86)" />`,
-  ][shape];
+  const theme = FRUIT_THEMES[pairId % FRUIT_THEMES.length];
+  const hue = theme.hue;
+  const hueAlt = (theme.hue + 62) % 360;
+  const accent = theme.accent;
+  const sparkleHue = (hue + 180) % 360;
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="hsl(${hue}, 78%, 42%)" />
-          <stop offset="100%" stop-color="hsl(${hueAlt}, 80%, 28%)" />
+          <stop offset="0%" stop-color="hsl(${hue}, 82%, 44%)" />
+          <stop offset="100%" stop-color="hsl(${hueAlt}, 82%, 26%)" />
         </linearGradient>
+        <radialGradient id="shine" cx="32%" cy="24%" r="72%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.42)" />
+          <stop offset="55%" stop-color="rgba(255,255,255,0.12)" />
+          <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+        </radialGradient>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="4" result="blur" />
           <feMerge>
@@ -66,10 +108,14 @@ const createArtwork = (pairId: number): string => {
         </filter>
       </defs>
       <rect width="128" height="128" rx="26" fill="url(#bg)" />
-      <circle cx="22" cy="20" r="42" fill="rgba(255,255,255,0.18)" />
-      <circle cx="112" cy="116" r="52" fill="rgba(0,0,0,0.18)" />
-      <g filter="url(#glow)">${shapeMarkup}</g>
-      <text x="64" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-size="31" font-weight="900" fill="white">${number}</text>
+      <rect x="16" y="14" width="96" height="100" rx="24" fill="url(#shine)" />
+      <circle cx="32" cy="28" r="10" fill="hsla(${sparkleHue}, 92%, 90%, 0.42)" />
+      <circle cx="96" cy="44" r="7" fill="hsla(${sparkleHue}, 92%, 90%, 0.30)" />
+      <g filter="url(#glow)">
+        <text x="64" y="78" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="50" font-weight="900">${theme.emoji}</text>
+      </g>
+      <text x="64" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="800" fill="rgba(255,255,255,0.9)" letter-spacing="1.5">${theme.name.toUpperCase()}</text>
+      <rect x="24" y="100" width="80" height="4" rx="2" fill="hsla(${accent}, 95%, 82%, 0.82)" />
     </svg>
   `;
 
@@ -81,7 +127,7 @@ const buildDeck = (rows: number, cols: number): PairImageCard[] => {
   const pairCount = Math.floor(totalCards / 2);
   const cards = Array.from({ length: pairCount }, (_, pairId) => {
     const imageSrc = createArtwork(pairId);
-    const label = `Relic ${pairId + 1}`;
+    const label = FRUIT_THEMES[pairId % FRUIT_THEMES.length].name;
     return [
       { id: `${pairId}-a`, pairId, imageSrc, label, isOpened: false, isMatched: false },
       { id: `${pairId}-b`, pairId, imageSrc, label, isOpened: false, isMatched: false },
@@ -255,17 +301,17 @@ export function PairImageGame({
     <div className="w-full h-full flex flex-col items-center justify-center">
       {gameState === 'menu' ? (
         <div className="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-sm mx-auto overflow-y-auto no-scrollbar">
-          <div className="w-20 h-20 rounded-[28px] bg-cyan-400/20 border-4 border-white/20 flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-4xl font-black text-cyan-100">2x</span>
+          <div className="w-20 h-20 rounded-[28px] bg-emerald-400/20 border-4 border-white/20 flex items-center justify-center mb-4 shadow-lg overflow-hidden">
+            <span className="text-4xl font-black text-white">🍉</span>
           </div>
-          <h2 className="font-bubbly text-3xl text-white mb-1 uppercase tracking-widest italic">PAIR IMAGES</h2>
+          <h2 className="font-bubbly text-3xl text-white mb-1 uppercase tracking-widest italic">FRUIT MATCH</h2>
           <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-8 text-center leading-relaxed px-4">
-            Flip cards and match every hidden image pair.
+            Flip cards and match every hidden fruit pair.
           </p>
 
           <div className="w-full">
             <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-4 block px-2 text-center italic">
-              SELECT MEMORY GRID
+              SELECT FRUIT GRID
             </label>
             <div className="grid grid-cols-3 gap-1.5">
               {(Object.keys(LEVELS) as LevelKey[]).map((key) => (
@@ -390,7 +436,7 @@ export function PairImageGame({
               </div>
 
               <p className="text-[7px] md:text-[10px] font-black text-white/80 uppercase tracking-widest text-center mt-2 md:mt-4 z-10 opacity-80">
-                Match image pairs. Attempts: {attempts}
+                Match fruit pairs. Attempts: {attempts}
               </p>
             </div>
 

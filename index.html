@@ -6,16 +6,76 @@
     <title>Alin.city</title>
     <script>
       (function() {
-        const RECOVERY_KEY = 'last_asset_reload';
-        const COOLDOWN_MS = 10000;
+        var RECOVERY_KEY = 'last_asset_reload';
+        var COOLDOWN_MS = 10000;
+        var BUILD_VERSION_KEY = 'APP_BUILD_VERSION';
+        var PRESERVED_KEYS = ['cloudflareUrl', 'deviceId', 'accessToken', 'user'];
 
+        // === PROACTIVE VERSION CHECK ===
+        // Runs before any JS loads. If build changed since last visit, force-clear
+        // browser caches + service workers + localStorage, then reload.
+        (function checkBuildVersion() {
+          try {
+            var metaVersion = document.querySelector('meta[name="build-version"]');
+            var htmlVersion = metaVersion ? metaVersion.getAttribute('content') : null;
+            if (!htmlVersion) return;
+
+            var storedVersion = localStorage.getItem(BUILD_VERSION_KEY);
+            if (storedVersion === htmlVersion) return;
+
+            console.warn('[Proactive] Build changed:', storedVersion, '->', htmlVersion, '. Clearing caches...');
+
+            // Preserve critical auth data
+            var preserved = {};
+            PRESERVED_KEYS.forEach(function(k) {
+              var v = localStorage.getItem(k);
+              if (v !== null) preserved[k] = v;
+            });
+
+            // Nuclear clear
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Restore auth data
+            Object.keys(preserved).forEach(function(k) {
+              localStorage.setItem(k, preserved[k]);
+            });
+            localStorage.setItem(BUILD_VERSION_KEY, htmlVersion);
+
+            // Clear Service Workers
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(r) { r.unregister(); });
+              }).catch(function() {});
+            }
+
+            // Clear Cache Storage
+            if ('caches' in window) {
+              caches.keys().then(function(keys) {
+                keys.forEach(function(key) {
+                  if (/asset|vite|workbox|game|alin|resider/i.test(key)) {
+                    caches.delete(key);
+                  }
+                });
+              }).catch(function() {});
+            }
+
+            // Force reload to get fresh assets
+            if (storedVersion) {
+              window.location.reload();
+            }
+          } catch(e) {
+            // Silently fail — version check must not break the page
+          }
+        })();
+
+        // === REACTIVE ASSET ERROR RECOVERY ===
         function triggerRecovery(reason) {
           console.warn('[Auto-Recovery]', reason, 'đang ép tải lại trang...');
-          const lastReload = sessionStorage.getItem(RECOVERY_KEY);
+          var lastReload = sessionStorage.getItem(RECOVERY_KEY);
           if (!lastReload || Date.now() - parseInt(lastReload) > COOLDOWN_MS) {
             sessionStorage.setItem(RECOVERY_KEY, Date.now().toString());
-            const currentUrl = new URL(window.location.href);
-            // Append a cache-busting timestamp to bypass Cloudflare/browser cache
+            var currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('reload_v', Date.now().toString());
             window.location.href = currentUrl.toString();
           }
