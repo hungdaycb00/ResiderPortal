@@ -1,13 +1,11 @@
 # Cloudflare Pages headers.
 # Rule /* phải có Cache-Control no-store để ngăn CDN/browser cache HTML SPA routes.
-# Clear-Site-Data buộc trình duyệt xóa toàn bộ cache khi nhận response mới.
 # Rule /assets/* cụ thể hơn sẽ override với immutable cho static files có hash.
 
 /*
   Cache-Control: no-store, max-age=0, must-revalidate
   Pragma: no-cache
   Expires: 0
-  Clear-Site-Data: "cache"
   Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*.trycloudflare.com https://static.cloudflareinsights.com https://api.alin.city https://*.alin.city https://alin.city; frame-src 'self' data: blob: https://*.trycloudflare.com https://*.alin.city https://alin.city; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://*.trycloudflare.com wss://*.trycloudflare.com http://localhost:* ws://localhost:* wss://localhost:* https://ipapi.co https://api.alin.city wss://api.alin.city wss://alin-social.alin.city https://*.alin.city wss://*.alin.city https://alin.city wss://alin.city https://www.alin.city wss://www.alin.city https://nominatim.openstreetmap.org https://api.open-meteo.com; img-src 'self' data: blob: https://* http://localhost:*;
   X-Frame-Options: ALLOWALL
   X-Content-Type-Options: nosniff
