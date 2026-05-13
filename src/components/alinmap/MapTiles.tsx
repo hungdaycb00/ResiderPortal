@@ -19,6 +19,21 @@ interface MapTilesProps {
 
 const DEFAULT_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 const CACHE_WORKER_URL = '/alinmap-cache-sw.js';
+const FALLBACK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#94a3b8" stroke="#fff" stroke-width="2"/></svg>`;
+
+const STYLE_NUMBER_DEFAULTS: Record<string, number> = {
+  'icon-size': 1,
+  'icon-opacity': 1,
+  'text-size': 12,
+  'text-opacity': 1,
+  'line-width': 1,
+  'line-opacity': 1,
+  'circle-radius': 5,
+  'circle-opacity': 1,
+  'fill-opacity': 1,
+  'icon-rotate': 0,
+  'text-rotate': 0,
+};
 
 let cacheWorkerRegistered = false;
 
@@ -29,6 +44,33 @@ const canRegisterCacheWorker = () => {
   if (typeof window === 'undefined') return false;
   if (!('serviceWorker' in navigator)) return false;
   return window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+};
+
+const patchNullNumbers = (obj: any): any => {
+  if (obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(patchNullNumbers);
+  if (typeof obj === 'object') {
+    const result: Record<string, any> = {};
+    for (const key of Object.keys(obj)) {
+      if (obj[key] === null && key in STYLE_NUMBER_DEFAULTS) {
+        result[key] = STYLE_NUMBER_DEFAULTS[key];
+      } else {
+        result[key] = patchNullNumbers(obj[key]);
+      }
+    }
+    return result;
+  }
+  return obj;
+};
+
+const fetchAndPatchStyle = async (url: string): Promise<any> => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch style: ${res.status}`);
+  const style = await res.json();
+  if (style.layers) {
+    style.layers = patchNullNumbers(style.layers);
+  }
+  return style;
 };
 
 const registerMapCacheWorker = () => {
@@ -90,25 +132,47 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myO
     if (!containerRef.current || !center || mode !== 'roadmap') return;
     if (mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: styleUrl,
-      center: [center.lng, center.lat],
-      zoom,
-      interactive: false,
-      attributionControl: false,
-      fadeDuration: 0,
-      refreshExpiredTiles: true,
-    });
+    let cancelled = false;
 
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
-    map.on('error', () => setHasMapError(true));
-    map.on('load', () => setHasMapError(false));
-    mapRef.current = map;
+    const initMap = async () => {
+      let styleOrUrl: any = styleUrl;
+      try {
+        styleOrUrl = await fetchAndPatchStyle(styleUrl);
+      } catch (e) {
+        console.warn('[MapTiles] Failed to fetch/validate style, using raw URL:', e);
+      }
+      if (cancelled || !containerRef.current) return;
+
+      const map = new maplibregl.Map({
+        container: containerRef.current,
+        style: styleOrUrl,
+        center: [center.lng, center.lat],
+        zoom,
+        interactive: false,
+        attributionControl: false,
+        fadeDuration: 0,
+        refreshExpiredTiles: true,
+      });
+
+      map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+      map.on('error', () => setHasMapError(true));
+      map.on('load', () => setHasMapError(false));
+      map.on('styleimagemissing', (e: any) => {
+        const img = new Image(16, 16);
+        img.src = `data:image/svg+xml;base64,${btoa(FALLBACK_ICON_SVG)}`;
+        img.onload = () => { if (!cancelled) map.addImage(e.id, img as any, { sdf: false }); };
+      });
+      mapRef.current = map;
+    };
+
+    initMap();
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      cancelled = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [hasCenter, mode, styleUrl]);
 
