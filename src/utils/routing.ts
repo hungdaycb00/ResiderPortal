@@ -49,7 +49,6 @@ export function pathToTab(pathname: string): AppTab {
 
     // Handle /profile/:username — still shows profile tab
     if (segments[0] === 'profile') return 'profile';
-    if (segments[0] === 'explore' && segments[1] === 'looter-game') return 'backpack';
     if (segments[0] === 'explore' || segments[0] === 'games') return segments[0] === 'games' ? 'home' : 'discover';
     
     return PATH_TO_TAB[segments[0]] || 'discover';

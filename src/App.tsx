@@ -159,9 +159,12 @@ export default function App() {
     const isGamePath = location.pathname.startsWith('/games');
     if (!isAlinPath && !isGamePath) return;
 
-    const slug = extractSlug(location.pathname);
+    if (location.pathname.startsWith('/explore/looter-game')) {
+      navigate('/explore', { replace: true });
+      return;
+    }
 
-    if (slug === 'looter-game') return;
+    const slug = extractSlug(location.pathname);
 
     if (playingGame?.slug) {
       const base = isGamePath ? '/games' : '/explore';
@@ -182,7 +185,7 @@ export default function App() {
   useEffect(() => {
     if (allGames.length > 0 && !playingGame) {
       const slug = extractSlug(location.pathname);
-      if (slug && slug !== 'looter-game') {
+      if (slug) {
         const game = allGames.find((g: any) => 
           (String(g.slug || '').toLowerCase() === slug) || 
           (String(g.id || '').toLowerCase() === slug) ||

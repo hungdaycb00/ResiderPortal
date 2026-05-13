@@ -73,15 +73,17 @@ export function useMapNavigation({
   const [cameraRotateYDeg, setCameraRotateYDeg] = useState(CAMERA_ROTATE_Y_DEFAULT_DEG);
   const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
   const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
-  useMotionValueEvent(cameraFov, 'change', (v) => setCameraFovValue(v));
+  useMotionValueEvent(cameraFov, 'change', (v: number) => setCameraFovValue(v));
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;
   const TRACKPAD_ZOOM_STEP = 150;
 
-  const perspectivePx = useTransform(cameraFov, (fov) => getPerspectivePx(viewportHeight, fov));
-  const scale = useTransform([cameraZ, perspectivePx], ([z, p]) => getVisualScaleFromCameraZ(z, p));
+  const perspectivePxMotion = useTransform(cameraFov, (fov: number) => getPerspectivePx(viewportHeight, fov));
+  const [perspectivePx, setPerspectivePx] = useState(() => getPerspectivePx(viewportHeight, CAMERA_FOV_DEGREES));
+  useMotionValueEvent(perspectivePxMotion, 'change', (v: number) => setPerspectivePx(v));
+  const scale = useTransform([cameraZ, perspectivePxMotion], ([z, p]: [number, number]) => getVisualScaleFromCameraZ(z, p));
   const effectiveTiltAngle = useMotionValue(CAMERA_TILT_FAR_DEGREES);
   const pitchOverrideRef = useRef<number | null>(null);
   pitchOverrideRef.current = cameraPitchOverride;
@@ -180,14 +182,14 @@ export function useMapNavigation({
   }, [cameraZ, setCameraZ]);
 
   const setVisualScale = useCallback((visualScale: number) => {
-    setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx.get()));
+    setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
   }, [perspectivePx, setCameraZ]);
 
   const handleCenter = useCallback(() => {
     animate(panX, 0, { duration: 1.6, ease: "easeInOut" });
     animate(panY, 0, { duration: 1.6, ease: "easeInOut" });
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
-    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx.get()), { duration: 1.6, ease: "easeInOut" });
+    animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
   }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {

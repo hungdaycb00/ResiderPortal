@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../services/externalApi';
-import { extractExploreGame } from '../../utils/routing';
 import MapCanvas from './MapCanvas';
 import AlinMapUiOverlay from './AlinMapUiOverlay';
 import { AlinMapProps, DEGREES_TO_PX, MAP_PLANE_SCALE } from './constants';
@@ -155,38 +154,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- URL Sub-path Sync ---
     useEffect(() => {
-        if (!location.pathname.startsWith('/explore')) return;
-        const subGame = extractExploreGame(location.pathname);
-        if (subGame === 'looter-game' && !isLooterGameMode) {
-            looterActions.setIsLooterGameMode(true);
-            nav.setMainTab('backpack');
-            nav.setIsSheetExpanded(true);
-            nav.requestBoatAutoFocus();
-        } else if (subGame !== 'looter-game' && isLooterGameMode && nav.mainTab !== 'backpack') {
-            looterActions.setIsLooterGameMode(false);
+        if (location.pathname.startsWith('/explore/looter-game')) {
+            navigate('/explore', { replace: true });
         }
-    }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.mainTab, nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus]);
-
-    useEffect(() => {
-        // Chỉ đồng bộ URL khi đang ở trong AlinMap (path bắt đầu bằng /explore)
-        if (!location.pathname.startsWith('/explore')) return;
-
-        const subGame = extractExploreGame(location.pathname);
-        let newPath = '/explore';
-
-        if (isLooterGameMode) {
-            newPath = '/explore/looter-game';
-        } else {
-            const nonLooterSubGame = subGame && subGame !== 'looter-game';
-            if (nonLooterSubGame) {
-                newPath = location.pathname;
-            }
-        }
-
-        if (location.pathname !== newPath) {
-            navigate(newPath, { replace: true });
-        }
-    }, [isLooterGameMode, nav.mainTab, location.pathname, navigate]);
+    }, [location.pathname, navigate]);
 
     // Combat HUD & Camera Sync logic has been moved to useCombatCamera hook inside MapCanvas
     // to prevent redundant animations and circular dependency issues.
