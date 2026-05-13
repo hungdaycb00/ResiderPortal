@@ -196,6 +196,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     isLooterGameMode={false}
                     onExploreSubTabChange={handleExploreSubTabChange}
                     onSocialSubTabChange={handleSocialSubTabChange}
+                    onSearchClick={() => setIsSearchOverlayOpen?.(true)}
                 />
             )}
         </div>

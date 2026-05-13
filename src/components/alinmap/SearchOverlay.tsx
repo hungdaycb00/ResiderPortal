@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Clock, Search, TrendingUp, X } from 'lucide-react';
 import SheetSearchResults from './SheetSearchResults';
 import { fetchAlinSearch } from './search';
 
-const TRENDING_TOPICS = ['#looter', '#trading', 'Chợ phiên', '#chill', 'Săn rồng'];
+const TRENDING_TOPICS = ['#looter', '#trading', 'Chá»£ phiÃªn', '#chill', 'SÄƒn rá»“ng'];
 const RECENT_SEARCHES_KEY = 'alin_recent_searches';
 
 interface SearchOverlayProps {
@@ -169,7 +169,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           {recentSearches.length > 0 && (
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900">Tìm kiếm gần đây</h3>
+                <h3 className="text-sm font-bold text-gray-900">TÃ¬m kiáº¿m gáº§n Ä‘Ã¢y</h3>
               </div>
               <div className="space-y-1">
                 {recentSearches.map((query, idx) => (
@@ -225,7 +225,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           <input
             ref={inputRef}
             type="text"
-            placeholder="Tìm kiếm bạn bè, game, bài viết..."
+            placeholder="TÃ¬m kiáº¿m báº¡n bÃ¨, game, bÃ i viáº¿t..."
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="none"
@@ -272,8 +272,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     return (
       <div className="px-4 pt-3">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <h3 className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-500">Xu hướng tìm kiếm</h3>
-          <span className="text-[10px] font-bold text-gray-400">Kéo ngang</span>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-500">Xu hÆ°á»›ng tÃ¬m kiáº¿m</h3>
         </div>
         <div className="-mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 pr-8 scrollbar-hide">
           {chips.map((item) => (
@@ -335,3 +334,4 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
 };
 
 export default React.memo(SearchOverlay);
+
