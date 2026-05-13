@@ -234,16 +234,14 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     onPointerCancel={handleMapPointerCancel}
                     onClickCapture={handleMapClickCapture}
                 >
-                    {!isLooterGameMode && (
-                        <MapTiles
-                            panX={panX}
-                            panY={panY}
-                            scale={scale}
-                            planeYScale={planeYScale}
-                            myObfPos={myObfPos}
-                            mode={mapMode}
-                        />
-                    )}
+                    <MapTiles
+                        panX={panX}
+                        panY={panY}
+                        scale={scale}
+                        planeYScale={planeYScale}
+                        myObfPos={myObfPos}
+                        mode={mapMode}
+                    />
 
                     {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
                         <RoadmapAvatarLayer

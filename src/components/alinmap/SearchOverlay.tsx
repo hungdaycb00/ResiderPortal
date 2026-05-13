@@ -3,7 +3,7 @@ import { ArrowLeft, Clock, Search, TrendingUp, X } from 'lucide-react';
 import SheetSearchResults from './SheetSearchResults';
 import { fetchAlinSearch } from './search';
 
-const TRENDING_TOPICS = ['#looter', '#trading', 'Chá»£ phiÃªn', '#chill', 'SÄƒn rá»“ng'];
+const TRENDING_TOPICS = ['#looter', '#trading', 'Chợ phiên', '#chill', 'Săn rồng'];
 const RECENT_SEARCHES_KEY = 'alin_recent_searches';
 
 interface SearchOverlayProps {
@@ -169,7 +169,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           {recentSearches.length > 0 && (
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900">TÃ¬m kiáº¿m gáº§n Ä‘Ã¢y</h3>
+                <h3 className="text-sm font-bold text-gray-900">Tìm kiếm gần đây</h3>
               </div>
               <div className="space-y-1">
                 {recentSearches.map((query, idx) => (
@@ -225,7 +225,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           <input
             ref={inputRef}
             type="text"
-            placeholder="TÃ¬m kiáº¿m báº¡n bÃ¨, game, bÃ i viáº¿t..."
+            placeholder="Tìm kiếm bạn bè, game, bài viết..."
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="none"
