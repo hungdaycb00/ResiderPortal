@@ -104,7 +104,9 @@ const FortressWaypoint: React.FC<FortressWaypointProps> = ({
             className="fixed z-[200] pointer-events-none transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-opacity duration-300"
             style={{ left: waypointStyle.left, top: waypointStyle.top }}
         >
-            <div className={`absolute inset-0 rounded-full scale-[4.5] ${isReduced ? 'bg-amber-500/10' : 'bg-amber-500/20 animate-ping'}`} />
+            <div className="absolute inset-0 scale-[4.5]">
+                <div className={`absolute inset-0 rounded-full ${isReduced ? 'bg-amber-500/10' : 'bg-amber-500/20 animate-ping'}`} />
+            </div>
             <div className="relative w-4 h-4 bg-amber-600/90 backdrop-blur-md rounded-full shadow-md shadow-amber-900/50 flex items-center justify-center border border-amber-400">
                 <Home className="w-2 h-2 text-white" />
                 <div

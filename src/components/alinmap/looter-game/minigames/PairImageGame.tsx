@@ -82,40 +82,12 @@ const shuffle = <T,>(items: T[]): T[] => {
 
 const createArtwork = (pairId: number): string => {
   const theme = FRUIT_THEMES[pairId % FRUIT_THEMES.length];
-  const hue = theme.hue;
-  const hueAlt = (theme.hue + 62) % 360;
-  const accent = theme.accent;
-  const sparkleHue = (hue + 180) % 360;
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="hsl(${hue}, 82%, 44%)" />
-          <stop offset="100%" stop-color="hsl(${hueAlt}, 82%, 26%)" />
-        </linearGradient>
-        <radialGradient id="shine" cx="32%" cy="24%" r="72%">
-          <stop offset="0%" stop-color="rgba(255,255,255,0.42)" />
-          <stop offset="55%" stop-color="rgba(255,255,255,0.12)" />
-          <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-        </radialGradient>
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="4" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      <rect width="128" height="128" rx="26" fill="url(#bg)" />
-      <rect x="16" y="14" width="96" height="100" rx="24" fill="url(#shine)" />
-      <circle cx="32" cy="28" r="10" fill="hsla(${sparkleHue}, 92%, 90%, 0.42)" />
-      <circle cx="96" cy="44" r="7" fill="hsla(${sparkleHue}, 92%, 90%, 0.30)" />
-      <g filter="url(#glow)">
-        <text x="64" y="78" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="50" font-weight="900">${theme.emoji}</text>
-      </g>
-      <text x="64" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="800" fill="rgba(255,255,255,0.9)" letter-spacing="1.5">${theme.name.toUpperCase()}</text>
-      <rect x="24" y="100" width="80" height="4" rx="2" fill="hsla(${accent}, 95%, 82%, 0.82)" />
+      <rect width="128" height="128" rx="24" fill="#ffffff" />
+      <rect x="1" y="1" width="126" height="126" rx="23" fill="none" stroke="rgba(15,23,42,0.08)" stroke-width="2" />
+      <text x="64" y="76" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="56" font-weight="900">${theme.emoji}</text>
     </svg>
   `;
 
