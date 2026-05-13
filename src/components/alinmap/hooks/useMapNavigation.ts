@@ -73,8 +73,8 @@ export function useMapNavigation({
   const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
-  const WHEEL_ZOOM_STEP = 1200;
-  const TRACKPAD_ZOOM_STEP = 600;
+  const WHEEL_ZOOM_STEP = 300;
+  const TRACKPAD_ZOOM_STEP = 150;
 
   const perspectivePx = getPerspectivePx(viewportHeight);
   const scale = useTransform(cameraZ, (z) => getVisualScaleFromCameraZ(z, perspectivePx));

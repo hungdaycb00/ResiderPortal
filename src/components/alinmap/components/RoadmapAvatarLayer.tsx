@@ -51,29 +51,24 @@ const useViewportSize = () => {
 };
 
 const useMotionSnapshot = (value: MotionValue<number>) => {
-  const [snapshot, setSnapshot] = React.useState(value.get());
   const frameRef = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
-    const unsubscribe = value.on('change', (latest) => {
-      if (typeof window === 'undefined') {
-        setSnapshot(latest);
-        return;
-      }
-      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+  React.useEffect(() => () => {
+    if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  return React.useSyncExternalStore(
+    React.useCallback((notify) => value.on('change', () => {
+      if (typeof window === 'undefined') { notify(); return; }
+      if (frameRef.current !== null) return;
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = null;
-        setSnapshot(latest);
+        notify();
       });
-    });
-
-    return () => {
-      unsubscribe();
-      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-    };
-  }, [value]);
-
-  return snapshot;
+    }), [value]),
+    React.useCallback(() => value.get(), [value]),
+    React.useCallback(() => value.get(), [value])
+  );
 };
 
 const lngToTileX = (lng: number, zoom: number) => ((lng + 180) / 360) * 2 ** zoom;
