@@ -77,6 +77,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     }, [setIsSheetExpanded]);
 
     const isWhiteBg = mainTab !== 'backpack';
+    const showMobileCreatePostAction = !isDesktop && mainTab === 'friends' && socialSubTab === 'posts' && !props.isCreatingPost;
+    const handleMobileCreatePost = React.useCallback(() => {
+        if (props.requireAuth && !props.requireAuth('tao bai viet')) return;
+        props.setPostPrivacy('public');
+        props.setPostIsStarred(false);
+        props.setIsCreatingPost(true);
+    }, [props]);
 
     return (
         <div
@@ -197,6 +204,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onExploreSubTabChange={handleExploreSubTabChange}
                     onSocialSubTabChange={handleSocialSubTabChange}
                     onSearchClick={() => setIsSearchOverlayOpen?.(true)}
+                    onCreatePostClick={handleMobileCreatePost}
+                    showCreatePostAction={showMobileCreatePostAction}
                 />
             )}
         </div>

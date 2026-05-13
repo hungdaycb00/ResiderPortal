@@ -38,7 +38,6 @@ const LootSprite: React.FC<LootSpriteProps> = ({
 
     return (
         <Billboard
-            follow
             position={position}
             scale={[scale, scale, 1]}
             onClick={(e) => {
