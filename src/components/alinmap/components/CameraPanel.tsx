@@ -40,6 +40,18 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [zDisplay, setZDisplay] = useState(() => Math.round(cameraZ.get()));
   const tickRef = useRef(0);
+  const safeSetCameraZ = useCallback((value: number) => {
+    setCameraZ(value);
+  }, [setCameraZ]);
+  const safeSetCameraHeightOffset = useCallback((value: number) => {
+    setCameraHeightOffset(value);
+  }, [setCameraHeightOffset]);
+  const safeSetCameraPitchOverride = useCallback((value: number | null) => {
+    setCameraPitchOverride(value);
+  }, [setCameraPitchOverride]);
+  const safeSetCameraFov = useCallback((value: number) => {
+    setCameraFov(value);
+  }, [setCameraFov]);
 
   useMotionValueEvent(cameraZ, 'change', (v) => {
     tickRef.current = (tickRef.current + 1) % 3;
@@ -57,11 +69,11 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
 
   const resetAll = useCallback(() => {
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
-    setCameraZ(getCameraZForVisualScale(targetVisualScale, perspectivePx));
-    setCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
-    setCameraPitchOverride(null);
-    setCameraFov(CAMERA_FOV_DEGREES);
-  }, [mapMode, isLooterGameMode, perspectivePx, setCameraZ, setCameraHeightOffset, setCameraPitchOverride, setCameraFov]);
+    safeSetCameraZ(getCameraZForVisualScale(targetVisualScale, perspectivePx));
+    safeSetCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
+    safeSetCameraPitchOverride(null);
+    safeSetCameraFov(CAMERA_FOV_DEGREES);
+  }, [mapMode, isLooterGameMode, perspectivePx, safeSetCameraZ, safeSetCameraHeightOffset, safeSetCameraPitchOverride, safeSetCameraFov]);
 
   return (
     <div className="flex items-end gap-0">
@@ -90,7 +102,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               value={zDisplay}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraZ(v);
+                if (!isNaN(v)) safeSetCameraZ(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
@@ -105,7 +117,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
                   {effectivePitch}°
                 </span>
                 <button
-                  onClick={() => setCameraPitchOverride(isAutoPitch ? effectivePitch : null)}
+                  onClick={() => safeSetCameraPitchOverride(isAutoPitch ? effectivePitch : null)}
                   className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-all ${
                     isAutoPitch
                       ? 'bg-slate-700/70 text-slate-400 hover:text-slate-300'
@@ -122,7 +134,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               value={effectivePitch}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraPitchOverride(v);
+                if (!isNaN(v)) safeSetCameraPitchOverride(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
@@ -140,7 +152,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               value={cameraHeightOffset}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraHeightOffset(v);
+                if (!isNaN(v)) safeSetCameraHeightOffset(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
@@ -158,7 +170,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               max="110"
               step="1"
               value={cameraFov}
-              onChange={(e) => setCameraFov(parseInt(e.target.value, 10))}
+              onChange={(e) => safeSetCameraFov(parseInt(e.target.value, 10))}
               className="w-full accent-cyan-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-2"
             />
             <input
@@ -167,7 +179,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               value={cameraFov}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setCameraFov(v);
+                if (!isNaN(v)) safeSetCameraFov(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
