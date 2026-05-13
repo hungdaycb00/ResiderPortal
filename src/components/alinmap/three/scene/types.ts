@@ -41,6 +41,7 @@ export interface AlinMapThreeSceneProps {
   selfDragY: MotionValue<number>;
   mapMode: AlinMapMode;
   isLooterGameMode?: boolean;
+  useDomLooterLayer?: boolean;
   boatTargetPin?: LatLng | null;
   boatOffsetX?: MotionValue<number>;
   boatOffsetY?: MotionValue<number>;

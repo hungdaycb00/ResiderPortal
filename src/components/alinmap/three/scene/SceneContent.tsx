@@ -60,6 +60,7 @@ export default function SceneContent({
   selfDragY,
   mapMode,
   isLooterGameMode,
+  useDomLooterLayer,
   boatTargetPin,
   boatOffsetX,
   boatOffsetY,
@@ -95,6 +96,7 @@ export default function SceneContent({
 
   const usesRoadmapProjection = mapMode === 'roadmap';
   const isRoadmapOverlay = usesRoadmapProjection && !isLooterGameMode;
+  const renderLooterInScene = !!isLooterGameMode && !useDomLooterLayer;
   const sceneWorldScale = isRoadmapOverlay ? ROADMAP_WORLD_SCALE : 1;
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
@@ -264,6 +266,7 @@ export default function SceneContent({
           galleryImages={galleryImages}
           mapMode={mapMode}
           isLooterGameMode={!!isLooterGameMode}
+          showLooterBoat={renderLooterInScene}
           isRoadmapOverlay={isRoadmapOverlay}
           scale={scale}
           planeYScale={planeYScale}
@@ -294,7 +297,7 @@ export default function SceneContent({
 
         {/* Looter game layers */}
         <LooterLayers
-          isLooterGameMode={!!isLooterGameMode}
+          isLooterGameMode={renderLooterInScene}
           encounter={encounter}
           sceneWorldScale={sceneWorldScale}
           boatPosRef={boatPosRef}

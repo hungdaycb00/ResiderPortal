@@ -35,6 +35,7 @@ interface UserLayersProps {
   // Mode
   mapMode: AlinMapMode;
   isLooterGameMode: boolean;
+  showLooterBoat?: boolean;
   isRoadmapOverlay: boolean;
 
   // Drag
@@ -80,6 +81,7 @@ export default function UserLayers({
   galleryImages,
   mapMode,
   isLooterGameMode,
+  showLooterBoat = true,
   isRoadmapOverlay,
   scale,
   planeYScale,
@@ -175,7 +177,7 @@ export default function UserLayers({
   return (
     <>
       {/* Self avatar / Boat */}
-      {isLooterGameMode ? (
+      {isLooterGameMode && showLooterBoat ? (
         <ProceduralBoat
           position={[selfPos.x, 0, selfPos.z]}
           offsetX={boatOffsetX}
@@ -187,7 +189,7 @@ export default function UserLayers({
           reducedMotion={performanceMode === 'low'}
           sceneWorldScale={sceneWorldScale}
         />
-      ) : !isRoadmapOverlay && (() => {
+      ) : !isLooterGameMode && !isRoadmapOverlay && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
         return (
           <group

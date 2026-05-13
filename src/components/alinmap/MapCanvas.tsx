@@ -6,6 +6,7 @@ import { useLooterState, useLooterActions } from './looter-game/LooterGameContex
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
 import MapTiles from './MapTiles';
+import LooterMapPlaneLayer from './components/LooterMapPlaneLayer';
 import RoadmapAvatarLayer from './components/RoadmapAvatarLayer';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
@@ -244,6 +245,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
                                 '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
                                 '--alin-map-camera-rotate-x-deg': '0deg',
+                                '--alin-map-billboard-pitch-deg': billboardPitchDeg,
+                                '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
+                                '--alin-map-billboard-lift-px': '24px',
                                 '--alin-map-plane-scale': MAP_PLANE_SCALE,
                             } as React.CSSProperties}
                         >
@@ -255,6 +259,20 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 myObfPos={myObfPos}
                                 mode={mapMode}
                             />
+                            {isLooterGameMode && mapMode === 'roadmap' && (
+                                <LooterMapPlaneLayer
+                                    myObfPos={myObfPos}
+                                    panX={panX}
+                                    panY={panY}
+                                    scale={scale}
+                                    planeYScale={planeYScale}
+                                    boatOffsetX={looterBoat.boatOffsetX}
+                                    boatOffsetY={looterBoat.boatOffsetY}
+                                    onRequestMove={looterBoat.executeMoveToExact}
+                                    onStopBoat={looterBoat.stopBoat}
+                                    onSetArrivalAction={looterBoat.setOnArrivalAction}
+                                />
+                            )}
                         </motion.div>
                     </div>
 
@@ -332,6 +350,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selfDragY={selfDragY}
                         mapMode={mapMode}
                         isLooterGameMode={isLooterGameMode}
+                        useDomLooterLayer={isLooterGameMode && mapMode === 'roadmap'}
                         boatTargetPin={looterBoat.boatTargetPin}
                         boatOffsetX={looterBoat.boatOffsetX}
                         boatOffsetY={looterBoat.boatOffsetY}
