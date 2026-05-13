@@ -93,7 +93,8 @@ export default function SceneContent({
   const { state: looterStateObj, encounter } = looterState;
   const { openFortressStorage, setShowMinigame, pickupItem } = looterActions;
 
-  const isRoadmapOverlay = mapMode === 'roadmap' && !isLooterGameMode;
+  const usesRoadmapProjection = mapMode === 'roadmap';
+  const isRoadmapOverlay = usesRoadmapProjection && !isLooterGameMode;
   const sceneWorldScale = isRoadmapOverlay ? ROADMAP_WORLD_SCALE : 1;
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
@@ -113,26 +114,26 @@ export default function SceneContent({
     planeYScale: planeYScale.get(),
   }));
   useMotionValueEvent(panX, 'change', (v) => {
-    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, panX: v }));
+    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, panX: v }));
   });
   useMotionValueEvent(panY, 'change', (v) => {
-    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, panY: v }));
+    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, panY: v }));
   });
   useMotionValueEvent(planeYScale, 'change', (v) => {
-    if (isRoadmapOverlay) setRoadmapView(prev => ({ ...prev, planeYScale: v }));
+    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, planeYScale: v }));
   });
   useEffect(() => {
-    if (!isRoadmapOverlay) return;
+    if (!usesRoadmapProjection) return;
     setRoadmapView({
       panX: panX.get(),
       panY: panY.get(),
       planeYScale: planeYScale.get(),
     });
-  }, [isRoadmapOverlay, panX, panY, planeYScale]);
+  }, [usesRoadmapProjection, panX, panY, planeYScale]);
 
   // ── Origin calculation ─────────────────────────────────────────────────────
   const baseOrigin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
-  const origin: LatLng = isRoadmapOverlay
+  const origin: LatLng = usesRoadmapProjection
     ? getRoadmapCenterFromPan(baseOrigin, roadmapView.panX, roadmapView.panY, roadmapView.planeYScale)
     : baseOrigin;
 
@@ -168,7 +169,7 @@ export default function SceneContent({
     const liftZ = panY.get();
     const tilt = tiltAngle.get();
 
-    if (isRoadmapOverlay) {
+    if (usesRoadmapProjection) {
       if (lastLiftXRef.current !== 0 || lastLiftZRef.current !== 0) {
         moveGroupRef.current.position.set(0, 0, 0);
         lastLiftXRef.current = 0;
@@ -196,8 +197,7 @@ export default function SceneContent({
     if (position && isLooterGameMode) {
       frameSkipRef.current = (frameSkipRef.current + 1) % 3;
       if (frameSkipRef.current === 0) {
-        const origin2: LatLng = { lat: position[0], lng: position[1] };
-        const sp = scaleScenePoint(worldToScene(origin2, origin2));
+        const sp = scaleScenePoint(worldToScene(origin, baseOrigin));
         const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
         const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
         const nx = sp.x + pxToScaledScene(visualBoatX);

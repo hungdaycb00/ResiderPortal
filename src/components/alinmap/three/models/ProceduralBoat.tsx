@@ -20,6 +20,7 @@ interface ProceduralBoatProps {
     fortressLat?: number | null;
     fortressLng?: number | null;
     reducedMotion?: boolean;
+    sceneWorldScale?: number;
 }
 
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
@@ -33,6 +34,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     fortressLat,
     fortressLng,
     reducedMotion = false,
+    sceneWorldScale = 1,
 }) => {
     const groupRef = useRef<THREE.Group>(null);
 
@@ -40,8 +42,8 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
         if (!groupRef.current) return;
 
         const t = state.clock.getElapsedTime();
-        const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE);
-        const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE);
+        const x = position[0] + pxToScene((offsetX?.get?.() ?? 0) * MAP_PLANE_SCALE) * sceneWorldScale;
+        const z = position[2] + pxToScene((offsetY?.get?.() ?? 0) * MAP_PLANE_SCALE) * sceneWorldScale;
         const bobY = reducedMotion ? 0 : Math.sin(t * 2.1) * 1.5;
         const rockZ = reducedMotion ? 0 : Math.sin(t * 1.2) * 0.025;
 

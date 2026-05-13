@@ -50,6 +50,10 @@ export default function LooterLayers({
   if (!isLooterGameMode) return null;
 
   const pxToScaledScene = (px: number) => pxToScene(px) * sceneWorldScale;
+  const scalePos = (pos: { x: number; z: number }) => ({
+    x: pos.x * sceneWorldScale,
+    z: pos.z * sceneWorldScale,
+  });
 
   return (
     <>
@@ -59,20 +63,23 @@ export default function LooterLayers({
       ) : null}
 
       {/* Waypoint items (3 gần nhất) */}
-      {waypointRenderData.map(({ item, pos }: any) => (
-        <LootSprite
-          key={`wp-${item.spawnId}`}
-          position={[pos.x, 3.5, pos.z]}
-          type={getWorldItemType(item)}
-          icon={getWorldItemIcon(item)}
-          title={item?.item?.name || 'Loot'}
-          accent={getWorldItemAccent(item)}
-          scale={2.4}
-          size={AVATAR_PLANE_SIZE * 2.0}
-          renderOrder={50}
-          onClick={() => handleWorldItemClick(item)}
-        />
-      ))}
+      {waypointRenderData.map(({ item, pos }: any) => {
+        const scenePos = scalePos(pos);
+        return (
+          <LootSprite
+            key={`wp-${item.spawnId}`}
+            position={[scenePos.x, 3.5, scenePos.z]}
+            type={getWorldItemType(item)}
+            icon={getWorldItemIcon(item)}
+            title={item?.item?.name || 'Loot'}
+            accent={getWorldItemAccent(item)}
+            scale={2.4}
+            size={AVATAR_PLANE_SIZE * 2.0}
+            renderOrder={50}
+            onClick={() => handleWorldItemClick(item)}
+          />
+        );
+      })}
 
       {/* Dashed path từ thuyền → target */}
       {!encounter && boatTargetPin && boatTargetScene ? (
@@ -107,20 +114,23 @@ export default function LooterLayers({
       ) : null}
 
       {/* World loot items */}
-      {itemRenderData.map(({ item, pos }: any) => (
-        <LootSprite
-          key={item.spawnId}
-          position={[pos.x, 3.0, pos.z]}
-          type={getWorldItemType(item)}
-          icon={getWorldItemIcon(item)}
-          title={item?.item?.name || 'Loot'}
-          accent={getWorldItemAccent(item)}
-          scale={2}
-          size={AVATAR_PLANE_SIZE * 1.8}
-          renderOrder={40}
-          onClick={() => handleWorldItemClick(item)}
-        />
-      ))}
+      {itemRenderData.map(({ item, pos }: any) => {
+        const scenePos = scalePos(pos);
+        return (
+          <LootSprite
+            key={item.spawnId}
+            position={[scenePos.x, 3.0, scenePos.z]}
+            type={getWorldItemType(item)}
+            icon={getWorldItemIcon(item)}
+            title={item?.item?.name || 'Loot'}
+            accent={getWorldItemAccent(item)}
+            scale={2}
+            size={AVATAR_PLANE_SIZE * 1.8}
+            renderOrder={40}
+            onClick={() => handleWorldItemClick(item)}
+          />
+        );
+      })}
     </>
   );
 }

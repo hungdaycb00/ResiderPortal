@@ -185,6 +185,7 @@ export default function UserLayers({
           fortressLat={looterStateObj?.fortressLat}
           fortressLng={looterStateObj?.fortressLng}
           reducedMotion={performanceMode === 'low'}
+          sceneWorldScale={sceneWorldScale}
         />
       ) : !isRoadmapOverlay && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
