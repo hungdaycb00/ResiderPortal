@@ -5,7 +5,7 @@ import BottomSheet from './BottomSheet';
 import ContextMenu from './ContextMenu';
 import FullscreenToggle from './components/FullscreenToggle';
 import MapControls from './MapControls';
-import MobileSubTabBar from './components/MobileSubTabBar';
+
 import NavigationBar from './NavigationBar';
 import SearchHeader from './SearchHeader';
 import SearchOverlay from './SearchOverlay';
@@ -230,16 +230,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isWidgetExpanded={isWeatherWidgetExpanded}
         setIsWidgetExpanded={setIsWeatherWidgetExpanded}
         isSheetExpanded={isSheetExpanded}
-      />
-
-      <MobileSubTabBar
-        mainTab={nav.mainTab}
-        exploreSubTab={exploreSubTab}
-        socialSubTab={socialSubTab}
-        isLooterGameMode={isLooterGameMode}
-        isSheetExpanded={isSheetExpanded}
-        onExploreSubTabChange={setExploreSubTab}
-        onSocialSubTabChange={setSocialSubTab}
       />
 
       <NavigationBar

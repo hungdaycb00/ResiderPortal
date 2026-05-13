@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import BottomSheetContent from './bottom-sheet/BottomSheetContent';
 import SheetHeader from './bottom-sheet/SheetHeader';
 import SubTabSwitcher from './bottom-sheet/SubTabSwitcher';
+import MobileSubTabBar from './components/MobileSubTabBar';
 
 import { useLooterGame } from './looter-game/LooterGameContext';
 
@@ -157,8 +158,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onPostClick={onPostClick}
                 />
 
-                {/* SubTabSwitcher rendered outside scrollable area so it stays fixed on desktop */}
-                {isSheetExpanded && !selectedUser && mainTab === 'discover' && (
+                {/* Mobile: inline subtab bar inside sheet */}
+                {isSheetExpanded && !selectedUser && !isDesktop && (
+                    <MobileSubTabBar
+                        mainTab={mainTab}
+                        exploreSubTab={exploreSubTab}
+                        socialSubTab={socialSubTab}
+                        isLooterGameMode={false}
+                        onExploreSubTabChange={setExploreSubTab}
+                        onSocialSubTabChange={setSocialSubTab}
+                    />
+                )}
+
+                {/* Desktop: fixed SubTabSwitcher outside scrollable area */}
+                {isSheetExpanded && !selectedUser && isDesktop && mainTab === 'discover' && (
                     <SubTabSwitcher
                         value={exploreSubTab}
                         onChange={setExploreSubTab}
@@ -168,7 +181,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                         ]}
                     />
                 )}
-                {isSheetExpanded && !selectedUser && mainTab === 'friends' && (
+                {isSheetExpanded && !selectedUser && isDesktop && mainTab === 'friends' && (
                     <SubTabSwitcher
                         value={socialSubTab}
                         onChange={setSocialSubTab}
