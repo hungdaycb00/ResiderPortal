@@ -4,7 +4,6 @@ import SpatialNode from '../SpatialNode';
 import {
   clamp,
   getRoadmapCenterFromPan,
-  getRoadmapTileScale,
   getRoadmapTileZoom,
   ROADMAP_TILE_SIZE,
   type AlinMapMode,
@@ -86,17 +85,14 @@ const toScreenPosition = (
   viewport: { width: number; height: number }
 ) => {
   const zoom = getRoadmapTileZoom(visualScale);
-  const tileScale = getRoadmapTileScale(visualScale);
   const centerTileX = lngToTileX(center.lng, zoom);
   const centerTileY = latToTileY(center.lat, zoom);
   const targetTileX = lngToTileX(target.lng, zoom);
   const targetTileY = latToTileY(target.lat, zoom);
-  const centerPixelX = centerTileX * ROADMAP_TILE_SIZE;
-  const centerPixelY = centerTileY * ROADMAP_TILE_SIZE;
 
   return {
-    x: viewport.width / 2 + (targetTileX * ROADMAP_TILE_SIZE - centerPixelX) * tileScale,
-    y: viewport.height / 2 + (targetTileY * ROADMAP_TILE_SIZE - centerPixelY) * tileScale,
+    x: viewport.width / 2 + (targetTileX - centerTileX) * ROADMAP_TILE_SIZE,
+    y: viewport.height / 2 + (targetTileY - centerTileY) * ROADMAP_TILE_SIZE,
   };
 };
 
