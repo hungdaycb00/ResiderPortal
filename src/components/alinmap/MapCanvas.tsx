@@ -17,7 +17,7 @@ import {
 } from './components/MapUIOverlays';
 import { MapBoundary, SearchMarkerPin } from './components/MapObjects';
 import { useCombatCamera } from './looter-game/hooks/useCombatCamera';
-import { BILLBOARD_UPRIGHT_PITCH_DEGREES, ROADMAP_WORLD_SCALE, type AlinMapMode } from './constants';
+import { BILLBOARD_UPRIGHT_PITCH_DEGREES, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE, type AlinMapMode } from './constants';
 
 
 interface MapCanvasProps {
@@ -236,14 +236,27 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     onPointerCancel={handleMapPointerCancel}
                     onClickCapture={handleMapClickCapture}
                 >
-                    <MapTiles
-                        panX={panX}
-                        panY={panY}
-                        scale={scale}
-                        planeYScale={planeYScale}
-                        myObfPos={myObfPos}
-                        mode={mapMode}
-                    />
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[180vmax] w-[180vmax] -translate-x-1/2 -translate-y-1/2">
+                        <motion.div
+                            className="absolute inset-0 alin-map-tilt-plane"
+                            style={{
+                                '--alin-map-tilt-deg': tiltDeg,
+                                '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
+                                '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
+                                '--alin-map-camera-rotate-x-deg': '0deg',
+                                '--alin-map-plane-scale': MAP_PLANE_SCALE,
+                            } as React.CSSProperties}
+                        >
+                            <MapTiles
+                                panX={panX}
+                                panY={panY}
+                                scale={scale}
+                                planeYScale={planeYScale}
+                                myObfPos={myObfPos}
+                                mode={mapMode}
+                            />
+                        </motion.div>
+                    </div>
 
                     {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
                         <RoadmapAvatarLayer
