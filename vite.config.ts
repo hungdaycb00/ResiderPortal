@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
@@ -29,6 +30,12 @@ export default defineConfig(({mode}) => {
               `href="$1?css_v=${stylesheetVersion}"`,
             );
           });
+        },
+        writeBundle() {
+          // Write version.txt to dist so client can poll for new version
+          const distVersionPath = path.resolve(__dirname, 'dist', 'version.txt');
+          fs.mkdirSync(path.dirname(distVersionPath), { recursive: true });
+          fs.writeFileSync(distVersionPath, buildVersion, 'utf-8');
         },
       },
     ],

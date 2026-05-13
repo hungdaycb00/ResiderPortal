@@ -12,58 +12,89 @@
         var PRESERVED_KEYS = ['cloudflareUrl', 'deviceId', 'accessToken', 'user'];
 
         // === PROACTIVE VERSION CHECK ===
-        // Runs before any JS loads. If build changed since last visit, force-clear
-        // browser caches + service workers + localStorage, then reload.
+        // Runs before any JS loads. Uses TWO detection mechanisms:
+        // 1. Compare meta build-version against localStorage (fast path)
+        // 2. Poll /version.txt from network with cache bypass (catches stale HTML)
         (function checkBuildVersion() {
           try {
             var metaVersion = document.querySelector('meta[name="build-version"]');
             var htmlVersion = metaVersion ? metaVersion.getAttribute('content') : null;
-            if (!htmlVersion) return;
 
-            var storedVersion = localStorage.getItem(BUILD_VERSION_KEY);
-            if (storedVersion === htmlVersion) return;
+            function nuclearClear(newVersion) {
+              // Preserve critical auth data
+              var preserved = {};
+              PRESERVED_KEYS.forEach(function(k) {
+                var v = localStorage.getItem(k);
+                if (v !== null) preserved[k] = v;
+              });
 
-            console.warn('[Proactive] Build changed:', storedVersion, '->', htmlVersion, '. Clearing caches...');
+              localStorage.clear();
+              sessionStorage.clear();
 
-            // Preserve critical auth data
-            var preserved = {};
-            PRESERVED_KEYS.forEach(function(k) {
-              var v = localStorage.getItem(k);
-              if (v !== null) preserved[k] = v;
-            });
+              Object.keys(preserved).forEach(function(k) {
+                localStorage.setItem(k, preserved[k]);
+              });
+              localStorage.setItem(BUILD_VERSION_KEY, newVersion || htmlVersion || '');
 
-            // Nuclear clear
-            localStorage.clear();
-            sessionStorage.clear();
+              // Clear Service Workers
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                }).catch(function() {});
+              }
 
-            // Restore auth data
-            Object.keys(preserved).forEach(function(k) {
-              localStorage.setItem(k, preserved[k]);
-            });
-            localStorage.setItem(BUILD_VERSION_KEY, htmlVersion);
+              // Clear Cache Storage
+              if ('caches' in window) {
+                caches.keys().then(function(keys) {
+                  keys.forEach(function(key) {
+                    if (/asset|vite|workbox|game|alin|resider/i.test(key)) {
+                      caches.delete(key);
+                    }
+                  });
+                }).catch(function() {});
+              }
 
-            // Clear Service Workers
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                regs.forEach(function(r) { r.unregister(); });
-              }).catch(function() {});
-            }
-
-            // Clear Cache Storage
-            if ('caches' in window) {
-              caches.keys().then(function(keys) {
-                keys.forEach(function(key) {
-                  if (/asset|vite|workbox|game|alin|resider/i.test(key)) {
-                    caches.delete(key);
-                  }
-                });
-              }).catch(function() {});
-            }
-
-            // Force reload to get fresh assets
-            if (storedVersion) {
               window.location.reload();
             }
+
+            // Fast path: compare embedded version with localStorage
+            if (htmlVersion) {
+              var storedVersion = localStorage.getItem(BUILD_VERSION_KEY);
+              if (storedVersion && storedVersion !== htmlVersion) {
+                console.warn('[Proactive] Build changed (local):', storedVersion, '->', htmlVersion);
+                nuclearClear(htmlVersion);
+                return;
+              }
+            }
+
+            // Network path: poll server version.txt to detect stale HTML cache
+            // Uses cache: 'no-store' to bypass browser HTTP cache
+            fetch('/version.txt?_v=' + Date.now(), { cache: 'no-store' })
+              .then(function(r) {
+                if (!r.ok) return;
+                return r.text();
+              })
+              .then(function(serverVersion) {
+                if (!serverVersion) return;
+                serverVersion = serverVersion.trim();
+                var storedVersion = localStorage.getItem(BUILD_VERSION_KEY);
+
+                // If server version differs from localStorage → new deploy detected
+                if (storedVersion && storedVersion !== serverVersion) {
+                  console.warn('[Proactive] Build changed (network):', storedVersion, '->', serverVersion);
+                  nuclearClear(serverVersion);
+                  return;
+                }
+
+                // If embedded version differs from server → HTML is stale (cached)
+                if (htmlVersion && htmlVersion !== serverVersion) {
+                  console.warn('[Proactive] HTML stale:', htmlVersion, 'vs server:', serverVersion);
+                  nuclearClear(serverVersion);
+                }
+              })
+              .catch(function() {
+                // Network failed — no action (don't break page on network errors)
+              });
           } catch(e) {
             // Silently fail — version check must not break the page
           }
