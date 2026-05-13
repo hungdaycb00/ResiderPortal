@@ -314,7 +314,11 @@ const MapTiles: React.FC<MapTilesProps> = ({ panX, panY, scale, planeYScale, myO
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#dfe8df] select-none">
-      <div ref={containerRef} className="absolute inset-0" />
+      <div
+        ref={containerRef}
+        className="absolute inset-0"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),rgba(226,243,230,0.02)_42%,rgba(15,23,42,0.12))]" />
     </div>
   );

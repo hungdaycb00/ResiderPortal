@@ -50,7 +50,7 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const [worldItems, setWorldItemsRaw] = useState<WorldItem[]>([]);
   const [ui, dispatch] = useReducer(uiReducer, initialUIState);
   const [globalSettings, setGlobalSettings] = useState<any>({ speedMultiplier: 1.0 });
-  const [openBackpackHandler, setOpenBackpackHandler] = useState<(() => void) | null>(null);
+  const openBackpackHandlerRef = useRef<(() => void) | null>(null);
   // Dùng ref thay state để tránh khoảng trống null khi dependency thay đổi
   const centerBoatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
   const centerCombatHandlerRef = useRef<((yOffset?: number, xOffset?: number) => void) | null>(null);
@@ -119,10 +119,14 @@ export const LooterGameProvider: React.FC<LooterGameProviderProps> = ({ children
   const runInQueueRef = useRef(runInQueue);
   runInQueueRef.current = runInQueue;
   const { saveInventory, saveBags, saveStorage, syncState } = useLooterData({ deviceId, apiUrl: API_URL, setState });
+  const setOpenBackpackHandler = useCallback((handler: (() => void) | null) => {
+    openBackpackHandlerRef.current = handler;
+  }, []);
+
   const openBackpack = useCallback(() => {
     if (!isLooterGameModeRef.current) return;
-    if (typeof openBackpackHandler === 'function') openBackpackHandler();
-  }, [openBackpackHandler]);
+    openBackpackHandlerRef.current?.();
+  }, []);
 
   // 3. Initialize Hooks
   const stateManager = useLooterStateManager({
