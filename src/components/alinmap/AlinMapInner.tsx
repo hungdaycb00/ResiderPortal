@@ -155,6 +155,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
     // --- URL Sub-path Sync ---
     useEffect(() => {
+        if (!location.pathname.startsWith('/explore')) return;
         const subGame = extractExploreGame(location.pathname);
         if (subGame === 'looter-game' && !isLooterGameMode) {
             looterActions.setIsLooterGameMode(true);
@@ -167,18 +168,19 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     }, [location.pathname, isLooterGameMode, looterActions.setIsLooterGameMode, nav.mainTab, nav.setMainTab, nav.setIsSheetExpanded, nav.requestBoatAutoFocus]);
 
     useEffect(() => {
+        // Chỉ đồng bộ URL khi đang ở trong AlinMap (path bắt đầu bằng /explore)
+        if (!location.pathname.startsWith('/explore')) return;
+
         const subGame = extractExploreGame(location.pathname);
         let newPath = '/explore';
-        
+
         if (isLooterGameMode) {
             newPath = '/explore/looter-game';
         } else {
-            // Khi không ở looter mode, không bao giờ giữ URL /explore/looter-game
             const nonLooterSubGame = subGame && subGame !== 'looter-game';
             if (nonLooterSubGame) {
                 newPath = location.pathname;
             }
-            // else: newPath stays '/explore' (không có sub-game nào khác)
         }
 
         if (location.pathname !== newPath) {

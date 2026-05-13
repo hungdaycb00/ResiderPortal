@@ -36,6 +36,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
     const socialSubTab = (props.socialSubTab as SocialSubTab) ?? _socialSubTab;
     const setExploreSubTab = props.onExploreSubTabChange ?? _setExploreSubTab;
     const setSocialSubTab = props.onSocialSubTabChange ?? _setSocialSubTab;
+    const handleExploreSubTabChange = React.useCallback((value: string) => {
+        setExploreSubTab(value as ExploreSubTab);
+    }, [setExploreSubTab]);
+    const handleSocialSubTabChange = React.useCallback((value: string) => {
+        setSocialSubTab(value as SocialSubTab);
+    }, [setSocialSubTab]);
     const lastSocialFeedRequestRef = React.useRef('');
     const shouldHideSearch = ['creator', 'backpack', 'discover', 'friends', 'profile'].includes(mainTab);
     const deferredSearchTag = React.useDeferredValue(searchTag);
@@ -162,7 +168,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 {isDesktop && isSheetExpanded && !selectedUser && mainTab === 'discover' && (
                     <SubTabSwitcher
                         value={exploreSubTab}
-                        onChange={setExploreSubTab}
+                        onChange={handleExploreSubTabChange}
                         options={[
                             { value: 'games', label: 'Games' },
                             { value: 'creator', label: 'Creator' },
@@ -172,7 +178,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                 {isDesktop && isSheetExpanded && !selectedUser && mainTab === 'friends' && (
                     <SubTabSwitcher
                         value={socialSubTab}
-                        onChange={setSocialSubTab}
+                        onChange={handleSocialSubTabChange}
                         options={[
                             { value: 'posts', label: 'Posts' },
                             { value: 'nearby', label: 'Nearby' },
@@ -188,8 +194,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     exploreSubTab={exploreSubTab}
                     socialSubTab={socialSubTab}
                     isLooterGameMode={false}
-                    onExploreSubTabChange={setExploreSubTab}
-                    onSocialSubTabChange={setSocialSubTab}
+                    onExploreSubTabChange={handleExploreSubTabChange}
+                    onSocialSubTabChange={handleSocialSubTabChange}
                 />
             )}
         </div>

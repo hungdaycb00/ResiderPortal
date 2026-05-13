@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Clock, Search, TrendingUp, X } from 'lucide-react';
 import SheetSearchResults from './SheetSearchResults';
 import { fetchAlinSearch } from './search';
 
-const TRENDING_TOPICS = ['#looter', '#trading', 'Chợ phiên', '#chill', 'Săn rồng'];
+const TRENDING_TOPICS = ['#looter', '#trading', 'Chá»£ phiÃªn', '#chill', 'SÄƒn rá»“ng'];
 const RECENT_SEARCHES_KEY = 'alin_recent_searches';
 
 interface SearchOverlayProps {
@@ -42,13 +42,57 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     }
   });
   const [trendingTags, setTrendingTags] = useState<Array<{ tag: string; count?: number }>>([]);
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = !isDesktop;
+  const useDesktopPanel = isDesktop && isSheetExpanded;
+
+  const focusSearchInput = React.useCallback(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
+  }, []);
 
   useEffect(() => {
-    setTimeout(() => {
-      inputRef.current?.focus();
+    const focusTimer = window.setTimeout(() => {
+      focusSearchInput();
+      if (isMobile) {
+        window.setTimeout(focusSearchInput, 120);
+      }
     }, 50);
-  }, []);
+
+    return () => window.clearTimeout(focusTimer);
+  }, [focusSearchInput, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile || typeof window === 'undefined') return;
+
+    const updateKeyboardInset = () => {
+      const viewport = window.visualViewport;
+      const visualHeight = viewport?.height ?? window.innerHeight;
+      const offsetTop = viewport?.offsetTop ?? 0;
+      const inset = Math.max(0, Math.round(window.innerHeight - visualHeight - offsetTop));
+      setKeyboardInset(inset);
+    };
+
+    updateKeyboardInset();
+
+    const viewport = window.visualViewport;
+    viewport?.addEventListener('resize', updateKeyboardInset);
+    viewport?.addEventListener('scroll', updateKeyboardInset);
+    window.addEventListener('resize', updateKeyboardInset);
+
+    return () => {
+      viewport?.removeEventListener('resize', updateKeyboardInset);
+      viewport?.removeEventListener('scroll', updateKeyboardInset);
+      window.removeEventListener('resize', updateKeyboardInset);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,123 +149,49 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     onClose();
   };
 
-  const useDesktopPanel = isDesktop && isSheetExpanded;
-
-  const searchBar = (
-    <div className="flex items-center gap-2 px-3 py-3 bg-white">
-      <button
-        onClick={() => onClose()}
-        className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95 shrink-0"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <form onSubmit={handleSearchSubmit} className="flex-1">
-        <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
-          <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Tìm kiếm bạn bè, game, bài viết..."
-            className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium"
-            value={searchTag}
-            onChange={(e) => setSearchTag(e.target.value)}
-          />
-          {searchTag && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTag('');
-                inputRef.current?.focus();
-              }}
-              className="p-1 hover:bg-gray-200 rounded-full ml-1"
-            >
-              <X className="w-3 h-3 text-gray-400" />
-            </button>
-          )}
-        </div>
-      </form>
-    </div>
-  );
-
-  const trendingSection = (
-    !searchTag.trim() && (
-      <div className="px-4 pt-3 pb-3 bg-white">
-        <h3 className="text-xs font-bold text-gray-500 mb-2">Xu hướng tìm kiếm</h3>
-        <div className="flex flex-wrap gap-2">
-          {trendingTags.length > 0 ? trendingTags.map((item) => (
-            <button
-              key={item.tag}
-              onClick={() => {
-                setSearchTag(item.tag);
-                saveRecentSearch(item.tag);
-              }}
-              className="inline-flex items-center gap-1.5 bg-blue-50/50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-            >
-              <TrendingUp className="w-3 h-3" />
-              {item.tag}
-              {item.count ? <span className="text-[10px] text-blue-400">x{item.count}</span> : null}
-            </button>
-          )) : TRENDING_TOPICS.map((topic) => (
-            <button
-              key={topic}
-              onClick={() => {
-                setSearchTag(topic);
-                saveRecentSearch(topic);
-              }}
-              className="inline-flex items-center gap-1.5 bg-blue-50/50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-            >
-              <TrendingUp className="w-3 h-3" />
-              {topic}
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  );
-
-  const contentArea = (
-    <div className="flex-1 overflow-y-auto subtle-scrollbar bg-gray-50" data-immersive-scroll>
+  const renderSearchResults = (mobile = false) => (
+    <div className={`flex-1 min-h-0 overflow-y-auto subtle-scrollbar bg-gray-50 ${mobile ? 'pb-44' : ''}`} data-immersive-scroll>
       {searchTag.trim().length >= 2 ? (
         <div className="bg-white min-h-full">
-           <SheetSearchResults
-              searchTag={searchTag}
-              nearbyUsers={nearbyUsers}
-              setSelectedUser={setSelectedUser}
-              setActiveTab={setActiveTab}
-              setIsSheetExpanded={setIsSheetExpanded}
-              setSearchTag={setSearchTag}
-              handlePlayGame={handlePlayGame}
-              onClose={handleResultClick}
-           />
+          <SheetSearchResults
+            searchTag={searchTag}
+            nearbyUsers={nearbyUsers}
+            setSelectedUser={setSelectedUser}
+            setActiveTab={setActiveTab}
+            setIsSheetExpanded={setIsSheetExpanded}
+            setSearchTag={setSearchTag}
+            handlePlayGame={handlePlayGame}
+            onClose={handleResultClick}
+          />
         </div>
       ) : (
         <div className="bg-white min-h-full px-4 py-4">
-          {/* Recent Searches */}
           {recentSearches.length > 0 && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-gray-900">Tìm kiếm gần đây</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-gray-900">TÃ¬m kiáº¿m gáº§n Ä‘Ã¢y</h3>
               </div>
               <div className="space-y-1">
                 {recentSearches.map((query, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => {
                       setSearchTag(query);
                       saveRecentSearch(query);
+                      window.setTimeout(focusSearchInput, 0);
                     }}
-                    className="w-full flex items-center justify-between py-3 px-2 hover:bg-gray-50 rounded-xl transition-colors text-left group"
+                    className="group flex w-full items-center justify-between rounded-xl px-2 py-3 text-left transition-colors hover:bg-gray-50 active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                        <Clock className="h-4 w-4" />
                       </div>
-                      <span className="text-[15px] text-gray-700 font-medium">{query}</span>
+                      <span className="text-[15px] font-medium text-gray-700">{query}</span>
                     </div>
                     <div
                       onClick={(e) => removeRecentSearch(e, query)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 md:opacity-100"
+                      className="rounded-full p-2 text-gray-400 opacity-0 transition-colors hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 md:opacity-100"
                     >
                       <X className="w-4 h-4" />
                     </div>
@@ -235,25 +205,129 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     </div>
   );
 
+  const renderSearchBar = (mobile = false) => (
+    <div className={`flex items-center gap-2 ${mobile ? 'px-4 pt-2 pb-3' : 'px-3 py-3 bg-white'}`}>
+      <button
+        type="button"
+        onClick={() => onClose()}
+        className={`shrink-0 rounded-full text-gray-600 transition-colors active:scale-95 ${
+          mobile
+            ? 'inline-flex h-12 w-12 items-center justify-center border border-gray-200 bg-white shadow-sm hover:bg-gray-50'
+            : 'p-2 hover:bg-gray-100'
+        }`}
+      >
+        <ArrowLeft className={mobile ? 'h-[18px] w-[18px]' : 'h-5 w-5'} />
+      </button>
+
+      <form onSubmit={handleSearchSubmit} className="flex-1">
+        <div className={`flex items-center rounded-full ${mobile ? 'border border-gray-200 bg-white px-4 py-3 shadow-sm' : 'bg-gray-100 px-4 py-2'}`}>
+          <Search className={`mr-2 shrink-0 ${mobile ? 'h-4 w-4 text-gray-400' : 'h-4 w-4 text-gray-500'}`} />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="TÃ¬m kiáº¿m báº¡n bÃ¨, game, bÃ i viáº¿t..."
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            enterKeyHint="search"
+            inputMode="search"
+            spellCheck={false}
+            autoFocus
+            className="w-full border-none bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-500"
+            value={searchTag}
+            onChange={(e) => setSearchTag(e.target.value)}
+          />
+          {searchTag && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTag('');
+                window.setTimeout(focusSearchInput, 0);
+              }}
+              className="ml-1 rounded-full p-1 hover:bg-gray-200"
+            >
+              <X className="h-3 w-3 text-gray-400" />
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+
+  const renderMobileTrending = () => {
+    if (searchTag.trim()) return null;
+
+    const chips = trendingTags.length > 0
+      ? trendingTags.map((item) => ({
+          key: item.tag,
+          label: item.tag,
+          count: item.count,
+        }))
+      : TRENDING_TOPICS.map((topic) => ({
+          key: topic,
+          label: topic,
+          count: undefined as number | undefined,
+        }));
+
+    return (
+      <div className="px-4 pt-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <h3 className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-500">Xu hướng tìm kiếm</h3>
+          <span className="text-[10px] font-bold text-gray-400">Kéo ngang</span>
+        </div>
+        <div className="-mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 pr-8 scrollbar-hide">
+          {chips.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => {
+                setSearchTag(item.label);
+                saveRecentSearch(item.label);
+                window.setTimeout(focusSearchInput, 0);
+              }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-700 transition-colors active:scale-[0.98] hover:bg-blue-100"
+            >
+              <TrendingUp className="h-3 w-3" />
+              <span className="whitespace-nowrap">{item.label}</span>
+              {typeof item.count === 'number' ? <span className="text-[10px] text-blue-400">x{item.count}</span> : null}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
-      className={`z-[400] bg-white flex flex-col animate-in fade-in duration-200 ${
+      className={`z-[400] flex flex-col overflow-hidden bg-white animate-in fade-in duration-200 ${
         useDesktopPanel
           ? 'fixed top-0 bottom-0 rounded-l-[32px] shadow-[-4px_0_24px_rgba(0,0,0,0.05)] slide-in-from-left-2'
           : 'fixed inset-0 slide-in-from-bottom-2'
       }`}
-      style={useDesktopPanel ? { left: 72, width: panelWidth } : undefined}
+      style={
+        useDesktopPanel
+          ? { left: 72, width: panelWidth }
+          : isMobile
+            ? { top: 0, left: 0, right: 0, bottom: keyboardInset }
+            : undefined
+      }
     >
       {useDesktopPanel ? (
         <>
-          <div className="border-b border-gray-100">{searchBar}</div>
-          {contentArea}
+          <div className="border-b border-gray-100">{renderSearchBar(false)}</div>
+          {renderSearchResults(false)}
         </>
       ) : (
         <>
-          <div className="border-b border-gray-100">{searchBar}</div>
-          {trendingSection}
-          {contentArea}
+          {renderSearchResults(true)}
+
+          <div
+            className="shrink-0 border-t border-gray-100 bg-white/96 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+          >
+            {renderMobileTrending()}
+            {renderSearchBar(true)}
+          </div>
         </>
       )}
     </div>

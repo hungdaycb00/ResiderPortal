@@ -155,21 +155,29 @@ export default function App() {
 
   // --- Sync URL with Playing Game ---
   useEffect(() => {
-    const currentBase = activeTab === 'home' ? '/games' : '/explore';
-    let newPath = currentBase;
+    // Không can thiệp nếu người dùng đã navigate ra ngoài AlinMap/Home
+    const isAlinPath = location.pathname.startsWith('/explore');
+    const isGamePath = location.pathname.startsWith('/games');
+    if (!isAlinPath && !isGamePath) return;
+
     const slug = extractSlug(location.pathname);
-    
-    if (playingGame?.slug) {
-      newPath = `${currentBase}/${playingGame.slug}`;
-    }
 
     if (slug === 'looter-game') return;
 
-    if (location.pathname !== newPath && !playingGame?.gameUrl.includes('looter-game')) {
-      // Note: Looter Game is handled inside AlinMap.tsx
-      navigate(newPath, { replace: true });
+    if (playingGame?.slug) {
+      const base = isGamePath ? '/games' : '/explore';
+      const newPath = `${base}/${playingGame.slug}`;
+      if (location.pathname !== newPath && !playingGame?.gameUrl?.includes('looter-game')) {
+        navigate(newPath, { replace: true });
+      }
+    } else if (slug) {
+      // Có slug trong URL nhưng không còn playing game → xóa slug
+      const base = isGamePath ? '/games' : '/explore';
+      if (location.pathname !== base) {
+        navigate(base, { replace: true });
+      }
     }
-  }, [playingGame, activeTab, location.pathname, navigate]);
+  }, [playingGame, location.pathname, navigate]);
 
   // --- Auto-Play from URL Slug ---
   useEffect(() => {
