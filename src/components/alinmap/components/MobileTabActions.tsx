@@ -40,7 +40,7 @@ const MobileTabActions: React.FC<MobileTabActionsProps> = ({
           ? 'opacity-100 pointer-events-auto translate-y-0'
           : 'opacity-0 pointer-events-none translate-y-2'
       }`}
-      style={{ bottom: '64px' }}
+      style={{ bottom: '50px' }}
     >
       {/* Search Button */}
       {showSearch && (
