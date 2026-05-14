@@ -93,7 +93,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
         <div className="flex flex-col gap-6 pb-20">
             <div className="flex items-center justify-between px-1 pt-1">
                 <h3 className="truncate text-[20px] font-black uppercase tracking-tighter italic text-gray-900">
-                    Explore
+                    Khám phá
                 </h3>
                 <div className="hidden md:flex items-center gap-2 min-w-0">
                     <button
@@ -113,7 +113,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-[20px] font-black text-gray-900 flex items-center gap-2 uppercase tracking-tighter italic border-l-4 border-yellow-400 pl-3">
                             <Trophy className="w-5 h-5 text-yellow-400" />
-                            Featured Games
+                            Trò chơi nổi bật
                         </h3>
                     </div>
                     <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
@@ -138,7 +138,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                                 <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent opacity-100 pointer-events-none" />
                                 <div className="absolute bottom-0 left-0 w-full p-4 z-10 pointer-events-none">
                                     <div className="px-2 py-1 bg-yellow-400 text-black rounded-full text-[8px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 mb-1.5">
-                                        <Trophy className="w-2.5 h-2.5" /> Featured {game.score ? `- ${game.score}/10` : ''}
+                                        <Trophy className="w-2.5 h-2.5" /> Nổi bật {game.score ? `- ${game.score}/10` : ''}
                                     </div>
                                     <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none truncate">
                                         {getGameTitle(game)}
@@ -150,7 +150,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 </section>
             )}
 
-            <GameSlider title="All Games" icon={<Plus className="w-5 h-5 text-purple-400" />} lightMode>
+            <GameSlider title="Tất cả trò chơi" icon={<Plus className="w-5 h-5 text-purple-400" />} lightMode>
                 {visibleGames.map((game, i) => (
                     <div key={game.id || game.slug || i} className="w-[180px] sm:w-[220px] content-auto">
                         <GameCard
@@ -184,8 +184,8 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
 
             <div className="mt-2 space-y-4 px-1 content-auto">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-black text-gray-900">Trending Tags</h3>
-                    <span className="text-[11px] font-bold text-gray-400">{nearbyUsers.length} users nearby</span>
+                    <h3 className="text-lg font-black text-gray-900">Tags xu hướng</h3>
+                    <span className="text-[11px] font-bold text-gray-400">{nearbyUsers.length} người dùng gần đây</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                         {trendingTags.length === 0 ? (

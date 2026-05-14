@@ -38,15 +38,15 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
 
   if (mainTab === 'discover') {
     tabs = [
-      { value: 'games', label: 'Games' },
-      { value: 'creator', label: 'Creator' },
+      { value: 'games', label: 'Trò chơi' },
+      { value: 'creator', label: 'Sáng tạo' },
     ];
     activeValue = exploreSubTab;
     onTabChange = onExploreSubTabChange;
   } else if (mainTab === 'friends') {
     tabs = [
-      { value: 'posts', label: 'Posts' },
-      { value: 'nearby', label: 'Nearby' },
+      { value: 'posts', label: 'Bài viết' },
+      { value: 'nearby', label: 'Gần đây' },
     ];
     activeValue = socialSubTab;
     onTabChange = onSocialSubTabChange;
@@ -61,11 +61,13 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
 
   return (
     <div className="fixed bottom-[64px] left-0 right-0 z-[190] px-4 pb-4 pointer-events-none">
-      <div className="flex w-full items-center gap-3">
-        <div className="flex flex-1 justify-center min-w-0">
-          {tabs && tabs.length > 0 && (
-            <div className="flex bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1 gap-0.5 pointer-events-auto">
-              {tabs.map((tab) => (
+      <div className="relative flex w-full items-center min-h-10">
+        {tabs && tabs.length > 0 && (
+          <div
+            className="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1 gap-0.5"
+            style={{ maxWidth: 'calc(100vw - 144px)' }}
+          >
+            {tabs.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
@@ -79,12 +81,11 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
                 {tab.label}
               </button>
             ))}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {(showSearchAction || showCreatePostAction || showAuthAction) && (
-          <div className="flex shrink-0 items-center gap-2 pointer-events-auto">
+          <div className="pointer-events-auto absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
             {showAuthAction && (
               <>
                 {user ? (
@@ -118,7 +119,7 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
                 <Search className="h-4 w-4" />
               </button>
             )}
- 
+
             {showCreatePostAction && (
               <button
                 type="button"

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: system-ui, -apple-system, "Inter", sans-serif;
 }
 
 @layer utilities {

@@ -119,20 +119,20 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
             {isSearching && (
                 <div className="flex items-center justify-center gap-2 py-4">
                     <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                    <span className="text-xs text-gray-400 font-medium">Searching...</span>
+                    <span className="text-xs text-gray-400 font-medium">Đang tìm kiếm...</span>
                 </div>
             )}
 
             {!isSearching && !hasResults && (
                 <div className="text-center py-6">
                     <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">No results for "{searchTag}"</p>
+                    <p className="text-sm text-gray-400">Không tìm thấy kết quả cho "{searchTag}"</p>
                 </div>
             )}
 
             {searchResults.users.length > 0 && (
                 <div className="mb-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Users</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Người dùng</p>
                     <div className="space-y-1">
                         {searchResults.users.map((u: any) => (
                             <button
@@ -161,7 +161,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
 
             {searchResults.posts.length > 0 && (
                 <div className="mb-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Posts</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Bài viết</p>
                     <div className="space-y-1">
                         {searchResults.posts.map((p: any) => (
                             <button
@@ -179,7 +179,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-gray-900 truncate">{p.title}</p>
                                     <p className="text-[11px] text-gray-500 truncate">
-                                        {p.author?.name || p.author?.username || 'User'} - {p.likeCount || 0} likes
+                                        {p.author?.name || p.author?.username || 'Người dùng'} - {p.likeCount || 0} lượt thích
                                     </p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -191,7 +191,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
 
             {searchResults.games.length > 0 && (
                 <div className="mb-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Games</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Trò chơi</p>
                     <div className="space-y-1">
                         {searchResults.games.map((g: any) => (
                             <button
@@ -209,7 +209,7 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-gray-900 truncate">{g.title || g.name}</p>
                                     <p className="text-[11px] text-gray-500 truncate">
-                                        {g.category || 'Game'} - {g.playCount || g.downloads || 0} plays
+                                        {g.category || 'Trò chơi'} - {g.playCount || g.downloads || 0} lượt chơi
                                     </p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
