@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Html, Billboard, Sphere, Cylinder } from '@react-three/drei';
+import React from 'react';
+import { Html, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import GalleryImage from '../GalleryImage';
 
@@ -34,7 +34,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
     dimmed = false,
     color = '#10b981', // Default green-ish
 }) => {
-    const [isHovered, setIsHovered] = useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
 
     const shouldShowDetails = isHovered || !!isSelected;
     const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
@@ -77,13 +77,15 @@ const User3DModel: React.FC<User3DModelProps> = ({
             {/* 3D Placeholder Character (Meeple shape) */}
             <group position={[0, 1.2, 0]}>
                 {/* Body */}
-                <Cylinder args={[0.3, 0.6, 1.5, 16]} position={[0, -0.2, 0]} castShadow receiveShadow>
+                <mesh position={[0, -0.2, 0]} castShadow receiveShadow>
+                    <cylinderGeometry args={[0.3, 0.6, 1.5, 16]} />
                     <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
-                </Cylinder>
+                </mesh>
                 {/* Head */}
-                <Sphere args={[0.5, 32, 32]} position={[0, 0.8, 0]} castShadow receiveShadow>
+                <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+                    <sphereGeometry args={[0.5, 32, 32]} />
                     <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
-                </Sphere>
+                </mesh>
             </group>
 
             {/* Selection/Hover Highlight Ring on the ground */}
