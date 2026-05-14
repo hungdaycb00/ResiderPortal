@@ -200,7 +200,7 @@ export default function UserLayers({
             <AvatarBillboard
               name={myDisplayName || user?.displayName || 'Me'}
               avatarUrl={myAvatarUrl || user?.photoURL}
-              position={[selfPos.x + selfLift, 0.25, selfPos.z + selfDepth]}
+              position={[selfPos.x + selfLift, 0.01, selfPos.z + selfDepth]}
               status={myStatus}
               isVisibleOnMap={isVisibleOnMap}
               isSelected={isSelfSelected}
@@ -231,7 +231,7 @@ export default function UserLayers({
           key={u.id}
           name={u.displayName || u.username || 'U'}
           avatarUrl={isLooterGameMode ? null : u.avatar_url}
-          position={[pos.x, 0.22, pos.z]}
+          position={[pos.x, 0.01, pos.z]}
           status={isLooterGameMode ? undefined : u.status}
           isVisibleOnMap
           isSelected={!isLooterGameMode && selectedUser?.id === u.id}

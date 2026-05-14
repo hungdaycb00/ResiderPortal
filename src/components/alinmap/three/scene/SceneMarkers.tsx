@@ -27,7 +27,7 @@ export default function SceneMarkers({
       {/* Province marker */}
       {currentProvince ? (
         <MarkerBillboard
-          position={[selfSceneX + pxToScaledScene(180), 0.5, selfSceneZ - pxToScaledScene(180)]}
+          position={[selfSceneX + pxToScaledScene(180), 0.01, selfSceneZ - pxToScaledScene(180)]}
           icon="Province"
           label={currentProvince}
           accent="#0ea5e9"
@@ -37,7 +37,7 @@ export default function SceneMarkers({
       {/* Search marker */}
       {searchMarkerPos ? (
         <MarkerBillboard
-          position={[searchMarkerScene!.x, 0.4, searchMarkerScene!.z]}
+          position={[searchMarkerScene!.x, 0.01, searchMarkerScene!.z]}
           icon="Pin"
           label="Search"
           accent="#fb7185"

@@ -3,7 +3,7 @@ import { Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
 
-const FOOTPRINT_WORLD_Y = 0.35; // Vòng tròn click đặt ngay trên mặt đất (ground y=-1)
+const FOOTPRINT_WORLD_Y = 0.01; // Vòng tròn click đặt ngay trên mặt đất (ground y=0)
 
 interface LootSpriteProps {
     position: [number, number, number];
