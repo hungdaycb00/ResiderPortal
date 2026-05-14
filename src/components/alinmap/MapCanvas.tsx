@@ -7,6 +7,7 @@ import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
 import MapTiles from './MapTiles';
 import LooterMapPlaneLayer from './components/LooterMapPlaneLayer';
+import MapReferenceGridOverlay from './components/MapReferenceGridOverlay';
 import RoadmapAvatarLayer from './components/RoadmapAvatarLayer';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
@@ -127,6 +128,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
     const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
     const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
+    const showReferenceGrid = React.useMemo(() => {
+        if (import.meta.env.DEV) return true;
+        if (typeof window === 'undefined') return false;
+        return window.localStorage.getItem('alinmap.showReferenceGrid') === '1';
+    }, []);
 
     useMotionValueEvent(cameraZ, 'change', (latest) => {
         setDebugCameraZ(Math.round(latest));
@@ -246,15 +252,15 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             className="absolute inset-0 alin-map-tilt-plane"
                             style={{
                                 '--alin-map-tilt-deg': tiltDeg,
-                        '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
-                        '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                        '--alin-map-camera-rotate-x-deg': '0deg',
-                        '--alin-map-billboard-pitch-deg': billboardPitchDeg,
-                        '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
-                        '--alin-map-billboard-lift-px': '30px',
-                        '--alin-map-plane-scale': MAP_PLANE_SCALE,
-                    } as React.CSSProperties}
-                >
+                                '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
+                                '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
+                                '--alin-map-camera-rotate-x-deg': '0deg',
+                                '--alin-map-billboard-pitch-deg': billboardPitchDeg,
+                                '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
+                                '--alin-map-billboard-lift-px': '30px',
+                                '--alin-map-plane-scale': MAP_PLANE_SCALE,
+                            } as React.CSSProperties}
+                        >
                             <MapTiles
                                 panX={panX}
                                 panY={panY}
@@ -280,6 +286,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             )}
                         </motion.div>
                     </div>
+
+                    <MapReferenceGridOverlay
+                        scale={scale}
+                        mapMode={mapMode}
+                        enabled={showReferenceGrid}
+                    />
 
                     {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
                         <RoadmapAvatarLayer
