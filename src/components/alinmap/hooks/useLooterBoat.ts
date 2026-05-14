@@ -240,10 +240,11 @@ export function useLooterBoat({
         const safeW = Math.max(containerW || 1, 1);
         const safeH = Math.max(containerH || 1, 1);
 
-        // 1. Vị trí camera (H, D) — công thức giống CameraRig
+        // 1. Vị trí camera (H, D) — đồng bộ chuẩn với CameraRig
         const zoom = clampVal(scale?.get?.() ?? 1, 0.08, 8);
-        const D = clampVal(perspectivePx * 0.56 / zoom, 95, 9000);
-        const H = D * CAMERA_HEIGHT_RATIO_DEFAULT + cameraHeightOffset;
+        const D = clampVal(perspectivePx * 0.56 / zoom, 140, 9000); // Sửa 95 -> 140 (minDistance)
+        const baseHeight = D * CAMERA_HEIGHT_RATIO_DEFAULT;
+        const H = baseHeight + cameraHeightOffset;
 
         // 2. Góc tilt θ = acos(planeYScale / MAP_PLANE_SCALE)
         const curPlaneYScale = planeYScale.get();
@@ -254,18 +255,20 @@ export function useLooterBoat({
         // β = 2·tan(FOV/2) / containerHeight
         const cameraFovRad = (clampVal(cameraFov || 46, 20, 110) * Math.PI) / 180;
         const beta = 2 * Math.tan(cameraFovRad / 2) / safeH;
-        const L = Math.sqrt(H * H + D * D);
-        const S = Math.cos(theta) * H + Math.sin(theta) * D;
-        const K = H * Math.sin(theta) - D * Math.cos(theta);
+        const L = Math.sqrt(baseHeight * baseHeight + D * D); // Fix: Sử dụng baseHeight thay vì H để tìm hướng quang trục
+        
+        const S_dir = baseHeight * Math.cos(theta) + D * Math.sin(theta);
+        const K_dir = baseHeight * Math.sin(theta) - D * Math.cos(theta);
+        
+        const denom_pos = S_dir - offsetY * beta * K_dir;
+        if (denom_pos < 1e-8) return null; // ray song song hoặc hướng lên trời
 
-        const denom = S - beta * offsetY * K;
-        if (Math.abs(denom) < 1e-8) return null; // ray song song với map plane
-
-        const t = S * L / denom;
+        const Num = H * Math.cos(theta) + D * Math.sin(theta);
+        const t = (Num * L) / denom_pos;
 
         // Giao điểm trong world space
         const Px = t * beta * offsetX;
-        const Pz = D + t * ((beta * offsetY * H) / L - D / L);
+        const Pz = D + t * (-D + offsetY * beta * baseHeight) / L; // Fix: Công thức Pz theo chuẩn vector nhìn của camera
 
         // Chuyển về ground-local (trừ đi pan offset)
         const curPanX = panX?.get?.() ?? 0;
@@ -278,7 +281,7 @@ export function useLooterBoat({
         const lng = myObfPos.lng + xGround / COORD_SCALE;
         const lat = myObfPos.lat - zGround / COORD_SCALE;
 
-        return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
+        return { lat, lng, debug: { zoom, H, baseHeight, D, theta, beta, L, S_dir, K_dir, denom_pos, Num, t, Px, Pz, xGround, zGround } };
     }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraFov, cameraHeightOffset]);
 
     const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
