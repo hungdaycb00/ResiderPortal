@@ -129,10 +129,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
     const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
     const showReferenceGrid = React.useMemo(() => {
-        if (import.meta.env.DEV) return true;
-        if (typeof window === 'undefined') return false;
-        return window.localStorage.getItem('alinmap.showReferenceGrid') === '1';
-    }, []);
+        if (mapMode !== 'roadmap') return false;
+        if (typeof window === 'undefined') return true;
+        const value = window.localStorage.getItem('alinmap.showReferenceGrid');
+        if (value === '0') return false;
+        return true;
+    }, [mapMode]);
 
     useMotionValueEvent(cameraZ, 'change', (latest) => {
         setDebugCameraZ(Math.round(latest));
