@@ -147,8 +147,26 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
     const lng = origin.lng + localPt.x / SCALE;
     const lat = origin.lat + localPt.y / SCALE;
+
+    // === Cơ chế proximity check: phát hiện item gần vị trí click ===
+    // Không phụ thuộc R3F event system — so sánh tọa độ click với tọa độ item
+    const CLICK_RADIUS_DEG = 0.0009; // ~100 mét — bán kính phát hiện
+    const nearbyItems = [
+      ...waypointItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
+      ...renderedWorldItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
+    ].filter(e => e.d2 <= CLICK_RADIUS_DEG ** 2);
+
+    if (nearbyItems.length > 0) {
+      nearbyItems.sort((a, b) => a.d2 - b.d2);
+      const nearest = nearbyItems[0].item;
+      console.log('[GroundClick→Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', lat.toFixed(5), 'click-lng:', lng.toFixed(5));
+      handleWorldItemClick(nearest);
+      return;
+    }
+    // === Kết thúc proximity check ===
+
     onRequestMove(lat, lng, 'map');
-  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen]);
+  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen, handleWorldItemClick, waypointItems, renderedWorldItems]);
 
   // Waypoint: 3 item gần nhất, bypass culling
   const waypointItems = React.useMemo(() => {
