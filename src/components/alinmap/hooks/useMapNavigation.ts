@@ -74,7 +74,7 @@ export function useMapNavigation({
   const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
   const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
   useMotionValueEvent(cameraFov, 'change', (v: number) => setCameraFovValue(v));
-  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(null); // null = auto mode
+  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(65); // default 65deg
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;
@@ -214,7 +214,12 @@ export function useMapNavigation({
     if (targetLat == null || targetLng == null) return;
 
     const timer = window.setTimeout(() => {
-      const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
+      const effectivePitch = cameraPitchOverride ?? getTiltAngleFromCameraZ(cameraZ.get());
+      const { xOffset, yOffset } = getVisibleBoatCameraOffsets({
+        cameraZ: cameraZ.get(),
+        perspectivePx,
+        tiltDeg: effectivePitch,
+      });
       looterActions.centerOnBoat(yOffset, xOffset);
       pendingBoatFocusRef.current = false;
     }, 140);
@@ -227,6 +232,9 @@ export function useMapNavigation({
     looterStateObj.currentLng,
     myObfPos,
     looterActions.centerOnBoat,
+    cameraPitchOverride,
+    cameraZ,
+    perspectivePx,
   ]);
 
   const handleUpdateRadius = useCallback((newRadius: number) => {

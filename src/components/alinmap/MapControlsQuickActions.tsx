@@ -1,4 +1,5 @@
 import React from 'react';
+import type { MotionValue } from 'framer-motion';
 import { Map, RefreshCw, Waves, LocateFixed } from 'lucide-react';
 import { LocateBoatButton } from './looter-game/components/LocateBoatButton';
 import BoatSpeedPanel from './looter-game/components/BoatSpeedPanel';
@@ -11,6 +12,9 @@ interface MapControlsQuickActionsProps {
     handleRefresh: () => void;
     handleCenter: () => void;
     setMapMode: (v: AlinMapMode) => void;
+    cameraZ: MotionValue<number>;
+    perspectivePx: number;
+    cameraPitchOverride: number | null;
 }
 
 const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
@@ -20,10 +24,17 @@ const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
     handleRefresh,
     handleCenter,
     setMapMode,
+    cameraZ,
+    perspectivePx,
+    cameraPitchOverride,
 }) => {
     return (
         <>
-            <LocateBoatButton />
+            <LocateBoatButton
+                cameraZ={cameraZ}
+                perspectivePx={perspectivePx}
+                cameraPitchOverride={cameraPitchOverride}
+            />
 
             {isLooterGameMode && <BoatSpeedPanel />}
 

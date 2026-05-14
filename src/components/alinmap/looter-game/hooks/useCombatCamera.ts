@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Encounter } from '../LooterGameContext';
 import { CAMERA_Z_DEFAULT, CAMERA_Z_NEAR } from '../../constants';
 import { getVisibleBoatCameraOffsets } from '../utils/boatCameraFocus';
+import { getTiltAngleFromCameraZ } from '../../constants';
 
 export function useCombatCamera(
   encounter: Encounter | null,
@@ -11,16 +12,25 @@ export function useCombatCamera(
   setMainTab?: (tab: any) => void,
   setIsSheetExpanded?: (v: boolean) => void,
   isLooterGameMode: boolean = true,
-  isSheetExpanded: boolean = false
+  isSheetExpanded: boolean = false,
+  cameraZ?: { get: () => number },
+  perspectivePx?: number,
+  cameraPitchOverride?: number | null
 ) {
   const lastEncounterUid = useRef<string | null>(null);
   const combatCenterTokenRef = useRef(0);
 
   const centerCombatInVisibleArea = useCallback(() => {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-    const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
+    const currentCameraZ = cameraZ?.get?.();
+    const tiltDeg = cameraPitchOverride ?? (typeof currentCameraZ === 'number' ? getTiltAngleFromCameraZ(currentCameraZ) : undefined);
+    const { xOffset, yOffset } = getVisibleBoatCameraOffsets({
+      cameraZ: currentCameraZ,
+      perspectivePx,
+      tiltDeg,
+    });
     centerOnCombat(isDesktop ? 0 : yOffset, xOffset);
-  }, [centerOnCombat]);
+  }, [cameraPitchOverride, cameraZ, centerOnCombat, perspectivePx]);
 
   const scheduleCombatCenter = useCallback(() => {
     const token = ++combatCenterTokenRef.current;

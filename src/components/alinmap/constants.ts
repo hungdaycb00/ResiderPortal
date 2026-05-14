@@ -31,7 +31,7 @@ export const CAMERA_ROTATE_Y_MIN_DEG = -180;
 export const CAMERA_ROTATE_Y_MAX_DEG = 180;
 export const BILLBOARD_UPRIGHT_PITCH_DEGREES = 55;
 export const BILLBOARD_UPRIGHT_LIFT_PX = 40;
-export const CAMERA_TILT_FAR_DEGREES = 64;
+export const CAMERA_TILT_FAR_DEGREES = 65;
 export const CAMERA_TILT_NEAR_DEGREES = 42;
 
 // Camera pitch (Góc) — manual override range in degrees

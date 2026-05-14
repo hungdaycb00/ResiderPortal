@@ -106,6 +106,9 @@ const MapControls: React.FC<MapControlsProps> = ({
                         handleRefresh={handleRefresh}
                         handleCenter={handleCenter}
                         setMapMode={setMapMode}
+                        cameraZ={cameraZ}
+                        perspectivePx={perspectivePx}
+                        cameraPitchOverride={cameraPitchOverride}
                     />
                 </div>
             </div>

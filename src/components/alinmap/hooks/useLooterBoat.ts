@@ -7,9 +7,6 @@ import { getDistanceMeters } from '../looter-game/backpack/utils';
 import { MAP_COORD_SCENE_SCALE } from '../three/sceneUtils';
 import { clamp as clampVal } from '../constants';
 
-const CAMERA_FOV_RAD = (46 * Math.PI) / 180;
-const CAMERA_HALF_FOV_TAN = Math.tan(CAMERA_FOV_RAD / 2);
-
 interface UseSeaBoatParams {
     isLooterGameMode: boolean;
     myObfPos: { lat: number; lng: number } | null;
@@ -18,6 +15,7 @@ interface UseSeaBoatParams {
     panX: MotionValue<number>;
     panY: MotionValue<number>;
     perspectivePx: number;
+    cameraFov: number;
     cameraZ: MotionValue<number>;
     cameraHeightOffset: number;
     setMainTab?: (tab: string) => void;
@@ -30,7 +28,7 @@ const TAP_MOVE_TOLERANCE_PX = 30;
 
 export function useLooterBoat({
     isLooterGameMode, myObfPos, scale, planeYScale, panX, panY,
-    perspectivePx, cameraZ, cameraHeightOffset,
+    perspectivePx, cameraFov, cameraZ, cameraHeightOffset,
     setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
@@ -244,7 +242,7 @@ export function useLooterBoat({
 
         // 1. Vị trí camera (H, D) — công thức giống CameraRig
         const zoom = clampVal(scale?.get?.() ?? 1, 0.08, 8);
-        const D = clampVal(perspectivePx * 0.56 / zoom - (cameraZ?.get?.() ?? 0) * 5, 95, 9000);
+        const D = clampVal(perspectivePx * 0.56 / zoom, 95, 9000);
         const H = D * CAMERA_HEIGHT_RATIO_DEFAULT + cameraHeightOffset;
 
         // 2. Góc tilt θ = acos(planeYScale / MAP_PLANE_SCALE)
@@ -254,7 +252,8 @@ export function useLooterBoat({
 
         // 3. Ray-plane intersection
         // β = 2·tan(FOV/2) / containerHeight
-        const beta = 2 * CAMERA_HALF_FOV_TAN / safeH;
+        const cameraFovRad = (clampVal(cameraFov || 46, 20, 110) * Math.PI) / 180;
+        const beta = 2 * Math.tan(cameraFovRad / 2) / safeH;
         const L = Math.sqrt(H * H + D * D);
         const S = Math.cos(theta) * H + Math.sin(theta) * D;
         const K = H * Math.sin(theta) - D * Math.cos(theta);
@@ -280,7 +279,7 @@ export function useLooterBoat({
         const lat = myObfPos.lat - zGround / COORD_SCALE;
 
         return { lat, lng, debug: { zoom, H, D, theta, beta, L, S, K, denom, t, Px, Pz, xGround, zGround } };
-    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraZ, cameraHeightOffset]);
+    }, [myObfPos, scale, planeYScale, panX, panY, perspectivePx, cameraFov, cameraHeightOffset]);
 
     const handleMapDoubleClick = useCallback((offsetX: number, offsetY: number, containerRect?: DOMRect) => {
         if (!isLooterGameMode || !myObfPos) return;

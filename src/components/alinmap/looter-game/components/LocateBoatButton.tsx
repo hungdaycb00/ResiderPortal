@@ -1,9 +1,21 @@
 import React from 'react';
 import { LocateFixed } from 'lucide-react';
+import type { MotionValue } from 'framer-motion';
 import { useLooterGame } from '../LooterGameContext';
 import { getVisibleBoatCameraOffsets } from '../utils/boatCameraFocus';
+import { getTiltAngleFromCameraZ } from '../../constants';
 
-export const LocateBoatButton: React.FC = () => {
+interface LocateBoatButtonProps {
+    cameraZ?: MotionValue<number>;
+    perspectivePx?: number;
+    cameraPitchOverride?: number | null;
+}
+
+export const LocateBoatButton: React.FC<LocateBoatButtonProps> = ({
+    cameraZ,
+    perspectivePx,
+    cameraPitchOverride,
+}) => {
     const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();
 
     if (!isLooterGameMode) return null;
@@ -12,7 +24,13 @@ export const LocateBoatButton: React.FC = () => {
         e.preventDefault();
         e.stopPropagation();
 
-        const { xOffset, yOffset } = getVisibleBoatCameraOffsets();
+        const currentCameraZ = cameraZ?.get?.();
+        const tiltDeg = cameraPitchOverride ?? (typeof currentCameraZ === 'number' ? getTiltAngleFromCameraZ(currentCameraZ) : undefined);
+        const { xOffset, yOffset } = getVisibleBoatCameraOffsets({
+            cameraZ: currentCameraZ,
+            perspectivePx,
+            tiltDeg,
+        });
         if (encounter) {
             centerOnCombat(yOffset, xOffset);
         } else {

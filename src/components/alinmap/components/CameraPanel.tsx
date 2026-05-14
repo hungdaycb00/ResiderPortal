@@ -71,7 +71,7 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
     const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
     safeSetCameraZ(getCameraZForVisualScale(targetVisualScale, perspectivePx));
     safeSetCameraHeightOffset(CAMERA_HEIGHT_OFFSET_DEFAULT);
-    safeSetCameraPitchOverride(null);
+    safeSetCameraPitchOverride(65);
     safeSetCameraFov(CAMERA_FOV_DEGREES);
   }, [mapMode, isLooterGameMode, perspectivePx, safeSetCameraZ, safeSetCameraHeightOffset, safeSetCameraPitchOverride, safeSetCameraFov]);
 
