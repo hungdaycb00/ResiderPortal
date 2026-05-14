@@ -125,7 +125,8 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         tiltAngle,
         (v) => `${-v + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
     );
-    const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
+    const nodeCounterScale = useTransform(scale, (v) => Math.max(0.12, v || 1));
+    const nodeCounterScaleCss = useMotionTemplate`${nodeCounterScale}`;
     const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
     const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
     const showReferenceGrid = React.useMemo(() => {
@@ -261,6 +262,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
                                 '--alin-map-billboard-lift-px': '30px',
                                 '--alin-map-plane-scale': MAP_PLANE_SCALE,
+                                '--alin-map-node-counter-scale': nodeCounterScaleCss,
                             } as React.CSSProperties}
                         >
                             <MapTiles

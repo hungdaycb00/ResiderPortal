@@ -144,11 +144,13 @@ const PlaneSprite: React.FC<PlaneSpriteProps> = ({ x, y, type, title, icon, acce
         transform: `translate(-50%, calc(-100% + ${size / 2}px))`,
       }}
     >
-      <span 
-        className="block w-full alin-map-upright-sprite"
-        style={{ height: size }}
-      >
-        <img src={src} alt={title || type} className="h-full w-full select-none object-contain drop-shadow-[0_10px_18px_rgba(2,8,23,0.35)]" draggable={false} />
+      <span className="alin-map-billboard" style={{ display: 'block', width: '100%', height: size }}>
+        <span
+          className="block w-full alin-map-upright-sprite"
+          style={{ height: size }}
+        >
+          <img src={src} alt={title || type} className="h-full w-full select-none object-contain drop-shadow-[0_10px_18px_rgba(2,8,23,0.35)]" draggable={false} />
+        </span>
       </span>
     </button>
   );

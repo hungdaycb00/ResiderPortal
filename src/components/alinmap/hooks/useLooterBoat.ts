@@ -354,19 +354,38 @@ export function useLooterBoat({
             const tileY = latToTileY(lat, tileZoom);
             const planeX = (tileX - centerTileX) * ROADMAP_TILE_SIZE;
             const planeY = (tileY - centerTileY) * ROADMAP_TILE_SIZE;
-            const screenX = planeX * S;
-            const screenY = planeY * cosTilt * S;
-            return { screenX, screenY };
+
+            const S = MAP_PLANE_SCALE;
+            const perspective = perspectivePx || 1000;
+            const tiltRad = Math.acos(clampVal(planeYScale.get() / S, 0.001, 1));
+            const sinTilt = Math.sin(tiltRad);
+            const cosTilt = Math.cos(tiltRad);
+
+            // Tọa độ Z sau khi quay nghiêng (Perspective Projection)
+            // planeY < 0 (phía xa) -> z < 0 (nhỏ đi)
+            // planeY > 0 (phía gần) -> z > 0 (to lên)
+            const zDist = planeY * S * sinTilt;
+            const scaleFactor = perspective / Math.max(1, perspective - zDist);
+
+            const screenX = planeX * S * scaleFactor;
+            const screenY = planeY * S * cosTilt * scaleFactor;
+            
+            return { screenX, screenY, scaleFactor };
         };
 
         // 3. Kiểm tra xem click có trúng item nào không (Hit-testing)
-        // Hitbox được thiết kế vươn cao lên trên gốc (do item được dựng đứng bằng CSS)
-        const checkHit = (screenX: number, screenY: number, size: number) => {
-            const actualSize = size * S; // Phải nhân với scale của bản đồ
+        const checkHit = (screenX: number, screenY: number, size: number, scaleFactor: number, label: string) => {
+            const actualSize = size * S * scaleFactor; // Phải nhân với scale của bản đồ và perspective
             const dx = relX - screenX;
             const dy = relY - screenY;
+            
             // Hitbox: rộng ngang = actualSize * 1.5, cao lên trên = actualSize * 2.5, thấp xuống dưới = actualSize * 0.5
-            return Math.abs(dx) <= actualSize * 0.75 && dy >= -actualSize * 2.5 && dy <= actualSize * 0.5;
+            const isHit = Math.abs(dx) <= actualSize * 0.75 && dy >= -actualSize * 2.5 && dy <= actualSize * 0.5;
+            
+            if (isHit) {
+                console.log(`[HitTest] Success: ${label} | dx:${dx.toFixed(1)} dy:${dy.toFixed(1)} size:${actualSize.toFixed(1)}`);
+            }
+            return isHit;
         };
 
         let clickedTarget: any = null;
@@ -375,7 +394,7 @@ export function useLooterBoat({
         // Kiểm tra Fortress
         if (state?.fortressLat && state?.fortressLng) {
             const pos = projectToScreen(state.fortressLat, state.fortressLng);
-            if (checkHit(pos.screenX, pos.screenY, 112)) {
+            if (checkHit(pos.screenX, pos.screenY, 112, pos.scaleFactor, 'Fortress')) {
                 isFortressHit = true;
             }
         }
@@ -385,20 +404,24 @@ export function useLooterBoat({
             for (const item of worldItems) {
                 const pos = projectToScreen(item.lat, item.lng);
                 // size của item là 54px trên map
-                if (checkHit(pos.screenX, pos.screenY, 54)) {
+                if (checkHit(pos.screenX, pos.screenY, 54, pos.scaleFactor, item.spawnId)) {
                     clickedTarget = item;
                     break;
                 }
             }
         }
 
+        console.log(`[MapClick] isLooter:${isLooterGameMode} relX:${relX.toFixed(1)} relY:${relY.toFixed(1)} target:${clickedTarget ? clickedTarget.spawnId : (isFortressHit ? 'Fortress' : 'None')}`);
+
         // 4. Xử lý logic tương tác
         if (isFortressHit) {
             const interact = () => openFortressStorage('fortress');
             if (getDistanceMeters(myObfPos.lat, myObfPos.lng, state!.fortressLat!, state!.fortressLng!) <= 250) {
+                console.log('[MapClick] Close interaction with Fortress');
                 stopBoat();
                 interact();
             } else {
+                console.log('[MapClick] Moving to Fortress');
                 setOnArrivalAction(() => interact);
                 executeMoveToExact(state!.fortressLat!, state!.fortressLng!, 'fortress');
             }
@@ -409,6 +432,7 @@ export function useLooterBoat({
             const target = { lat: clickedTarget.lat, lng: clickedTarget.lng };
             const isPortal = clickedTarget?.item?.type === 'portal';
             const interact = () => {
+                console.log('[MapClick] Executing interaction for:', clickedTarget.spawnId);
                 if (isPortal) {
                     openFortressStorage('portal');
                 } else if (clickedTarget.minigameType) {
@@ -419,9 +443,11 @@ export function useLooterBoat({
             };
 
             if (getDistanceMeters(myObfPos.lat, myObfPos.lng, target.lat, target.lng) <= 250) {
+                console.log('[MapClick] Close interaction with item:', clickedTarget.spawnId);
                 stopBoat();
                 interact();
             } else {
+                console.log('[MapClick] Moving to item:', clickedTarget.spawnId);
                 setOnArrivalAction(() => interact);
                 executeMoveToExact(target.lat, target.lng, 'item');
             }
