@@ -125,16 +125,16 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         tiltAngle,
         (v) => `${-v + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
     );
-    const nodeCounterScale = useTransform(scale, (v) => Math.max(0.12, v || 1));
+    const nodeCounterScale = useTransform(scale, (v) => Math.max(0.35, Math.min(1.6, v || 1)));
     const nodeCounterScaleCss = useMotionTemplate`${nodeCounterScale}`;
     const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
     const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
     const showReferenceGrid = React.useMemo(() => {
         if (mapMode !== 'roadmap') return false;
-        if (typeof window === 'undefined') return true;
+        if (typeof window === 'undefined') return false;
         const value = window.localStorage.getItem('alinmap.showReferenceGrid');
-        if (value === '0') return false;
-        return true;
+        if (value === '1') return true;
+        return false;
     }, [mapMode]);
 
     useMotionValueEvent(cameraZ, 'change', (latest) => {
