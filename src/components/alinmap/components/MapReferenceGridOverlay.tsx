@@ -6,6 +6,7 @@ interface MapReferenceGridOverlayProps {
   scale: MotionValue<number>;
   mapMode: AlinMapMode;
   enabled?: boolean;
+  is3DPlane?: boolean;
 }
 
 const MINOR_GRID_BASE = 48;
@@ -41,10 +42,12 @@ export default function MapReferenceGridOverlay({
     '--alin-map-grid-major-step': `${majorStep}px`,
   } as React.CSSProperties;
 
+  if (is3DPlane) {
+    return <div className="alin-map-reference-grid absolute inset-0 pointer-events-none" style={gridStyle} />;
+  }
+
   return (
     <div className="pointer-events-none absolute inset-0 z-[120] overflow-hidden">
-      <div className="alin-map-reference-grid absolute inset-0" style={gridStyle} />
-
       <div className="absolute inset-0">
         <div className="absolute left-1/2 top-1/2 h-px w-[min(82vw,1080px)] -translate-x-1/2 bg-slate-900/35 shadow-[0_0_0_1px_rgba(255,255,255,0.28)]" />
         <div className="absolute left-1/2 top-1/2 h-[min(82vh,1080px)] w-px -translate-x-1/2 -translate-y-1/2 bg-slate-900/35 shadow-[0_0_0_1px_rgba(255,255,255,0.28)]" />

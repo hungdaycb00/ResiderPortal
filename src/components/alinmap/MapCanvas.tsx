@@ -286,6 +286,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                     onSetArrivalAction={looterBoat.setOnArrivalAction}
                                 />
                             )}
+                            <MapReferenceGridOverlay
+                                scale={scale}
+                                mapMode={mapMode}
+                                enabled={showReferenceGrid}
+                                is3DPlane={true}
+                            />
                         </motion.div>
                     </div>
 
@@ -293,6 +299,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         scale={scale}
                         mapMode={mapMode}
                         enabled={showReferenceGrid}
+                        is3DPlane={false}
                     />
 
                     {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
