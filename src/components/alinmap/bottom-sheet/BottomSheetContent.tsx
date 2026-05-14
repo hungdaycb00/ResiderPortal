@@ -244,7 +244,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                             nearbyUsers={nearbyUsers}
                                             setSearchTag={setSearchTag}
                                             handlePlayGame={handlePlayGame}
-                                            onSearchClick={onSearchClick}
                                         />
                                     ) : (
                                         <CreatorTabView
@@ -292,7 +291,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                         user={user}
                                         requireAuth={requireAuth}
                                         socialSubTab={socialSubTab}
-                                        onSearchClick={onSearchClick}
                                         onPostClick={onPostClick}
                                     />
 
@@ -342,7 +340,6 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     setPostIsStarred={setPostIsStarred}
                                     isSavingPost={isSavingPost}
                                     handleCreatePost={handleCreatePost}
-                                    onSearchClick={onSearchClick}
                                     onPostClick={onPostClick}
                                 />
                             )}

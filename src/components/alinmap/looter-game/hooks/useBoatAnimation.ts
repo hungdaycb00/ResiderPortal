@@ -25,6 +25,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
   const userDraggingRef = useRef(false);
   const cameraYOffsetRef = useRef(0);
   const cameraXOffsetRef = useRef(0);
+  const boatAutoFollowRef = useRef(false);
 
   const stopAllAnimations = useCallback(() => {
     if (boatMoveXRef.current) { boatMoveXRef.current.stop(); boatMoveXRef.current = null; }
@@ -77,6 +78,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
     if (panMoveXRef.current) panMoveXRef.current.stop();
     if (panMoveYRef.current) panMoveYRef.current.stop();
     userDraggingRef.current = false;
+    boatAutoFollowRef.current = true;
     cameraYOffsetRef.current = yOffsetPx;
     cameraXOffsetRef.current = xOffsetPx;
 
@@ -101,6 +103,7 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
 
   const stopPanFollow = useCallback(() => {
     userDraggingRef.current = true;
+    boatAutoFollowRef.current = false;
     if (panMoveXRef.current) { panMoveXRef.current.stop(); panMoveXRef.current = null; }
     if (panMoveYRef.current) { panMoveYRef.current.stop(); panMoveYRef.current = null; }
   }, []);

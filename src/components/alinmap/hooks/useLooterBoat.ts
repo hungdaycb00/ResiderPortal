@@ -87,11 +87,12 @@ export function useLooterBoat({
     const cancelBoatMovement = useCallback(() => {
         movementRunIdRef.current += 1;
         stopAllAnimations();
+        stopPanFollow();
         curseAnimationRef.current?.stop();
         curseAnimationRef.current = null;
         setBoatTargetPin(null);
         onArrivalActionRef.current = null;
-    }, [stopAllAnimations]);
+    }, [stopAllAnimations, stopPanFollow]);
 
     useEffect(() => {
         isLooterModeRef.current = isLooterGameMode;
@@ -139,6 +140,9 @@ export function useLooterBoat({
 
     const executeMoveToExact = useCallback((lat: number, lng: number, source: string = 'map') => {
         if (!isLooterModeRef.current) return;
+
+        // User chose a new target or tapped the map, so the locate/follow mode must be released.
+        stopPanFollow();
 
         if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
@@ -240,7 +244,7 @@ export function useLooterBoat({
             });
         });
 
-    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations]);
+    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations, stopPanFollow]);
 
     /**
      * Chuyển đổi click trên màn hình (clientX, clientY) → (lat, lng) trên map.
@@ -358,10 +362,11 @@ export function useLooterBoat({
         // 3. Kiểm tra xem click có trúng item nào không (Hit-testing)
         // Hitbox được thiết kế vươn cao lên trên gốc (do item được dựng đứng bằng CSS)
         const checkHit = (screenX: number, screenY: number, size: number) => {
+            const actualSize = size * S; // Phải nhân với scale của bản đồ
             const dx = relX - screenX;
             const dy = relY - screenY;
-            // Hitbox: rộng ngang = size, cao lên trên = size * 2, thấp xuống dưới = size * 0.2
-            return Math.abs(dx) <= size / 2 && dy >= -size * 2 && dy <= size * 0.2;
+            // Hitbox: rộng ngang = actualSize * 1.5, cao lên trên = actualSize * 2.5, thấp xuống dưới = actualSize * 0.5
+            return Math.abs(dx) <= actualSize * 0.75 && dy >= -actualSize * 2.5 && dy <= actualSize * 0.5;
         };
 
         let clickedTarget: any = null;

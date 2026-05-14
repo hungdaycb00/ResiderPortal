@@ -188,8 +188,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         <SearchHeader
           isDesktop={isDesktop}
           isSheetExpanded={isSheetExpanded}
-          setIsSearchOverlayOpen={setIsSearchOverlayOpen}
-          handleTabClick={nav.handleTabClick}
           currentProvince={currentProvince}
         myObfPos={myObfPos}
         onWeatherClick={() => setIsWeatherWidgetExpanded(true)}

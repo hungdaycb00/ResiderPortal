@@ -1,36 +1,28 @@
 import React from 'react';
-import { Search, Plus, LogIn, LogOut } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 
 interface MobileTabActionsProps {
   mainTab: string;
   socialSubTab: string;
-  user: any;
   isCreatingPost: boolean;
   isSheetExpanded: boolean;
   isLooterGameMode: boolean;
   onSearchClick: () => void;
   onCreatePostClick: () => void;
-  onLoginClick: () => void;
-  onLogoutClick: () => void;
 }
 
 const MobileTabActions: React.FC<MobileTabActionsProps> = ({
   mainTab,
   socialSubTab,
-  user,
   isCreatingPost,
   isSheetExpanded,
   isLooterGameMode,
   onSearchClick,
   onCreatePostClick,
-  onLoginClick,
-  onLogoutClick,
 }) => {
   // Only show on mobile for tabs that need action buttons
   const showSearch = ['discover', 'friends', 'profile'].includes(mainTab);
   const showCreatePost = mainTab === 'friends' && socialSubTab === 'posts' && !isCreatingPost;
-  const showAuth = mainTab === 'profile';
-
   if (isLooterGameMode || !showSearch) return null;
 
   return (
@@ -65,26 +57,6 @@ const MobileTabActions: React.FC<MobileTabActionsProps> = ({
         </button>
       )}
 
-      {/* Login/Logout Button (Profile tab) */}
-      {showAuth && (
-        user ? (
-          <button
-            onClick={onLogoutClick}
-            className="flex items-center gap-1.5 px-3 h-9 bg-red-50 hover:bg-red-100 text-red-600 rounded-full shadow-lg active:scale-95 transition-all text-xs font-semibold"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Dang xuat
-          </button>
-        ) : (
-          <button
-            onClick={onLoginClick}
-            className="flex items-center gap-1.5 px-3 h-9 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full shadow-lg active:scale-95 transition-all text-xs font-semibold"
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            Dang nhap
-          </button>
-        )
-      )}
     </div>
   );
 };

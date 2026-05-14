@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Plus, Search, Sword, Trophy, Zap } from 'lucide-react';
+import { Brain, Plus, Sword, Trophy, Zap } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 import GameCard from '../../../../GameCard';
 import GameSlider from '../../../../GameSlider';
@@ -9,7 +9,6 @@ interface DiscoverViewProps {
     nearbyUsers: any[];
     setSearchTag: (tag: string) => void;
     handlePlayGame?: (game: any) => void;
-    onSearchClick?: () => void;
 }
 
 const FEATURED_LIMIT = 8;
@@ -42,7 +41,7 @@ const normalizeTagKey = (value: string) => {
 
 const extractTagsFromText = (value: string) => (String(value || '').match(/#[\p{L}\p{N}_-]+/gu) || []);
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame, onSearchClick }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSearchTag, handlePlayGame }) => {
     const gameList = React.useMemo(() => Array.isArray(games) ? games.filter(Boolean) : [], [games]);
 
     const uniqueHighRated = React.useMemo(() => (
@@ -95,17 +94,6 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ games, nearbyUsers, setSear
                 <h3 className="truncate text-[20px] font-black uppercase tracking-tighter italic text-gray-900">
                     Khám phá
                 </h3>
-                <div className="hidden md:flex items-center gap-2 min-w-0">
-                    <button
-                        type="button"
-                        onClick={onSearchClick}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
-                        aria-label="Search"
-                        title="Search"
-                    >
-                        <Search className="h-4 w-4" />
-                    </button>
-                </div>
             </div>
 
             {uniqueHighRated.length > 0 && (

@@ -50,7 +50,6 @@ interface MyProfileViewProps {
     setPostIsStarred?: (v: boolean) => void;
     isSavingPost?: boolean;
     handleCreatePost?: (files: File[]) => void;
-    onSearchClick?: () => void;
     onPostClick?: (post: any) => void;
 }
 
