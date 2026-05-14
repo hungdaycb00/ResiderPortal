@@ -134,20 +134,27 @@ export default function UserLayers({
 
   const userRenderData = useMemo(() => {
     const raw = filteredUsers.map((u) => ({ user: u, pos: scaleScenePoint(worldToScene(origin, u)) }));
+
+    // Adaptive spatial clustering: grid cell size based on actual avatar visual footprint
+    const scaledSpacing = AVATAR_PLANE_SIZE * sceneWorldScale * 0.6;
+    const cellSize = Math.max(scaledSpacing * 1.5, 0.001); // prevent division by zero
+
     const groups = new Map<string, typeof raw>();
     raw.forEach((item) => {
-      const key = `${item.pos.x.toFixed(1)},${item.pos.z.toFixed(1)}`;
+      const gridX = Math.round(item.pos.x / cellSize);
+      const gridZ = Math.round(item.pos.z / cellSize);
+      const key = `${gridX},${gridZ}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(item);
     });
-    const SPACING = AVATAR_PLANE_SIZE * 0.6;
+
     const result: typeof raw = [];
     groups.forEach((group) => {
       group.forEach((item, i) => {
         if (i === 0) { result.push(item); return; }
         const ring = Math.ceil(i / 6);
         const angle = ((i - 1) % 6) * (Math.PI / 3);
-        const radius = ring * SPACING;
+        const radius = ring * scaledSpacing;
         result.push({
           user: item.user,
           pos: {
