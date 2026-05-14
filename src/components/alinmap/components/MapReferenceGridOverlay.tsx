@@ -18,6 +18,7 @@ export default function MapReferenceGridOverlay({
   scale,
   mapMode,
   enabled = true,
+  is3DPlane = false,
 }: MapReferenceGridOverlayProps) {
   const [gridStep, setGridStep] = React.useState(() => MINOR_GRID_BASE);
   const [currentScale, setCurrentScale] = React.useState(() => scale.get());
