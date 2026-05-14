@@ -240,6 +240,8 @@ export default function SceneContent({
           isLooterGameMode={!!isLooterGameMode}
           showLooterBoat={renderLooterInScene}
           isRoadmapOverlay={isRoadmapOverlay}
+          panX={panX}
+          panY={panY}
           scale={scale}
           planeYScale={planeYScale}
           selfDragX={selfDragX}

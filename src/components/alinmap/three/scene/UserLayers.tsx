@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { Group } from 'three';
 import type { MotionValue } from 'framer-motion';
 import AvatarBillboard from '../AvatarBillboard';
 import ProceduralBoat from '../models/ProceduralBoat';
 import { useDragHandlers } from './useDragHandlers';
-import { worldToScene, pxToScene, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
+import { worldToScene, pxToScene, AVATAR_PLANE_SIZE, MAP_COORD_SCENE_SCALE, type LatLng } from '../sceneUtils';
 import type { AdaptivePerformanceProfile } from '../../hooks/useAdaptivePerformance';
 import type { AlinMapMode } from '../../constants';
 
@@ -37,6 +39,10 @@ interface UserLayersProps {
   isLooterGameMode: boolean;
   showLooterBoat?: boolean;
   isRoadmapOverlay: boolean;
+
+  // Pan offset (counteract moveGroup translation so avatars stay on GPS position)
+  panX: MotionValue<number>;
+  panY: MotionValue<number>;
 
   // Drag
   scale: MotionValue<number>;
@@ -83,6 +89,8 @@ export default function UserLayers({
   isLooterGameMode,
   showLooterBoat = true,
   isRoadmapOverlay,
+  panX,
+  panY,
   scale,
   planeYScale,
   selfDragX,
@@ -97,6 +105,26 @@ export default function UserLayers({
   onSelectSelf,
   performance,
 }: UserLayersProps) {
+  // Ref cho group chứa toàn bộ avatar - cộng thêm pan offset để counteract moveGroup
+  const panGroupRef = useRef<Group>(null);
+  const lastPanXRef = useRef(0);
+  const lastPanZRef = useRef(0);
+
+  // Sync pan offset mỗi frame - đảm bảo avatar gắn với tọa độ GPS chứ không theo camera
+  useFrame(() => {
+    if (!panGroupRef.current) return;
+    const px = panX.get();
+    const pz = panY.get();
+    if (Math.abs(px - lastPanXRef.current) > 0.001 || Math.abs(pz - lastPanZRef.current) > 0.001) {
+      panGroupRef.current.position.set(
+        px * MAP_COORD_SCENE_SCALE * sceneWorldScale,
+        0,
+        pz * MAP_COORD_SCENE_SCALE * sceneWorldScale,
+      );
+      lastPanXRef.current = px;
+      lastPanZRef.current = pz;
+    }
+  });
   const performanceMode = performance?.mode ?? 'high';
   const labelMode = performance?.labelMode ?? 'full';
   const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
@@ -182,7 +210,7 @@ export default function UserLayers({
   const selfDepth = pxToScaledScene(dragOffset.y);
 
   return (
-    <>
+    <group ref={panGroupRef}>
       {/* Self avatar / Boat */}
       {isLooterGameMode && showLooterBoat ? (
         <ProceduralBoat
@@ -251,6 +279,6 @@ export default function UserLayers({
           dimmed={isLooterGameMode}
         />
       ))}
-    </>
+    </group>
   );
 }
