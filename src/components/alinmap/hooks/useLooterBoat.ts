@@ -105,7 +105,7 @@ export function useLooterBoat({
     useEffect(() => {
         if (!isLooterGameMode || !state) return;
         syncBoatPosition();
-    }, [isLooterGameMode, state?.currentLat, state?.currentLng, isChallengeActive, syncBoatPosition]);
+    }, [isLooterGameMode, state?.currentLat, state?.currentLng, encounter, syncBoatPosition]);
 
     const pendingPickupsRef = useRef<Set<string>>(new Set());
 
@@ -228,7 +228,7 @@ export function useLooterBoat({
             moveBoat(lat, lng, false, finalDist).then(res => {
                 if (movementRunIdRef.current !== runId || !isLooterModeRef.current) return;
                 if (res?.curseTrigger) {
-                    centerOnCombat();
+                    centerOnBoat();
                 } else {
                     // Auto-interact: thực thi callback nếu được set trước khi di chuyển
                     const arrivalAction = onArrivalActionRef.current;

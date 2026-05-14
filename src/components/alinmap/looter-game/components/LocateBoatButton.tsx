@@ -16,7 +16,7 @@ export const LocateBoatButton: React.FC<LocateBoatButtonProps> = ({
     perspectivePx,
     cameraPitchOverride,
 }) => {
-    const { isLooterGameMode, encounter, centerOnBoat, centerOnCombat } = useLooterGame();
+    const { isLooterGameMode, centerOnBoat } = useLooterGame();
 
     if (!isLooterGameMode) return null;
 
@@ -31,11 +31,7 @@ export const LocateBoatButton: React.FC<LocateBoatButtonProps> = ({
             perspectivePx,
             tiltDeg,
         });
-        if (encounter) {
-            centerOnCombat(yOffset, xOffset);
-        } else {
-            centerOnBoat(yOffset, xOffset);
-        }
+        centerOnBoat(yOffset, xOffset);
     };
 
     return (

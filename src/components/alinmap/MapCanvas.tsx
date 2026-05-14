@@ -205,7 +205,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     // Auto-focus camera on combat center
     useCombatCamera(
         looterState.encounter, 
-        looterBoat.centerOnCombat, 
+        looterBoat.centerOnBoat, 
         looterBoat.centerOnBoat,
         props.setCameraZ,
 	        setMainTab,

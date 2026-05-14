@@ -6,7 +6,7 @@ import { getTiltAngleFromCameraZ } from '../../constants';
 
 export function useCombatCamera(
   encounter: Encounter | null,
-  centerOnCombat: (yOffset?: number, xOffset?: number) => void,
+  centerOnBoatWithOffset: (yOffset?: number, xOffset?: number) => void,
   centerOnBoat: () => void,
   setCameraZ?: (z: number) => void,
   setMainTab?: (tab: any) => void,
@@ -29,8 +29,8 @@ export function useCombatCamera(
       perspectivePx,
       tiltDeg,
     });
-    centerOnCombat(isDesktop ? 0 : yOffset, xOffset);
-  }, [cameraPitchOverride, cameraZ, centerOnCombat, perspectivePx]);
+    centerOnBoatWithOffset(isDesktop ? 0 : yOffset, xOffset);
+  }, [cameraPitchOverride, cameraZ, centerOnBoatWithOffset, perspectivePx]);
 
   const scheduleCombatCenter = useCallback(() => {
     const token = ++combatCenterTokenRef.current;
