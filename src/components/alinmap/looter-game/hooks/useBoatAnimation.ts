@@ -64,8 +64,8 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
   }, [myObfPos, boatOffsetX, boatOffsetY, panX, panY]);
 
   const syncBoatPosition = useCallback(() => {
-    // Không tự động sync camera nếu đang trong trận đấu hoặc đang chạy animation di chuyển
-    if (!myObfPos || currentLat == null || currentLng == null || isAnimatingRef.current || encounter) return;
+    // Không tự động sync camera nếu đang trong trận đấu, animation, hoặc người dùng đang kéo map
+    if (!myObfPos || currentLat == null || currentLng == null || isAnimatingRef.current || encounter || userDraggingRef.current) return;
     const nextBoatX = (currentLng - myObfPos.lng) * DEGREES_TO_PX;
     const nextBoatY = -(currentLat - myObfPos.lat) * DEGREES_TO_PX;
     boatOffsetX.set(nextBoatX);
