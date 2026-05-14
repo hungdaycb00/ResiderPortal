@@ -43,19 +43,19 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const avatarScale = isRoadmapPresentation ? 0.72 : 1;
     const avatarPlaneSize = AVATAR_PLANE_SIZE * avatarScale;
     const ringRadius = AVATAR_RING_RADIUS * avatarScale;
-    const labelYOffset = isRoadmapPresentation ? -2.85 : -3.65;
-    const labelDistanceFactor = isRoadmapPresentation ? 9 : 7;
+    const labelYOffset = isRoadmapPresentation ? -2.45 : -3.65;
+    const labelDistanceFactor = isRoadmapPresentation ? 8.4 : 7;
     const labelShellClass = isRoadmapPresentation
-        ? 'max-w-[300px] rounded-full border border-white/80 bg-white/94 px-5 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.16)] backdrop-blur-md'
+        ? 'max-w-[260px] rounded-full border border-white/80 bg-white/94 px-4 py-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.14)] backdrop-blur-md'
         : 'max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] backdrop-blur-md';
     const labelTextClass = isRoadmapPresentation
-        ? 'block max-w-[260px] truncate text-[34px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[38px]'
+        ? 'block max-w-[220px] truncate text-[30px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[33px]'
         : 'block max-w-[360px] truncate text-[50px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[55px]';
     const statusShellClass = isRoadmapPresentation
-        ? 'max-w-[220px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-1 shadow-[0_6px_16px_rgba(14,165,233,0.1)] backdrop-blur-md'
+        ? 'max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-1 shadow-[0_6px_16px_rgba(14,165,233,0.1)] backdrop-blur-md'
         : 'max-w-[260px] rounded-full border border-sky-100 bg-sky-50/95 px-3 py-1 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md';
     const statusTextClass = isRoadmapPresentation
-        ? 'block max-w-[190px] truncate text-[10px] font-semibold text-slate-600 sm:text-[11px]'
+        ? 'block max-w-[180px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]'
         : 'block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]';
 
     useEffect(() => () => { texture.dispose(); }, [texture]);

@@ -57,8 +57,8 @@
   }
 
   .alin-map-scene {
-    perspective: var(--alin-map-perspective-px, clamp(850px, 125vw, 1400px));
-    perspective-origin: 50% var(--alin-map-perspective-origin-y, 42%);
+    perspective: var(--alin-map-perspective-px, clamp(760px, 110vw, 1280px));
+    perspective-origin: 50% var(--alin-map-perspective-origin-y, 38%);
   }
 
   .alin-map-camera-layer,
@@ -104,14 +104,14 @@
     --alin-map-counter-tilt-deg: -60deg;
     --alin-map-billboard-pitch-deg: 24deg;
     --alin-map-billboard-yaw-deg: 0deg;
-    --alin-map-billboard-lift-px: 40px;
+    --alin-map-billboard-lift-px: 30px;
     --alin-map-world-rotate-deg: 0deg;
     --alin-map-camera-rotate-x-deg: 0deg;
     --alin-map-camera-rotate-y-deg: 0deg;
-    --alin-map-perspective-origin-y: 42%;
+    --alin-map-perspective-origin-y: 38%;
     --alin-map-plane-scale: 1.32;
     --alin-map-node-counter-scale: 1;
-    --alin-map-perspective-px: 960px;
+    --alin-map-perspective-px: 880px;
   }
 
 html,

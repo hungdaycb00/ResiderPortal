@@ -246,15 +246,15 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                             className="absolute inset-0 alin-map-tilt-plane"
                             style={{
                                 '--alin-map-tilt-deg': tiltDeg,
-                                '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
-                                '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                                '--alin-map-camera-rotate-x-deg': '0deg',
-                                '--alin-map-billboard-pitch-deg': billboardPitchDeg,
-                                '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
-                                '--alin-map-billboard-lift-px': '24px',
-                                '--alin-map-plane-scale': MAP_PLANE_SCALE,
-                            } as React.CSSProperties}
-                        >
+                        '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
+                        '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
+                        '--alin-map-camera-rotate-x-deg': '0deg',
+                        '--alin-map-billboard-pitch-deg': billboardPitchDeg,
+                        '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
+                        '--alin-map-billboard-lift-px': '30px',
+                        '--alin-map-plane-scale': MAP_PLANE_SCALE,
+                    } as React.CSSProperties}
+                >
                             <MapTiles
                                 panX={panX}
                                 panY={panY}
