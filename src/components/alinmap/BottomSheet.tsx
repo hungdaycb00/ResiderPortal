@@ -206,6 +206,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onSearchClick={() => setIsSearchOverlayOpen?.(true)}
                     onCreatePostClick={handleMobileCreatePost}
                     showCreatePostAction={showMobileCreatePostAction}
+                    user={props.user}
+                    triggerAuth={props.triggerAuth}
+                    logout={props.logout}
                 />
             )}
         </div>

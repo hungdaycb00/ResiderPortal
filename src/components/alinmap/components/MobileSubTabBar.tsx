@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Search } from 'lucide-react';
+import { LogIn, LogOut, Plus, Search } from 'lucide-react';
 
 interface MobileSubTabBarProps {
   mainTab: string;
@@ -11,6 +11,9 @@ interface MobileSubTabBarProps {
   onSearchClick?: () => void;
   onCreatePostClick?: () => void;
   showCreatePostAction?: boolean;
+  user?: any;
+  triggerAuth?: (callback: () => void) => void;
+  logout?: () => void;
 }
 
 const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
@@ -23,6 +26,9 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
   onSearchClick,
   onCreatePostClick,
   showCreatePostAction = false,
+  user,
+  triggerAuth,
+  logout,
 }) => {
   if (isLooterGameMode) return null;
 
@@ -44,18 +50,22 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
     ];
     activeValue = socialSubTab;
     onTabChange = onSocialSubTabChange;
+  } else if (mainTab === 'profile') {
+    tabs = null;
   }
 
-  if (!tabs) return null;
+  if (!tabs && mainTab !== 'profile') return null;
 
   const showSearchAction = !!onSearchClick;
+  const showAuthAction = mainTab === 'profile';
 
   return (
     <div className="fixed bottom-[64px] left-0 right-0 z-[190] px-4 pb-4 pointer-events-none">
       <div className="flex w-full items-center gap-3">
         <div className="flex flex-1 justify-center min-w-0">
-          <div className="flex bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1 gap-0.5 pointer-events-auto">
-            {tabs.map((tab) => (
+          {tabs && tabs.length > 0 && (
+            <div className="flex bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-gray-200 p-1 gap-0.5 pointer-events-auto">
+              {tabs.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
@@ -69,11 +79,34 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
                 {tab.label}
               </button>
             ))}
-          </div>
+            </div>
+          )}
         </div>
 
-        {(showSearchAction || showCreatePostAction) && (
+        {(showSearchAction || showCreatePostAction || showAuthAction) && (
           <div className="flex shrink-0 items-center gap-2 pointer-events-auto">
+            {showAuthAction && (
+              <>
+                {user ? (
+                  <button
+                    onClick={() => logout?.()}
+                    className="flex items-center gap-1.5 h-10 px-4 bg-red-50/90 hover:bg-red-100 text-red-600 text-xs font-bold rounded-full shadow-lg backdrop-blur-md transition-all active:scale-95 border border-red-100"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Đăng xuất
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => triggerAuth?.(() => {})}
+                    className="flex items-center gap-1.5 h-10 px-4 bg-blue-50/90 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-full shadow-lg backdrop-blur-md transition-all active:scale-95 border border-blue-100"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    Đăng nhập
+                  </button>
+                )}
+              </>
+            )}
+
             {showSearchAction && (
               <button
                 type="button"
@@ -85,7 +118,7 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
                 <Search className="h-4 w-4" />
               </button>
             )}
-
+ 
             {showCreatePostAction && (
               <button
                 type="button"

@@ -11,6 +11,7 @@ interface LooterMapPlaneLayerProps {
   panY: MotionValue<number>;
   scale: MotionValue<number>;
   planeYScale: MotionValue<number>;
+  boatTargetPin?: { lat: number; lng: number } | null;
   boatOffsetX?: MotionValue<number>;
   boatOffsetY?: MotionValue<number>;
   onRequestMove?: (lat: number, lng: number, source?: string) => void;
@@ -158,6 +159,7 @@ const LooterMapPlaneLayer: React.FC<LooterMapPlaneLayerProps> = ({
   panY,
   scale,
   planeYScale,
+  boatTargetPin,
   boatOffsetX,
   boatOffsetY,
   onRequestMove,
@@ -244,9 +246,57 @@ const LooterMapPlaneLayer: React.FC<LooterMapPlaneLayerProps> = ({
   const fortressPos = state?.fortressLat && state?.fortressLng
     ? projectToPlane(center, { lat: state.fortressLat, lng: state.fortressLng }, visualScale, planeSize)
     : null;
+  const targetPos = boatTargetPin ? projectToPlane(center, boatTargetPin, visualScale, planeSize) : null;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[2]">
+      {!encounter && boatTargetPin && targetPos ? (
+        <div className="absolute inset-0 z-[1]">
+          <svg
+            className="absolute inset-0 h-full w-full overflow-visible"
+            width={planeSize}
+            height={planeSize}
+            viewBox={`0 0 ${planeSize} ${planeSize}`}
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="looter-target-path" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#f8fafc" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+            <line
+              x1={boatPos.x}
+              y1={boatPos.y}
+              x2={targetPos.x}
+              y2={targetPos.y}
+              stroke="url(#looter-target-path)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="12 10"
+              className="animate-[dash_1.4s_linear_infinite]"
+              opacity="0.92"
+            />
+            <circle
+              cx={targetPos.x}
+              cy={targetPos.y}
+              r="18"
+              fill="none"
+              stroke="#22d3ee"
+              strokeWidth="2"
+              opacity="0.35"
+            />
+            <circle
+              cx={targetPos.x}
+              cy={targetPos.y}
+              r="6"
+              fill="#ffffff"
+              opacity="0.75"
+            />
+          </svg>
+        </div>
+      ) : null}
+
       {!encounter && fortressPos ? (
         <PlaneSprite
           x={fortressPos.x}

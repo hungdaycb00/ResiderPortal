@@ -231,7 +231,7 @@ export default function SceneContent({
           mapMode={mapMode}
           roadmapWorldScale={sceneWorldScale}
           groundRef={groundMeshRef}
-          onGroundClick={(point) => handleGroundClick(groundMeshRef, point)}
+          onGroundClick={useDomLooterLayer ? undefined : (point) => handleGroundClick(groundMeshRef, point)}
         />
 
         {/* Search area ring */}

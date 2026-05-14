@@ -16,6 +16,7 @@ interface UseMapInteractionsProps {
     cameraZ?: MotionValue<number>;
     setCameraZ?: (z: number) => void;
     mapMode?: AlinMapMode;
+    useDomLooterLayer?: boolean;
 }
 
 export function useMapInteractions({
@@ -23,6 +24,7 @@ export function useMapInteractions({
     isLooterGameMode,
     myObfPos, looterBoat, encounter, isInteractionLocked = false,
     planeYScale, cameraZ, setCameraZ, mapMode,
+    useDomLooterLayer = false,
 }: UseMapInteractionsProps) {
 
     const mapDragRef = useRef<{
@@ -186,12 +188,15 @@ export function useMapInteractions({
              // --- Looter Challenge Initiation Logic ---
              // Chỉ mở tier selector khi đang ở thành trì và chưa chọn tier (worldTier === -1)
 
-        // Trong looter mode, Ground onClick (R3F Raycaster) xử lý di chuyển.
-        // Không gọi looterBoat.handlePointerUp để tránh double-fire với đường screenToWorld cũ.
-        if (isLooterGameMode && !dragState.moved) return;
+        if (isLooterGameMode && !dragState.moved) {
+            if (useDomLooterLayer) {
+                looterBoat.handlePointerUp(e);
+            }
+            return;
+        }
 
         looterBoat.handlePointerUp(e);
-    }, [looterBoat, isLooterGameMode, encounter, isInteractionLocked, panX, panY, scale, myObfPos]);
+    }, [looterBoat, isLooterGameMode, encounter, isInteractionLocked, panX, panY, scale, myObfPos, useDomLooterLayer]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
