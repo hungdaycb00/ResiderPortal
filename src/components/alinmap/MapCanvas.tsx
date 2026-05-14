@@ -8,6 +8,7 @@ import AlinMapThreeScene from './three/AlinMapThreeScene';
 import MapTiles from './MapTiles';
 import LooterMapPlaneLayer from './components/LooterMapPlaneLayer';
 import RoadmapAvatarLayer from './components/RoadmapAvatarLayer';
+import MapReferenceGridOverlay from './components/MapReferenceGridOverlay';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
@@ -127,6 +128,13 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const nodeCounterScale = useTransform(scale, (v) => 1 / Math.max(0.2, v || 1));
     const sceneWorldScale = mapMode === 'roadmap' && !isLooterGameMode ? ROADMAP_WORLD_SCALE : 1;
     const showRoadmapDiagnostics = import.meta.env.DEV && typeof window !== 'undefined' && window.localStorage.getItem('alinmap.debugRoadmap') === '1';
+    const showReferenceGrid = React.useMemo(() => {
+        if (mapMode !== 'roadmap') return false;
+        if (typeof window === 'undefined') return true;
+        const value = window.localStorage.getItem('alinmap.showReferenceGrid');
+        if (value === '0') return false;
+        return true;
+    }, [mapMode]);
 
     useMotionValueEvent(cameraZ, 'change', (latest) => {
         setDebugCameraZ(Math.round(latest));
@@ -278,8 +286,21 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                     onSetArrivalAction={looterBoat.setOnArrivalAction}
                                 />
                             )}
+                            <MapReferenceGridOverlay
+                                scale={scale}
+                                mapMode={mapMode}
+                                enabled={showReferenceGrid}
+                                is3DPlane={true}
+                            />
                         </motion.div>
                     </div>
+
+                    <MapReferenceGridOverlay
+                        scale={scale}
+                        mapMode={mapMode}
+                        enabled={showReferenceGrid}
+                        is3DPlane={false}
+                    />
 
                     {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
                         <RoadmapAvatarLayer
