@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
 import type { MotionValue } from 'framer-motion';
 import AvatarBillboard from '../AvatarBillboard';
+import User3DModel from '../models/User3DModel';
 import ProceduralBoat from '../models/ProceduralBoat';
 import { useDragHandlers } from './useDragHandlers';
 import { worldToScene, pxToScene, AVATAR_PLANE_SIZE, MAP_COORD_SCENE_SCALE, type LatLng } from '../sceneUtils';
@@ -128,7 +129,9 @@ export default function UserLayers({
   const performanceMode = performance?.mode ?? 'high';
   const labelMode = performance?.labelMode ?? 'full';
   const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
-  const avatarPresentation = mapMode === 'roadmap' ? 'roadmap' : 'default';
+  const avatarPresentation: 'roadmap' | 'default' = mapMode === 'roadmap' ? 'roadmap' : 'default';
+
+  const USE_3D_AVATARS = true;
 
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
@@ -226,59 +229,73 @@ export default function UserLayers({
         />
       ) : !isLooterGameMode && !isRoadmapOverlay && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
+        
+        const avatarProps = {
+            name: myDisplayName || user?.displayName || 'Me',
+            position: [selfPos.x + selfLift, 0.01, selfPos.z + selfDepth] as [number, number, number],
+            status: myStatus,
+            isVisibleOnMap,
+            isSelected: isSelfSelected,
+            labelMode,
+            presentation: avatarPresentation,
+            onClick: () => {
+              if (!selfDragRef.current.moved) {
+                onSelectSelf?.({
+                  id: user?.uid || myUserId || 'self',
+                  username: myDisplayName,
+                  lat: baseOrigin.lat,
+                  lng: baseOrigin.lng,
+                  isSelf: true,
+                });
+              }
+            },
+            showGallery: galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode)),
+            galleryTitle,
+            galleryImages,
+        };
+
         return (
           <group
             onPointerDown={handleSelfPointerDown}
             onPointerMove={handleSelfPointerMove}
             onPointerUp={handleSelfPointerUp}
           >
-            <AvatarBillboard
-              name={myDisplayName || user?.displayName || 'Me'}
-              avatarUrl={myAvatarUrl || user?.photoURL}
-              position={[selfPos.x + selfLift, 0.01, selfPos.z + selfDepth]}
-              status={myStatus}
-              isVisibleOnMap={isVisibleOnMap}
-              isSelected={isSelfSelected}
-              labelMode={labelMode}
-              presentation={avatarPresentation}
-              onClick={() => {
-                if (!selfDragRef.current.moved) {
-                  onSelectSelf?.({
-                    id: user?.uid || myUserId || 'self',
-                    username: myDisplayName,
-                    lat: baseOrigin.lat,
-                    lng: baseOrigin.lng,
-                    isSelf: true,
-                  });
-                }
-              }}
-              showGallery={galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode))}
-              galleryTitle={galleryTitle}
-              galleryImages={galleryImages}
-            />
+            {USE_3D_AVATARS ? (
+              <User3DModel {...avatarProps} color="#3b82f6" /> // Blue for self
+            ) : (
+              <AvatarBillboard {...avatarProps} avatarUrl={myAvatarUrl || user?.photoURL} />
+            )}
           </group>
         );
       })()}
 
       {/* Nearby users */}
-      {!isRoadmapOverlay && userRenderData.map(({ user: u, pos }) => (
-        <AvatarBillboard
-          key={u.id}
-          name={u.displayName || u.username || 'U'}
-          avatarUrl={isLooterGameMode ? null : u.avatar_url}
-          position={[pos.x, 0.01, pos.z]}
-          status={isLooterGameMode ? undefined : u.status}
-          isVisibleOnMap
-          isSelected={!isLooterGameMode && selectedUser?.id === u.id}
-          labelMode={labelMode}
-          presentation={avatarPresentation}
-          onClick={isLooterGameMode ? undefined : () => onSelectUser?.(u)}
-          showGallery={!isLooterGameMode && u.gallery?.active}
-          galleryTitle={u.gallery?.title}
-          galleryImages={u.gallery?.images}
-          dimmed={isLooterGameMode}
-        />
-      ))}
+      {!isRoadmapOverlay && userRenderData.map(({ user: u, pos }) => {
+        const avatarProps = {
+          name: u.displayName || u.username || 'U',
+          position: [pos.x, 0.01, pos.z] as [number, number, number],
+          status: isLooterGameMode ? undefined : u.status,
+          isVisibleOnMap: true,
+          isSelected: !isLooterGameMode && selectedUser?.id === u.id,
+          labelMode,
+          presentation: avatarPresentation,
+          onClick: isLooterGameMode ? undefined : () => onSelectUser?.(u),
+          showGallery: !isLooterGameMode && u.gallery?.active,
+          galleryTitle: u.gallery?.title,
+          galleryImages: u.gallery?.images,
+          dimmed: isLooterGameMode,
+        };
+
+        return USE_3D_AVATARS ? (
+          <User3DModel key={u.id} {...avatarProps} />
+        ) : (
+          <AvatarBillboard
+            key={u.id}
+            {...avatarProps}
+            avatarUrl={isLooterGameMode ? null : u.avatar_url}
+          />
+        );
+      })}
     </group>
   );
 }

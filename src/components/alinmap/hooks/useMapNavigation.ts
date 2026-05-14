@@ -5,6 +5,7 @@ import {
   CAMERA_FOV_DEGREES,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
+  CAMERA_Z_DEFAULT,
   CAMERA_Z_NEAR,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
   CAMERA_HEIGHT_RATIO_DEFAULT,
@@ -55,7 +56,7 @@ export function useMapNavigation({
   const initialPerspectivePx = getPerspectivePx(typeof window !== 'undefined' ? window.innerHeight : 720);
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
-  const cameraZ = useMotionValue(getCameraZForVisualScale(ROADMAP_VISUAL_SCALE_DEFAULT, initialPerspectivePx));
+  const cameraZ = useMotionValue(CAMERA_Z_DEFAULT);
   const selfDragX = useMotionValue(0);
   const selfDragY = useMotionValue(0);
 
@@ -74,7 +75,7 @@ export function useMapNavigation({
   const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
   const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
   useMotionValueEvent(cameraFov, 'change', (v: number) => setCameraFovValue(v));
-  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(60); // default 60deg
+  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(-60); // default -60deg
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;
