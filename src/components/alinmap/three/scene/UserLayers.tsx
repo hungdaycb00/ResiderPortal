@@ -132,6 +132,7 @@ export default function UserLayers({
   const avatarPresentation: 'roadmap' | 'default' = mapMode === 'roadmap' ? 'roadmap' : 'default';
 
   const USE_3D_AVATARS = true;
+  console.log(`[UserLayers] RENDER. USE_3D_AVATARS=${USE_3D_AVATARS}, users=${userRenderData.length}`);
 
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
