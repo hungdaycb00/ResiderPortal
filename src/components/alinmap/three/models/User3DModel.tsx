@@ -73,11 +73,11 @@ const User3DModel: React.FC<User3DModelProps> = ({
             <group position={[0, 1.2, 0]}>
                 {/* Body */}
                 <Cylinder args={[0.3, 0.6, 1.5, 16]} position={[0, -0.2, 0]} castShadow receiveShadow>
-                    <meshStandardMaterial color={color} transparent={dimmed} opacity={dimmed ? 0.3 : 1} roughness={0.6} metalness={0.1} />
+                    <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
                 </Cylinder>
                 {/* Head */}
                 <Sphere args={[0.5, 32, 32]} position={[0, 0.8, 0]} castShadow receiveShadow>
-                    <meshStandardMaterial color={color} transparent={dimmed} opacity={dimmed ? 0.3 : 1} roughness={0.4} metalness={0.1} />
+                    <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
                 </Sphere>
             </group>
 
