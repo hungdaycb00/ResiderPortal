@@ -128,16 +128,21 @@ const PlaneSprite: React.FC<PlaneSpriteProps> = ({ x, y, type, title, icon, acce
     return url;
   }, [type, title, accent, icon]);
 
+  // Tăng chiều cao của hitbox lên gấp 2.5 lần để bù lại lực nén (squash)
+  // do góc nghiêng (tilt) của camera, giúp người chơi dễ click hơn.
+  const hitboxHeight = size * 2.5;
+
   return (
     <button
       type="button"
-      className="absolute pointer-events-auto border-0 bg-transparent p-0"
+      className="absolute pointer-events-auto border-0 bg-transparent p-0 flex flex-col justify-end items-center"
       style={{
         left: x,
         top: y,
         width: size,
-        height: size,
-        transform: 'translate(-50%, -50%)',
+        height: hitboxHeight,
+        // Dời lên trên một chút để tâm của hitbox khớp với chân item
+        transform: `translate(-50%, calc(-100% + ${size / 2}px))`,
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -146,7 +151,10 @@ const PlaneSprite: React.FC<PlaneSpriteProps> = ({ x, y, type, title, icon, acce
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      <span className="block h-full w-full alin-map-upright-sprite">
+      <span 
+        className="block w-full alin-map-upright-sprite"
+        style={{ height: size }}
+      >
         <img src={src} alt={title || type} className="h-full w-full select-none object-contain drop-shadow-[0_10px_18px_rgba(2,8,23,0.35)]" draggable={false} />
       </span>
     </button>
