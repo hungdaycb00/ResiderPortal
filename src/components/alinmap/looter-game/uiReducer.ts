@@ -41,7 +41,7 @@ export function uiReducer(state: UIState, action: UIAction): UIState {
       if (action.payload && state.isIntegratedStorageOpen) return state;
       return action.payload
         ? { ...state, encounter: action.payload, showMinigame: null, showCurseModal: false, isIntegratedStorageOpen: false, isFortressStorageOpen: false }
-        : { ...state, encounter: null };
+        : { ...state, encounter: null, showCurseModal: false };
     case 'SET_COMBAT_RESULT':
       return action.payload
         ? { ...state, combatResult: action.payload, showMinigame: null, showCurseModal: false, isIntegratedStorageOpen: false, isFortressStorageOpen: false }
