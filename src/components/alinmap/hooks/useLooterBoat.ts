@@ -245,68 +245,55 @@ export function useLooterBoat({
     /**
      * Chuyển đổi click trên màn hình (clientX, clientY) → (lat, lng) trên map.
      * 
-     * Sử dụng CSS perspective inverse math để unproject click point về tọa độ
-     * trên mặt phẳng tilt-plane, rồi chuyển sang lat/lng qua cùng hệ tọa độ
-     * Mercator tile projection mà LooterMapPlaneLayer đang dùng để render.
+     * Wrapper div giữa .alin-map-scene và .alin-map-tilt-plane có transform
+     * nhưng KHÔNG có transform-style: preserve-3d → phá vỡ 3D context.
+     * Do đó rotateX(tilt) chỉ là phép chiếu 2D phẳng (scale Y bởi cosTilt),
+     * KHÔNG có perspective foreshortening.
      * 
-     * Flow: clientXY → perspectiveInverse → planeXY → tileReverse → lat/lng
+     * Phép chiếu thuận (plane → screen):
+     *   screenX = planeX * S        (relative to wrapper center)
+     *   screenY = planeY * cos(tilt) * S  (relative to wrapper center)
+     * 
+     * Phép chiếu ngược (screen → plane):
+     *   planeX = relX / S
+     *   planeY = relY / (cos(tilt) * S)
+     * 
+     * Flow: clientXY → affineInverse → planeXY → tileReverse → lat/lng
      */
     const screenToWorld = useCallback((clientX: number, clientY: number) => {
         if (!myObfPos) return null;
 
-        // 1. Lấy perspective value từ CSS
+        // 1. Lấy viewport container
         const sceneEl = document.querySelector('.alin-map-scene') as HTMLElement | null;
         if (!sceneEl) return null;
         
         const sceneRect = sceneEl.getBoundingClientRect();
-        const perspectiveStr = getComputedStyle(sceneEl).perspective;
-        const P = parseFloat(perspectiveStr) || perspectivePx;
         
-        // 2. Perspective origin (50% 42%) — lấy từ CSS
-        const perspOriginX = sceneRect.left + sceneRect.width * 0.5;
-        const perspOriginY = sceneRect.top + sceneRect.height * 0.42;
+        // 2. Reference point = viewport center (50%, 50%)
+        //    Đây là tâm của wrapper div (left:50% top:50% -translate-x/y-1/2)
+        //    và cũng là transform-origin của tilt-plane (center center)
+        const centerX = sceneRect.left + sceneRect.width * 0.5;
+        const centerY = sceneRect.top + sceneRect.height * 0.5;
         
-        // 3. Tọa độ click tương đối với perspective origin
-        const relX = clientX - perspOriginX;
-        const relY = clientY - perspOriginY;
+        // 3. Tọa độ click tương đối với wrapper center
+        const relX = clientX - centerX;
+        const relY = clientY - centerY;
         
-        // 4. Tính tilt angle từ planeYScale (giống tất cả nơi khác trong codebase)
+        // 4. Tilt angle từ planeYScale
         const curPlaneYScale = planeYScale.get();
         const cosTheta = clampVal(curPlaneYScale / MAP_PLANE_SCALE, 0.001, 1);
         const tiltRad = Math.acos(cosTheta);
         const cosTilt = Math.cos(tiltRad);
-        const sinTilt = Math.sin(tiltRad);
         const S = MAP_PLANE_SCALE;
         
-        // 5. CSS Perspective inverse math:
-        //    Transform chain: rotateX(tilt) → scale(S)
-        //    Điểm (px, py) trên mặt phẳng → sau rotateX → (px, py*cos, -py*sin)
-        //    Sau scale: (px*S, py*cos*S, -py*sin*S)
-        //    Perspective projection:
-        //      screenX = px*S*P / (P + py*sin*S)
-        //      screenY = py*cos*S*P / (P + py*sin*S)
-        //    Giải ngược từ screenY:
-        //      py = relY*P / (S*(cos*P - relY*sin))
-        //    Rồi từ py tính depth và giải px:
-        //      depth = P + py*sin*S
-        //      px = relX*depth / (S*P)
+        // 5. Affine inverse (2D, không perspective):
+        //    rotateX(tilt) scale(S) → screenX = planeX * S
+        //                           → screenY = planeY * cosTilt * S
+        const planeX = relX / S;
+        const planeY = relY / (cosTilt * S);
         
-        const denomY = S * (cosTilt * P - relY * sinTilt);
-        if (Math.abs(denomY) < 1e-6) return null;
-        
-        const planeY = (relY * P) / denomY;
-        
-        const depth = P + planeY * sinTilt * S;
-        if (depth < 1e-6) return null;
-        
-        const planeX = (relX * depth) / (S * P);
-        
-        // 6. planeX, planeY là tọa độ trên mặt phẳng CSS (tính từ tâm wrapper)
-        //    Plane có kích thước = max(viewportW, viewportH) * 1.8 (giống LooterMapPlaneLayer)
-        const planeSize = Math.max(sceneRect.width, sceneRect.height) * 1.8;
-        
-        // 7. Chuyển sang hệ tọa độ tile Mercator (ngược lại projectToPlane)
-        //    projectToPlane output: x = planeSize/2 + (targetTileX - centerTileX) * TILE_SIZE
+        // 6. Chuyển sang hệ tọa độ tile Mercator (ngược lại projectToPlane)
+        //    projectToPlane: x = planeSize/2 + (targetTileX - centerTileX) * TILE_SIZE
         //    Ngược lại: targetTileX = centerTileX + planeX / TILE_SIZE
         const curPanX = panX?.get?.() ?? 0;
         const curPanY = panY?.get?.() ?? 0;
@@ -321,7 +308,7 @@ export function useLooterBoat({
         const targetTileX = centerTileX + planeX / ROADMAP_TILE_SIZE;
         const targetTileY = centerTileY + planeY / ROADMAP_TILE_SIZE;
         
-        // 8. Tile → lat/lng
+        // 7. Tile → lat/lng
         const lat = tileYToLat(targetTileY, tileZoom);
         const lng = tileXToLng(targetTileX, tileZoom);
 
