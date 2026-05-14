@@ -1,6 +1,5 @@
 import React from 'react';
 import { Vector3 } from 'three';
-import { sanitizeWorldItems } from '../../looter-game/LooterGameContext';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
 import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
 
@@ -80,6 +79,44 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     return '#22d3ee';
   }, []);
 
+  // Waypoint: 3 item gần nhất, bypass culling — PHẢI định nghĩa TRƯỚC handleGroundClick
+  const waypointItems = React.useMemo(() => {
+    if (!isLooterGameMode || !safeWorldItems.length) return [];
+    const curLat = looterStateObj?.currentLat ?? origin.lat;
+    const curLng = looterStateObj?.currentLng ?? origin.lng;
+    return safeWorldItems
+      .filter((i: any) => i.item?.type !== 'portal')
+      .map((i: any) => ({ item: i, dist: (i.lat - curLat) ** 2 + (i.lng - curLng) ** 2 }))
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 3)
+      .map(e => e.item);
+  }, [isLooterGameMode, safeWorldItems, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
+
+  const waypointSpawnIds = React.useMemo(() =>
+    new Set(waypointItems.map((i: any) => i.spawnId))
+  , [waypointItems]);
+
+  const renderedWorldItems = React.useMemo(() => {
+    if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
+    const centerLat = looterStateObj?.currentLat ?? origin.lat;
+    const centerLng = looterStateObj?.currentLng ?? origin.lng;
+    const cullDeg = (isDesktop ? 5000 : 3200) / 111000;
+    const maxItems = isDesktop ? 42 : 24;
+
+    return safeWorldItems
+      .filter((item: any) => Math.abs(item.lat - centerLat) <= cullDeg && Math.abs(item.lng - centerLng) <= cullDeg)
+      .filter((item: any) => !waypointSpawnIds.has(item.spawnId))
+      .map((item: any) => {
+        const dLat = item.lat - centerLat;
+        const dLng = item.lng - centerLng;
+        const priority = item?.item?.type === 'portal' ? -1 : 0;
+        return { item, score: priority + dLat * dLat + dLng * dLng };
+      })
+      .sort((a, b) => a.score - b.score)
+      .slice(0, maxItems)
+      .map((entry) => entry.item);
+  }, [encounter, isDesktop, isLooterGameMode, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng, safeWorldItems, waypointSpawnIds]);
+
   const handleWorldItemClick = React.useCallback((worldItem: any) => {
     if (!isLooterGameMode || !worldItem) return;
     console.log('[LootClick] Clicked item:', worldItem.spawnId, worldItem.item?.name || worldItem.item?.type, 'at', worldItem.lat?.toFixed(5), worldItem.lng?.toFixed(5));
@@ -119,6 +156,10 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     openFortressStorage, pickupItem, setShowMinigame, itemClickLockRef,
   ]);
 
+  // Ref để handleGroundClick truy cập handleWorldItemClick mới nhất mà không cần đưa vào dep array
+  const handleWorldItemClickRef = React.useRef(handleWorldItemClick);
+  handleWorldItemClickRef.current = handleWorldItemClick;
+
   const handleFortressClick = React.useCallback(() => {
     if (!isLooterGameMode || !looterStateObj?.fortressLat || !looterStateObj?.fortressLng) return;
     const target = { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng };
@@ -148,9 +189,8 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     const lng = origin.lng + localPt.x / SCALE;
     const lat = origin.lat + localPt.y / SCALE;
 
-    // === Cơ chế proximity check: phát hiện item gần vị trí click ===
-    // Không phụ thuộc R3F event system — so sánh tọa độ click với tọa độ item
-    const CLICK_RADIUS_DEG = 0.0009; // ~100 mét — bán kính phát hiện
+    // === Proximity check: phát hiện item gần vị trí click ===
+    const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
     const nearbyItems = [
       ...waypointItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
       ...renderedWorldItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
@@ -160,51 +200,12 @@ export function useLooterInteraction(params: LooterInteractionParams) {
       nearbyItems.sort((a, b) => a.d2 - b.d2);
       const nearest = nearbyItems[0].item;
       console.log('[GroundClick→Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', lat.toFixed(5), 'click-lng:', lng.toFixed(5));
-      handleWorldItemClick(nearest);
+      handleWorldItemClickRef.current(nearest);
       return;
     }
-    // === Kết thúc proximity check ===
 
     onRequestMove(lat, lng, 'map');
-  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen, handleWorldItemClick, waypointItems, renderedWorldItems]);
-
-  // Waypoint: 3 item gần nhất, bypass culling
-  const waypointItems = React.useMemo(() => {
-    if (!isLooterGameMode || !safeWorldItems.length) return [];
-    const curLat = looterStateObj?.currentLat ?? origin.lat;
-    const curLng = looterStateObj?.currentLng ?? origin.lng;
-    return safeWorldItems
-      .filter((i: any) => i.item?.type !== 'portal')
-      .map((i: any) => ({ item: i, dist: (i.lat - curLat) ** 2 + (i.lng - curLng) ** 2 }))
-      .sort((a, b) => a.dist - b.dist)
-      .slice(0, 3)
-      .map(e => e.item);
-  }, [isLooterGameMode, safeWorldItems, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng]);
-
-  const waypointSpawnIds = React.useMemo(() =>
-    new Set(waypointItems.map((i: any) => i.spawnId))
-  , [waypointItems]);
-
-  const renderedWorldItems = React.useMemo(() => {
-    if (!isLooterGameMode || encounter || !safeWorldItems.length) return [];
-    const centerLat = looterStateObj?.currentLat ?? origin.lat;
-    const centerLng = looterStateObj?.currentLng ?? origin.lng;
-    const cullDeg = (isDesktop ? 5000 : 3200) / 111000;
-    const maxItems = isDesktop ? 42 : 24;
-
-    return safeWorldItems
-      .filter((item: any) => Math.abs(item.lat - centerLat) <= cullDeg && Math.abs(item.lng - centerLng) <= cullDeg)
-      .filter((item: any) => !waypointSpawnIds.has(item.spawnId))
-      .map((item: any) => {
-        const dLat = item.lat - centerLat;
-        const dLng = item.lng - centerLng;
-        const priority = item?.item?.type === 'portal' ? -1 : 0;
-        return { item, score: priority + dLat * dLat + dLng * dLng };
-      })
-      .sort((a, b) => a.score - b.score)
-      .slice(0, maxItems)
-      .map((entry) => entry.item);
-  }, [encounter, isDesktop, isLooterGameMode, looterStateObj?.currentLat, looterStateObj?.currentLng, origin.lat, origin.lng, safeWorldItems, waypointSpawnIds]);
+  }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen, waypointItems, renderedWorldItems]);
 
   const itemRenderData = React.useMemo(() =>
     renderedWorldItems.map((item: any) => ({
