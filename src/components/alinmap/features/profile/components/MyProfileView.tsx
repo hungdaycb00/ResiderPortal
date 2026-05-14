@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, LogOut, Search } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 import ProfileHeader from './ProfileHeader';
 import ProfileInfoTab from './ProfileInfoTab';
 import ProfilePresenceSection from './ProfilePresenceSection';
@@ -68,7 +68,6 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
         postPrivacy, setPostPrivacy, postIsStarred, setPostIsStarred,
         isSavingPost, handleCreatePost,
-        onSearchClick,
         onPostClick
     } = props;
 
@@ -153,33 +152,23 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-3 px-1 mb-2">
                 <h3 className="min-w-0 truncate text-lg font-black text-gray-900">My Profile</h3>
-                <div className="flex shrink-0 items-center gap-2">
+                {user ? (
                     <button
-                        type="button"
-                        onClick={onSearchClick}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all active:scale-95 hover:bg-gray-50"
-                        aria-label="Search"
+                        onClick={() => logout?.()}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-all active:scale-95 hover:bg-red-100"
                     >
-                        <Search className="h-4 w-4" />
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Đăng xuất</span>
                     </button>
-                    {user ? (
-                        <button
-                            onClick={() => logout?.()}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-all active:scale-95 hover:bg-red-100"
-                        >
-                            <LogOut className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Đăng xuất</span>
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => triggerAuth?.(() => {})}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-all active:scale-95 hover:bg-blue-100"
-                        >
-                            <LogIn className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Đăng nhập</span>
-                        </button>
-                    )}
-                </div>
+                ) : (
+                    <button
+                        onClick={() => triggerAuth?.(() => {})}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-all active:scale-95 hover:bg-blue-100"
+                    >
+                        <LogIn className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Đăng nhập</span>
+                    </button>
+                )}
             </div>
 
             <ProfileHeader

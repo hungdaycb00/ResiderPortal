@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, LogOut, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 
 interface MobileSubTabBarProps {
   mainTab: string;
@@ -11,9 +11,6 @@ interface MobileSubTabBarProps {
   onSearchClick?: () => void;
   onCreatePostClick?: () => void;
   showCreatePostAction?: boolean;
-  user?: any;
-  triggerAuth?: (callback: () => void) => void;
-  logout?: () => void;
 }
 
 const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
@@ -26,9 +23,6 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
   onSearchClick,
   onCreatePostClick,
   showCreatePostAction = false,
-  user,
-  triggerAuth,
-  logout,
 }) => {
   if (isLooterGameMode) return null;
 
@@ -57,7 +51,6 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
   if (!tabs && mainTab !== 'profile') return null;
 
   const showSearchAction = !!onSearchClick;
-  const showAuthAction = mainTab === 'profile';
 
   return (
     <div className="fixed bottom-[64px] left-0 right-0 z-[190] px-4 pb-4 pointer-events-none">
@@ -84,30 +77,8 @@ const MobileSubTabBar: React.FC<MobileSubTabBarProps> = ({
           </div>
         )}
 
-        {(showSearchAction || showCreatePostAction || showAuthAction) && (
+        {(showSearchAction || showCreatePostAction) && (
           <div className="pointer-events-auto absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
-            {showAuthAction && (
-              <>
-                {user ? (
-                  <button
-                    onClick={() => logout?.()}
-                    className="flex items-center gap-1.5 h-10 px-4 bg-red-50/90 hover:bg-red-100 text-red-600 text-xs font-bold rounded-full shadow-lg backdrop-blur-md transition-all active:scale-95 border border-red-100"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    Đăng xuất
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => triggerAuth?.(() => {})}
-                    className="flex items-center gap-1.5 h-10 px-4 bg-blue-50/90 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-full shadow-lg backdrop-blur-md transition-all active:scale-95 border border-blue-100"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    Đăng nhập
-                  </button>
-                )}
-              </>
-            )}
-
             {showSearchAction && (
               <button
                 type="button"
