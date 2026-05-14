@@ -109,35 +109,11 @@ export default function SceneContent({
   useMotionValueEvent(selfDragX, 'change', (v) => setDragOffset(prev => ({ ...prev, x: v })));
   useMotionValueEvent(selfDragY, 'change', (v) => setDragOffset(prev => ({ ...prev, y: v })));
 
-  // ── Roadmap pan state ──────────────────────────────────────────────────────
-  const [roadmapView, setRoadmapView] = useState(() => ({
-    panX: panX.get(),
-    panY: panY.get(),
-    planeYScale: planeYScale.get(),
-  }));
-  useMotionValueEvent(panX, 'change', (v) => {
-    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, panX: v }));
-  });
-  useMotionValueEvent(panY, 'change', (v) => {
-    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, panY: v }));
-  });
-  useMotionValueEvent(planeYScale, 'change', (v) => {
-    if (usesRoadmapProjection) setRoadmapView(prev => ({ ...prev, planeYScale: v }));
-  });
-  useEffect(() => {
-    if (!usesRoadmapProjection) return;
-    setRoadmapView({
-      panX: panX.get(),
-      panY: panY.get(),
-      planeYScale: planeYScale.get(),
-    });
-  }, [usesRoadmapProjection, panX, panY, planeYScale]);
-
   // ── Origin calculation ─────────────────────────────────────────────────────
+  // Đã loại bỏ roadmapView state để tối ưu CPU. Sử dụng baseOrigin cố định, 
+  // việc dịch chuyển sẽ được xử lý bằng Matrix Translation ở WebGL loop (moveGroupRef).
   const baseOrigin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
-  const origin: LatLng = usesRoadmapProjection
-    ? getRoadmapCenterFromPan(baseOrigin, roadmapView.panX, roadmapView.panY, roadmapView.planeYScale)
-    : baseOrigin;
+  const origin: LatLng = baseOrigin;
 
   // ── Looter interaction ─────────────────────────────────────────────────────
   const {
@@ -171,13 +147,9 @@ export default function SceneContent({
     const liftZ = panY.get();
     const tilt = tiltAngle.get();
 
-    if (usesRoadmapProjection) {
-      if (lastLiftXRef.current !== 0 || lastLiftZRef.current !== 0) {
-        moveGroupRef.current.position.set(0, 0, 0);
-        lastLiftXRef.current = 0;
-        lastLiftZRef.current = 0;
-      }
-    } else if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
+    // GPU Matrix Translation: Dịch chuyển thế giới 3D đồng bộ với thao tác pan bản đồ DOM
+    // Áp dụng chung cho mọi mode (roadmap và satellite) để loại bỏ dependency vào React State
+    if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
       moveGroupRef.current.position.set(
         liftX * MAP_COORD_SCENE_SCALE * sceneWorldScale,
         0,
