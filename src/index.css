@@ -94,26 +94,6 @@
   .alin-map-ground-shadow {
     transform: rotateX(0deg) translateZ(-2px);
   }
-
-  .alin-map-reference-grid {
-    background-image:
-      linear-gradient(rgba(15, 23, 42, 0.16) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(15, 23, 42, 0.16) 1px, transparent 1px),
-      linear-gradient(rgba(56, 189, 248, 0.35) 2px, transparent 2px),
-      linear-gradient(90deg, rgba(56, 189, 248, 0.35) 2px, transparent 2px),
-      radial-gradient(circle at center, rgba(2, 8, 23, 0.08) 0%, rgba(2, 8, 23, 0.03) 30%, transparent 68%);
-    background-size:
-      var(--alin-map-grid-minor-step, 48px) var(--alin-map-grid-minor-step, 48px),
-      var(--alin-map-grid-minor-step, 48px) var(--alin-map-grid-minor-step, 48px),
-      var(--alin-map-grid-major-step, 192px) var(--alin-map-grid-major-step, 192px),
-      var(--alin-map-grid-major-step, 192px) var(--alin-map-grid-major-step, 192px),
-      100% 100%;
-    background-position: center center;
-    background-color: rgba(255, 255, 255, 0.04);
-    opacity: 0.82;
-    mix-blend-mode: multiply;
-    filter: saturate(1.2) contrast(1.05);
-  }
 }
 
 :root {
