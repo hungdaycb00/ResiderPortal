@@ -82,6 +82,7 @@ export function useLooterInteraction(params: LooterInteractionParams) {
 
   const handleWorldItemClick = React.useCallback((worldItem: any) => {
     if (!isLooterGameMode || !worldItem) return;
+    console.log('[LootClick] Clicked item:', worldItem.spawnId, worldItem.item?.name || worldItem.item?.type, 'at', worldItem.lat?.toFixed(5), worldItem.lng?.toFixed(5));
     itemClickLockRef.current = true;
     const boat = getCurrentBoatLatLng();
     const dist = distanceMeters(boat, { lat: worldItem.lat, lng: worldItem.lng });

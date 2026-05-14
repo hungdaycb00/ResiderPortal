@@ -38,6 +38,8 @@ const LootSprite: React.FC<LootSpriteProps> = ({
 
     return (
         <Billboard
+            lockX
+            lockZ
             position={position}
             scale={[scale, scale, 1]}
             onClick={(e) => {
@@ -63,6 +65,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 document.body.style.cursor = 'auto';
             }}
         >
+            {/* Main sprite - vertical plane (đứng vuông góc nền map nhờ lockX lockZ) */}
             <mesh renderOrder={renderOrder} raycast={interactive ? undefined : () => {}}>
                 <planeGeometry args={[size, size]} />
                 <meshBasicMaterial
@@ -73,12 +76,11 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                     side={THREE.DoubleSide}
                 />
             </mesh>
-            {interactive && (
+            {/* Click footprint - vòng tròn nằm ngang dưới chân item, dễ click từ mọi góc */}
             <mesh position={[0, -size * 0.48, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[AVATAR_RING_RADIUS * 0.8, 16]} />
-                <meshBasicMaterial color="black" transparent opacity={0.18} depthWrite={false} />
+                <circleGeometry args={[size * 0.55, 16]} />
+                <meshBasicMaterial color="black" transparent opacity={0.12} depthWrite={false} />
             </mesh>
-            )}
         </Billboard>
     );
 };
