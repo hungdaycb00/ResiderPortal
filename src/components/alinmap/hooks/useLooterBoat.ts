@@ -317,10 +317,117 @@ export function useLooterBoat({
 
     const handleMapClick = useCallback((clientX: number, clientY: number) => {
         if (!isLooterGameMode || !myObfPos) return;
+
+        // 1. Tính toán lại reference point (tâm màn hình) giống hệt screenToWorld
+        const sceneEl = document.querySelector('.alin-map-scene') as HTMLElement | null;
+        if (!sceneEl) return;
+        const sceneRect = sceneEl.getBoundingClientRect();
+        const centerX = sceneRect.left + sceneRect.width * 0.5;
+        const centerY = sceneRect.top + sceneRect.height * 0.5;
+
+        // Tọa độ click tương đối với tâm màn hình
+        const relX = clientX - centerX;
+        const relY = clientY - centerY;
+
+        // 2. Tính toán các thông số projection hiện tại
+        const curPlaneYScale = planeYScale.get();
+        const cosTheta = clampVal(curPlaneYScale / MAP_PLANE_SCALE, 0.001, 1);
+        const cosTilt = cosTheta;
+        const S = MAP_PLANE_SCALE;
+
+        const curPanX = panX?.get?.() ?? 0;
+        const curPanY = panY?.get?.() ?? 0;
+        const visualScale = clampVal(scale?.get?.() ?? 1, 0.08, 8);
+        const tileZoom = getRoadmapTileZoom(visualScale);
+        const center = getRoadmapCenterFromPan(myObfPos, curPanX, curPanY, curPlaneYScale);
+
+        const centerTileX = lngToTileX(center.lng, tileZoom);
+        const centerTileY = latToTileY(center.lat, tileZoom);
+
+        // Helper: Project (lat, lng) to screen (relX, relY)
+        const projectToScreen = (lat: number, lng: number) => {
+            const tileX = lngToTileX(lng, tileZoom);
+            const tileY = latToTileY(lat, tileZoom);
+            const planeX = (tileX - centerTileX) * ROADMAP_TILE_SIZE;
+            const planeY = (tileY - centerTileY) * ROADMAP_TILE_SIZE;
+            const screenX = planeX * S;
+            const screenY = planeY * cosTilt * S;
+            return { screenX, screenY };
+        };
+
+        // 3. Kiểm tra xem click có trúng item nào không (Hit-testing)
+        // Hitbox được thiết kế vươn cao lên trên gốc (do item được dựng đứng bằng CSS)
+        const checkHit = (screenX: number, screenY: number, size: number) => {
+            const dx = relX - screenX;
+            const dy = relY - screenY;
+            // Hitbox: rộng ngang = size, cao lên trên = size * 2, thấp xuống dưới = size * 0.2
+            return Math.abs(dx) <= size / 2 && dy >= -size * 2 && dy <= size * 0.2;
+        };
+
+        let clickedTarget: any = null;
+        let isFortressHit = false;
+
+        // Kiểm tra Fortress
+        if (state?.fortressLat && state?.fortressLng) {
+            const pos = projectToScreen(state.fortressLat, state.fortressLng);
+            if (checkHit(pos.screenX, pos.screenY, 112)) {
+                isFortressHit = true;
+            }
+        }
+
+        // Kiểm tra World Items
+        if (!isFortressHit && worldItems && worldItems.length > 0) {
+            for (const item of worldItems) {
+                const pos = projectToScreen(item.lat, item.lng);
+                // size của item là 54px trên map
+                if (checkHit(pos.screenX, pos.screenY, 54)) {
+                    clickedTarget = item;
+                    break;
+                }
+            }
+        }
+
+        // 4. Xử lý logic tương tác
+        if (isFortressHit) {
+            const interact = () => openFortressStorage('fortress');
+            if (getDistanceMeters(myObfPos.lat, myObfPos.lng, state!.fortressLat!, state!.fortressLng!) <= 250) {
+                stopBoat();
+                interact();
+            } else {
+                setOnArrivalAction(() => interact);
+                executeMoveToExact(state!.fortressLat!, state!.fortressLng!, 'fortress');
+            }
+            return;
+        }
+
+        if (clickedTarget) {
+            const target = { lat: clickedTarget.lat, lng: clickedTarget.lng };
+            const isPortal = clickedTarget?.item?.type === 'portal';
+            const interact = () => {
+                if (isPortal) {
+                    openFortressStorage('portal');
+                } else if (clickedTarget.minigameType) {
+                    setShowMinigame({ ...clickedTarget, currentLat: myObfPos.lat, currentLng: myObfPos.lng });
+                } else {
+                    looterActions.pickupItem(clickedTarget.spawnId, clickedTarget, myObfPos.lat, myObfPos.lng);
+                }
+            };
+
+            if (getDistanceMeters(myObfPos.lat, myObfPos.lng, target.lat, target.lng) <= 250) {
+                stopBoat();
+                interact();
+            } else {
+                setOnArrivalAction(() => interact);
+                executeMoveToExact(target.lat, target.lng, 'item');
+            }
+            return;
+        }
+
+        // 5. Nếu không trúng item nào, coi như click lên bản đồ để di chuyển
         const result = screenToWorld(clientX, clientY);
         if (!result) return;
         executeMoveToExact(result.lat, result.lng, 'map');
-    }, [isLooterGameMode, myObfPos, screenToWorld, executeMoveToExact]);
+    }, [isLooterGameMode, myObfPos, screenToWorld, executeMoveToExact, planeYScale, panX, panY, scale, state, worldItems, openFortressStorage, stopBoat, setOnArrivalAction, setShowMinigame, looterActions]);
 
     const isTapWithinTolerance = (start: { x: number; y: number } | null, end: { x: number; y: number }) => {
         if (!start) return true;

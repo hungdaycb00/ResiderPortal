@@ -135,21 +135,14 @@ const PlaneSprite: React.FC<PlaneSpriteProps> = ({ x, y, type, title, icon, acce
   return (
     <button
       type="button"
-      className="absolute pointer-events-auto border-0 bg-transparent p-0 flex flex-col justify-end items-center"
+      className="absolute pointer-events-none border-0 bg-transparent p-0 flex flex-col justify-end items-center"
       style={{
         left: x,
         top: y,
         width: size,
         height: hitboxHeight,
-        // Dời lên trên một chút để tâm của hitbox khớp với chân item
         transform: `translate(-50%, calc(-100% + ${size / 2}px))`,
       }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
     >
       <span 
         className="block w-full alin-map-upright-sprite"

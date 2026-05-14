@@ -151,9 +151,9 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between px-1 mb-2">
-                <h3 className="truncate text-lg font-black text-gray-900">My Profile</h3>
-                <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3 px-1 mb-2">
+                <h3 className="min-w-0 truncate text-lg font-black text-gray-900">My Profile</h3>
+                <div className="flex shrink-0 items-center gap-2">
                     <button
                         type="button"
                         onClick={onSearchClick}
@@ -165,18 +165,18 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                     {user ? (
                         <button
                             onClick={() => logout?.()}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-all active:scale-95 hover:bg-red-100"
                         >
                             <LogOut className="w-3.5 h-3.5" />
-                            Đăng xuất
+                            <span className="hidden sm:inline">Đăng xuất</span>
                         </button>
                     ) : (
                         <button
                             onClick={() => triggerAuth?.(() => {})}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all active:scale-95"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 transition-all active:scale-95 hover:bg-blue-100"
                         >
                             <LogIn className="w-3.5 h-3.5" />
-                            Đăng nhập
+                            <span className="hidden sm:inline">Đăng nhập</span>
                         </button>
                     )}
                 </div>
