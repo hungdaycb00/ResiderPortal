@@ -3,9 +3,7 @@ import { Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
 
-// Hằng số kích thước được đồng bộ với AvatarBillboard
-const ITEM_SIZE = AVATAR_PLANE_SIZE;
-const SHADOW_RADIUS = AVATAR_RING_RADIUS * 0.8;
+const FOOTPRINT_WORLD_Y = 0.35; // Vòng tròn click đặt ngay trên mặt đất (ground y=-1)
 
 interface LootSpriteProps {
     position: [number, number, number];
@@ -36,6 +34,13 @@ const LootSprite: React.FC<LootSpriteProps> = ({
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
+    // Vị trí Y cục bộ để vòng tròn footprint nằm ở FOOTPRINT_WORLD_Y trong world space,
+    // bất kể item được đặt ở độ cao nào hay scale bao nhiêu.
+    const footprintLocalY = (FOOTPRINT_WORLD_Y - position[1]) / scale;
+
+    // Bán kính vòng tròn click — tỉ lệ với size, tối thiểu 3.5 để luôn dễ click
+    const footprintRadius = Math.max(size * 0.5, 3.5);
+
     return (
         <Billboard
             lockX
@@ -65,7 +70,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 document.body.style.cursor = 'auto';
             }}
         >
-            {/* Main sprite - vertical plane (đứng vuông góc nền map nhờ lockX lockZ) */}
+            {/* Sprite chính — plane đứng thẳng vuông góc nền map (lockX lockZ) */}
             <mesh renderOrder={renderOrder} raycast={interactive ? undefined : () => {}}>
                 <planeGeometry args={[size, size]} />
                 <meshBasicMaterial
@@ -76,10 +81,14 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                     side={THREE.DoubleSide}
                 />
             </mesh>
-            {/* Click footprint - vòng tròn nằm ngang dưới chân item, dễ click từ mọi góc */}
-            <mesh position={[0, -size * 0.48, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[size * 0.55, 16]} />
-                <meshBasicMaterial color="black" transparent opacity={0.12} depthWrite={false} />
+            {/* Click footprint — vòng tròn nằm ngang trên mặt đất, LUÔN trên ground (y=-1) */}
+            <mesh
+                position={[0, footprintLocalY, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                renderOrder={renderOrder - 1}
+            >
+                <circleGeometry args={[footprintRadius, 16]} />
+                <meshBasicMaterial color="black" transparent opacity={0.10} depthWrite={false} />
             </mesh>
         </Billboard>
     );

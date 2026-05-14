@@ -1,5 +1,4 @@
 import React from 'react';
-import { Html } from '@react-three/drei';
 import MarkerBillboard from '../MarkerBillboard';
 
 interface SceneMarkersProps {
@@ -10,7 +9,6 @@ interface SceneMarkersProps {
   pxToScaledScene: (px: number) => number;
   searchMarkerPos: { lat: number; lng: number } | null;
   searchMarkerScene: { x: number; z: number } | null;
-  mapMode: string;
 }
 
 export default function SceneMarkers({
@@ -21,7 +19,6 @@ export default function SceneMarkers({
   pxToScaledScene,
   searchMarkerPos,
   searchMarkerScene,
-  mapMode,
 }: SceneMarkersProps) {
   if (isRoadmapOverlay) return null;
 
@@ -46,13 +43,6 @@ export default function SceneMarkers({
           accent="#fb7185"
         />
       ) : null}
-
-      {/* Mode label */}
-      <Html position={[0, 10, 0]} center transform sprite distanceFactor={18} occlude={false}>
-        <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[9px] font-black uppercase tracking-[0.26em] text-cyan-200 shadow-lg backdrop-blur-md">
-          {mapMode}
-        </div>
-      </Html>
     </>
   );
 }

@@ -292,7 +292,6 @@ export default function SceneContent({
           pxToScaledScene={pxToScaledScene}
           searchMarkerPos={searchMarkerPos}
           searchMarkerScene={searchMarkerScene}
-          mapMode={mapMode}
         />
 
         {/* Looter game layers */}
