@@ -46,24 +46,28 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
             </div>
         )}
 
-        {!isDesktop && isSheetExpanded && !shouldHideSearch && (
-            <div className="px-4 pb-3 -mt-1 block md:hidden animate-in fade-in duration-300">
-                <div className="flex bg-gray-100 rounded-full items-center px-4 py-2 border border-gray-200 shadow-inner">
-                    <Search className="w-4 h-4 text-gray-500 mr-2 shrink-0" />
+        {isSheetExpanded && !shouldHideSearch && (
+            <div className="px-4 pb-3 -mt-1 animate-in fade-in duration-300">
+                <div className={`flex rounded-full items-center px-4 py-2 border shadow-inner ${isWhiteBg ? 'bg-gray-100 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+                    <Search className={`w-4 h-4 mr-2 shrink-0 ${isWhiteBg ? 'text-gray-500' : 'text-white/40'}`} />
                     <input
-                        id="sheet-search-mobile"
+                        id="sheet-search-input"
                         type="text"
-                        placeholder="Search..."
+                        placeholder="Tìm kiếm..."
                         onFocus={(e) => {
-                            e.target.blur();
-                            setIsSearchOverlayOpen?.(true);
+                            if (!isDesktop) {
+                                e.target.blur();
+                                setIsSearchOverlayOpen?.(true);
+                            }
                         }}
-                        className="bg-transparent border-none outline-none text-gray-900 text-sm w-full placeholder:text-gray-500 font-medium font-sans cursor-pointer"
+                        className={`bg-transparent border-none outline-none text-sm w-full font-medium font-sans ${isWhiteBg ? 'text-gray-900 placeholder:text-gray-500' : 'text-white placeholder:text-white/30'}`}
                         value={searchTag}
-                        readOnly
+                        onChange={(e) => isDesktop && setSearchTag(e.target.value)}
+                        readOnly={!isDesktop}
+                        onClick={() => !isDesktop && setIsSearchOverlayOpen?.(true)}
                     />
                     {searchTag && (
-                        <button onClick={() => setSearchTag('')} className="p-1 hover:bg-gray-200 rounded-full ml-1">
+                        <button onClick={() => setSearchTag('')} className={`p-1 rounded-full ml-1 ${isWhiteBg ? 'hover:bg-gray-200' : 'hover:bg-white/10'}`}>
                             <X className="w-3 h-3 text-gray-400" />
                         </button>
                     )}
