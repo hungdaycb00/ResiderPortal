@@ -6,9 +6,7 @@ import { clamp } from '../constants';
 
 interface CameraRigProps {
     scale: MotionValue<number>;
-    /** Góc ngẩng (Pitch) từ mặt phẳng XZ: 10° = nhìn ngang, 89° = nhìn thẳng xuống */
     tiltAngle: MotionValue<number>;
-    /** Góc xoay ngang (Yaw) quanh trục Y: 0° = nhìn về phía Nam (Z+) */
     cameraYawDeg: number;
     cameraHeightOffset: number;
     perspectivePx: number;
@@ -16,19 +14,13 @@ interface CameraRigProps {
     minDistance?: number;
 }
 
-/**
- * CameraRig (True 3D Orbit)
- *
- * Camera di chuyển theo hệ tọa độ cầu (Spherical Coordinates) xung quanh điểm nhìn trung tâm.
- * - Pitch (tiltAngle): Góc ngẩng của camera từ mặt đất.
- * - Yaw (cameraYawDeg): Góc xoay vòng của camera quanh trục Y.
- * - Radius (distance): Khoảng cách từ camera đến tâm, được tính từ zoom scale.
- *
- * Kiến trúc:
- *   Camera quỹ đạo xung quanh origin (0, cameraHeightOffset, 0).
- *   World group (moveGroupRef) di chuyển để tạo hiệu ứng pan.
- *   Không còn xoay World group để tạo góc nghiêng nữa.
- */
+// SPRINT 2: Temp objects tái sử dụng — tránh GC pressure mỗi frame
+const _targetPos = new THREE.Vector3();
+const _lookAtTarget = new THREE.Vector3();
+const _tempMatrix = new THREE.Matrix4();
+const _targetQuat = new THREE.Quaternion();
+const _UP = new THREE.Vector3(0, 1, 0);
+
 export default function CameraRig({
     scale,
     tiltAngle,
@@ -38,11 +30,26 @@ export default function CameraRig({
     cameraFov,
     minDistance = 140,
 }: CameraRigProps) {
-    const { camera } = useThree();
-    const targetPosRef = useRef(new THREE.Vector3());
-    const lookAtTargetRef = useRef(new THREE.Vector3());
+    const { camera, invalidate } = useThree();
 
-    // ── Đồng bộ FOV ngay lập tức khi prop thay đổi ────────────────────────────
+    // SPRINT 2: Cache degToRad — chỉ tính lại khi giá trị thay đổi
+    const prevPitchRef = useRef(-999);
+    const prevYawRef = useRef(-999);
+    const phiRef = useRef(0);
+    const thetaRef = useRef(0);
+    const sinPhiRef = useRef(0);
+    const cosPhiRef = useRef(0);
+    const sinThetaRef = useRef(0);
+    const cosThetaRef = useRef(0);
+
+    // SPRINT 2: Subscribe MotionValues → invalidate() để trigger frame khi cần
+    useEffect(() => {
+        const unsubScale = scale.on('change', invalidate);
+        const unsubTilt = tiltAngle.on('change', invalidate);
+        return () => { unsubScale(); unsubTilt(); };
+    }, [scale, tiltAngle, invalidate]);
+
+    // Đồng bộ FOV khi prop thay đổi
     useEffect(() => {
         if (!cameraFov) return;
         const cam = camera as THREE.PerspectiveCamera;
@@ -50,36 +57,65 @@ export default function CameraRig({
         if (Math.abs(cam.fov - cameraFov) < 0.01) return;
         cam.fov = cameraFov;
         cam.updateProjectionMatrix();
-    }, [camera, cameraFov]);
+        invalidate();
+    }, [camera, cameraFov, invalidate]);
+
+    // Trigger frame khi yaw thay đổi (prop, không phải MotionValue)
+    const prevYawPropRef = useRef(cameraYawDeg);
+    useEffect(() => {
+        if (prevYawPropRef.current !== cameraYawDeg) {
+            prevYawPropRef.current = cameraYawDeg;
+            invalidate();
+        }
+    }, [cameraYawDeg, invalidate]);
 
     useFrame((_, delta) => {
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
         const distance = clamp(depthFit / zoom, minDistance, 9000);
 
-        // ── Tính vị trí Camera theo tọa độ cầu ──────────────────────────────
-        // phi = góc ngẩng từ mặt phẳng XZ (giống altitude trong spherical coords)
-        // theta = góc xoay quanh trục Y (azimuth)
+        // SPRINT 2: Cache trig values — chỉ tính lại khi pitch/yaw thực sự thay đổi
         const pitchDeg = clamp(tiltAngle.get(), 8, 89);
-        const phi   = THREE.MathUtils.degToRad(pitchDeg);     // elevation
-        const theta = THREE.MathUtils.degToRad(cameraYawDeg); // azimuth
+        if (pitchDeg !== prevPitchRef.current) {
+            prevPitchRef.current = pitchDeg;
+            phiRef.current = THREE.MathUtils.degToRad(pitchDeg);
+            sinPhiRef.current = Math.sin(phiRef.current);
+            cosPhiRef.current = Math.cos(phiRef.current);
+        }
+        if (cameraYawDeg !== prevYawRef.current) {
+            prevYawRef.current = cameraYawDeg;
+            thetaRef.current = THREE.MathUtils.degToRad(cameraYawDeg);
+            sinThetaRef.current = Math.sin(thetaRef.current);
+            cosThetaRef.current = Math.cos(thetaRef.current);
+        }
 
-        const sinPhi   = Math.sin(phi);
-        const cosPhi   = Math.cos(phi);
-        const sinTheta = Math.sin(theta);
-        const cosTheta = Math.cos(theta);
+        const camX = distance * cosPhiRef.current * sinThetaRef.current;
+        const camY = distance * sinPhiRef.current + cameraHeightOffset;
+        const camZ = distance * cosPhiRef.current * cosThetaRef.current;
 
-        // Camera quỹ đạo quanh tâm (0, cameraHeightOffset, 0)
-        const camX = distance * cosPhi * sinTheta;
-        const camY = distance * sinPhi + cameraHeightOffset;
-        const camZ = distance * cosPhi * cosTheta;
+        _targetPos.set(camX, camY, camZ);
+        _lookAtTarget.set(0, cameraHeightOffset * 0.5, 0);
 
-        targetPosRef.current.set(camX, camY, camZ);
-        camera.position.lerp(targetPosRef.current, Math.min(1, delta * 6));
+        // SPRINT 2: Quaternion slerp thay vì lookAt() mỗi frame
+        // lookAt() → tính full rotation matrix → chậm hơn slerp trên mobile
+        _tempMatrix.lookAt(_targetPos, _lookAtTarget, _UP);
+        _targetQuat.setFromRotationMatrix(_tempMatrix);
 
-        // Camera luôn nhìn về tâm, có tính đến height offset
-        lookAtTargetRef.current.set(0, cameraHeightOffset * 0.5, 0);
-        camera.lookAt(lookAtTargetRef.current);
+        const EPSILON = 0.5;
+        const posNeedsUpdate = camera.position.distanceToSquared(_targetPos) > EPSILON;
+        const quatNeedsUpdate = camera.quaternion.angleTo(_targetQuat) > 0.0001;
+
+        if (posNeedsUpdate) {
+            camera.position.lerp(_targetPos, Math.min(1, delta * 6));
+        }
+        if (quatNeedsUpdate) {
+            camera.quaternion.slerp(_targetQuat, Math.min(1, delta * 8));
+        }
+
+        // SPRINT 2: Chỉ request frame tiếp theo khi camera vẫn đang di chuyển
+        if (posNeedsUpdate || quatNeedsUpdate) {
+            invalidate();
+        }
     });
 
     return null;

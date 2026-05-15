@@ -98,6 +98,15 @@ export default function SceneContent({
   const usesRoadmapProjection = mapMode === 'roadmap';
   const isRoadmapOverlay = usesRoadmapProjection && !isLooterGameMode;
   const renderLooterInScene = !!isLooterGameMode && !useDomLooterLayer;
+
+  // SPRINT 2: Subscribe pan MotionValues — trigger render khi user kéo bản đồ
+  const { invalidate } = useThree();
+  useEffect(() => {
+    const unsubX = panX.on('change', invalidate);
+    const unsubY = panY.on('change', invalidate);
+    const unsubScale = scale.on('change', invalidate);
+    return () => { unsubX(); unsubY(); unsubScale(); };
+  }, [panX, panY, scale, invalidate]);
   const sceneWorldScale = isRoadmapOverlay ? ROADMAP_WORLD_SCALE : 1;
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,

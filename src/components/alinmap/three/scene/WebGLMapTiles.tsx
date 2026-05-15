@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MotionValue } from 'framer-motion';
@@ -44,8 +44,11 @@ export default function WebGLMapTiles({
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const mapReadyRef = useRef(false);
   const lastJumpRef = useRef(0);
-  // SPRINT 1 FIX P0: Dirty flag — chỉ upload texture khi MapLibre render xong
   const textureDirtyRef = useRef(false);
+  // SPRINT 2: invalidate ref — gọi được từ trong useEffect closure
+  const { invalidate } = useThree();
+  const invalidateRef = useRef(invalidate);
+  invalidateRef.current = invalidate;
 
   useEffect(() => {
     if (mode !== 'roadmap' || !myObfPos) return;
@@ -90,6 +93,8 @@ export default function WebGLMapTiles({
           ctx2d.restore();
           // SPRINT 1 FIX P0: Đặt dirty flag thay vì set needsUpdate trực tiếp
           textureDirtyRef.current = true;
+          // SPRINT 2: Báo R3F render frame tiếp theo ngay khi có texture mới
+          invalidateRef.current();
         } catch {
           // bỏ qua khi canvas đang transition
         }

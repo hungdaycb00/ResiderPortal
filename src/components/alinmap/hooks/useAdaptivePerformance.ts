@@ -54,18 +54,38 @@ const readPerformanceProfile = (): AdaptivePerformanceProfile => {
   const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
   const narrowViewport = window.matchMedia('(max-width: 768px)').matches;
 
+  // SPRINT 2: iOS detection — iOS không bao giờ expose deviceMemory
+  // nên cores<=4 && memory<=4 luôn true trên iOS gây nhận dạng sai
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // SPRINT 2: GPU tier detection từ WebGL renderer string
+  let isHighEndGPU = false;
+  try {
+    const glCanvas = document.createElement('canvas');
+    const gl = glCanvas.getContext('webgl');
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      const renderer = ext ? (gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string) || '' : '';
+      isHighEndGPU = /A15|A16|A17|A18|Snapdragon 8 Gen [23]|Adreno 7[0-9][0-9]/.test(renderer);
+    }
+  } catch { /* skip */ }
+
   const lowEndSignals = saveData
     || reducedMotion
-    || cores <= 4
-    || memory <= 4
+    // iOS fix: bỏ qua kiểm tra cores/memory trên iOS vì không tin cậy
+    || (!isIOS && (cores <= 4 || memory <= 4))
     || effectiveType === 'slow-2g'
     || effectiveType === '2g';
 
-  const mobileLike = coarsePointer || narrowViewport;
+  const mobileLike = coarsePointer || narrowViewport || isIOS;
 
   let mode: AdaptivePerformanceMode = 'high';
   if (lowEndSignals) mode = 'low';
   else if (mobileLike) mode = 'balanced';
+
+  // SPRINT 2: iOS high-end GPU — upgrade từ 'low' lên 'balanced' nếu GPU mạnh
+  if (isIOS && isHighEndGPU && mode === 'low') mode = 'balanced';
 
   if (mode === 'low') {
     return {
