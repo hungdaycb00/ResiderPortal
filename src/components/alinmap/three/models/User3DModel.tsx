@@ -74,16 +74,10 @@ const User3DModel: React.FC<User3DModelProps> = ({
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             scale={[avatarScale, avatarScale, avatarScale]}
         >
-            {/* 3D Placeholder Character (Meeple shape) */}
-            <group position={[0, 1.2, 0]}>
-                {/* Body */}
-                <mesh position={[0, -0.2, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[0.3, 0.6, 1.5, 16]} />
-                    <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
-                </mesh>
-                {/* Head */}
-                <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
-                    <sphereGeometry args={[0.5, 32, 32]} />
+            {/* 3D Placeholder Character (Cube shape) */}
+            <group position={[0, 0.6, 0]}>
+                <mesh position={[0, 0, 0]} castShadow receiveShadow>
+                    <boxGeometry args={[1.2, 1.2, 1.2]} />
                     <meshNormalMaterial transparent={dimmed} opacity={dimmed ? 0.3 : 1} />
                 </mesh>
             </group>
