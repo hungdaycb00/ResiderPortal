@@ -68,69 +68,74 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             renderOrder={10}
         >
-            <Billboard follow>
+            <Billboard follow lockX lockZ>
                 <mesh position={[0, 1.15 * avatarScale, 0.02]} renderOrder={20}>
                     <planeGeometry args={[avatarPlaneSize, avatarPlaneSize]} />
-                    <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
+                    <meshBasicMaterial map={texture} transparent alphaTest={0.1} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
                 </mesh>
-                <mesh position={[0, 0.08, -0.02]}>
-                    <circleGeometry args={[ringRadius, 48]} />
-                    <meshBasicMaterial
-                        color={isVisibleOnMap ? '#22d3ee' : '#10b981'}
-                        transparent
-                        opacity={0.2}
-                        depthTest={false}
-                        depthWrite={false}
-                    />
-                </mesh>
-                {(isSelected || isHovered) && (
-                    <mesh position={[0, 0.08, -0.03]}>
-                        <circleGeometry args={[ringRadius * 1.15, 48]} />
-                        <meshBasicMaterial
-                            color="#ffffff"
-                            transparent
-                            opacity={0.4}
-                            depthTest={false}
-                            depthWrite={false}
-                        />
-                    </mesh>
-                )}
                 {shouldRenderLabel && (
                     <group position={[0, labelYOffset, 0]}>
                         <Text
                             position={[0, 0, 0]}
-                            fontSize={isRoadmapPresentation ? 0.4 : 0.6}
+                            fontSize={isRoadmapPresentation ? 0.4 : 0.7}
                             color="#0f172a"
                             outlineWidth={0.04}
                             outlineColor="#ffffff"
                             anchorX="center"
                             anchorY="middle"
                             fontWeight="bold"
-                            depthTest={false}
                         >
                             {name}
                         </Text>
                         {status && labelMode === 'full' && (
                             <Text
-                                position={[0, isRoadmapPresentation ? -0.4 : -0.6, 0]}
-                                fontSize={isRoadmapPresentation ? 0.2 : 0.25}
+                                position={[0, isRoadmapPresentation ? -0.5 : -0.7, 0]}
+                                fontSize={isRoadmapPresentation ? 0.25 : 0.35}
                                 color="#0284c7"
                                 outlineWidth={0.02}
                                 outlineColor="#e0f2fe"
                                 anchorX="center"
                                 anchorY="middle"
                                 fontWeight="bold"
-                                depthTest={false}
                             >
                                 {status}
                             </Text>
                         )}
                     </group>
                 )}
-                {showGallery ? (
-                    <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
-                ) : null}
             </Billboard>
+
+            {/* Vòng tròn dưới đất (footprint) */}
+            <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[ringRadius, 48]} />
+                <meshBasicMaterial
+                    color={isVisibleOnMap ? '#22d3ee' : '#10b981'}
+                    transparent
+                    opacity={0.2}
+                    depthWrite={false}
+                />
+            </mesh>
+            {(isSelected || isHovered) && (
+                <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <circleGeometry args={[ringRadius * 1.15, 48]} />
+                    <meshBasicMaterial
+                        color="#ffffff"
+                        transparent
+                        opacity={0.4}
+                        depthWrite={false}
+                    />
+                </mesh>
+            )}
+            
+            {/* Fake Drop Shadow */}
+            <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[ringRadius * 0.8, 32]} />
+                <meshBasicMaterial color="black" transparent opacity={0.15} depthWrite={false} />
+            </mesh>
+
+            {showGallery ? (
+                <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
+            ) : null}
         </group>
     );
 };

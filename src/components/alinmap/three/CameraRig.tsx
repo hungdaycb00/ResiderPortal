@@ -26,12 +26,14 @@ export default function CameraRig({ scale, cameraHeightOffset, perspectivePx, ca
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
         const distance = clamp(depthFit / zoom, minDistance, 9000);
-        const baseHeight = distance * CAMERA_HEIGHT_RATIO_DEFAULT;
+        const baseHeight = distance * 1.2; // Increase ratio for "Bird's eye" depth
         const height = baseHeight + cameraHeightOffset;
 
         targetPosRef.current.set(0, height, distance);
         camera.position.lerp(targetPosRef.current, Math.min(1, delta * 6));
-        camera.lookAt(0, cameraHeightOffset, 0);
+        
+        // Look slightly forward to capture more depth and sky area
+        camera.lookAt(0, cameraHeightOffset, -distance * 0.15);
     });
 
     return null;
