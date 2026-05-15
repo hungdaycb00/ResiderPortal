@@ -17,11 +17,19 @@ interface WebGLMapTilesProps {
   performanceMode?: string;
 }
 
-// SPRINT 1 FIX: Adaptive proxy size theo device capability
+// SPRINT 1: Adaptive proxy size theo device capability
 const getProxySize = (isDesktop = false, perfMode = 'high'): number => {
   if (perfMode === 'low') return 512;
   if (!isDesktop) return 1024;
   return 2048;
+};
+
+// SPRINT 3b: Adaptive throttle interval theo performance mode
+// high=30fps(33ms), balanced=20fps(50ms), low=10fps(100ms)
+const getThrottleInterval = (perfMode = 'high'): number => {
+  if (perfMode === 'low') return 0.1;
+  if (perfMode === 'balanced') return 0.05;
+  return 0.033;
 };
 
 const getOffscreenContainer = () => {
@@ -45,12 +53,28 @@ export default function WebGLMapTiles({
   const mapReadyRef = useRef(false);
   const lastJumpRef = useRef(0);
   const textureDirtyRef = useRef(false);
-  // SPRINT 2: invalidate ref — gọi được từ trong useEffect closure
+  // SPRINT 3c: Pause khi tab hidden
+  const isPageVisibleRef = useRef(true);
+
   const { invalidate } = useThree();
   const invalidateRef = useRef(invalidate);
   invalidateRef.current = invalidate;
 
+  // SPRINT 3c: Dừng MapLibre update khi tab bị ẩn — tiết kiệm CPU/GPU
   useEffect(() => {
+    const onVisibility = () => {
+      isPageVisibleRef.current = document.visibilityState !== 'hidden';
+      if (isPageVisibleRef.current) {
+        // Khi quay lại tab — trigger re-render ngay
+        invalidateRef.current();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  useEffect(() => {
+    // SPRINT 3d: Cleanup triệt để khi mode !== 'roadmap' hoặc myObfPos null
     if (mode !== 'roadmap' || !myObfPos) return;
 
     const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
@@ -58,7 +82,7 @@ export default function WebGLMapTiles({
     const safeScale = scale.get() || 1;
     const initialZoom = getRoadmapTileZoom(safeScale);
 
-    // Proxy 2D canvas: Three.js đọc từ đây, tránh xung đột WebGL context
+    // Proxy 2D canvas — tránh xung đột 2 WebGL context
     const proxyCanvas = document.createElement('canvas');
     proxyCanvas.width = PROXY_SIZE;
     proxyCanvas.height = PROXY_SIZE;
@@ -78,23 +102,18 @@ export default function WebGLMapTiles({
       mapReadyRef.current = true;
       const mapCanvas = map.getCanvas();
 
-      // Copy MapLibre frame → proxy 2D canvas đồng bộ trong render callback
-      // Sau đó set dirty flag để useFrame biết texture cần upload
       map.on('render', () => {
-        if (!ctx2d || !mapReadyRef.current) return;
+        // SPRINT 3c: Skip copy khi tab hidden
+        if (!ctx2d || !mapReadyRef.current || !isPageVisibleRef.current) return;
         try {
-          // FIX TEXT NGƯỢC: ctx2d.drawImage từ WebGL canvas cần được flip ngang
-          // vì MapLibre với yaw=0 (nhìn từ Nam lên Bắc) render map đúng hướng
-          // nhưng UV plane sau rotation-x=-PI/2 cần flip U để text đúng chiều
+          // Fix text ngược: flip ngang khi copy
           ctx2d.save();
           ctx2d.translate(PROXY_SIZE, 0);
-          ctx2d.scale(-1, 1); // Flip ngang để correct text direction
+          ctx2d.scale(-1, 1);
           ctx2d.drawImage(mapCanvas, 0, 0, PROXY_SIZE, PROXY_SIZE);
           ctx2d.restore();
-          // SPRINT 1 FIX P0: Đặt dirty flag thay vì set needsUpdate trực tiếp
           textureDirtyRef.current = true;
-          // SPRINT 2: Báo R3F render frame tiếp theo ngay khi có texture mới
-          invalidateRef.current();
+          invalidateRef.current(); // Sprint 2: trigger R3F frame
         } catch {
           // bỏ qua khi canvas đang transition
         }
@@ -104,9 +123,7 @@ export default function WebGLMapTiles({
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.format = THREE.RGBAFormat;
-      // flipY=true: Three.js chuẩn hóa V-axis, kết hợp với flip ngang bên trên
-      // cho ra đúng hướng bản đồ (north = top, east = right, text đọc được)
-      texture.flipY = true;
+      texture.flipY = true; // correct V-axis
 
       textureRef.current = texture;
       if (materialRef.current) {
@@ -117,24 +134,33 @@ export default function WebGLMapTiles({
 
     mapRef.current = map;
 
+    // SPRINT 3d: Cleanup đầy đủ khi component unmount hoặc mode thay đổi
     return () => {
       mapReadyRef.current = false;
       textureDirtyRef.current = false;
       map.remove();
       mapRef.current = null;
+      // Giải phóng VRAM ngay lập tức khi rời roadmap mode
       if (textureRef.current) {
         textureRef.current.dispose();
         textureRef.current = null;
+      }
+      if (materialRef.current) {
+        materialRef.current.map = null;
+        materialRef.current.needsUpdate = true;
       }
     };
   }, [mode, myObfPos, isDesktop, performanceMode]);
 
   useFrame((_, delta) => {
     if (!mapReadyRef.current || !mapRef.current || !myObfPos) return;
+    // SPRINT 3c: Skip frame processing khi tab hidden
+    if (!isPageVisibleRef.current) return;
 
-    // Throttle jumpTo ~15fps
+    // SPRINT 3b: Adaptive throttle theo performance mode
+    const throttleInterval = getThrottleInterval(performanceMode);
     lastJumpRef.current += delta;
-    if (lastJumpRef.current >= 0.066) {
+    if (lastJumpRef.current >= throttleInterval) {
       lastJumpRef.current = 0;
 
       let center = getRoadmapCenterFromPan(
@@ -147,19 +173,19 @@ export default function WebGLMapTiles({
       if (!isFinite(center.lng)) center.lng = myObfPos.lng;
 
       try {
-        // SPRINT 1 FIX P2: easeTo() thay jumpTo() để smooth giữa các frame
+        // Sprint 1: easeTo smooth hơn jumpTo
         mapRef.current.easeTo({
           center: [center.lng, center.lat],
           zoom,
-          duration: 80,  // ms — smooth giữa 2 frame 15fps
-          easing: (t: number) => t, // linear
+          duration: Math.round(throttleInterval * 1000 * 1.2),
+          easing: (t: number) => t,
         });
       } catch {
         // bỏ qua
       }
     }
 
-    // SPRINT 1 FIX P0: Chỉ upload GPU khi có frame mới từ MapLibre
+    // Chỉ upload texture khi có frame mới từ MapLibre
     if (textureDirtyRef.current && textureRef.current) {
       textureRef.current.needsUpdate = true;
       textureDirtyRef.current = false;
