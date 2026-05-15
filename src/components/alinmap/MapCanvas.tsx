@@ -224,7 +224,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 	    );
 
     return (
-        <div className="absolute inset-0 overflow-hidden bg-[#001424]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
+        <div className="absolute inset-0 overflow-hidden bg-[#dcdcd8]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
             <LooterBackground mode={performance?.backgroundMode} />
 
             {/* Location Consent Overlay */}

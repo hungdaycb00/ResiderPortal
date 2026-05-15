@@ -195,9 +195,24 @@ export default function SceneContent({
 
   return (
     <group ref={tiltGroupRef}>
-      {/* Fog đường chân trời — tạo chiều sâu không gian 3D thực thụ */}
-      <fogExp2 attach="fog" color="#071a2e" density={0.000018} />
+      {/* Fog chân trời — màu thay đổi theo mode */}
+      {isRoadmapOverlay ? (
+        // Roadmap: fog trắng nhạt (đúng màu nền Positron/CartoDB)
+        <fogExp2 attach="fog" color="#e8e8e4" density={0.000006} />
+      ) : (
+        // Satellite / Looter: fog đẮm tối
+        <fogExp2 attach="fog" color="#071a2e" density={0.000018} />
+      )}
       
+      {/* Background fill plane — chỉ hiển thị trong roadmap mode
+          Phủ khắp mặt đất bằng màu nền map để lấp đầy khoảng trống */}
+      {isRoadmapOverlay && (
+        <mesh rotation-x={-Math.PI / 2} position={[0, -0.4, 0]}>
+          <planeGeometry args={[60000, 60000]} />
+          <meshBasicMaterial color="#e8e8e4" depthWrite={false} />
+        </mesh>
+      )}
+
       {/* Lớp bản đồ nền (WebGL) không bị gắn vào moveGroupRef 
           vì MapLibre đã tự handle việc trượt tọa độ theo panX, panY */}
       <WebGLMapTiles 

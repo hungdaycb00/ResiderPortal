@@ -142,11 +142,10 @@ export default function WebGLMapTiles({
 
   if (mode !== 'roadmap') return null;
 
-  // Plane phải đủ lớn để phủ toàn bộ vùng nhìn từ camera
-  // 1000 units ở sceneWorldScale=0.12 tương đương vùng nhìn rộng
+  // Plane phải đủ lớn để phủ toàn bộ vùng nhìn từ camera kể cả khi zoom ra xa
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
-      <planeGeometry args={[1000, 1000]} />
+      <planeGeometry args={[4000, 4000]} />
       <meshBasicMaterial ref={materialRef} transparent opacity={1} color="#ffffff" />
     </mesh>
   );
