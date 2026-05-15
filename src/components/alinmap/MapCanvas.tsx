@@ -5,10 +5,6 @@ import { useLooterBoat } from './hooks/useLooterBoat';
 import { useLooterState, useLooterActions } from './looter-game/LooterGameContext';
 import { useMapInteractions } from './hooks/useMapInteractions';
 import AlinMapThreeScene from './three/AlinMapThreeScene';
-import MapTiles from './MapTiles';
-import LooterMapPlaneLayer from './components/LooterMapPlaneLayer';
-import RoadmapAvatarLayer from './components/RoadmapAvatarLayer';
-import MapReferenceGridOverlay from './components/MapReferenceGridOverlay';
 import type { AdaptivePerformanceProfile } from './hooks/useAdaptivePerformance';
 import AlinMapLoadingIcon from './components/AlinMapLoadingIcon';
 
@@ -251,76 +247,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                     onPointerCancel={handleMapPointerCancel}
                     onClickCapture={handleMapClickCapture}
                 >
-                    <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[180vmax] w-[180vmax] -translate-x-1/2 -translate-y-1/2">
-                        <motion.div
-                            className="absolute inset-0 alin-map-tilt-plane"
-                            style={{
-                                '--alin-map-tilt-deg': tiltDeg,
-                                '--alin-map-world-rotate-deg': `${cameraRotateDeg}deg`,
-                                '--alin-map-camera-rotate-y-deg': `${cameraRotateYDeg}deg`,
-                                '--alin-map-camera-rotate-x-deg': '0deg',
-                                '--alin-map-billboard-pitch-deg': billboardPitchDeg,
-                                '--alin-map-billboard-yaw-deg': `${-cameraRotateYDeg}deg`,
-                                '--alin-map-billboard-lift-px': '30px',
-                                '--alin-map-plane-scale': MAP_PLANE_SCALE,
-                                '--alin-map-node-counter-scale': nodeCounterScaleCss,
-                            } as React.CSSProperties}
-                        >
-                            <MapTiles
-                                panX={panX}
-                                panY={panY}
-                                scale={scale}
-                                planeYScale={planeYScale}
-                                myObfPos={myObfPos}
-                                mode={mapMode}
-                            />
 
-                            <MapReferenceGridOverlay
-                                scale={scale}
-                                mapMode={mapMode}
-                                enabled={showReferenceGrid}
-                                is3DPlane={true}
-                            />
-                        </motion.div>
-                    </div>
-
-                    <MapReferenceGridOverlay
-                        scale={scale}
-                        mapMode={mapMode}
-                        enabled={showReferenceGrid}
-                        is3DPlane={false}
-                    />
-
-                    {!isLooterGameMode && mapMode === 'roadmap' && myObfPos && (
-                        <RoadmapAvatarLayer
-                            nearbyUsers={nearbyUsers}
-                            myUserId={myUserId}
-                            user={user}
-                            myDisplayName={myDisplayName}
-                            myAvatarUrl={myAvatarUrl}
-                            myStatus={myStatus}
-                            galleryActive={galleryActive}
-                            galleryTitle={galleryTitle}
-                            galleryImages={galleryImages}
-                            myObfPos={myObfPos}
-                            searchTag={searchTag}
-                            filterDistance={filterDistance}
-                            filterAgeMin={filterAgeMin}
-                            filterAgeMax={filterAgeMax}
-                            scale={scale}
-                            panX={panX}
-                            panY={panY}
-                            planeYScale={planeYScale}
-                            mapMode={mapMode}
-                            onSelectUser={setSelectedUser}
-                            onSelectSelf={() => {
-                                setSelectedUser(null);
-                                setActiveTab('posts');
-                                setMainTab?.('profile');
-                                setIsSheetExpanded(true);
-                            }}
-                        />
-                    )}
 
                     <AlinMapThreeScene
                         position={position}

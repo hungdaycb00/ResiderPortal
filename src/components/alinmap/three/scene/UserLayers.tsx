@@ -202,10 +202,6 @@ export default function UserLayers({
           position={[selfPos.x, 0, selfPos.z]}
           offsetX={boatOffsetX}
           offsetY={boatOffsetY}
-          currentLat={looterStateObj?.currentLat}
-          currentLng={looterStateObj?.currentLng}
-          fortressLat={looterStateObj?.fortressLat}
-          fortressLng={looterStateObj?.fortressLng}
           reducedMotion={performanceMode === 'low'}
           sceneWorldScale={sceneWorldScale}
         />

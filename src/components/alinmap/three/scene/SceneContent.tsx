@@ -13,6 +13,7 @@ import CameraRig from '../CameraRig';
 import UserLayers from './UserLayers';
 import LooterLayers from './LooterLayers';
 import SceneMarkers from './SceneMarkers';
+import WebGLMapTiles from './WebGLMapTiles';
 
 // Hooks
 import { useLooterInteraction } from './looterInteraction';
@@ -188,10 +189,26 @@ export default function SceneContent({
 
   if (!position) return null;
 
+  // Kích thước của Texture MapLibre canvas
+  const CANVAS_SIZE = 2048;
+  const MAP_PLANE_SIZE = CANVAS_SIZE * MAP_PLANE_SCALE * sceneWorldScale;
+
   return (
     <group ref={tiltGroupRef}>
       {/* Fog đường chân trời — tạo chiều sâu không gian 3D thực thụ */}
       <fogExp2 attach="fog" color="#071a2e" density={0.000018} />
+      
+      {/* Lớp bản đồ nền (WebGL) không bị gắn vào moveGroupRef 
+          vì MapLibre đã tự handle việc trượt tọa độ theo panX, panY */}
+      <WebGLMapTiles 
+        panX={panX} 
+        panY={panY} 
+        scale={scale} 
+        planeYScale={planeYScale} 
+        myObfPos={origin} 
+        mode={mapMode} 
+      />
+
       <group ref={moveGroupRef}>
         {/* Ground */}
         <Ground

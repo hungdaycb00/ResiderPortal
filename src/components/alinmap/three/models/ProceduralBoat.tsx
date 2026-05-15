@@ -43,10 +43,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
         groupRef.current.rotation.z = rockZ;
     });
 
-    const distToFortress = useMemo(() => {
-        if (currentLat == null || currentLng == null || fortressLat == null || fortressLng == null) return null;
-        return Math.round(getDistanceMeters(currentLat, currentLng, fortressLat, fortressLng));
-    }, [currentLat, currentLng, fortressLat, fortressLng]);
+
 
     return (
         <group position={position} rotation={rotation} ref={groupRef}>
@@ -59,21 +56,6 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 size={AVATAR_PLANE_SIZE * 1.1}
                 interactive={false}
             />
-            {distToFortress != null && !reducedMotion && (
-                <Text
-                    position={[0, -2.5, 0]}
-                    fontSize={0.8}
-                    color="#94a3b8"
-                    outlineWidth={0.06}
-                    outlineColor="#0f172a"
-                    anchorX="center"
-                    anchorY="middle"
-                    fontWeight="bold"
-                    material-depthTest={false}
-                >
-                    {distToFortress}m → 🏰
-                </Text>
-            )}
         </group>
     );
 };
