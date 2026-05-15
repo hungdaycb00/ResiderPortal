@@ -8,7 +8,7 @@ import type { AlinMapMode } from '../constants';
 interface GroundProps {
     mapMode: AlinMapMode;
     roadmapWorldScale?: number;
-    onGroundClick?: (point: THREE.Vector3) => void;
+    onGroundClick?: (point: THREE.Vector3, ray?: THREE.Ray) => void;
     groundRef?: React.RefObject<THREE.Mesh | null>;
 }
 
@@ -21,7 +21,7 @@ export default function Ground({ mapMode, onGroundClick, groundRef }: GroundProp
 
     const handleClick = (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        onGroundClick?.(e.point);
+        onGroundClick?.(e.point, e.ray);
     };
 
     return (

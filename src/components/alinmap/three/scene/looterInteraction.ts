@@ -1,5 +1,5 @@
 import React from 'react';
-import { Vector3 } from 'three';
+import { Vector3, Ray } from 'three';
 import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
 import { worldToScene, pxToScene, MAP_COORD_SCENE_SCALE, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
 
@@ -178,7 +178,7 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     onRequestMove, onStopBoat, onSetArrivalAction, openFortressStorage,
   ]);
 
-  const handleGroundClick = React.useCallback((groundMeshRef: React.RefObject<any>, point: Vector3) => {
+  const handleGroundClick = React.useCallback((groundMeshRef: React.RefObject<any>, point: Vector3, ray?: Ray) => {
     if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
     if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
     if (looterStateObj?.worldTier === -1 && !encounter) {
@@ -186,18 +186,39 @@ export function useLooterInteraction(params: LooterInteractionParams) {
       return;
     }
 
-    // worldToLocal trên moveGroupRef (cha của Ground) là cách chuẩn nhất để 
-    // đảo ngược tất cả phép biến hình Tilt (xoay) và Pan (dịch chuyển).
-    const moveGroup = groundMeshRef.current.parent; 
+    const moveGroup = groundMeshRef.current.parent;
     if (!moveGroup) return;
-    const localPt = moveGroup.worldToLocal(point.clone());
 
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
-    const lng = origin.lng + localPt.x / SCALE;
-    const lat = origin.lat - localPt.z / SCALE;
-    // moveGroup.worldToLocal chỉ undo pan translation.
-    // Trong moveGroup space: sceneZ = -(lat - origin.lat) * SCALE = localPt.z
-    // => lat = origin.lat - localPt.z / SCALE
+    let lat: number;
+    let lng: number;
+
+    if (ray) {
+      // Transform TIA (ray) về moveGroup local space, tính giao với mặt phẳng ngang Y=-1.
+      // Cách này khắc phục lỗi lệch target do camera ở độ cao (height) bắn tia xuyên qua
+      // mặt phẳng Ground đã bị tiltGroup xoay nghiêng. worldToLocal(point) chỉ un-tilt
+      // điểm giao cắt chứ không tính lại đường đi của tia => sai lệch vài km.
+      const localOrigin = moveGroup.worldToLocal(ray.origin.clone());
+      const rayEndWorld = ray.origin.clone().add(ray.direction);
+      const localEnd = moveGroup.worldToLocal(rayEndWorld);
+      const localDir = new Vector3().subVectors(localEnd, localOrigin).normalize();
+
+      const denom = localDir.y;
+      if (Math.abs(denom) < 1e-9) {
+        // Tia song song mặt đất — fallback về worldToLocal(point)
+        const fb = moveGroup.worldToLocal(point.clone());
+        lng = origin.lng + fb.x / SCALE;
+        lat = origin.lat - fb.z / SCALE;
+      } else {
+        const t = (-1 - localOrigin.y) / denom;
+        lng = origin.lng + (localOrigin.x + t * localDir.x) / SCALE;
+        lat = origin.lat - (localOrigin.z + t * localDir.z) / SCALE;
+      }
+    } else {
+      const localPt = moveGroup.worldToLocal(point.clone());
+      lng = origin.lng + localPt.x / SCALE;
+      lat = origin.lat - localPt.z / SCALE;
+    }
 
     // === Proximity check: phát hiện item gần vị trí click ===
     const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
@@ -209,7 +230,7 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     if (nearbyItems.length > 0) {
       nearbyItems.sort((a, b) => a.d2 - b.d2);
       const nearest = nearbyItems[0].item;
-      console.log('[GroundClick→Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', lat.toFixed(5), 'click-lng:', lng.toFixed(5));
+      console.log('[GroundClick->Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', lat.toFixed(5), 'click-lng:', lng.toFixed(5));
       handleWorldItemClickRef.current(nearest);
       return;
     }
