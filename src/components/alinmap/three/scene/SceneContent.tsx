@@ -72,6 +72,7 @@ export default function SceneContent({
   onSelfDragEnd,
   onSetArrivalAction,
   setIsTierSelectorOpen,
+  cameraFov,
   performance,
 }: AlinMapThreeSceneProps) {
   const tiltGroupRef = useRef<Group>(null);
@@ -161,7 +162,7 @@ export default function SceneContent({
 
     if (Math.abs(tilt - lastTiltRef.current) > 0.001) {
       tiltGroupRef.current.rotation.set(
-        MathUtils.degToRad(-tilt),
+        MathUtils.degToRad(tilt),
         MathUtils.degToRad(cameraRotateYDeg),
         MathUtils.degToRad(cameraRotateDeg)
       );

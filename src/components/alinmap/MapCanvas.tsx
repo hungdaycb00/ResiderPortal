@@ -119,11 +119,11 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const [isCursesExpanded, setIsCursesExpanded] = React.useState(false);
     const [debugCameraZ, setDebugCameraZ] = React.useState(() => Math.round(cameraZ.get()));
     const [debugScale, setDebugScale] = React.useState(() => scale.get());
-    const tiltDeg = useMotionTemplate`${tiltAngle}deg`;
-    const counterTiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
+    const tiltDeg = useTransform(tiltAngle, (v) => `${-v}deg`);
+    const counterTiltDeg = useMotionTemplate`${tiltAngle}deg`;
     const billboardPitchDeg = useTransform(
         tiltAngle,
-        (v) => `${-v + BILLBOARD_UPRIGHT_PITCH_DEGREES}deg`
+        (v) => `${v - (90 - BILLBOARD_UPRIGHT_PITCH_DEGREES)}deg`
     );
     const nodeCounterScale = useTransform(scale, (v) => Math.max(0.35, Math.min(1.6, v || 1)));
     const nodeCounterScaleCss = useMotionTemplate`${nodeCounterScale}`;
