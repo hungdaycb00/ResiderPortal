@@ -8,14 +8,21 @@ interface CameraRigProps {
     scale: MotionValue<number>;
     cameraHeightOffset: number;
     perspectivePx: number;
+    cameraFov?: number;
     minDistance?: number;
 }
 
-export default function CameraRig({ scale, cameraHeightOffset, perspectivePx, minDistance = 140 }: CameraRigProps) {
+export default function CameraRig({ scale, cameraHeightOffset, perspectivePx, cameraFov, minDistance = 140 }: CameraRigProps) {
     const { camera } = useThree();
     const targetPosRef = useRef(new THREE.Vector3());
 
     useFrame((_, delta) => {
+        // Đồng bộ FOV khi giá trị perspective thay đổi từ UI
+        if (cameraFov && (camera as THREE.PerspectiveCamera).isPerspectiveCamera && (camera as THREE.PerspectiveCamera).fov !== cameraFov) {
+            (camera as THREE.PerspectiveCamera).fov = cameraFov;
+            (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+        }
+
         const zoom = clamp(scale.get() || 1, 0.08, 8);
         const depthFit = perspectivePx * 0.56;
         const distance = clamp(depthFit / zoom, minDistance, 9000);

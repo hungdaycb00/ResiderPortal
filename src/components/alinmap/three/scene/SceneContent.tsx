@@ -292,6 +292,7 @@ export default function SceneContent({
         scale={scale}
         cameraHeightOffset={cameraHeightOffset}
         perspectivePx={perspectivePx}
+        cameraFov={cameraFov}
         minDistance={isLooterGameMode ? 95 : 140}
       />
     </group>
