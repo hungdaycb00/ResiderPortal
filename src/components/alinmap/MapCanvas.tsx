@@ -273,21 +273,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 myObfPos={myObfPos}
                                 mode={mapMode}
                             />
-                            {isLooterGameMode && mapMode === 'roadmap' && (
-                                <LooterMapPlaneLayer
-                                    myObfPos={myObfPos}
-                                    panX={panX}
-                                    panY={panY}
-                                    scale={scale}
-                                    planeYScale={planeYScale}
-                                    boatTargetPin={looterBoat.boatTargetPin}
-                                    boatOffsetX={looterBoat.boatOffsetX}
-                                    boatOffsetY={looterBoat.boatOffsetY}
-                                    onRequestMove={looterBoat.executeMoveToExact}
-                                    onStopBoat={looterBoat.stopBoat}
-                                    onSetArrivalAction={looterBoat.setOnArrivalAction}
-                                />
-                            )}
+                            {/* LooterMapPlaneLayer (DOM) has been removed to enforce 3D rendering pipeline for 2.5D perspective */}
                             <MapReferenceGridOverlay
                                 scale={scale}
                                 mapMode={mapMode}
@@ -370,7 +356,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selfDragY={selfDragY}
                         mapMode={mapMode}
                         isLooterGameMode={isLooterGameMode}
-                        useDomLooterLayer={isLooterGameMode && mapMode === 'roadmap'}
+                        useDomLooterLayer={false}
                         boatTargetPin={looterBoat.boatTargetPin}
                         boatOffsetX={looterBoat.boatOffsetX}
                         boatOffsetY={looterBoat.boatOffsetY}

@@ -28,7 +28,7 @@ export default function Ground({ mapMode, onGroundClick, groundRef }: GroundProp
         <group>
             <mesh ref={meshRef} rotation-x={-Math.PI / 2} position={[0, -1, 0]} receiveShadow onClick={handleClick}>
                 <planeGeometry args={[ROADMAP_HIT_SIZE, ROADMAP_HIT_SIZE, 1, 1]} />
-                <meshBasicMaterial visible={false} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
 
             {mapMode === 'satellite' && (

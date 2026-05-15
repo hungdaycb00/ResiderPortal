@@ -153,9 +153,9 @@ export default function SceneContent({
     // Áp dụng chung cho mọi mode (roadmap và satellite) để loại bỏ dependency vào React State
     if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
       moveGroupRef.current.position.set(
-        liftX * MAP_COORD_SCENE_SCALE * sceneWorldScale,
+        liftX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale,
         0,
-        liftZ * MAP_COORD_SCENE_SCALE * sceneWorldScale
+        liftZ * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale
       );
       lastLiftXRef.current = liftX;
       lastLiftZRef.current = liftZ;
