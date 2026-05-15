@@ -194,10 +194,10 @@ export function useLooterInteraction(params: LooterInteractionParams) {
 
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
     const lng = origin.lng + localPt.x / SCALE;
-    const lat = origin.lat + localPt.y / SCALE; 
-    // Giải thích lat: Ground mesh xoay X -90 độ, nên trục Y local của nó hướng theo -World Z.
-    // Trong worldToScene: sceneZ = -(lat - origin.lat) * SCALE.
-    // Vậy localY = -sceneZ = (lat - origin.lat) * SCALE  => lat = origin.lat + localY / SCALE.
+    const lat = origin.lat - localPt.z / SCALE;
+    // moveGroup.worldToLocal chỉ undo pan translation.
+    // Trong moveGroup space: sceneZ = -(lat - origin.lat) * SCALE = localPt.z
+    // => lat = origin.lat - localPt.z / SCALE
 
     // === Proximity check: phát hiện item gần vị trí click ===
     const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
