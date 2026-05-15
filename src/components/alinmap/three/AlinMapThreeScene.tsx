@@ -22,7 +22,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
     <Canvas
       className="absolute inset-0 z-[20]"
       dpr={dprRange}
-      frameloop="demand"
+      frameloop="always"
       shadows={false}
       gl={{
         antialias,
