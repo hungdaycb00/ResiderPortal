@@ -15,17 +15,15 @@ interface WebGLMapTilesProps {
   mode: string;
 }
 
+// Kích thước proxy canvas (phải là power-of-2 để GPU cache tốt)
+const PROXY_SIZE = 2048;
+
 const getOffscreenContainer = () => {
   let div = document.getElementById('maplibre-offscreen-container');
   if (!div) {
     div = document.createElement('div');
     div.id = 'maplibre-offscreen-container';
-    div.style.position = 'fixed';
-    div.style.left = '-9999px';
-    div.style.top = '-9999px';
-    div.style.width = '2048px';
-    div.style.height = '2048px';
-    div.style.pointerEvents = 'none';
+    div.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2048px;height:2048px;pointer-events:none;';
     document.body.appendChild(div);
   }
   return div;
@@ -37,10 +35,8 @@ export default function WebGLMapTiles({
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
-  // Throttle: chỉ gọi jumpTo tối đa ~15fps để tránh quá tải MapLibre WebGL context
-  const lastJumpRef = useRef(0);
-  // Guard: chỉ cập nhật texture khi MapLibre context còn sống
   const mapReadyRef = useRef(false);
+  const lastJumpRef = useRef(0);
 
   useEffect(() => {
     if (mode !== 'roadmap' || !myObfPos) return;
@@ -49,6 +45,13 @@ export default function WebGLMapTiles({
     const safeScale = scale.get() || 1;
     const initialZoom = getRoadmapTileZoom(safeScale);
 
+    // ── Proxy 2D canvas: Three.js đọc từ đây, KHÔNG đọc trực tiếp từ WebGL canvas của MapLibre
+    // Điều này loại bỏ hoàn toàn xung đột giữa 2 WebGL context
+    const proxyCanvas = document.createElement('canvas');
+    proxyCanvas.width = PROXY_SIZE;
+    proxyCanvas.height = PROXY_SIZE;
+    const ctx2d = proxyCanvas.getContext('2d', { willReadFrequently: false });
+
     const map = new maplibregl.Map({
       container,
       style: 'https://tiles.openfreemap.org/styles/positron',
@@ -56,37 +59,35 @@ export default function WebGLMapTiles({
       zoom: isNaN(initialZoom) ? 15 : initialZoom,
       interactive: false,
       attributionControl: false,
-      // @ts-ignore – MapLibre hỗ trợ preserveDrawingBuffer natively nhưng types có thể lỗi thời
-      preserveDrawingBuffer: true,
+      // KHÔNG dùng preserveDrawingBuffer – tránh mất WebGL context
       fadeDuration: 0,
     });
 
     map.on('load', () => {
       mapReadyRef.current = true;
-      const canvas = map.getCanvas();
+      const mapCanvas = map.getCanvas();
 
-      // Tự phục hồi khi WebGL context bị mất (tránh lỗi texSubImage2D)
-      canvas.addEventListener('webglcontextlost', (e) => {
-        e.preventDefault();
-        mapReadyRef.current = false;
-        console.warn('[WebGLMapTiles] MapLibre context lost – sẽ tự phục hồi...');
-      }, false);
+      // Mỗi khi MapLibre render xong một frame, copy sang proxy 2D canvas
+      // drawImage() an toàn vì được gọi đồng bộ trong render callback
+      map.on('render', () => {
+        if (!ctx2d || !mapReadyRef.current) return;
+        try {
+          ctx2d.clearRect(0, 0, PROXY_SIZE, PROXY_SIZE);
+          ctx2d.drawImage(mapCanvas, 0, 0, PROXY_SIZE, PROXY_SIZE);
+        } catch {
+          // bỏ qua – có thể xảy ra khi canvas đang trong quá trình re-init
+        }
+      });
 
-      canvas.addEventListener('webglcontextrestored', () => {
-        mapReadyRef.current = true;
-        console.info('[WebGLMapTiles] MapLibre context restored');
-      }, false);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      // Tắt mipmap để bản đồ sắc nét khi zoom
+      // Three.js texture đọc từ 2D canvas (không phụ thuộc WebGL context của MapLibre)
+      const texture = new THREE.CanvasTexture(proxyCanvas);
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.format = THREE.RGBAFormat;
-      // MapLibre render ngược trục Y trong WebGL – flipY để đúng chiều
-      texture.flipY = true;
+      // 2D canvas KHÔNG bị lật Y như WebGL canvas
+      texture.flipY = false;
 
       textureRef.current = texture;
-
       if (materialRef.current) {
         materialRef.current.map = texture;
         materialRef.current.needsUpdate = true;
@@ -109,7 +110,7 @@ export default function WebGLMapTiles({
   useFrame((_, delta) => {
     if (!mapReadyRef.current || !mapRef.current || !myObfPos) return;
 
-    // Throttle jumpTo: gọi ~15fps thay vì 60fps để tránh quá tải context WebGL
+    // Throttle jumpTo ~15fps để tránh quá tải MapLibre
     lastJumpRef.current += delta;
     if (lastJumpRef.current >= 0.066) {
       lastJumpRef.current = 0;
@@ -122,7 +123,6 @@ export default function WebGLMapTiles({
       );
       let zoom = getRoadmapTileZoom(scale.get() || 1);
 
-      // Guard chống NaN / Infinity trước khi gọi jumpTo
       if (!isFinite(zoom)) zoom = 15;
       if (!isFinite(center.lat)) center.lat = myObfPos.lat;
       if (!isFinite(center.lng)) center.lng = myObfPos.lng;
@@ -130,11 +130,11 @@ export default function WebGLMapTiles({
       try {
         mapRef.current.jumpTo({ center: [center.lng, center.lat], zoom });
       } catch {
-        // Bỏ qua – thường xảy ra khi context đang bị lost
+        // bỏ qua khi map chưa sẵn sàng
       }
     }
 
-    // Đồng bộ texture với MapLibre canvas mỗi frame
+    // Đánh dấu texture cần update sau khi MapLibre render event copy xong
     if (textureRef.current) {
       textureRef.current.needsUpdate = true;
     }
@@ -142,9 +142,11 @@ export default function WebGLMapTiles({
 
   if (mode !== 'roadmap') return null;
 
+  // Plane phải đủ lớn để phủ toàn bộ vùng nhìn từ camera
+  // 1000 units ở sceneWorldScale=0.12 tương đương vùng nhìn rộng
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
-      <planeGeometry args={[180, 180]} />
+      <planeGeometry args={[1000, 1000]} />
       <meshBasicMaterial ref={materialRef} transparent opacity={1} color="#ffffff" />
     </mesh>
   );

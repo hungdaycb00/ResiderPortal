@@ -3,6 +3,7 @@ import { useMotionValue, animate, useTransform, useMotionValueEvent } from 'fram
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import {
   CAMERA_FOV_DEGREES,
+  CAMERA_PITCH_DEFAULT,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
   CAMERA_Z_DEFAULT,
@@ -75,7 +76,7 @@ export function useMapNavigation({
   const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
   const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
   useMotionValueEvent(cameraFov, 'change', (v: number) => setCameraFovValue(v));
-  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(35); // default 35deg (góc 2.5D đẹp)
+  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(CAMERA_PITCH_DEFAULT);
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;

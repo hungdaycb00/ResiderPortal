@@ -13,7 +13,7 @@ export const CAMERA_Z_FAR = -100000;
 export const CAMERA_Z_DEFAULT = 0;
 export const CAMERA_Z_WATER_DEFAULT = 38; // ~95% zoom trên slider
 export const CAMERA_Z_NEAR = 260;
-export const ROADMAP_VISUAL_SCALE_DEFAULT = 1.35;
+export const ROADMAP_VISUAL_SCALE_DEFAULT = 0.9;
 export const ROADMAP_WORLD_SCALE = 0.12;
 export const SATELLITE_VISUAL_SCALE_DEFAULT = 0.92;
 export const LOOTER_VISUAL_SCALE_DEFAULT = 1.08;
@@ -37,7 +37,7 @@ export const CAMERA_TILT_NEAR_DEGREES = 42;
 // Camera pitch (Góc) — 10 là nhìn ngang, 85 là nhìn thẳng xuống
 export const CAMERA_PITCH_MIN_DEG = 10;
 export const CAMERA_PITCH_MAX_DEG = 85;
-export const CAMERA_PITCH_DEFAULT = 35;
+export const CAMERA_PITCH_DEFAULT = 55;
 
 // Camera height offset (Cao) — pure vertical translation in scene units
 export const CAMERA_HEIGHT_OFFSET_DEFAULT = 0;
