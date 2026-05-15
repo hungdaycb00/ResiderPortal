@@ -106,26 +106,8 @@ export default function UserLayers({
   onSelectSelf,
   performance,
 }: UserLayersProps) {
-  // Ref cho group chứa toàn bộ avatar - cộng thêm pan offset để counteract moveGroup
-  const panGroupRef = useRef<Group>(null);
-  const lastPanXRef = useRef(0);
-  const lastPanZRef = useRef(0);
-
-  // Sync pan offset mỗi frame - đảm bảo avatar gắn với tọa độ GPS chứ không theo camera
-  useFrame(() => {
-    if (!panGroupRef.current) return;
-    const px = panX.get();
-    const pz = panY.get();
-    if (Math.abs(px - lastPanXRef.current) > 0.001 || Math.abs(pz - lastPanZRef.current) > 0.001) {
-      panGroupRef.current.position.set(
-        px * MAP_COORD_SCENE_SCALE * sceneWorldScale,
-        0,
-        pz * MAP_COORD_SCENE_SCALE * sceneWorldScale,
-      );
-      lastPanXRef.current = px;
-      lastPanZRef.current = pz;
-    }
-  });
+  // Sync pan offset - ĐÃ LOẠI BỎ vì UserLayers đã nằm trong moveGroupRef của SceneContent
+  // Việc bù trừ thêm panX/panY ở đây sẽ làm avatar bị "trượt" khỏi vị trí trên map.
   const performanceMode = performance?.mode ?? 'high';
   const labelMode = performance?.labelMode ?? 'full';
   const maxVisibleUsers = performance?.maxNearbyUsers ?? (isLooterGameMode ? 40 : 90);
@@ -213,7 +195,7 @@ export default function UserLayers({
   const selfDepth = pxToScaledScene(dragOffset.y);
 
   return (
-    <group ref={panGroupRef}>
+    <group>
       {/* Self avatar / Boat */}
       {isLooterGameMode && showLooterBoat ? (
         <ProceduralBoat

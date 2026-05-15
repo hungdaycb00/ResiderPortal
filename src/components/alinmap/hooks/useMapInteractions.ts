@@ -60,10 +60,8 @@ export function useMapInteractions({
         }
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
         if (interactiveTarget && !isLooterGameMode) {
-            looterBoat.handlePointerDown(e);
             return;
         }
-        looterBoat.handlePointerDown(e);
         mapDragRef.current = {
             active: true,
             pointerId: e.pointerId,
@@ -176,7 +174,6 @@ export function useMapInteractions({
         }
 
         if (interactiveTarget) {
-            looterBoat.handlePointerCancel();
             return;
         }
 
@@ -185,24 +182,14 @@ export function useMapInteractions({
             return;
         }
 
-             // --- Looter Challenge Initiation Logic ---
-             // Chỉ mở tier selector khi đang ở thành trì và chưa chọn tier (worldTier === -1)
-
-        if (isLooterGameMode && !dragState.moved) {
-            if (useDomLooterLayer) {
-                looterBoat.handlePointerUp(e);
-            }
-            return;
-        }
-
-        looterBoat.handlePointerUp(e);
+        // DOM Pointer event delegation for looter game is removed.
+        // All interactions are now handled natively by Three.js Raycaster.
     }, [looterBoat, isLooterGameMode, encounter, isInteractionLocked, panX, panY, scale, myObfPos, useDomLooterLayer]);
 
     const handleMapPointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
         if (isInteractionLocked) {
             dragState.active = false;
-            looterBoat.handlePointerCancel();
             return;
         }
         
@@ -215,8 +202,7 @@ export function useMapInteractions({
         if (dragState.active && dragState.pointerId === e.pointerId) {
             dragState.active = false;
         }
-        looterBoat.handlePointerCancel();
-    }, [looterBoat, isInteractionLocked]);
+    }, [isInteractionLocked]);
 
     const handleMapClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         const dragState = mapDragRef.current;
