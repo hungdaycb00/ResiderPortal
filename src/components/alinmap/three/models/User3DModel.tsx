@@ -1,5 +1,5 @@
 import React from 'react';
-import { Html, Billboard } from '@react-three/drei';
+import { Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import GalleryImage from '../GalleryImage';
 
@@ -104,29 +104,36 @@ const User3DModel: React.FC<User3DModelProps> = ({
             {/* Labels (Using Billboard so they always face camera) */}
             <Billboard follow position={[0, 3.5, 0]}>
                 {shouldRenderLabel && (
-                    <Html
-                        position={[0, 0, 0]}
-                        center
-                        transform
-                        sprite
-                        distanceFactor={labelDistanceFactor}
-                        occlude={false}
-                    >
-                        <div className="pointer-events-none flex flex-col items-center gap-1">
-                            <div className={`${labelShellClass} transition-transform duration-200 ${shouldShowDetails ? 'scale-105' : 'scale-100'}`}>
-                                <span className={labelTextClass}>
-                                    {name}
-                                </span>
-                            </div>
-                            {status && labelMode === 'full' ? (
-                                <div className={`${statusShellClass} transition-all duration-200 ${shouldShowDetails ? 'opacity-100 translate-y-0' : 'opacity-85 translate-y-0.5'}`}>
-                                    <span className={statusTextClass}>
-                                        {status}
-                                    </span>
-                                </div>
-                            ) : null}
-                        </div>
-                    </Html>
+                    <group position={[0, isRoadmapPresentation ? 0.5 : 1.2, 0]}>
+                        <Text
+                            position={[0, 0, 0]}
+                            fontSize={isRoadmapPresentation ? 0.4 : 0.6}
+                            color="#0f172a"
+                            outlineWidth={0.04}
+                            outlineColor="#ffffff"
+                            anchorX="center"
+                            anchorY="middle"
+                            fontWeight="bold"
+                            depthTest={false}
+                        >
+                            {name}
+                        </Text>
+                        {status && labelMode === 'full' && (
+                            <Text
+                                position={[0, isRoadmapPresentation ? -0.4 : -0.6, 0]}
+                                fontSize={isRoadmapPresentation ? 0.2 : 0.25}
+                                color="#0284c7"
+                                outlineWidth={0.02}
+                                outlineColor="#e0f2fe"
+                                anchorX="center"
+                                anchorY="middle"
+                                fontWeight="bold"
+                                depthTest={false}
+                            >
+                                {status}
+                            </Text>
+                        )}
+                    </group>
                 )}
                 {showGallery ? (
                     <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />

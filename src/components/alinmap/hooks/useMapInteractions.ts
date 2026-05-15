@@ -149,7 +149,6 @@ export function useMapInteractions({
         const dragState = mapDragRef.current;
         if (isInteractionLocked) {
             dragState.active = false;
-            looterBoat.handlePointerCancel();
             e.preventDefault();
             e.stopPropagation();
             return;
@@ -168,7 +167,6 @@ export function useMapInteractions({
 
             if (dragState.moved) {
                 dragState.suppressClick = true;
-                looterBoat.handlePointerCancel();
                 return;
             }
         }

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { MAP_PLANE_SCALE } from '../../constants';
@@ -68,11 +68,19 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 interactive={false}
             />
             {distToFortress != null && !reducedMotion && (
-                <Html position={[0, -9, 0]} center transform sprite distanceFactor={20} occlude={false}>
-                    <div style={{ color: '#94a3b8', fontSize: 9, fontWeight: 700, textShadow: '0 0 6px rgba(0,0,0,0.9)', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
-                        {distToFortress}m → 🏰
-                    </div>
-                </Html>
+                <Text
+                    position={[0, -2.5, 0]}
+                    fontSize={0.8}
+                    color="#94a3b8"
+                    outlineWidth={0.06}
+                    outlineColor="#0f172a"
+                    anchorX="center"
+                    anchorY="middle"
+                    fontWeight="bold"
+                    depthTest={false}
+                >
+                    {distToFortress}m → 🏰
+                </Text>
             )}
         </group>
     );
