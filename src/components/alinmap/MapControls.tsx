@@ -39,6 +39,8 @@ interface MapControlsProps {
     setCameraPitchOverride: (v: number | null) => void;
     setCameraFov: (v: number) => void;
     cameraFov: number;
+    cameraRotateYDeg: number;
+    setCameraRotateYDeg: (v: number) => void;
     isWidgetExpanded: boolean;
     setIsWidgetExpanded: (v: boolean) => void;
     isSheetExpanded: boolean;
@@ -76,6 +78,8 @@ const MapControls: React.FC<MapControlsProps> = ({
     setCameraPitchOverride,
     setCameraFov,
     cameraFov,
+    cameraRotateYDeg,
+    setCameraRotateYDeg,
     isWidgetExpanded,
     setIsWidgetExpanded,
     isSheetExpanded,
@@ -97,6 +101,8 @@ const MapControls: React.FC<MapControlsProps> = ({
                     setCameraPitchOverride={setCameraPitchOverride}
                     cameraFov={cameraFov}
                     setCameraFov={setCameraFov}
+                    cameraRotateYDeg={cameraRotateYDeg}
+                    setCameraRotateYDeg={setCameraRotateYDeg}
                 />
                 <div className="flex flex-col gap-2 md:gap-3 ml-2">
                     <MapControlsQuickActions

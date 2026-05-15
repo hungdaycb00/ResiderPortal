@@ -22,6 +22,8 @@ interface CameraPanelProps {
   setCameraPitchOverride: (v: number | null) => void;
   setCameraFov: (v: number) => void;
   cameraFov: number;
+  cameraRotateYDeg: number;
+  setCameraRotateYDeg: (v: number) => void;
 }
 
 const CameraPanel: React.FC<CameraPanelProps> = ({
@@ -36,6 +38,8 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   setCameraPitchOverride,
   cameraFov,
   setCameraFov,
+  cameraRotateYDeg,
+  setCameraRotateYDeg,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [zDisplay, setZDisplay] = useState(() => Math.round(cameraZ.get()));
@@ -52,6 +56,9 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
   const safeSetCameraFov = useCallback((value: number) => {
     setCameraFov(value);
   }, [setCameraFov]);
+  const safeSetCameraRotateYDeg = useCallback((value: number) => {
+    setCameraRotateYDeg(value);
+  }, [setCameraRotateYDeg]);
 
   useMotionValueEvent(cameraZ, 'change', (v) => {
     tickRef.current = (tickRef.current + 1) % 3;
@@ -180,6 +187,33 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
                 if (!isNaN(v)) safeSetCameraFov(v);
+              }}
+              className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
+            />
+          </div>
+
+          {/* Hướng xoay (Yaw) */}
+          <div className="mb-0 pt-3 border-t border-slate-700/50">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">Rotation (Yaw)</span>
+              <span className="text-[10px] font-mono font-bold text-cyan-300">{cameraRotateYDeg}°</span>
+            </div>
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="1"
+              value={cameraRotateYDeg}
+              onChange={(e) => safeSetCameraRotateYDeg(parseInt(e.target.value, 10))}
+              className="w-full accent-cyan-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-2"
+            />
+            <input
+              type="number"
+              step={1}
+              value={cameraRotateYDeg}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (!isNaN(v)) safeSetCameraRotateYDeg(v);
               }}
               className="w-full bg-slate-800/70 border border-slate-600/60 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400/70 focus:shadow-[0_0_6px_rgba(34,211,238,0.25)] transition-all"
             />
