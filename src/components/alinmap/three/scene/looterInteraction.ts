@@ -184,10 +184,31 @@ export function useLooterInteraction(params: LooterInteractionParams) {
       setIsTierSelectorOpen?.(true);
       return;
     }
-    const localPt = groundMeshRef.current.worldToLocal(point.clone());
+
+    // Raycaster trả về world-space point (e.point).
+    // Ground mesh nằm trong moveGroupRef, nhưng e.point đã ở world space nên
+    // KHÔNG cần worldToLocal (vì worldToLocal sẽ bao gồm cả moveGroup offset → sai).
+    //
+    // Phép chuyển ngược từ worldToScene:
+    //   sceneX = (lng - origin.lng) * SCALE * sceneWorldScale
+    //   sceneZ = -(lat - origin.lat) * SCALE * sceneWorldScale
+    // → moveGroup dịch thêm panX * MAP_COORD_SCENE_SCALE * sceneWorldScale trên X
+    //   và panY * MAP_COORD_SCENE_SCALE * sceneWorldScale trên Z
+    //
+    // Tọa độ world = scenePos + moveGroupOffset
+    // → sceneX = worldX - moveGroupOffset.x
+    // → sceneZ = worldZ - moveGroupOffset.z
+
+    const moveGroup = groundMeshRef.current.parent; // moveGroupRef
+    const moveOffsetX = moveGroup?.position?.x ?? 0;
+    const moveOffsetZ = moveGroup?.position?.z ?? 0;
+
+    const sceneX = point.x - moveOffsetX;
+    const sceneZ = point.z - moveOffsetZ;
+
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
-    const lng = origin.lng + localPt.x / SCALE;
-    const lat = origin.lat + localPt.y / SCALE;
+    const lng = origin.lng + sceneX / SCALE;
+    const lat = origin.lat - sceneZ / SCALE;
 
     // === Proximity check: phát hiện item gần vị trí click ===
     const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
