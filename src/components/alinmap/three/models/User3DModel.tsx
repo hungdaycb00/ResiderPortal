@@ -100,6 +100,11 @@ const User3DModel: React.FC<User3DModelProps> = ({
                 <circleGeometry args={[0.8, 32]} />
                 <meshBasicMaterial color={isVisibleOnMap ? '#22d3ee' : '#10b981'} transparent opacity={0.3} depthWrite={false} />
             </mesh>
+            {/* Fake Drop Shadow */}
+            <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.6, 32]} />
+                <meshBasicMaterial color="black" transparent opacity={0.2} depthWrite={false} />
+            </mesh>
 
             {/* Labels (Using Billboard so they always face camera) */}
             <Billboard follow lockX lockZ position={[0, 3.5, 0]}>
