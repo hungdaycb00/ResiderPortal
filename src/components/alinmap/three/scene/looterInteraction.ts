@@ -194,17 +194,10 @@ export function useLooterInteraction(params: LooterInteractionParams) {
 
     const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
     const lng = origin.lng + localPt.x / SCALE;
-    // localPt is in moveGroup space (which is NOT rotated).
-    // In worldToScene: sceneZ = -(lat - origin.lat) * SCALE.
-    // Therefore: lat = origin.lat - localPt.z / SCALE.
-    const lat = origin.lat - localPt.z / SCALE; 
-
-    console.log('[GroundClick] DEBUG INFO:', {
-      worldPoint: { x: point.x.toFixed(2), y: point.y.toFixed(2), z: point.z.toFixed(2) },
-      localPt: { x: localPt.x.toFixed(2), y: localPt.y.toFixed(2), z: localPt.z.toFixed(2) },
-      SCALE: SCALE.toFixed(2),
-      calculatedTarget: { lat: lat.toFixed(6), lng: lng.toFixed(6) }
-    });
+    const lat = origin.lat + localPt.y / SCALE; 
+    // Giải thích lat: Ground mesh xoay X -90 độ, nên trục Y local của nó hướng theo -World Z.
+    // Trong worldToScene: sceneZ = -(lat - origin.lat) * SCALE.
+    // Vậy localY = -sceneZ = (lat - origin.lat) * SCALE  => lat = origin.lat + localY / SCALE.
 
     // === Proximity check: phát hiện item gần vị trí click ===
     const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
