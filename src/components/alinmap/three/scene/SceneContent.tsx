@@ -139,6 +139,7 @@ export default function SceneContent({
     setShowMinigame,
     pickupItem,
     setIsTierSelectorOpen,
+    sceneWorldScale,
   });
 
   // ── Per-frame tilt/move sync ───────────────────────────────────────────────

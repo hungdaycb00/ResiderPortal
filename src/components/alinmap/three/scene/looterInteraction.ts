@@ -21,6 +21,7 @@ interface LooterInteractionParams {
   setShowMinigame?: (item: any) => void;
   pickupItem?: (spawnId: string, item: any, lat: number, lng: number) => void;
   setIsTierSelectorOpen?: (v: boolean) => void;
+  sceneWorldScale?: number;
 }
 
 export function useLooterInteraction(params: LooterInteractionParams) {
@@ -30,7 +31,7 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     boatOffsetX, boatOffsetY, itemClickLockRef,
     onRequestMove, onStopBoat, onSetArrivalAction,
     openFortressStorage, setShowMinigame, pickupItem,
-    setIsTierSelectorOpen,
+    setIsTierSelectorOpen, sceneWorldScale = 1,
   } = params;
 
   const getCurrentBoatLatLng = React.useCallback((): LatLng => {
@@ -185,30 +186,18 @@ export function useLooterInteraction(params: LooterInteractionParams) {
       return;
     }
 
-    // Raycaster trả về world-space point (e.point).
-    // Ground mesh nằm trong moveGroupRef, nhưng e.point đã ở world space nên
-    // KHÔNG cần worldToLocal (vì worldToLocal sẽ bao gồm cả moveGroup offset → sai).
-    //
-    // Phép chuyển ngược từ worldToScene:
-    //   sceneX = (lng - origin.lng) * SCALE * sceneWorldScale
-    //   sceneZ = -(lat - origin.lat) * SCALE * sceneWorldScale
-    // → moveGroup dịch thêm panX * MAP_COORD_SCENE_SCALE * sceneWorldScale trên X
-    //   và panY * MAP_COORD_SCENE_SCALE * sceneWorldScale trên Z
-    //
-    // Tọa độ world = scenePos + moveGroupOffset
-    // → sceneX = worldX - moveGroupOffset.x
-    // → sceneZ = worldZ - moveGroupOffset.z
+    // worldToLocal trên moveGroupRef (cha của Ground) là cách chuẩn nhất để 
+    // đảo ngược tất cả phép biến hình Tilt (xoay) và Pan (dịch chuyển).
+    const moveGroup = groundMeshRef.current.parent; 
+    if (!moveGroup) return;
+    const localPt = moveGroup.worldToLocal(point.clone());
 
-    const moveGroup = groundMeshRef.current.parent; // moveGroupRef
-    const moveOffsetX = moveGroup?.position?.x ?? 0;
-    const moveOffsetZ = moveGroup?.position?.z ?? 0;
-
-    const sceneX = point.x - moveOffsetX;
-    const sceneZ = point.z - moveOffsetZ;
-
-    const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE;
-    const lng = origin.lng + sceneX / SCALE;
-    const lat = origin.lat - sceneZ / SCALE;
+    const SCALE = DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
+    const lng = origin.lng + localPt.x / SCALE;
+    const lat = origin.lat + localPt.y / SCALE; 
+    // Giải thích lat: Ground mesh xoay X -90 độ, nên trục Y local của nó hướng theo -World Z.
+    // Trong worldToScene: sceneZ = -(lat - origin.lat) * SCALE.
+    // Vậy localY = -sceneZ = (lat - origin.lat) * SCALE  => lat = origin.lat + localY / SCALE.
 
     // === Proximity check: phát hiện item gần vị trí click ===
     const CLICK_RADIUS_DEG = 0.0009; // ~100 mét
