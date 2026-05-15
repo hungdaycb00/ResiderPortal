@@ -12,9 +12,14 @@ interface UseBoatAnimationParams {
   currentLat: number | null;
   currentLng: number | null;
   encounter: any | null;
+  cameraYaw: MotionValue<number> | number;
+  cameraPitch: MotionValue<number> | number;
 }
 
-export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat, currentLng, encounter }: UseBoatAnimationParams) {
+export function useBoatAnimation({ 
+  myObfPos, panX, panY, planeYScale, currentLat, currentLng, encounter,
+  cameraYaw, cameraPitch 
+}: UseBoatAnimationParams) {
   const boatOffsetX = useMotionValue(0);
   const boatOffsetY = useMotionValue(0);
   const isAnimatingRef = useRef(false);
@@ -101,8 +106,17 @@ export function useBoatAnimation({ myObfPos, panX, panY, planeYScale, currentLat
     }
 
     // Di chuyển camera (pan) đến vị trí đó
-    panMoveXRef.current = animate(panX, -pxX * MAP_PLANE_SCALE + xOffsetPx, { duration: 0.9, ease: 'easeInOut' });
-    panMoveYRef.current = animate(panY, -pxY * MAP_PLANE_SCALE - yOffsetPx, {
+    // Khi xoay Camera Yaw, hướng "Lên" của màn hình (yOffsetPx) không còn là hướng Bắc.
+    // Chúng ta cần xoay vector offset theo góc Yaw hiện tại.
+    const yawRad = ((typeof cameraYaw === 'number' ? cameraYaw : cameraYaw?.get?.() ?? 0) * Math.PI) / 180;
+    
+    // Vector offset trong view-space: [xOffsetPx, -yOffsetPx] (y âm vì đẩy lên là giảm Z trong world space mặc định)
+    // Sau khi xoay Yaw:
+    const rotatedX = xOffsetPx * Math.cos(yawRad) - (-yOffsetPx) * Math.sin(yawRad);
+    const rotatedZ = xOffsetPx * Math.sin(yawRad) + (-yOffsetPx) * Math.cos(yawRad);
+
+    panMoveXRef.current = animate(panX, -pxX * MAP_PLANE_SCALE + rotatedX, { duration: 0.9, ease: 'easeInOut' });
+    panMoveYRef.current = animate(panY, -pxY * MAP_PLANE_SCALE + rotatedZ, {
       duration: 0.9,
       ease: 'easeInOut',
       onComplete: () => stopPanAnimations(),

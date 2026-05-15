@@ -30,6 +30,8 @@ interface UseSeaBoatParams {
     cameraFov: number;
     cameraZ: MotionValue<number>;
     cameraHeightOffset: number;
+    cameraRotateYDeg: MotionValue<number> | number;
+    cameraPitchOverride: MotionValue<number> | number | null;
     setMainTab?: (tab: string) => void;
     setIsSheetExpanded: (v: boolean) => void;
     showNotification?: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -41,6 +43,7 @@ const TAP_MOVE_TOLERANCE_PX = 30;
 export function useLooterBoat({
     isLooterGameMode, myObfPos, scale, planeYScale, panX, panY,
     perspectivePx, cameraFov, cameraZ, cameraHeightOffset,
+    cameraRotateYDeg, cameraPitchOverride,
     setMainTab, setIsSheetExpanded, showNotification, setIsTierSelectorOpen
 }: UseSeaBoatParams) {
     const looterState = useLooterState();
@@ -78,6 +81,8 @@ export function useLooterBoat({
         currentLat: state?.currentLat ?? null,
         currentLng: state?.currentLng ?? null,
         encounter,
+        cameraYaw: cameraRotateYDeg,
+        cameraPitch: cameraPitchOverride ?? 0,
     });
 
 

@@ -26,17 +26,18 @@ export const CAMERA_ROTATE_MAX_DEG = 180;
 export const CAMERA_ROTATE_X_DEFAULT_DEG = 0;
 export const CAMERA_ROTATE_X_MIN_DEG = -75;
 export const CAMERA_ROTATE_X_MAX_DEG = 75;
-export const CAMERA_ROTATE_Y_DEFAULT_DEG = 0;
-export const CAMERA_ROTATE_Y_MIN_DEG = -180;
-export const CAMERA_ROTATE_Y_MAX_DEG = 180;
+export const CAMERA_ROTATE_Y_DEFAULT_DEG = 180; // Nhìn từ Nam lên Bắc (hướng về Z-)
+export const CAMERA_ROTATE_Y_MIN_DEG = -Infinity;
+export const CAMERA_ROTATE_Y_MAX_DEG = Infinity;
 export const BILLBOARD_UPRIGHT_PITCH_DEGREES = 55;
 export const BILLBOARD_UPRIGHT_LIFT_PX = 40;
 export const CAMERA_TILT_FAR_DEGREES = 65;
 export const CAMERA_TILT_NEAR_DEGREES = 42;
 
-// Camera pitch (Góc) — manual override range in degrees
-export const CAMERA_PITCH_MIN_DEG = 25;
+// Camera pitch (Góc) — 10 là nhìn ngang, 85 là nhìn thẳng xuống
+export const CAMERA_PITCH_MIN_DEG = 10;
 export const CAMERA_PITCH_MAX_DEG = 85;
+export const CAMERA_PITCH_DEFAULT = 35;
 
 // Camera height offset (Cao) — pure vertical translation in scene units
 export const CAMERA_HEIGHT_OFFSET_DEFAULT = 0;

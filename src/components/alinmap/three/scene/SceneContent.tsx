@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Group, MathUtils, Mesh } from 'three';
+import { Group, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
 import { getRoadmapCenterFromPan, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
@@ -81,7 +81,6 @@ export default function SceneContent({
   const itemClickLockRef = useRef(false);
   const lastLiftXRef = useRef(0);
   const lastLiftZRef = useRef(0);
-  const lastTiltRef = useRef(0);
   const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
   const frameSkipRef = useRef(0);
   const groundMeshRef = useRef<Mesh>(null);
@@ -142,15 +141,16 @@ export default function SceneContent({
     sceneWorldScale,
   });
 
-  // ── Per-frame tilt/move sync ───────────────────────────────────────────────
+  // ── Per-frame pan/boat sync ────────────────────────────────────────────────
+  // LƯU Ý KIẾN TRÚC: Trong hệ thống Camera 3D mới, chúng ta KHÔNG xoay tiltGroupRef
+  // vì góc nhìn được tạo ra bởi Camera Orbit (CameraRig).
+  // tiltGroupRef chỉ còn là container trung gian, không có rotation.
   useFrame(() => {
-    if (!tiltGroupRef.current || !moveGroupRef.current) return;
+    if (!moveGroupRef.current) return;
     const liftX = panX.get();
     const liftZ = panY.get();
-    const tilt = tiltAngle.get();
 
     // GPU Matrix Translation: Dịch chuyển thế giới 3D đồng bộ với thao tác pan bản đồ DOM
-    // Áp dụng chung cho mọi mode (roadmap và satellite) để loại bỏ dependency vào React State
     if (Math.abs(liftX - lastLiftXRef.current) > 0.001 || Math.abs(liftZ - lastLiftZRef.current) > 0.001) {
       moveGroupRef.current.position.set(
         liftX * MAP_COORD_SCENE_SCALE * sceneWorldScale,
@@ -159,15 +159,6 @@ export default function SceneContent({
       );
       lastLiftXRef.current = liftX;
       lastLiftZRef.current = liftZ;
-    }
-
-    if (Math.abs(tilt - lastTiltRef.current) > 0.001) {
-      tiltGroupRef.current.rotation.set(
-        MathUtils.degToRad(tilt),
-        MathUtils.degToRad(cameraRotateYDeg),
-        MathUtils.degToRad(cameraRotateDeg)
-      );
-      lastTiltRef.current = tilt;
     }
 
     if (position && isLooterGameMode) {
@@ -199,6 +190,8 @@ export default function SceneContent({
 
   return (
     <group ref={tiltGroupRef}>
+      {/* Fog đường chân trời — tạo chiều sâu không gian 3D thực thụ */}
+      <fogExp2 attach="fog" color="#071a2e" density={0.000018} />
       <group ref={moveGroupRef}>
         {/* Ground */}
         <Ground
@@ -292,6 +285,8 @@ export default function SceneContent({
 
       <CameraRig
         scale={scale}
+        tiltAngle={tiltAngle}
+        cameraYawDeg={cameraRotateYDeg}
         cameraHeightOffset={cameraHeightOffset}
         perspectivePx={perspectivePx}
         cameraFov={cameraFov}

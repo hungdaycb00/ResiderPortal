@@ -15,10 +15,6 @@ interface ProceduralBoatProps {
     scale?: number;
     offsetX?: MotionValue<number>;
     offsetY?: MotionValue<number>;
-    currentLat?: number | null;
-    currentLng?: number | null;
-    fortressLat?: number | null;
-    fortressLng?: number | null;
     reducedMotion?: boolean;
     sceneWorldScale?: number;
 }
@@ -29,10 +25,6 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     scale = 2 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER,
     offsetX,
     offsetY,
-    currentLat,
-    currentLng,
-    fortressLat,
-    fortressLng,
     reducedMotion = false,
     sceneWorldScale = 1,
 }) => {
@@ -77,7 +69,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                     anchorX="center"
                     anchorY="middle"
                     fontWeight="bold"
-                    depthTest={false}
+                    material-depthTest={false}
                 >
                     {distToFortress}m → 🏰
                 </Text>

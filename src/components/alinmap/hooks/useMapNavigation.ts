@@ -75,7 +75,7 @@ export function useMapNavigation({
   const cameraFov = useMotionValue(CAMERA_FOV_DEGREES);
   const [cameraFovValue, setCameraFovValue] = useState(CAMERA_FOV_DEGREES);
   useMotionValueEvent(cameraFov, 'change', (v: number) => setCameraFovValue(v));
-  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(60); // default 60deg (positive)
+  const [cameraPitchOverride, setCameraPitchOverride] = useState<number | null>(35); // default 35deg (góc 2.5D đẹp)
   const looterBootstrapRef = React.useRef(false);
   const pendingBoatFocusRef = useRef(false);
   const WHEEL_ZOOM_STEP = 300;

@@ -112,6 +112,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         isLooterGameMode: !!isLooterGameMode,
         myObfPos, scale, planeYScale, panX, panY,
         perspectivePx, cameraFov, cameraZ, cameraHeightOffset,
+        cameraRotateYDeg, cameraPitchOverride,
         setMainTab, setIsSheetExpanded, showNotification,
         setIsTierSelectorOpen
     });
@@ -273,21 +274,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                                 myObfPos={myObfPos}
                                 mode={mapMode}
                             />
-                            {isLooterGameMode && mapMode === 'roadmap' && (
-                                <LooterMapPlaneLayer
-                                    myObfPos={myObfPos}
-                                    panX={panX}
-                                    panY={panY}
-                                    scale={scale}
-                                    planeYScale={planeYScale}
-                                    boatTargetPin={looterBoat.boatTargetPin}
-                                    boatOffsetX={looterBoat.boatOffsetX}
-                                    boatOffsetY={looterBoat.boatOffsetY}
-                                    onRequestMove={looterBoat.executeMoveToExact}
-                                    onStopBoat={looterBoat.stopBoat}
-                                    onSetArrivalAction={looterBoat.setOnArrivalAction}
-                                />
-                            )}
+
                             <MapReferenceGridOverlay
                                 scale={scale}
                                 mapMode={mapMode}
@@ -370,7 +357,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selfDragY={selfDragY}
                         mapMode={mapMode}
                         isLooterGameMode={isLooterGameMode}
-                        useDomLooterLayer={isLooterGameMode && mapMode === 'roadmap'}
+                        useDomLooterLayer={false}
                         boatTargetPin={looterBoat.boatTargetPin}
                         boatOffsetX={looterBoat.boatOffsetX}
                         boatOffsetY={looterBoat.boatOffsetY}
