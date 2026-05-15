@@ -208,7 +208,7 @@ export default function SceneContent({
           Phủ khắp mặt đất bằng màu nền map để lấp đầy khoảng trống */}
       {isRoadmapOverlay && (
         <mesh rotation-x={-Math.PI / 2} position={[0, -0.4, 0]}>
-          <planeGeometry args={[60000, 60000]} />
+          <planeGeometry args={[6000, 6000]} />
           <meshBasicMaterial color="#e8e8e4" depthWrite={false} />
         </mesh>
       )}
@@ -221,7 +221,9 @@ export default function SceneContent({
         scale={scale} 
         planeYScale={planeYScale} 
         myObfPos={origin} 
-        mode={mapMode} 
+        mode={mapMode}
+        isDesktop={isDesktop}
+        performanceMode={performance?.mode ?? 'high'}
       />
 
       <group ref={moveGroupRef}>

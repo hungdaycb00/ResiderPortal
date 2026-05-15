@@ -13,10 +13,16 @@ interface WebGLMapTilesProps {
   planeYScale: MotionValue<number>;
   myObfPos: { lat: number; lng: number } | null;
   mode: string;
+  isDesktop?: boolean;
+  performanceMode?: string;
 }
 
-// Kích thước proxy canvas (phải là power-of-2 để GPU cache tốt)
-const PROXY_SIZE = 2048;
+// SPRINT 1 FIX: Adaptive proxy size theo device capability
+const getProxySize = (isDesktop = false, perfMode = 'high'): number => {
+  if (perfMode === 'low') return 512;
+  if (!isDesktop) return 1024;
+  return 2048;
+};
 
 const getOffscreenContainer = () => {
   let div = document.getElementById('maplibre-offscreen-container');
@@ -30,23 +36,26 @@ const getOffscreenContainer = () => {
 };
 
 export default function WebGLMapTiles({
-  panX, panY, scale, planeYScale, myObfPos, mode
+  panX, panY, scale, planeYScale, myObfPos, mode,
+  isDesktop = false, performanceMode = 'high',
 }: WebGLMapTilesProps) {
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const mapReadyRef = useRef(false);
   const lastJumpRef = useRef(0);
+  // SPRINT 1 FIX P0: Dirty flag — chỉ upload texture khi MapLibre render xong
+  const textureDirtyRef = useRef(false);
 
   useEffect(() => {
     if (mode !== 'roadmap' || !myObfPos) return;
 
+    const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
     const container = getOffscreenContainer();
     const safeScale = scale.get() || 1;
     const initialZoom = getRoadmapTileZoom(safeScale);
 
-    // ── Proxy 2D canvas: Three.js đọc từ đây, KHÔNG đọc trực tiếp từ WebGL canvas của MapLibre
-    // Điều này loại bỏ hoàn toàn xung đột giữa 2 WebGL context
+    // Proxy 2D canvas: Three.js đọc từ đây, tránh xung đột WebGL context
     const proxyCanvas = document.createElement('canvas');
     proxyCanvas.width = PROXY_SIZE;
     proxyCanvas.height = PROXY_SIZE;
@@ -59,7 +68,6 @@ export default function WebGLMapTiles({
       zoom: isNaN(initialZoom) ? 15 : initialZoom,
       interactive: false,
       attributionControl: false,
-      // KHÔNG dùng preserveDrawingBuffer – tránh mất WebGL context
       fadeDuration: 0,
     });
 
@@ -67,25 +75,33 @@ export default function WebGLMapTiles({
       mapReadyRef.current = true;
       const mapCanvas = map.getCanvas();
 
-      // Mỗi khi MapLibre render xong một frame, copy sang proxy 2D canvas
-      // drawImage() an toàn vì được gọi đồng bộ trong render callback
+      // Copy MapLibre frame → proxy 2D canvas đồng bộ trong render callback
+      // Sau đó set dirty flag để useFrame biết texture cần upload
       map.on('render', () => {
         if (!ctx2d || !mapReadyRef.current) return;
         try {
-          ctx2d.clearRect(0, 0, PROXY_SIZE, PROXY_SIZE);
+          // FIX TEXT NGƯỢC: ctx2d.drawImage từ WebGL canvas cần được flip ngang
+          // vì MapLibre với yaw=0 (nhìn từ Nam lên Bắc) render map đúng hướng
+          // nhưng UV plane sau rotation-x=-PI/2 cần flip U để text đúng chiều
+          ctx2d.save();
+          ctx2d.translate(PROXY_SIZE, 0);
+          ctx2d.scale(-1, 1); // Flip ngang để correct text direction
           ctx2d.drawImage(mapCanvas, 0, 0, PROXY_SIZE, PROXY_SIZE);
+          ctx2d.restore();
+          // SPRINT 1 FIX P0: Đặt dirty flag thay vì set needsUpdate trực tiếp
+          textureDirtyRef.current = true;
         } catch {
-          // bỏ qua – có thể xảy ra khi canvas đang trong quá trình re-init
+          // bỏ qua khi canvas đang transition
         }
       });
 
-      // Three.js texture đọc từ 2D canvas (không phụ thuộc WebGL context của MapLibre)
       const texture = new THREE.CanvasTexture(proxyCanvas);
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.format = THREE.RGBAFormat;
-      // 2D canvas KHÔNG bị lật Y như WebGL canvas
-      texture.flipY = false;
+      // flipY=true: Three.js chuẩn hóa V-axis, kết hợp với flip ngang bên trên
+      // cho ra đúng hướng bản đồ (north = top, east = right, text đọc được)
+      texture.flipY = true;
 
       textureRef.current = texture;
       if (materialRef.current) {
@@ -98,6 +114,7 @@ export default function WebGLMapTiles({
 
     return () => {
       mapReadyRef.current = false;
+      textureDirtyRef.current = false;
       map.remove();
       mapRef.current = null;
       if (textureRef.current) {
@@ -105,21 +122,18 @@ export default function WebGLMapTiles({
         textureRef.current = null;
       }
     };
-  }, [mode, myObfPos]);
+  }, [mode, myObfPos, isDesktop, performanceMode]);
 
   useFrame((_, delta) => {
     if (!mapReadyRef.current || !mapRef.current || !myObfPos) return;
 
-    // Throttle jumpTo ~15fps để tránh quá tải MapLibre
+    // Throttle jumpTo ~15fps
     lastJumpRef.current += delta;
     if (lastJumpRef.current >= 0.066) {
       lastJumpRef.current = 0;
 
       let center = getRoadmapCenterFromPan(
-        myObfPos,
-        panX.get() || 0,
-        panY.get() || 0,
-        planeYScale.get() || 0.66
+        myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
       );
       let zoom = getRoadmapTileZoom(scale.get() || 1);
 
@@ -128,25 +142,31 @@ export default function WebGLMapTiles({
       if (!isFinite(center.lng)) center.lng = myObfPos.lng;
 
       try {
-        mapRef.current.jumpTo({ center: [center.lng, center.lat], zoom });
+        // SPRINT 1 FIX P2: easeTo() thay jumpTo() để smooth giữa các frame
+        mapRef.current.easeTo({
+          center: [center.lng, center.lat],
+          zoom,
+          duration: 80,  // ms — smooth giữa 2 frame 15fps
+          easing: (t: number) => t, // linear
+        });
       } catch {
-        // bỏ qua khi map chưa sẵn sàng
+        // bỏ qua
       }
     }
 
-    // Đánh dấu texture cần update sau khi MapLibre render event copy xong
-    if (textureRef.current) {
+    // SPRINT 1 FIX P0: Chỉ upload GPU khi có frame mới từ MapLibre
+    if (textureDirtyRef.current && textureRef.current) {
       textureRef.current.needsUpdate = true;
+      textureDirtyRef.current = false;
     }
   });
 
   if (mode !== 'roadmap') return null;
 
-  // Plane phải đủ lớn để phủ toàn bộ vùng nhìn từ camera kể cả khi zoom ra xa
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
       <planeGeometry args={[4000, 4000]} />
-      <meshBasicMaterial ref={materialRef} transparent opacity={1} color="#ffffff" />
+      <meshBasicMaterial ref={materialRef} color="#ffffff" />
     </mesh>
   );
 }

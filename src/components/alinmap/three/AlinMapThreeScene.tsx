@@ -26,7 +26,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
       shadows={false}
       gl={{
         antialias,
-        alpha: true,
+        alpha: false,  // SPRINT 1: alpha compositing tốn ~15% GPU bandwidth
         powerPreference,
         preserveDrawingBuffer: false,
       }}
