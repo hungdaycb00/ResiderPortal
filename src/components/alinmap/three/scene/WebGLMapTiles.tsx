@@ -56,7 +56,7 @@ export default function WebGLMapTiles({
   // SPRINT 3c: Pause khi tab hidden
   const isPageVisibleRef = useRef(true);
 
-  const { invalidate } = useThree();
+  const { gl, invalidate } = useThree();
   const invalidateRef = useRef(invalidate);
   invalidateRef.current = invalidate;
 
@@ -82,10 +82,15 @@ export default function WebGLMapTiles({
     const safeScale = scale.get() || 1;
     const initialZoom = getRoadmapTileZoom(safeScale);
 
-    // Proxy 2D canvas — tránh xung đột 2 WebGL context
+    // Tính toán DPR của màn hình hiện tại (tối đa 2 để tránh tốn quá nhiều VRAM)
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const canvasWidth = PROXY_SIZE * dpr;
+    const canvasHeight = PROXY_SIZE * dpr;
+
+    // Proxy 2D canvas — kích thước thật phải bằng kích thước MapLibre render (có tính dpr)
     const proxyCanvas = document.createElement('canvas');
-    proxyCanvas.width = PROXY_SIZE;
-    proxyCanvas.height = PROXY_SIZE;
+    proxyCanvas.width = canvasWidth;
+    proxyCanvas.height = canvasHeight;
     const ctx2d = proxyCanvas.getContext('2d', { willReadFrequently: false });
 
     const map = new maplibregl.Map({
@@ -108,9 +113,10 @@ export default function WebGLMapTiles({
         try {
           // Fix text ngược: flip ngang khi copy
           ctx2d.save();
-          ctx2d.translate(PROXY_SIZE, 0);
+          ctx2d.translate(canvasWidth, 0);
           ctx2d.scale(-1, 1);
-          ctx2d.drawImage(mapCanvas, 0, 0, PROXY_SIZE, PROXY_SIZE);
+          // Vẽ với kích thước thật của canvas
+          ctx2d.drawImage(mapCanvas, 0, 0, canvasWidth, canvasHeight);
           ctx2d.restore();
           textureDirtyRef.current = true;
           invalidateRef.current(); // Sprint 2: trigger R3F frame
@@ -124,6 +130,10 @@ export default function WebGLMapTiles({
       texture.magFilter = THREE.LinearFilter;
       texture.format = THREE.RGBAFormat;
       texture.flipY = true; // correct V-axis
+      
+      // FIX MỜ: Thêm Anisotropic Filtering — Cực kỳ quan trọng để map nét khi nhìn góc nghiêng (pitch)
+      texture.anisotropy = gl.capabilities.getMaxAnisotropy();
+      texture.generateMipmaps = true; // Cần mipmaps cho filter hoạt động tốt trên mặt nghiêng
 
       textureRef.current = texture;
       if (materialRef.current) {
