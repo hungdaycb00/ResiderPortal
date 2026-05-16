@@ -66,7 +66,7 @@ export function useMapInteractions({
         // Capture pointer to ensure smooth drag and prevent losing focus
         if (e.currentTarget && e.currentTarget.setPointerCapture) {
             e.currentTarget.setPointerCapture(e.pointerId);
-            console.log('[Map_Drag] Pointer captured:', e.pointerId, 'startX:', e.clientX, 'startY:', e.clientY);
+            console.warn('[Map_Drag] Pointer captured:', e.pointerId, 'startX:', e.clientX, 'startY:', e.clientY);
         }
 
         mapDragRef.current = {
@@ -145,7 +145,7 @@ export function useMapInteractions({
         const deltaY = movY / currentScale * 2.0;
 
         if (Math.abs(movX) > 5 || Math.abs(movY) > 5) {
-            console.log(`[Map_Drag] Moving. movX: ${movX.toFixed(2)}, movY: ${movY.toFixed(2)}, panX: ${panX.get().toFixed(4)}`);
+            console.warn(`[Map_Drag] Moving. movX: ${movX.toFixed(2)}, movY: ${movY.toFixed(2)}, panX: ${panX.get().toFixed(4)}`);
         }
 
         if (Math.abs(movX) + Math.abs(movY) > 4) {
@@ -181,7 +181,7 @@ export function useMapInteractions({
         if (e.currentTarget && e.currentTarget.releasePointerCapture) {
             try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
-                console.log('[Map_Drag] Pointer released:', e.pointerId);
+                console.warn('[Map_Drag] Pointer released:', e.pointerId);
             } catch (err) {}
         }
 
@@ -225,7 +225,7 @@ export function useMapInteractions({
         if (e.currentTarget && e.currentTarget.releasePointerCapture) {
             try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
-                console.log('[Map_Drag] Pointer capture cancelled:', e.pointerId);
+                console.warn('[Map_Drag] Pointer capture cancelled:', e.pointerId);
             } catch (err) {}
         }
 
