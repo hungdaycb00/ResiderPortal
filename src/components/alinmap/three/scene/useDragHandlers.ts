@@ -135,7 +135,6 @@ export function useDragHandlers(params: DragHandlersParams) {
     if (isLooterGameMode || !onSelfDragEnd) return;
     e.stopPropagation();
     e.nativeEvent.stopPropagation();
-    e.nativeEvent.preventDefault();
 
     cleanupWindowDragListeners();
     selfDragRef.current = {
