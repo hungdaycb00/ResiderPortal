@@ -230,21 +230,13 @@ export default function WebGLMapTiles({
           });
 
           const texture = new THREE.CanvasTexture(proxyCanvas);
-          texture.minFilter = THREE.LinearFilter;
+          texture.minFilter = THREE.LinearMipMapLinearFilter;
           texture.magFilter = THREE.LinearFilter;
           texture.format = THREE.RGBAFormat;
           texture.flipY = true;
-          
-          useEffect(() => {
-            if (textureRef.current) {
-              textureRef.current.anisotropy = gl.capabilities.getMaxAnisotropy();
-              textureRef.current.minFilter = THREE.LinearMipMapLinearFilter;
-              textureRef.current.magFilter = THREE.LinearFilter;
-              textureRef.current.generateMipmaps = true;
-              textureRef.current.flipY = true;
-              textureRef.current.needsUpdate = true;
-            }
-          }, [gl]);
+          texture.anisotropy = gl.capabilities.getMaxAnisotropy();
+          texture.generateMipmaps = true;
+          texture.needsUpdate = true;
 
           textureRef.current = texture;
           if (materialRef.current) {
