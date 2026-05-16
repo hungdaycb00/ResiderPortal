@@ -130,11 +130,8 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
-        const dragSpeedMultiplierX = mapMode === 'roadmap' ? (5 / 12) : (1 / 24);
-        const dragSpeedMultiplierY = mapMode === 'roadmap' ? (5 / 24) : (1 / 24);
-
-        const deltaX = ((e.clientX - dragState.startX) / currentScale) * dragSpeedMultiplierX;
-        const deltaY = ((e.clientY - dragState.startY) / currentScale) * dragSpeedMultiplierY;
+        const deltaX = (e.clientX - dragState.startX) / currentScale * 2.0;
+        const deltaY = (e.clientY - dragState.startY) / currentScale * 2.0;
         if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
             dragState.moved = true;
         }

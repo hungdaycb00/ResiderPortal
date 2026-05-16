@@ -297,8 +297,8 @@ export default function WebGLMapTiles({
       // Calculate precise zoom so that the proxy canvas exactly spans the visible 3D width.
       // 6255 is derived from (360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE) / (512 * 0.56)
       // This ensures 1:1 pixel mapping at the focal plane, guaranteeing maximum text crispness.
-      // We add a 1.2x buffer to prevent seeing edges during fast camera movement.
-      const buffer = 1.2;
+      // We add a larger buffer to prevent seeing edges when zooming out heavily
+      const buffer = 4.0;
       const exactZoom = Math.log2(
         (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
       );
