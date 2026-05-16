@@ -215,6 +215,7 @@ export default function WebGLMapTiles({
           interactive: false,
           attributionControl: false,
           fadeDuration: 0,
+          pixelRatio: dpr, // Sync với proxy canvas DPR để tránh mất nét trên high-DPR devices
         });
 
         map.on('load', () => {
@@ -299,17 +300,17 @@ export default function WebGLMapTiles({
     const maxViewportDimension = Math.max(viewportWidth, viewportHeight);
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // CHUYÊN GIA FIX: buffer = 5.0 (tính toán từ toán học camera frustum)
-    // Tại tilt=55°, FOV=75°: top edge nhìn thấy ground cách camera 2.026x distance.
-    // Tối thiểu cần buffer >= 2.64. Với Math.round() jitter cần >= 4.0. Dùng 5.0 cho an toàn.
-    const buffer = 5.0;
+    // buffer=3.0: đủ coverage (3.0 > 2.64 minimum tại tilt=55°, FOV=75°)
+    // Math.floor thay Math.round: luôn làm tròn XUỐNG → plane lớn hơn 2x worst-case
+    // → kết hợp buffer=3.0 + floor = effective coverage 3.0-6.0x → phủ kín frustum
+    // → MapLibre zoom chỉ giảm ~0.6 level so với buffer=2.0 → text vẫn nét!
+    const buffer = 3.0;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (maxViewportDimension * buffer)
     );
     
-    // CHUYÊN GIA THREE.JS FIX: Làm tròn zoom để Mapbox KHÔNG bị spam request số thực 
-    // khi Camera 3D đang trôi bằng Spring Animation. Chặn đứng lỗi nhấp nháy!
-    let zoom = Math.round(exactZoom);
+    // Math.floor: luôn làm tròn xuống → zoom thấp hơn → plane lớn hơn → không lộ mép
+    let zoom = Math.floor(exactZoom);
     if (!isFinite(zoom)) zoom = 15;
     if (!isFinite(center.lat)) center.lat = myObfPos.lat;
     if (!isFinite(center.lng)) center.lng = myObfPos.lng;
