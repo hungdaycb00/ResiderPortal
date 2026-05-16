@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MotionValue } from 'framer-motion';
-import { getRoadmapCenterFromPan, getRoadmapTileZoom, DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
+import { getRoadmapCenterFromPan, DEGREES_TO_PX, MAP_PLANE_SCALE } from '../../constants';
 import { MAP_COORD_SCENE_SCALE } from '../sceneCoords';
 
 // --- Style Patching Utils ---
@@ -176,7 +176,7 @@ export default function WebGLMapTiles({
     const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
     const container = getOffscreenContainer();
     const safeScale = scale.get() || 1;
-    const initialZoom = getRoadmapTileZoom(safeScale);
+    const initialZoom = 9.47 + Math.log2(safeScale * (PROXY_SIZE / 2048));
 
     // Tính toán DPR của màn hình hiện tại (tối đa 2 để tránh tốn quá nhiều VRAM)
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -290,7 +290,8 @@ export default function WebGLMapTiles({
       let center = getRoadmapCenterFromPan(
         myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
       );
-      let zoom = getRoadmapTileZoom(scale.get() || 1);
+      const currentProxySize = getProxySize(isDesktop, performanceMode);
+      let zoom = 9.47 + Math.log2((scale.get() || 1) * (currentProxySize / 2048));
 
       if (!isFinite(zoom)) zoom = 15;
       if (!isFinite(center.lat)) center.lat = myObfPos.lat;
