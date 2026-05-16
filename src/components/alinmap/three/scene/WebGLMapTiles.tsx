@@ -115,9 +115,12 @@ interface WebGLMapTilesProps {
 
 // SPRINT 1: Adaptive proxy size theo device capability
 const getProxySize = (isDesktop = false, perfMode = 'high'): number => {
-  if (perfMode === 'low') return 512;
-  if (!isDesktop) return 1024;
-  return 2048;
+  if (typeof window !== 'undefined') {
+    const maxSize = Math.max(window.innerWidth, window.innerHeight);
+    if (perfMode === 'low') return Math.min(maxSize, 1024);
+    return Math.min(Math.max(maxSize, 1024), 4096);
+  }
+  return isDesktop ? 2048 : 1024;
 };
 
 // SPRINT 3b: Adaptive throttle interval theo performance mode
@@ -133,7 +136,7 @@ const getOffscreenContainer = () => {
   if (!div) {
     div = document.createElement('div');
     div.id = 'maplibre-offscreen-container';
-    div.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:2048px;height:2048px;pointer-events:none;';
+    div.style.cssText = 'position:fixed;left:-9999px;top:-9999px;pointer-events:none;';
     document.body.appendChild(div);
   }
   return div;
@@ -177,6 +180,8 @@ export default function WebGLMapTiles({
 
     const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
     const container = getOffscreenContainer();
+    container.style.width = `${PROXY_SIZE}px`;
+    container.style.height = `${PROXY_SIZE}px`;
     const safeScale = scale.get() || 1;
     const initialZoom = 9.47 + Math.log2(safeScale * (PROXY_SIZE / 2048));
 

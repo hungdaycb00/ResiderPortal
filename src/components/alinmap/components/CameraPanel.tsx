@@ -173,8 +173,8 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <input
               type="range"
-              min="20"
-              max="110"
+              min="1"
+              max="180"
               step="1"
               value={cameraFov}
               onChange={(e) => safeSetCameraFov(parseInt(e.target.value, 10))}
@@ -200,8 +200,8 @@ const CameraPanel: React.FC<CameraPanelProps> = ({
             </div>
             <input
               type="range"
-              min="-180"
-              max="180"
+              min="-720"
+              max="720"
               step="1"
               value={cameraRotateYDeg}
               onChange={(e) => safeSetCameraRotateYDeg(parseInt(e.target.value, 10))}

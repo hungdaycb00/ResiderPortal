@@ -90,13 +90,12 @@ export const getPerspectivePx = (viewportHeight: number, fov: number = CAMERA_FO
 
 export const getVisualScaleFromCameraZ = (cameraZ: number, perspectivePx: number) => {
     const safePerspective = Math.max(perspectivePx || 0, 320);
-    return clamp(safePerspective / Math.max(1, safePerspective - cameraZ), 0.02, 8);
+    return safePerspective / Math.max(1, safePerspective - cameraZ);
 };
 
 export const getCameraZForVisualScale = (visualScale: number, perspectivePx: number) => {
     const safePerspective = Math.max(perspectivePx || 0, 320);
-    const safeScale = clamp(visualScale, 0.02, 8);
-    return clamp(safePerspective - safePerspective / safeScale, CAMERA_Z_FAR, CAMERA_Z_NEAR);
+    return safePerspective - safePerspective / visualScale;
 };
 
 export const getTiltAngleFromCameraZ = (cameraZ: number) =>
