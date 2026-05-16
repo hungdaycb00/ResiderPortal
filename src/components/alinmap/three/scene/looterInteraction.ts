@@ -181,10 +181,6 @@ export function useLooterInteraction(params: LooterInteractionParams) {
   const handleGroundClick = React.useCallback((groundMeshRef: React.RefObject<any>, point: Vector3, ray?: Ray) => {
     if (!isLooterGameMode || !groundMeshRef.current || !onRequestMove) return;
     if (itemClickLockRef.current) { itemClickLockRef.current = false; return; }
-    if (looterStateObj?.worldTier === -1 && !encounter) {
-      setIsTierSelectorOpen?.(true);
-      return;
-    }
 
     const moveGroup = groundMeshRef.current.parent;
     if (!moveGroup) return;
@@ -203,6 +199,11 @@ export function useLooterInteraction(params: LooterInteractionParams) {
       const nearest = selection.item;
       console.log('[GroundClick->Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', selection.lat.toFixed(5), 'click-lng:', selection.lng.toFixed(5));
       handleWorldItemClickRef.current(nearest);
+      return;
+    }
+
+    if (looterStateObj?.worldTier === -1 && !encounter) {
+      setIsTierSelectorOpen?.(true);
       return;
     }
 

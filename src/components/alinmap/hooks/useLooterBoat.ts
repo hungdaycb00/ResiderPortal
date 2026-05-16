@@ -149,6 +149,11 @@ export function useLooterBoat({
         // User chose a new target or tapped the map, so the locate/follow mode must be released.
         stopPanFollow();
 
+        if (source === 'map' && !isChallengeActive && state?.worldTier === -1) {
+            setIsTierSelectorOpen?.(true);
+            return;
+        }
+
         if (showMinigame || encounter || showCurseModal || combatResult || isIntegratedStorageOpen) {
             // Safety Reset Logic
             const now = Date.now();
@@ -167,11 +172,6 @@ export function useLooterBoat({
                 consecutiveBlockCountRef.current = 1;
             }
             lastBlockTimeRef.current = now;
-            return;
-        }
-
-        if (!isChallengeActive && state?.worldTier === -1) {
-            setIsTierSelectorOpen?.(true);
             return;
         }
 
@@ -249,7 +249,7 @@ export function useLooterBoat({
             });
         });
 
-    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations, stopPanFollow]);
+    }, [isLooterGameMode, looterState, looterActions, myObfPos, boatOffsetX, boatOffsetY, showNotification, setIsTierSelectorOpen, animateBoatTo, curseVisual, isAnimatingRef, centerOnCombat, stopAllAnimations, stopPanFollow, isChallengeActive, state?.worldTier]);
 
     return useMemo(() => ({
         boatOffsetX, boatOffsetY, curseVisual,
