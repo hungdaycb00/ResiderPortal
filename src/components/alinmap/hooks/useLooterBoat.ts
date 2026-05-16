@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { animate, useMotionValue, MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE, getRoadmapCenterFromPan, ROADMAP_TILE_SIZE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, getRoadmapCenterFromPan } from '../constants';
 import { useLooterState, useLooterActions } from '../looter-game/LooterGameContext';
 import { useBoatAnimation } from '../looter-game/hooks/useBoatAnimation';
 import { getDistanceMeters } from '../looter-game/backpack/utils';
