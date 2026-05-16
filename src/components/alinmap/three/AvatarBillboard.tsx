@@ -88,7 +88,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             renderOrder={10}
         >
-            <Billboard follow lockX lockZ>
+            <Billboard follow>
                 <mesh position={[0, 1.15 * avatarScale, 0.02]} renderOrder={20}>
                     <planeGeometry args={[avatarPlaneSize, avatarPlaneSize]} />
                     <meshBasicMaterial map={texture} transparent alphaTest={0.1} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
@@ -123,6 +123,13 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                         )}
                     </group>
                 )}
+                {showGallery ? (
+                    <GalleryImage
+                        url={galleryImages?.[0]}
+                        title={galleryTitle}
+                        avatarPlaneSize={avatarPlaneSize}
+                    />
+                ) : null}
             </Billboard>
 
             {/* Vòng tròn dưới đất (footprint) */}
@@ -152,14 +159,6 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                 <circleGeometry args={[ringRadius * 0.8, 32]} />
                 <meshBasicMaterial color="black" transparent opacity={0.15} depthWrite={false} />
             </mesh>
-
-            {showGallery ? (
-                <GalleryImage
-                    url={galleryImages?.[0]}
-                    title={galleryTitle}
-                    avatarPlaneSize={avatarPlaneSize}
-                />
-            ) : null}
         </group>
     );
 };

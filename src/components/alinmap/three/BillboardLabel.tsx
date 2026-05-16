@@ -15,7 +15,7 @@ export default function BillboardLabel({ title, subtitle, accent, position }: Bi
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
     return (
-        <Billboard follow lockX lockZ position={position}>
+        <Billboard follow position={position}>
             <mesh position={[0, 0, 0.1]} renderOrder={50}>
                 <planeGeometry args={LABEL_PLANE_SIZE} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />

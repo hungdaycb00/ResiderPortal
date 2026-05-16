@@ -96,7 +96,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
             </mesh>
 
             {/* Labels (Using Billboard so they always face camera) */}
-            <Billboard follow lockX lockZ position={[0, 3.5, 0]}>
+            <Billboard follow position={[0, 3.5, 0]}>
                 {shouldRenderLabel && (
                     <group position={[0, isRoadmapPresentation ? 0.5 : 1.2, 0]}>
                         <Text

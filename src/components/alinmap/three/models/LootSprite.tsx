@@ -36,16 +36,14 @@ const LootSprite: React.FC<LootSpriteProps> = ({
 
     // Vị trí Y cục bộ để vòng tròn footprint nằm ở FOOTPRINT_WORLD_Y trong world space,
     // bất kể item được đặt ở độ cao nào hay scale bao nhiêu.
-    const footprintLocalY = (FOOTPRINT_WORLD_Y - position[1]) / scale;
+    const footprintLocalY = FOOTPRINT_WORLD_Y - position[1];
 
     // Bán kính vòng tròn click — tỉ lệ với size, tối thiểu 3.5 để luôn dễ click
-    const footprintRadius = Math.max(size * 0.5, 3.5);
+    const footprintRadius = Math.max(size * 0.5, 3.5) * scale;
 
     return (
-        <Billboard
-            follow lockX lockZ
+        <group
             position={position}
-            scale={[scale, scale, 1]}
             onClick={(e) => {
                 e.stopPropagation();
                 onClick?.();
@@ -69,17 +67,19 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 document.body.style.cursor = 'auto';
             }}
         >
-            {/* Sprite chính — plane đứng thẳng vuông góc nền map (lockX lockZ) */}
-            <mesh renderOrder={renderOrder} raycast={interactive ? undefined : () => {}}>
-                <planeGeometry args={[size, size]} />
-                <meshBasicMaterial
-                    map={texture}
-                    transparent
-                    alphaTest={0.1}
-                    depthWrite={false}
-                    side={THREE.DoubleSide}
-                />
-            </mesh>
+            {/* Sprite chính luôn quay thẳng về camera để giữ đủ thông tin hiển thị. */}
+            <Billboard follow scale={[scale, scale, 1]}>
+                <mesh renderOrder={renderOrder} raycast={interactive ? undefined : () => {}}>
+                    <planeGeometry args={[size, size]} />
+                    <meshBasicMaterial
+                        map={texture}
+                        transparent
+                        alphaTest={0.1}
+                        depthWrite={false}
+                        side={THREE.DoubleSide}
+                    />
+                </mesh>
+            </Billboard>
             {/* Click footprint — vòng tròn nằm ngang trên mặt đất, LUÔN trên ground (y=-1) */}
             <mesh
                 position={[0, footprintLocalY, 0]}
@@ -89,7 +89,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 <circleGeometry args={[footprintRadius, 16]} />
                 <meshBasicMaterial color="black" transparent opacity={0.10} depthWrite={false} />
             </mesh>
-        </Billboard>
+        </group>
     );
 };
 
