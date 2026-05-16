@@ -117,10 +117,10 @@ interface WebGLMapTilesProps {
 const getProxySize = (isDesktop = false, perfMode = 'high'): number => {
   if (typeof window !== 'undefined') {
     const maxSize = Math.max(window.innerWidth, window.innerHeight);
-    if (perfMode === 'low') return Math.min(maxSize, 1024);
-    return Math.min(Math.max(maxSize, 1024), 4096);
+    if (perfMode === 'low') return Math.min(maxSize, 2048);
+    return Math.min(Math.max(maxSize, 2048), 4096);
   }
-  return isDesktop ? 2048 : 1024;
+  return isDesktop ? 4096 : 2048;
 };
 
 // SPRINT 3b: Adaptive throttle interval theo performance mode
@@ -298,12 +298,15 @@ export default function WebGLMapTiles({
       // 6255 is derived from (360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE) / (512 * 0.56)
       // This ensures 1:1 pixel mapping at the focal plane, guaranteeing maximum text crispness.
       // We add a larger buffer to prevent seeing edges when zooming out heavily
-      const buffer = 4.0;
+      const buffer = 1.2;
       const exactZoom = Math.log2(
         (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
       );
       
-      // MapLibre supports fractional zoom perfectly
+      if (Math.random() < 0.02) {
+          console.log(`[Map_Render] currentProxySize=${currentProxySize}, buffer=${buffer}, scale=${scale.get()?.toFixed(5)}, exactZoom=${exactZoom.toFixed(2)}`);
+      }
+
       let zoom = exactZoom;
 
       if (!isFinite(zoom)) zoom = 15;

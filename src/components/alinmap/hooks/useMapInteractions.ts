@@ -132,6 +132,11 @@ export function useMapInteractions({
         const mapPlaneScale = MAP_PLANE_SCALE;
         const deltaX = (e.clientX - dragState.startX) / currentScale * 2.0;
         const deltaY = (e.clientY - dragState.startY) / currentScale * 2.0;
+
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+            console.log(`[Map_Drag] currentScale=${currentScale.toFixed(5)}, currentPlaneYScale=${currentPlaneYScale.toFixed(3)}, deltaX=${deltaX.toFixed(1)}, deltaY=${deltaY.toFixed(1)}`);
+        }
+
         if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
             dragState.moved = true;
         }

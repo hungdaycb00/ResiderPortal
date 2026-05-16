@@ -11,6 +11,7 @@ import {
   CAMERA_HEIGHT_OFFSET_DEFAULT,
   CAMERA_HEIGHT_RATIO_DEFAULT,
   CAMERA_TILT_FAR_DEGREES,
+  CAMERA_Z_FAR,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   ROADMAP_VISUAL_SCALE_DEFAULT,
@@ -165,11 +166,15 @@ export function useMapNavigation({
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
     const distance = Math.max(1, perspectivePx - currentZ);
-    const stepRatio = e.deltaMode === 0 ? 0.05 : 0.2;
-    const step = distance * stepRatio;
+    const stepRatio = e.deltaMode === 0 ? 0.002 : 0.01;
+    const step = distance * stepRatio * Math.abs(e.deltaY);
+    
+    console.log(`[Map_Wheel] deltaY=${e.deltaY}, deltaMode=${e.deltaMode}, currentZ=${currentZ.toFixed(1)}, distance=${distance.toFixed(1)}, step=${step.toFixed(1)}`);
+    
     const nextZ = e.deltaY > 0
-      ? currentZ - step
+      ? Math.max(currentZ - step, CAMERA_Z_FAR)
       : Math.min(currentZ + step, CAMERA_Z_NEAR);
+      
     animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ, perspectivePx]);
 
@@ -179,12 +184,16 @@ export function useMapNavigation({
 
   const zoomIn = useCallback(() => {
     const distance = Math.max(1, perspectivePx - cameraZ.get());
-    setCameraZ(Math.min(cameraZ.get() + distance * 0.2, CAMERA_Z_NEAR));
+    const step = distance * 0.2;
+    console.log(`[Map_ZoomIn] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
+    setCameraZ(Math.min(cameraZ.get() + step, CAMERA_Z_NEAR));
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const zoomOut = useCallback(() => {
     const distance = Math.max(1, perspectivePx - cameraZ.get());
-    setCameraZ(cameraZ.get() - distance * 0.2);
+    const step = distance * 0.2;
+    console.log(`[Map_ZoomOut] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
+    setCameraZ(Math.max(cameraZ.get() - step, CAMERA_Z_FAR));
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const setVisualScale = useCallback((visualScale: number) => {

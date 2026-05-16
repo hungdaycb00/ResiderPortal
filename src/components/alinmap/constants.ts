@@ -9,7 +9,7 @@ export const MAP_PLANE_SCALE = 1.32;
 export const MAP_PLANE_Y_SCALE = MAP_PLANE_SCALE * Math.cos((MAP_TILT_DEGREES * Math.PI) / 180);
 
 export const CAMERA_FOV_DEGREES = 75;
-export const CAMERA_Z_FAR = -100000;
+export const CAMERA_Z_FAR = -150000;
 export const CAMERA_Z_DEFAULT = 0;
 export const CAMERA_Z_WATER_DEFAULT = 38; // ~95% zoom trên slider
 export const CAMERA_Z_NEAR = 260;
