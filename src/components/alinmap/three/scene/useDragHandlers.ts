@@ -32,6 +32,7 @@ interface WindowDragListeners {
 }
 
 const DRAG_THRESHOLD_PX = 4;
+const DRAG_FOLLOW_MULTIPLIER = 15;
 
 export function useDragHandlers(params: DragHandlersParams) {
   const { isLooterGameMode, basePosition, scale, selfDragX, selfDragY, onSelfDragEnd } = params;
@@ -63,8 +64,8 @@ export function useDragHandlers(params: DragHandlersParams) {
     const screenDx = clientX - state.startClientX;
     const screenDy = clientY - state.startClientY;
     const currentScale = Math.max(scale.get(), 0.001);
-    const dragX = screenDx / currentScale;
-    const dragY = screenDy / currentScale;
+    const dragX = (screenDx / currentScale) * DRAG_FOLLOW_MULTIPLIER;
+    const dragY = (screenDy / currentScale) * DRAG_FOLLOW_MULTIPLIER;
 
     state.lastClientX = clientX;
     state.lastClientY = clientY;
