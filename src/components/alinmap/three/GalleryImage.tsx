@@ -35,14 +35,26 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
     return (
         <group
             position={[0, billboardYOffset, 0]}
-            onClick={(e) => {
-                e.stopPropagation();
-                onClick?.(e);
-            }}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
         >
-            <mesh position={[0, 0, 0.05]} renderOrder={30}>
+            <mesh
+                position={[0, 0, 0.05]}
+                renderOrder={30}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => {
+                    e.stopPropagation();
+                    onClick?.(e);
+                }}
+                onPointerOver={(e) => {
+                    e.stopPropagation();
+                    document.body.style.cursor = 'pointer';
+                }}
+                onPointerOut={(e) => {
+                    e.stopPropagation();
+                    document.body.style.cursor = 'auto';
+                }}
+            >
                 <planeGeometry args={[billboardWidth, billboardHeight]} />
                 {texture ? (
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />

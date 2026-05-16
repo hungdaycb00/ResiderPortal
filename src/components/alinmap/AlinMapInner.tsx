@@ -173,10 +173,28 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             return !!(sameTitle || sameImage);
         };
 
-        const openPost = (post: any) => {
-            if (!post) return false;
-            setSelectedPost(post);
-            return true;
+        const normalizeProfileUser = (candidate: any) => ({
+            ...candidate,
+            id: candidate?.id || candidate?.uid || candidate?.user_id || sourceUserId,
+            displayName: candidate?.displayName || candidate?.name || candidate?.username || sourceUser.displayName || sourceUser.name || sourceUser.username || 'User',
+            username: candidate?.username || candidate?.displayName || candidate?.name || sourceUser.username || sourceUser.displayName || sourceUser.name || 'User',
+            avatar_url: candidate?.avatar_url || candidate?.photoURL || candidate?.avatarUrl || sourceUser.avatar_url || sourceUser.photoURL || sourceUser.avatarUrl || null,
+            photoURL: candidate?.photoURL || candidate?.avatar_url || candidate?.avatarUrl || sourceUser.photoURL || sourceUser.avatar_url || sourceUser.avatarUrl || null,
+            status: candidate?.status || sourceUser.status || '',
+        });
+
+        const openBillboardPost = (post: any) => {
+            const profileUser = normalizeProfileUser(post?.author || sourceUser);
+            nav.setSelectedUser(profileUser);
+            nav.setActiveTab('posts');
+            nav.setMainTab('profile');
+            nav.setIsSheetExpanded(true);
+
+            if (post) {
+                setSelectedPost(post);
+            } else {
+                setSelectedPost(null);
+            }
         };
 
         const localPost = allPosts.find((post: any) => matchesAuthor(post) && matchesGallery(post))
@@ -184,11 +202,15 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             || allPosts.find((post: any) => matchesAuthor(post))
             || null;
 
-        if (openPost(localPost)) {
+        if (localPost) {
+            openBillboardPost(localPost);
             return;
         }
 
-        if (!sourceUserId) return;
+        if (!sourceUserId) {
+            openBillboardPost(null);
+            return;
+        }
 
         try {
             const resp = await fetch(`${API_BASE}/api/user/${sourceUserId}/posts`, {
@@ -198,15 +220,18 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             const fetchedPosts = Array.isArray(data?.posts) ? data.posts : [];
             const fetchedPost = fetchedPosts.find(matchesGallery)
                 || fetchedPosts.find((post: any) => post?.isStarred)
+                || fetchedPosts.find((post: any) => matchesAuthor(post))
                 || null;
-            if (!openPost(fetchedPost)) {
-                showNotification?.('Không tìm thấy bài viết billboard', 'info');
+            openBillboardPost(fetchedPost);
+            if (!fetchedPost) {
+                showNotification?.('�� m? tab b�i vi?t c?a user, nhung chua t�m th?y post billboard c? th?', 'info');
             }
         } catch (err) {
             console.error('Open billboard post error:', err);
-            showNotification?.('Không mở được bài viết billboard', 'error');
+            openBillboardPost(null);
+            showNotification?.('Kh�ng m? du?c b�i vi?t billboard', 'error');
         }
-    }, [API_BASE, externalApi, posts.feedPosts, posts.userPosts, showNotification]);
+    }, [API_BASE, externalApi, nav, posts.feedPosts, posts.userPosts, showNotification]);
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
@@ -374,3 +399,4 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 };
 
 export default AlinMapInner;
+
