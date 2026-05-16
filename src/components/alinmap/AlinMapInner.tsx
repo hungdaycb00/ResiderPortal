@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../services/externalApi';
 import MapCanvas from './MapCanvas';
@@ -126,7 +126,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
         wsCtx.setIsSocketConnecting(true);
         const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
-        // CHUYÊN GIA FIX: panY giờ đồng nhất với panX, dùng MAP_PLANE_SCALE thay vì planeYScale.
+        // CHUYÃŠN GIA FIX: panY giá» Ä‘á»“ng nháº¥t vá»›i panX, dÃ¹ng MAP_PLANE_SCALE thay vÃ¬ planeYScale.
         const scanLat = geo.myObfPos.lat + (nav.panY.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
         wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
         setTimeout(() => wsCtx.setIsSocketConnecting(false), 1000);
@@ -147,6 +147,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setGalleryImages: wsCtx.setGalleryImages,
     });
 
+    const logBillboard = useCallback((stage: string, details: Record<string, unknown> = {}) => {
+        console.log(`[AlinMap][Billboard] ${stage}`, details);
+    }, []);
+
     const handleOpenBillboardPost = useCallback(async (sourceUser: any) => {
         if (!sourceUser) return;
 
@@ -158,6 +162,16 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             ...(Array.isArray(posts.feedPosts) ? posts.feedPosts : []),
             ...(Array.isArray(posts.userPosts) ? posts.userPosts : []),
         ];
+
+        logBillboard('click received', {
+            sourceUserId,
+            sourceName: sourceUser.displayName || sourceUser.name || sourceUser.username || null,
+            galleryActive: !!sourceUser.gallery?.active,
+            galleryTitle,
+            galleryImageCount: galleryImages.length,
+            galleryPostId,
+            totalCachedPosts: allPosts.length,
+        });
 
         const matchesAuthor = (post: any) => {
             const postAuthorId = post?.author?.id || post?.user_id || post?.author_id || null;
@@ -173,6 +187,22 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             return !!(sameTitle || sameImage);
         };
 
+        const resolvePostFromList = (list: any[]) => {
+            const exact = list.find((post: any) => matchesAuthor(post) && matchesGallery(post)) || null;
+            if (exact) return { post: exact, match: 'author+gallery' };
+
+            const starred = list.find((post: any) => matchesAuthor(post) && post?.isStarred) || null;
+            if (starred) return { post: starred, match: 'author+starred' };
+
+            const authorOnly = list.find((post: any) => matchesAuthor(post)) || null;
+            if (authorOnly) return { post: authorOnly, match: 'author-only' };
+
+            const galleryOnly = list.find((post: any) => matchesGallery(post)) || null;
+            if (galleryOnly) return { post: galleryOnly, match: 'gallery-only' };
+
+            return { post: null, match: 'none' };
+        };
+
         const normalizeProfileUser = (candidate: any) => ({
             ...candidate,
             id: candidate?.id || candidate?.uid || candidate?.user_id || sourceUserId,
@@ -183,55 +213,79 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             status: candidate?.status || sourceUser.status || '',
         });
 
-        const openBillboardPost = (post: any) => {
+        const openBillboardPost = (post: any, source: string) => {
             const profileUser = normalizeProfileUser(post?.author || sourceUser);
+            logBillboard('open profile tab', {
+                source,
+                profileUserId: profileUser.id,
+                profileUserName: profileUser.displayName || profileUser.username || null,
+                selectedPostId: post?.id || null,
+            });
             nav.setSelectedUser(profileUser);
             nav.setActiveTab('posts');
             nav.setMainTab('profile');
             nav.setIsSheetExpanded(true);
 
             if (post) {
+                logBillboard('set selected post', {
+                    postId: post.id || null,
+                    postTitle: post.title || null,
+                    postAuthorId: post.author?.id || post.user_id || post.author_id || null,
+                });
                 setSelectedPost(post);
             } else {
+                logBillboard('no post resolved, clear selected post');
                 setSelectedPost(null);
             }
         };
 
-        const localPost = allPosts.find((post: any) => matchesAuthor(post) && matchesGallery(post))
-            || allPosts.find((post: any) => matchesAuthor(post) && post?.isStarred)
-            || allPosts.find((post: any) => matchesAuthor(post))
-            || null;
+        const localResolved = resolvePostFromList(allPosts);
+        logBillboard('local resolve result', {
+            match: localResolved.match,
+            postId: localResolved.post?.id || null,
+            postTitle: localResolved.post?.title || null,
+        });
 
-        if (localPost) {
-            openBillboardPost(localPost);
+        if (localResolved.post) {
+            openBillboardPost(localResolved.post, 'local-cache');
             return;
         }
 
         if (!sourceUserId) {
-            openBillboardPost(null);
+            logBillboard('no sourceUserId, opening profile tab without post');
+            openBillboardPost(null, 'no-source-user-id');
             return;
         }
 
         try {
+            logBillboard('fetching user posts', { sourceUserId });
             const resp = await fetch(`${API_BASE}/api/user/${sourceUserId}/posts`, {
                 headers: { 'X-Device-Id': externalApi.getDeviceId() },
             });
             const data = await resp.json();
             const fetchedPosts = Array.isArray(data?.posts) ? data.posts : [];
-            const fetchedPost = fetchedPosts.find(matchesGallery)
-                || fetchedPosts.find((post: any) => post?.isStarred)
-                || fetchedPosts.find((post: any) => matchesAuthor(post))
-                || null;
-            openBillboardPost(fetchedPost);
-            if (!fetchedPost) {
-                showNotification?.('�� m? tab b�i vi?t c?a user, nhung chua t�m th?y post billboard c? th?', 'info');
+            const fetchedResolved = resolvePostFromList(fetchedPosts);
+            logBillboard('fetch resolve result', {
+                match: fetchedResolved.match,
+                postId: fetchedResolved.post?.id || null,
+                postTitle: fetchedResolved.post?.title || null,
+                fetchedCount: fetchedPosts.length,
+            });
+
+            openBillboardPost(fetchedResolved.post, 'fetched-api');
+            if (!fetchedResolved.post) {
+                showNotification?.('Đã mở tab bài viết của user, nhưng chưa tìm thấy post billboard cụ thể', 'info');
             }
         } catch (err) {
             console.error('Open billboard post error:', err);
-            openBillboardPost(null);
-            showNotification?.('Kh�ng m? du?c b�i vi?t billboard', 'error');
+            logBillboard('fetch failed', {
+                sourceUserId,
+                error: err instanceof Error ? err.message : String(err),
+            });
+            openBillboardPost(null, 'fetch-error');
+            showNotification?.('Không mở được bài viết billboard', 'error');
         }
-    }, [API_BASE, externalApi, nav, posts.feedPosts, posts.userPosts, showNotification]);
+    }, [API_BASE, externalApi, logBillboard, nav, posts.feedPosts, posts.userPosts, showNotification]);
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
@@ -399,4 +453,5 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 };
 
 export default AlinMapInner;
+
 

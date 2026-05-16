@@ -44,6 +44,13 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerUp={(e) => {
                     e.stopPropagation();
+                    console.log('[AlinMap][Billboard] pointerup', {
+                        title: title || 'GALLERY',
+                        url: url || null,
+                        hasTexture: !!texture,
+                        billboardWidth,
+                        billboardHeight,
+                    });
                     onClick?.(e);
                 }}
                 onPointerOver={(e) => {
