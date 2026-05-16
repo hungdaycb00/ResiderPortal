@@ -227,21 +227,24 @@ export function useMapNavigation({
     setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
   }, [perspectivePx, setCameraZ]);
 
-  const handleCenter = useCallback(() => {
+  const handleCenter = useCallback((targetVisualScaleOverride?: number) => {
     animate(panX, 0, { duration: 1.6, ease: "easeInOut" });
     animate(panY, 0, { duration: 1.6, ease: "easeInOut" });
-    const targetVisualScale = getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
+    const targetVisualScale = targetVisualScaleOverride ?? getDefaultVisualScaleForMapMode(mapMode, isLooterGameMode);
     animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
   }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
-  const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0) => {
+  const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0, targetVisualScale?: number) => {
     if (!myObfPos) return;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
     animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 3.0, ease: "easeInOut" });
     // CHUYÊN GIA FIX: panY cũng phải dùng MAP_PLANE_SCALE, đồng nhất với panX và moveGroupRef.
     animate(panY, -pxY * MAP_PLANE_SCALE - yOffsetPx, { duration: 3.0, ease: "easeInOut" });
-  }, [myObfPos, panX, panY]);
+    if (typeof targetVisualScale === 'number') {
+      animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
+    }
+  }, [myObfPos, panX, panY, cameraZ, perspectivePx]);
 
   const requestBoatAutoFocus = useCallback(() => {
     pendingBoatFocusRef.current = true;

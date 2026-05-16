@@ -300,13 +300,9 @@ export default function SceneContent({
           performance={performance}
         />
 
-        {/* Scene markers (Province, Search, Mode label) */}
+        {/* Scene markers (Search, Mode label) */}
         <SceneMarkers
           isRoadmapOverlay={isRoadmapOverlay}
-          currentProvince={currentProvince}
-          selfSceneX={selfPos.x}
-          selfSceneZ={selfPos.z}
-          pxToScaledScene={pxToScaledScene}
           searchMarkerPos={searchMarkerPos}
           searchMarkerScene={searchMarkerScene}
         />

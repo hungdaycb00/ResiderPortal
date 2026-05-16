@@ -17,6 +17,7 @@ import { useLooterActions, useLooterState } from './looter-game/LooterGameContex
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { usePosts } from './features/profile/hooks/usePosts';
+import { ROADMAP_LOCATE_VISUAL_SCALE } from './constants';
 
 type CameraLabState = {
   cameraZ: MotionValue<number>;
@@ -218,12 +219,12 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         handleCenter={() => {
           if (geo.position && geo.position.length >= 2) {
             // Bay về đúng tọa độ GPS thật thay vì tọa độ bị làm mờ (myObfPos)
-            nav.handleCenterTo(geo.position[0], geo.position[1]);
+            nav.handleCenterTo(geo.position[0], geo.position[1], 0, ROADMAP_LOCATE_VISUAL_SCALE);
             if (typeof geo.requestLocation === 'function') {
               geo.requestLocation(); // Cập nhật GPS mới nhất luôn
             }
           } else {
-            nav.handleCenter();
+            nav.handleCenter(ROADMAP_LOCATE_VISUAL_SCALE);
           }
         }}
         handleCenterTo={nav.handleCenterTo}

@@ -15,6 +15,7 @@ export const CAMERA_Z_WATER_DEFAULT = 38; // ~95% zoom trên slider
 export const CAMERA_Z_NEAR = 260;
 export const CAMERA_MIN_DISTANCE_FROM_TARGET = 12;
 export const ROADMAP_VISUAL_SCALE_DEFAULT = 0.9;
+export const ROADMAP_LOCATE_VISUAL_SCALE = 12.3;
 export const ROADMAP_WORLD_SCALE = 0.12;
 export const SATELLITE_VISUAL_SCALE_DEFAULT = 0.92;
 export const LOOTER_VISUAL_SCALE_DEFAULT = 1.08;
