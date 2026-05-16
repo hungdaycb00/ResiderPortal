@@ -15,6 +15,7 @@ import {
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   ROADMAP_VISUAL_SCALE_DEFAULT,
+  clampCameraZForPerspective,
   getDefaultVisualScaleForMapMode,
   getPerspectivePx,
   getCameraZForVisualScale,
@@ -178,9 +179,8 @@ export function useMapNavigation({
     
     // Sane bounds to prevent map from disappearing or camera going through ground
     const nextScale = Math.max(0.01, Math.min(100, baseScale * factor));
-    targetScaleRef.current = nextScale;
-    
     const nextZ = getCameraZForVisualScale(nextScale, perspectivePx);
+    targetScaleRef.current = getVisualScaleFromCameraZ(nextZ, perspectivePx);
     
     if (wheelTimeoutRef.current) window.clearTimeout(wheelTimeoutRef.current);
     wheelTimeoutRef.current = window.setTimeout(() => {
@@ -199,8 +199,15 @@ export function useMapNavigation({
   }, [cameraZ, perspectivePx]);
 
   const setCameraZ = useCallback((z: number) => {
-    animate(cameraZ, z, { type: 'tween', duration: 0.15, ease: 'easeOut' });
-  }, [cameraZ]);
+    animate(cameraZ, clampCameraZForPerspective(z, perspectivePx), { type: 'tween', duration: 0.15, ease: 'easeOut' });
+  }, [cameraZ, perspectivePx]);
+
+  useEffect(() => {
+    const safeZ = clampCameraZForPerspective(cameraZ.get(), perspectivePx);
+    if (Math.abs(safeZ - cameraZ.get()) > 0.001) {
+      cameraZ.set(safeZ);
+    }
+  }, [cameraZ, perspectivePx]);
 
   const zoomIn = useCallback(() => {
     const currentScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);

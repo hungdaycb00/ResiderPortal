@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { MotionValue } from 'framer-motion';
-import { clamp } from '../constants';
+import { CAMERA_MIN_DISTANCE_FROM_TARGET, clamp } from '../constants';
 
 interface CameraRigProps {
     scale: MotionValue<number>;
@@ -72,7 +72,7 @@ export default function CameraRig({
     useFrame((_, delta) => {
         const zoom = Math.max(0.0001, scale.get() || 1);
         const depthFit = perspectivePx * 0.56;
-        const distance = depthFit / zoom;
+        const distance = Math.max(CAMERA_MIN_DISTANCE_FROM_TARGET, depthFit / zoom);
 
         // SPRINT 2: Cache trig values — chỉ tính lại khi pitch/yaw thực sự thay đổi
         const pitchDeg = clamp(tiltAngle.get(), 0, 89.9);

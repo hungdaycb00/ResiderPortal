@@ -13,6 +13,7 @@ export const CAMERA_Z_FAR = -150000;
 export const CAMERA_Z_DEFAULT = 0;
 export const CAMERA_Z_WATER_DEFAULT = 38; // ~95% zoom trên slider
 export const CAMERA_Z_NEAR = 260;
+export const CAMERA_MIN_DISTANCE_FROM_TARGET = 12;
 export const ROADMAP_VISUAL_SCALE_DEFAULT = 0.9;
 export const ROADMAP_WORLD_SCALE = 0.12;
 export const SATELLITE_VISUAL_SCALE_DEFAULT = 0.92;
@@ -96,9 +97,14 @@ export const getVisualScaleFromCameraZ = (cameraZ: number, perspectivePx: number
     return safePerspective / Math.max(1, safePerspective - cameraZ);
 };
 
+export const clampCameraZForPerspective = (cameraZ: number, perspectivePx: number) => {
+    const safePerspective = Math.max(perspectivePx || 0, 320);
+    return clamp(cameraZ, CAMERA_Z_FAR, safePerspective - CAMERA_MIN_DISTANCE_FROM_TARGET);
+};
+
 export const getCameraZForVisualScale = (visualScale: number, perspectivePx: number) => {
     const safePerspective = Math.max(perspectivePx || 0, 320);
-    return safePerspective - safePerspective / visualScale;
+    return clampCameraZForPerspective(safePerspective - safePerspective / visualScale, safePerspective);
 };
 
 export const getTiltAngleFromCameraZ = (cameraZ: number) =>
