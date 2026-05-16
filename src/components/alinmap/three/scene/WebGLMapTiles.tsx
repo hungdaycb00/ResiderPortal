@@ -151,8 +151,9 @@ export default function WebGLMapTiles({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const mapReadyRef = useRef(false);
-  const lastJumpRef = useRef(0);
   const textureDirtyRef = useRef(false);
+  const textureCenterRef = useRef<{lat: number, lng: number} | null>(null);
+  const textureZoomRef = useRef<number>(15);
   // SPRINT 3c: Pause khi tab hidden
   const isPageVisibleRef = useRef(true);
 
@@ -227,7 +228,11 @@ export default function WebGLMapTiles({
             try {
               // Vẽ với kích thước thật của canvas
               ctx2d.drawImage(mapCanvas, 0, 0, canvasWidth, canvasHeight);
-              textureDirtyRef.current = true;
+              // LƯU LẠI MAP CENTER VÀ ZOOM CỦA ĐÚNG KHUNG HÌNH TEXTURE NÀY!
+              // (Điều này cực kỳ quan trọng để đồng bộ Tọa độ 3D và Hình ảnh Texture - Fix Jitter)
+              textureCenterRef.current = map.getCenter();
+              textureZoomRef.current = map.getZoom();
+
               invalidateRef.current(); // Sprint 2: trigger R3F frame
             } catch {
               // bỏ qua khi canvas đang transition
@@ -282,70 +287,57 @@ export default function WebGLMapTiles({
     // SPRINT 3c: Skip frame processing khi tab hidden
     if (!isPageVisibleRef.current) return;
 
-    // SPRINT 3b: Adaptive throttle theo performance mode
-    const throttleInterval = getThrottleInterval(performanceMode);
-    lastJumpRef.current += delta;
-    if (lastJumpRef.current >= throttleInterval) {
-      lastJumpRef.current = 0;
+    // Không dùng throttle nữa, cho Mapbox bám sát R3F nhất có thể
+    let center = getRoadmapCenterFromPan(
+      myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
+    );
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const currentProxySize = getProxySize(isDesktop, performanceMode);
+    
+    // Calculate precise zoom so that the proxy canvas exactly spans the visible 3D width.
+    const buffer = 1.2;
+    const exactZoom = Math.log2(
+      (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
+    );
+    
+    let zoom = exactZoom;
+    if (!isFinite(zoom)) zoom = 15;
+    if (!isFinite(center.lat)) center.lat = myObfPos.lat;
+    if (!isFinite(center.lng)) center.lng = myObfPos.lng;
 
-      let center = getRoadmapCenterFromPan(
-        myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
-      );
-      const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-      const currentProxySize = getProxySize(isDesktop, performanceMode);
-      
-      // Calculate precise zoom so that the proxy canvas exactly spans the visible 3D width.
-      // 6255 is derived from (360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE) / (512 * 0.56)
-      // This ensures 1:1 pixel mapping at the focal plane, guaranteeing maximum text crispness.
-      // We add a larger buffer to prevent seeing edges when zooming out heavily
-      const buffer = 1.2;
-      const exactZoom = Math.log2(
-        (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
-      );
-      
-      if (Math.random() < 0.02) {
-          console.log(`[Map_Render] currentProxySize=${currentProxySize}, buffer=${buffer}, scale=${scale.get()?.toFixed(5)}, exactZoom=${exactZoom.toFixed(2)}`);
-      }
-
-      let zoom = exactZoom;
-
-      if (!isFinite(zoom)) zoom = 15;
-      if (!isFinite(center.lat)) center.lat = myObfPos.lat;
-      if (!isFinite(center.lng)) center.lng = myObfPos.lng;
-
-      try {
-        // Thay easeTo bằng jumpTo để Mapbox theo sát React state mà không tự tạo animation đè lên (tránh giật lag)
-        mapRef.current.jumpTo({
-          center: [center.lng, center.lat],
-          zoom,
-        });
-      } catch {
-        // bỏ qua
-      }
+    try {
+      // Thay easeTo bằng jumpTo để Mapbox theo sát React state mà không tự tạo animation đè lên (tránh giật lag)
+      mapRef.current.jumpTo({
+        center: [center.lng, center.lat],
+        zoom,
+      });
+    } catch {
+      // bỏ qua
     }
 
-    // Chỉ upload texture khi có frame mới từ MapLibre
+    // Chỉ upload texture VÀ cập nhật vị trí Plane khi có frame mới từ MapLibre (Atomic Update)
     if (textureDirtyRef.current && textureRef.current) {
       textureRef.current.needsUpdate = true;
       textureDirtyRef.current = false;
-    }
-
-    if (meshRef.current) {
-      const currentZoom = mapRef.current.getZoom();
-      const currentCenter = mapRef.current.getCenter();
-      const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
       
-      // Tính toán kích thước 3D plane động để khớp hoàn hảo 100% với diện tích địa lý texture
-      const planeSizeX = (PROXY_SIZE * 360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale) / (512 * Math.pow(2, currentZoom));
-      const planeSizeY = planeSizeX * Math.cos((currentCenter.lat * Math.PI) / 180);
-      
-      meshRef.current.scale.set(planeSizeX, planeSizeY, 1);
-      
-      // Dịch chuyển plane để center của texture (hiện đang tại currentCenter) nằm đúng tọa độ 3D của currentCenter
-      const x = (currentCenter.lng - myObfPos.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
-      const zCoord = -(currentCenter.lat - myObfPos.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
-      
-      meshRef.current.position.set(x, -0.2, zCoord);
+      // Đảm bảo Plane và Texture luôn khớp hoàn hảo về mặt thời gian (Khắc phục Jitter)
+      if (meshRef.current && textureCenterRef.current) {
+        const currentZoom = textureZoomRef.current;
+        const currentCenter = textureCenterRef.current;
+        const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
+        
+        // Tính toán kích thước 3D plane động để khớp hoàn hảo 100% với diện tích địa lý texture
+        const planeSizeX = (PROXY_SIZE * 360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale) / (512 * Math.pow(2, currentZoom));
+        const planeSizeY = planeSizeX * Math.cos((currentCenter.lat * Math.PI) / 180);
+        
+        meshRef.current.scale.set(planeSizeX, planeSizeY, 1);
+        
+        // Dịch chuyển plane để center của texture nằm đúng tọa độ 3D của nó
+        const x = (currentCenter.lng - myObfPos.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
+        const zCoord = -(currentCenter.lat - myObfPos.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
+        
+        meshRef.current.position.set(x, -0.2, zCoord);
+      }
     }
   });
 

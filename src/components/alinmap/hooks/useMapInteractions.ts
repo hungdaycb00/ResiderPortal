@@ -160,9 +160,9 @@ export function useMapInteractions({
         const totalMovX = e.clientX - dragState.initialClientX;
         const totalMovY = e.clientY - dragState.initialClientY;
         
-        // Tốc độ 2.5 cho cảm giác cầm nắm chắc chắn, mượt mà và không giật cục (không dùng delta)
-        const totalDeltaX = totalMovX / currentScale * 2.5;
-        const totalDeltaY = totalMovY / currentScale * 2.5;
+        // Tốc độ 1.0 là tỷ lệ 1:1 hoàn hảo (kéo 1 pixel màn hình = map đi 1 pixel). Không nhân lên để tránh phóng đại độ rung tay.
+        const totalDeltaX = totalMovX / currentScale * 1.0;
+        const totalDeltaY = totalMovY / currentScale * 1.0;
 
         if (Math.abs(totalMovX) > 4 || Math.abs(totalMovY) > 4) {
             dragState.moved = true;
