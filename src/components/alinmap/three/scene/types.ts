@@ -8,6 +8,7 @@ import type { AlinMapMode } from '../../constants';
  */
 export interface AlinMapThreeSceneProps {
   position: [number, number] | null;
+  myObfPos: { lat: number; lng: number } | null;
   nearbyUsers: any[];
   myUserId: string | null;
   user: any;

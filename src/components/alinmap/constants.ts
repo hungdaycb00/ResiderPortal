@@ -61,8 +61,9 @@ export const getRoadmapCenterFromPan = (
     panY: number,
     planeYScale: number
 ) => {
+    const safePlaneYScale = Math.max(0.001, planeYScale || 1);
     return {
-        lat: clamp(base.lat + panY / MAP_PLANE_SCALE / DEGREES_TO_PX, -85.05112878, 85.05112878),
+        lat: clamp(base.lat + panY / safePlaneYScale / DEGREES_TO_PX, -85.05112878, 85.05112878),
         lng: base.lng - panX / MAP_PLANE_SCALE / DEGREES_TO_PX,
     };
 };

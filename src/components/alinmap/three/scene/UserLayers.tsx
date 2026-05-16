@@ -115,6 +115,7 @@ export default function UserLayers({
 
   const USE_3D_AVATARS = true;
   const shouldUseRoadmapBillboards = isRoadmapOverlay;
+  const shouldClusterUsers = !isRoadmapOverlay;
 
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
@@ -123,8 +124,8 @@ export default function UserLayers({
   const pxToScaledScene = (px: number) => pxToScene(px) * sceneWorldScale;
 
   const filteredUsers = useMemo(() => {
-    const baseLat = position?.[0] ?? 0;
-    const baseLng = position?.[1] ?? 0;
+    const baseLat = baseOrigin.lat;
+    const baseLng = baseOrigin.lng;
     const visible = nearbyUsers.filter((u) => {
       if (u.id === myUserId || u.id === user?.uid) return false;
       if (searchTag) {
@@ -144,10 +145,11 @@ export default function UserLayers({
     });
     visible.sort((a, b) => (a.distKm ?? 9999) - (b.distKm ?? 9999));
     return visible.slice(0, maxVisibleUsers);
-  }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, position, maxVisibleUsers]);
+  }, [nearbyUsers, myUserId, user?.uid, searchTag, filterDistance, filterAgeMin, filterAgeMax, baseOrigin.lat, baseOrigin.lng, maxVisibleUsers]);
 
   const userRenderData = useMemo(() => {
     const raw = filteredUsers.map((u) => ({ user: u, pos: scaleScenePoint(worldToScene(origin, u)) }));
+    if (!shouldClusterUsers) return raw;
 
     // Adaptive spatial clustering: grid cell size based on actual avatar visual footprint
     const scaledSpacing = AVATAR_PLANE_SIZE * sceneWorldScale * 0.6;
@@ -179,7 +181,7 @@ export default function UserLayers({
       });
     });
     return result;
-  }, [filteredUsers, origin.lat, origin.lng, sceneWorldScale]);
+  }, [filteredUsers, origin.lat, origin.lng, sceneWorldScale, shouldClusterUsers]);
 
   const { selfDragRef, handleSelfPointerDown, handleSelfPointerMove, handleSelfPointerUp } = useDragHandlers({
     isLooterGameMode,

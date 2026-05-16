@@ -30,6 +30,7 @@ import type { AlinMapThreeSceneProps } from './types';
  */
 export default function SceneContent({
   position,
+  myObfPos,
   nearbyUsers,
   myUserId,
   user,
@@ -122,7 +123,9 @@ export default function SceneContent({
   // ── Origin calculation ─────────────────────────────────────────────────────
   // Đã loại bỏ roadmapView state để tối ưu CPU. Sử dụng baseOrigin cố định, 
   // việc dịch chuyển sẽ được xử lý bằng Matrix Translation ở WebGL loop (moveGroupRef).
-  const baseOrigin: LatLng = position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 };
+  const baseOrigin: LatLng =
+    myObfPos ??
+    (position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 });
   const origin: LatLng = baseOrigin;
 
   // ── Looter interaction ─────────────────────────────────────────────────────

@@ -250,11 +250,12 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                 >
 
 
-                    <AlinMapThreeScene
-                        position={position}
-                        nearbyUsers={nearbyUsers}
-                        myUserId={myUserId}
-                        user={user}
+                        <AlinMapThreeScene
+                            position={position}
+                            myObfPos={myObfPos}
+                            nearbyUsers={nearbyUsers}
+                            myUserId={myUserId}
+                            user={user}
                         myDisplayName={myDisplayName}
                         myAvatarUrl={myAvatarUrl}
                         myStatus={myStatus}
