@@ -169,31 +169,29 @@ export function useMapNavigation({
     const stepRatio = e.deltaMode === 0 ? 0.002 : 0.01;
     const step = distance * stepRatio * Math.abs(e.deltaY);
     
-    console.log(`[Map_Wheel] deltaY=${e.deltaY}, deltaMode=${e.deltaMode}, currentZ=${currentZ.toFixed(1)}, distance=${distance.toFixed(1)}, step=${step.toFixed(1)}`);
+    console.warn(`[Map_Wheel] deltaY=${e.deltaY}, deltaMode=${e.deltaMode}, currentZ=${currentZ.toFixed(1)}, distance=${distance.toFixed(1)}, step=${step.toFixed(1)}`);
     
-    const nextZ = e.deltaY > 0
-      ? Math.max(currentZ - step, CAMERA_Z_FAR)
-      : Math.min(currentZ + step, CAMERA_Z_NEAR);
+    const nextZ = e.deltaY > 0 ? currentZ - step : currentZ + step;
       
-    animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+    animate(cameraZ, nextZ, { type: 'tween', duration: 0.15, ease: 'easeOut' });
   }, [cameraZ, perspectivePx]);
 
   const setCameraZ = useCallback((z: number) => {
-    animate(cameraZ, z, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
+    animate(cameraZ, z, { type: 'tween', duration: 0.15, ease: 'easeOut' });
   }, [cameraZ]);
 
   const zoomIn = useCallback(() => {
     const distance = Math.max(1, perspectivePx - cameraZ.get());
     const step = distance * 0.2;
-    console.log(`[Map_ZoomIn] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
-    setCameraZ(Math.min(cameraZ.get() + step, CAMERA_Z_NEAR));
+    console.warn(`[Map_ZoomIn] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
+    setCameraZ(cameraZ.get() + step);
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const zoomOut = useCallback(() => {
     const distance = Math.max(1, perspectivePx - cameraZ.get());
     const step = distance * 0.2;
-    console.log(`[Map_ZoomOut] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
-    setCameraZ(Math.max(cameraZ.get() - step, CAMERA_Z_FAR));
+    console.warn(`[Map_ZoomOut] step=${step.toFixed(1)}, currentZ=${cameraZ.get().toFixed(1)}`);
+    setCameraZ(cameraZ.get() - step);
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const setVisualScale = useCallback((visualScale: number) => {

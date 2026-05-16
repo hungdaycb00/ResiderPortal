@@ -70,12 +70,12 @@ export default function CameraRig({
     }, [cameraYawDeg, invalidate]);
 
     useFrame((_, delta) => {
-        const zoom = clamp(scale.get() || 1, 0.08, 8);
+        const zoom = Math.max(0.0001, scale.get() || 1);
         const depthFit = perspectivePx * 0.56;
-        const distance = clamp(depthFit / zoom, minDistance, 9000);
+        const distance = depthFit / zoom;
 
         // SPRINT 2: Cache trig values — chỉ tính lại khi pitch/yaw thực sự thay đổi
-        const pitchDeg = clamp(tiltAngle.get(), 8, 89);
+        const pitchDeg = clamp(tiltAngle.get(), 0, 89.9);
         if (pitchDeg !== prevPitchRef.current) {
             prevPitchRef.current = pitchDeg;
             phiRef.current = THREE.MathUtils.degToRad(pitchDeg);
