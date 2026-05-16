@@ -59,11 +59,13 @@ export const getRoadmapCenterFromPan = (
     base: { lat: number; lng: number },
     panX: number,
     panY: number,
-    planeYScale: number
+    planeYScale: number // Giữ nguyên tham số để tránh lỗi interface
 ) => {
-    const safePlaneYScale = Math.max(0.001, planeYScale || 1);
+    // CHUYÊN GIA FIX: KHÔNG CHIA CHO planeYScale nữa! panY bản thân nó ĐÃ chứa góc nghiêng (để dính vào chuột).
+    // Nếu chia tiếp cho planeYScale, Mapbox Center sẽ trượt nhanh gấp đôi Avatar!
+    // Phải chia cho MAP_PLANE_SCALE đồng nhất với panX để khớp hoàn hảo với hệ trục 3D R3F!
     return {
-        lat: clamp(base.lat + panY / safePlaneYScale / DEGREES_TO_PX, -85.05112878, 85.05112878),
+        lat: clamp(base.lat + panY / MAP_PLANE_SCALE / DEGREES_TO_PX, -85.05112878, 85.05112878),
         lng: base.lng - panX / MAP_PLANE_SCALE / DEGREES_TO_PX,
     };
 };

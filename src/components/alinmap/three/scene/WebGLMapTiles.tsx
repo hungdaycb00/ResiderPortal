@@ -341,11 +341,8 @@ export default function WebGLMapTiles({
         meshRef.current.scale.set(planeSizeX, planeSizeY, 1);
         
         // Dịch chuyển plane để center của texture nằm đúng tọa độ 3D của nó
-        // CHUYÊN GIA FIX: x dùng MAP_PLANE_SCALE (trục ngang). Nhưng zCoord PHẢI dùng currentPlaneYScale (trục dọc)!
-        // Lỗi nhân nhầm hệ số này đã khiến tấm Map bị trượt văng khỏi màn hình khi kéo chuột dọc.
-        const currentPlaneYScale = Math.max(0.001, planeYScale?.get() || 0.66);
         const x = (currentCenter.lng - myObfPos.lng) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
-        const zCoord = -(currentCenter.lat - myObfPos.lat) * DEGREES_TO_PX * currentPlaneYScale * MAP_COORD_SCENE_SCALE * sceneWorldScale;
+        const zCoord = -(currentCenter.lat - myObfPos.lat) * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale;
         
         meshRef.current.position.set(x, -0.2, zCoord);
       }
