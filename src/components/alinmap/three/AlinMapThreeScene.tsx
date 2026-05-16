@@ -30,7 +30,7 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
         powerPreference,
         preserveDrawingBuffer: false,
       }}
-      camera={{ fov: props.cameraFov || 35, near: 1, far: 50000, position: [0, 1600, 2200] }}
+      camera={{ fov: props.cameraFov || 35, near: 1, far: 2000000, position: [0, 1600, 2200] }}
       onCreated={({ gl }) => {
         // Màu nền Canvas — dùng màu trung tính để blend giữa roadmap (sáng) và satellite (tối)
         gl.setClearColor('#d8d8d4', 1);
