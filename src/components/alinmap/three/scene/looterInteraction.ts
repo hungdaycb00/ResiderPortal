@@ -2,7 +2,7 @@ import React from 'react';
 import { Vector3, Ray } from 'three';
 import { DEGREES_TO_PX } from '../../constants';
 import { worldToScene, pxToScene, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
-import { computeGroundClickTarget } from './useGroundClickTarget';
+import { resolveGroundClickSelection } from './useGroundClickTarget';
 
 interface LooterInteractionParams {
   isLooterGameMode: boolean;
@@ -189,30 +189,24 @@ export function useLooterInteraction(params: LooterInteractionParams) {
     const moveGroup = groundMeshRef.current.parent;
     if (!moveGroup) return;
 
-    const { lat, lng } = computeGroundClickTarget({
+    const selection = resolveGroundClickSelection({
       point,
       ray,
       moveGroup,
       origin,
       sceneWorldScale,
+      waypointItems,
+      renderedWorldItems,
     });
 
-    // Proximity check: phat hien item gan vi tri click
-    const CLICK_RADIUS_DEG = 0.0009; // ~100 met
-    const nearbyItems = [
-      ...waypointItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
-      ...renderedWorldItems.map((item: any) => ({ item, d2: (item.lat - lat) ** 2 + (item.lng - lng) ** 2 })),
-    ].filter(e => e.d2 <= CLICK_RADIUS_DEG ** 2);
-
-    if (nearbyItems.length > 0) {
-      nearbyItems.sort((a, b) => a.d2 - b.d2);
-      const nearest = nearbyItems[0].item;
-      console.log('[GroundClick->Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', lat.toFixed(5), 'click-lng:', lng.toFixed(5));
+    if (selection.kind === 'item' && selection.item) {
+      const nearest = selection.item;
+      console.log('[GroundClick->Item] Proximity hit:', nearest.spawnId, nearest.item?.name || nearest.item?.type, 'at', nearest.lat?.toFixed(5), nearest.lng?.toFixed(5), 'click-lat:', selection.lat.toFixed(5), 'click-lng:', selection.lng.toFixed(5));
       handleWorldItemClickRef.current(nearest);
       return;
     }
 
-    onRequestMove(lat, lng, 'map');
+    onRequestMove(selection.lat, selection.lng, 'map');
   }, [isLooterGameMode, onRequestMove, origin.lat, origin.lng, itemClickLockRef, looterStateObj?.worldTier, encounter, setIsTierSelectorOpen, waypointItems, renderedWorldItems]);
 
   const itemRenderData = React.useMemo(() =>

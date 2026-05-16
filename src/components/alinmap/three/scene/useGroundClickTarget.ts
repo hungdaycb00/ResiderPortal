@@ -123,6 +123,33 @@ export interface GroundClickResult {
   method: 'ray' | 'point-fallback';
 }
 
+export interface GroundClickTargetItem {
+  lat: number;
+  lng: number;
+  spawnId?: string;
+  item?: {
+    name?: string;
+    type?: string;
+    icon?: string;
+    rarity?: string;
+  };
+  minigameType?: string | null;
+}
+
+export interface GroundClickSelection {
+  kind: 'item' | 'move';
+  lat: number;
+  lng: number;
+  method: GroundClickResult['method'];
+  item?: GroundClickTargetItem;
+}
+
+export interface GroundClickSelectionInput extends GroundClickInput {
+  waypointItems?: GroundClickTargetItem[];
+  renderedWorldItems?: GroundClickTargetItem[];
+  clickRadiusDeg?: number;
+}
+
 /**
  * Tính toán Lat/Lng từ một cú click lên Ground mesh.
  *
@@ -148,6 +175,47 @@ export function computeGroundClickTarget(input: GroundClickInput): GroundClickRe
 
   const latlng = pointToLatLng(point, moveGroup, origin, sceneWorldScale);
   return { ...latlng, method: 'point-fallback' };
+}
+
+/**
+ * Resolve click target for Looter ground interactions using the same
+ * projection math as AlinMap, then prefer the nearest visible loot target.
+ */
+export function resolveGroundClickSelection(input: GroundClickSelectionInput): GroundClickSelection {
+  const {
+    waypointItems = [],
+    renderedWorldItems = [],
+    clickRadiusDeg = 0.0009,
+    ...groundInput
+  } = input;
+
+  const target = computeGroundClickTarget(groundInput);
+  const radiusSq = clickRadiusDeg * clickRadiusDeg;
+
+  const candidates = [...waypointItems, ...renderedWorldItems]
+    .map((item) => ({
+      item,
+      d2: (item.lat - target.lat) ** 2 + (item.lng - target.lng) ** 2,
+    }))
+    .filter((entry) => entry.d2 <= radiusSq)
+    .sort((a, b) => a.d2 - b.d2);
+
+  if (candidates.length > 0) {
+    return {
+      kind: 'item',
+      item: candidates[0].item,
+      lat: target.lat,
+      lng: target.lng,
+      method: target.method,
+    };
+  }
+
+  return {
+    kind: 'move',
+    lat: target.lat,
+    lng: target.lng,
+    method: target.method,
+  };
 }
 
 // Re-export hằng số để debug
