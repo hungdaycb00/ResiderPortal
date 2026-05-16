@@ -238,26 +238,25 @@ export default function UserLayers({
             galleryImages,
         };
 
-        if (!isVisibleOnMap) {
-          return (
-            <HomeMarker position={[realSelfPos.x, 0.02, realSelfPos.z]} />
-          );
-        }
-
         return (
-          <group
-            onPointerDown={handleSelfPointerDown}
-            onPointerMove={handleSelfPointerMove}
-            onPointerUp={handleSelfPointerUp}
-          >
-            {shouldUseRoadmapBillboards ? (
-              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
-            ) : USE_3D_AVATARS ? (
-              <User3DModel {...avatarProps} color="#3b82f6" /> // Blue for self
-            ) : (
-              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
-            )}
-          </group>
+          <>
+            <HomeMarker position={[realSelfPos.x, isRoadmapOverlay ? 3.2 : 4.0, realSelfPos.z]} />
+            {isVisibleOnMap ? (
+              <group
+                onPointerDown={handleSelfPointerDown}
+                onPointerMove={handleSelfPointerMove}
+                onPointerUp={handleSelfPointerUp}
+              >
+                {shouldUseRoadmapBillboards ? (
+                  <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
+                ) : USE_3D_AVATARS ? (
+                  <User3DModel {...avatarProps} color="#3b82f6" /> // Blue for self
+                ) : (
+                  <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
+                )}
+              </group>
+            ) : null}
+          </>
         );
       })()}
 
