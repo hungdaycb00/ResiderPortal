@@ -6,9 +6,11 @@ import { resolveRenderableImageUrl } from './sceneUtils';
 interface GalleryImageProps {
     url?: string;
     title?: string;
+    avatarPlaneSize: number;
+    scaleFactor?: number;
 }
 
-export default function GalleryImage({ url, title }: GalleryImageProps) {
+export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor = 4 }: GalleryImageProps) {
     const texture = useMemo(() => {
         if (!url) return null;
         const normalized = resolveRenderableImageUrl(url);
@@ -22,10 +24,16 @@ export default function GalleryImage({ url, title }: GalleryImageProps) {
         );
     }, [url]);
 
+    const billboardWidth = Math.max(avatarPlaneSize * scaleFactor, 0.01);
+    const billboardHeight = billboardWidth * (9 / 16);
+    const billboardYOffset = avatarPlaneSize * 1.35 + billboardHeight * 0.5;
+    const borderWidth = billboardWidth * 1.05;
+    const borderHeight = billboardHeight * 1.09;
+
     return (
-        <group position={[0, 11.5, 0]}>
+        <group position={[0, billboardYOffset, 0]}>
             <mesh position={[0, 0, 0.05]} renderOrder={30}>
-                <planeGeometry args={[24, 13.5]} />
+                <planeGeometry args={[billboardWidth, billboardHeight]} />
                 {texture ? (
                     <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />
                 ) : (
@@ -33,12 +41,12 @@ export default function GalleryImage({ url, title }: GalleryImageProps) {
                 )}
             </mesh>
             <mesh position={[0, 0, 0.02]} renderOrder={29}>
-                <planeGeometry args={[25.2, 14.7]} />
+                <planeGeometry args={[borderWidth, borderHeight]} />
                 <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} depthTest={false} depthWrite={false} />
             </mesh>
             <Text
-                position={[0, 8.1, 0.1]}
-                fontSize={1.8}
+                position={[0, billboardHeight * 0.36, 0.1]}
+                fontSize={Math.max(billboardWidth * 0.075, 0.14)}
                 color="#fef3c7"
                 anchorX="center"
                 anchorY="middle"

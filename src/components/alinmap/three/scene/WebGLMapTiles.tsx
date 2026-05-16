@@ -301,12 +301,14 @@ export default function WebGLMapTiles({
     
     // Sử dụng maxViewportDimension thay vì viewportWidth để đảm bảo màn hình DỌC (Mobile) 
     // vẫn được bao phủ kín cả trên và dưới.
-    const buffer = 1.5;
+    const buffer = 2.0;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (maxViewportDimension * buffer)
     );
     
-    let zoom = exactZoom;
+    // CHUYÊN GIA THREE.JS FIX: Làm tròn zoom để Mapbox KHÔNG bị spam request số thực 
+    // khi Camera 3D đang trôi bằng Spring Animation. Chặn đứng lỗi nhấp nháy!
+    let zoom = Math.round(exactZoom);
     if (!isFinite(zoom)) zoom = 15;
     if (!isFinite(center.lat)) center.lat = myObfPos.lat;
     if (!isFinite(center.lng)) center.lng = myObfPos.lng;
@@ -351,19 +353,19 @@ export default function WebGLMapTiles({
 
   return (
     <group>
-      {/* Tấm nền vô cực: Cùng tông màu với bản đồ MapLibre Positron. 
+      {/* Tấm nền vô cực: Cùng tông màu với bản đồ MapLibre Positron (#f2f3f0). 
           Nó được đặt ngay dưới tấm map (-0.3). Khi bạn nhìn nghiêng hoặc zoom xa bị hụt góc, 
           góc hụt sẽ lộ tấm nền này ra thay vì màu trắng của R3F. Hai màu sẽ hòa vào nhau
           tạo cảm giác bản đồ trải dài vô tận mà không hề tốn RAM! */}
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.3, 0]}>
         <planeGeometry args={[100000, 100000]} />
-        <meshBasicMaterial color="#EAEAEA" />
+        <meshBasicMaterial color="#f2f3f0" />
       </mesh>
 
       {/* Tấm map chính */}
       <mesh ref={meshRef} rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
         <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial ref={materialRef} color="#EAEAEA" />
+        <meshBasicMaterial ref={materialRef} color="#f2f3f0" />
       </mesh>
     </group>
   );

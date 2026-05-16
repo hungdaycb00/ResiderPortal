@@ -128,7 +128,11 @@ const User3DModel: React.FC<User3DModelProps> = ({
                     </group>
                 )}
                 {showGallery ? (
-                    <GalleryImage url={galleryImages?.[0]} title={galleryTitle} />
+                    <GalleryImage
+                        url={galleryImages?.[0]}
+                        title={galleryTitle}
+                        avatarPlaneSize={1.2 * avatarScale}
+                    />
                 ) : null}
             </Billboard>
         </group>
