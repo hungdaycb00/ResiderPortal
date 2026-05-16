@@ -62,10 +62,18 @@ export function useMapInteractions({
         if (interactiveTarget && !isLooterGameMode) {
             return;
         }
+
+        // Capture pointer to ensure smooth drag and prevent losing focus
+        if (e.currentTarget && e.currentTarget.setPointerCapture) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            console.log('[Map_Drag] Pointer captured:', e.pointerId, 'startX:', e.clientX, 'startY:', e.clientY);
+        }
+
         mapDragRef.current = {
             active: true,
             pointerId: e.pointerId,
             startX: e.clientX,
+            startY: e.clientY,
             startY: e.clientY,
             startPanX: panX.get(),
             startPanY: panY.get(),
@@ -130,20 +138,28 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
-        const deltaX = (e.clientX - dragState.startX) / currentScale * 2.0;
-        const deltaY = (e.clientY - dragState.startY) / currentScale * 2.0;
+        const movX = e.clientX - dragState.startX;
+        const movY = e.clientY - dragState.startY;
+        
+        const deltaX = movX / currentScale * 2.0;
+        const deltaY = movY / currentScale * 2.0;
 
-        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-            console.log(`[Map_Drag] currentScale=${currentScale.toFixed(5)}, currentPlaneYScale=${currentPlaneYScale.toFixed(3)}, deltaX=${deltaX.toFixed(1)}, deltaY=${deltaY.toFixed(1)}`);
+        if (Math.abs(movX) > 5 || Math.abs(movY) > 5) {
+            console.log(`[Map_Drag] Moving. movX: ${movX.toFixed(2)}, movY: ${movY.toFixed(2)}, panX: ${panX.get().toFixed(4)}`);
         }
 
-        if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
+        if (Math.abs(movX) + Math.abs(movY) > 4) {
             dragState.moved = true;
         }
 
-        // Áp dụng scale ngược để map di chuyển chuẩn theo tay người dùng
-        panX.set(dragState.startPanX + deltaX / mapPlaneScale);
-        panY.set(dragState.startPanY + (deltaY / currentPlaneYScale) * mapPlaneScale);
+        // Tích luỹ pan theo di chuyển nhỏ
+        panX.set(panX.get() + deltaX / mapPlaneScale);
+        panY.set(panY.get() + (deltaY / currentPlaneYScale) * mapPlaneScale);
+
+        // Cập nhật điểm gốc cho lần move tiếp theo (Incremental update)
+        dragState.startX = e.clientX;
+        dragState.startY = e.clientY;
+
         e.preventDefault();
     }, [panX, panY, scale, planeYScale, encounter, isInteractionLocked, mapMode]);
 
@@ -160,6 +176,13 @@ export function useMapInteractions({
         if (activePointersRef.current.size < 2) {
             initialPinchDistRef.current = null;
             initialCameraZRef.current = null;
+        }
+
+        if (e.currentTarget && e.currentTarget.releasePointerCapture) {
+            try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                console.log('[Map_Drag] Pointer released:', e.pointerId);
+            } catch (err) {}
         }
 
         const interactiveTarget = (e.target as HTMLElement | null)?.closest?.('[data-map-interactive="true"]');
@@ -197,6 +220,13 @@ export function useMapInteractions({
         if (activePointersRef.current.size < 2) {
             initialPinchDistRef.current = null;
             initialCameraZRef.current = null;
+        }
+
+        if (e.currentTarget && e.currentTarget.releasePointerCapture) {
+            try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                console.log('[Map_Drag] Pointer capture cancelled:', e.pointerId);
+            } catch (err) {}
         }
 
         if (dragState.active && dragState.pointerId === e.pointerId) {

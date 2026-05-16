@@ -224,7 +224,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 	    );
 
     return (
-        <div className="absolute inset-0 overflow-hidden bg-[#dcdcd8]" onWheel={handleWheel} onContextMenu={(e) => e.preventDefault()}>
+        <div className="absolute inset-0 overflow-hidden bg-[#dcdcd8]" onContextMenu={(e) => e.preventDefault()}>
             <LooterBackground mode={performance?.backgroundMode} />
 
             {/* Location Consent Overlay */}
@@ -241,6 +241,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         '--alin-map-perspective-origin-y': '42%',
                         touchAction: 'none',
                     } as React.CSSProperties}
+                    onWheel={handleWheel}
                     onPointerDown={handleMapPointerDown}
                     onPointerMove={handleMapPointerMove}
                     onPointerUp={handleMapPointerUp}
