@@ -161,8 +161,8 @@ export function useMapInteractions({
         const totalMovY = e.clientY - dragState.initialClientY;
         
         // Tốc độ 3.0 theo yêu cầu (kéo 1 pixel màn hình = map đi 3 pixel).
-        const totalDeltaX = totalMovX / currentScale * 3.0;
-        const totalDeltaY = totalMovY / currentScale * 3.0;
+        const totalDeltaX = totalMovX / currentScale * 15.0;
+        const totalDeltaY = totalMovY / currentScale * 15.0;
 
         if (Math.abs(totalMovX) > 4 || Math.abs(totalMovY) > 4) {
             dragState.moved = true;

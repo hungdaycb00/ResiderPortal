@@ -299,9 +299,10 @@ export default function WebGLMapTiles({
     const maxViewportDimension = Math.max(viewportWidth, viewportHeight);
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // Sử dụng maxViewportDimension thay vì viewportWidth để đảm bảo màn hình DỌC (Mobile) 
-    // vẫn được bao phủ kín cả trên và dưới.
-    const buffer = 2.0;
+    // CHUYÊN GIA FIX: buffer = 5.0 (tính toán từ toán học camera frustum)
+    // Tại tilt=55°, FOV=75°: top edge nhìn thấy ground cách camera 2.026x distance.
+    // Tối thiểu cần buffer >= 2.64. Với Math.round() jitter cần >= 4.0. Dùng 5.0 cho an toàn.
+    const buffer = 5.0;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (maxViewportDimension * buffer)
     );
