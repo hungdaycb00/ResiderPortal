@@ -297,8 +297,9 @@ export default function WebGLMapTiles({
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // Calculate precise zoom so that the proxy canvas exactly spans the visible 3D width.
-    const buffer = 1.2;
+    // Tăng buffer lên 4.0 để Plane 3D phình to ra, che khuất hoàn toàn các góc viền trắng
+    // khi camera nhìn nghiêng (pitch) hoặc zoom ra cực xa.
+    const buffer = 4.0;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
     );
