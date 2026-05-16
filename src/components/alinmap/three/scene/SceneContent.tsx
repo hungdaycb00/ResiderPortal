@@ -235,6 +235,7 @@ export default function SceneContent({
           mode={mapMode}
           isDesktop={isDesktop}
           performanceMode={performance?.mode ?? 'high'}
+          sceneWorldScale={sceneWorldScale}
         />
 
         {/* Ground */}

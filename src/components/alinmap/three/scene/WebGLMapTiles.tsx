@@ -110,6 +110,7 @@ interface WebGLMapTilesProps {
   mode: string;
   isDesktop?: boolean;
   performanceMode?: string;
+  sceneWorldScale?: number;
 }
 
 // SPRINT 1: Adaptive proxy size theo device capability
@@ -141,6 +142,7 @@ const getOffscreenContainer = () => {
 export default function WebGLMapTiles({
   panX, panY, scale, planeYScale, myObfPos, mode,
   isDesktop = false, performanceMode = 'high',
+  sceneWorldScale = 1,
 }: WebGLMapTilesProps) {
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -218,13 +220,8 @@ export default function WebGLMapTiles({
             // SPRINT 3c: Skip copy khi tab hidden
             if (!ctx2d || !mapReadyRef.current || !isPageVisibleRef.current) return;
             try {
-              // Fix text ngược: flip ngang khi copy
-              ctx2d.save();
-              ctx2d.translate(canvasWidth, 0);
-              ctx2d.scale(-1, 1);
               // Vẽ với kích thước thật của canvas
               ctx2d.drawImage(mapCanvas, 0, 0, canvasWidth, canvasHeight);
-              ctx2d.restore();
               textureDirtyRef.current = true;
               invalidateRef.current(); // Sprint 2: trigger R3F frame
             } catch {
@@ -236,11 +233,18 @@ export default function WebGLMapTiles({
           texture.minFilter = THREE.LinearFilter;
           texture.magFilter = THREE.LinearFilter;
           texture.format = THREE.RGBAFormat;
-          texture.flipY = true; // correct V-axis
+          texture.flipY = true;
           
-          // FIX MỜ: Thêm Anisotropic Filtering
-          texture.anisotropy = gl.capabilities.getMaxAnisotropy();
-          texture.generateMipmaps = true;
+          useEffect(() => {
+            if (textureRef.current) {
+              textureRef.current.anisotropy = gl.capabilities.getMaxAnisotropy();
+              textureRef.current.minFilter = THREE.LinearMipMapLinearFilter;
+              textureRef.current.magFilter = THREE.LinearFilter;
+              textureRef.current.generateMipmaps = true;
+              textureRef.current.flipY = true;
+              textureRef.current.needsUpdate = true;
+            }
+          }, [gl]);
 
           textureRef.current = texture;
           if (materialRef.current) {
@@ -290,8 +294,20 @@ export default function WebGLMapTiles({
       let center = getRoadmapCenterFromPan(
         myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
       );
+      const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
       const currentProxySize = getProxySize(isDesktop, performanceMode);
-      let zoom = 9.47 + Math.log2((scale.get() || 1) * (currentProxySize / 2048));
+      
+      // Calculate precise zoom so that the proxy canvas exactly spans the visible 3D width.
+      // 6255 is derived from (360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE) / (512 * 0.56)
+      // This ensures 1:1 pixel mapping at the focal plane, guaranteeing maximum text crispness.
+      // We add a 1.2x buffer to prevent seeing edges during fast camera movement.
+      const buffer = 1.2;
+      const exactZoom = Math.log2(
+        (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
+      );
+      
+      // MapLibre supports fractional zoom perfectly
+      let zoom = exactZoom;
 
       if (!isFinite(zoom)) zoom = 15;
       if (!isFinite(center.lat)) center.lat = myObfPos.lat;
@@ -319,10 +335,9 @@ export default function WebGLMapTiles({
     if (meshRef.current) {
       const currentZoom = mapRef.current.getZoom();
       const currentCenter = mapRef.current.getCenter();
-      const sceneWorldScale = mode === 'roadmap' ? 0.12 : 1; // ROADMAP_WORLD_SCALE
       const PROXY_SIZE = getProxySize(isDesktop, performanceMode);
       
-      // Tính toán kích thước 3D plane động để khớp hoàn hảo 100% với diện tích địa lý texture (không làm vỡ hình)
+      // Tính toán kích thước 3D plane động để khớp hoàn hảo 100% với diện tích địa lý texture
       const planeSizeX = (PROXY_SIZE * 360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale) / (512 * Math.pow(2, currentZoom));
       const planeSizeY = planeSizeX * Math.cos((currentCenter.lat * Math.PI) / 180);
       
