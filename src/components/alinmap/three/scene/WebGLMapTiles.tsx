@@ -336,7 +336,12 @@ export default function WebGLMapTiles({
         
         // Tính toán kích thước 3D plane động để khớp hoàn hảo 100% với diện tích địa lý texture
         const planeSizeX = (PROXY_SIZE * 360 * DEGREES_TO_PX * MAP_PLANE_SCALE * MAP_COORD_SCENE_SCALE * sceneWorldScale) / (512 * Math.pow(2, currentZoom));
-        const planeSizeY = planeSizeX * Math.cos((currentCenter.lat * Math.PI) / 180);
+        
+        // CHUYÊN GIA FIX: KHÔNG nhân planeSizeX với Math.cos(lat) nữa! Mapbox trả về ảnh Proxy hình vuông.
+        // Việc nhân cos(lat) làm cho tấm Mesh bị ép lùn xuống (dẹt), dẫn đến thiếu hụt chiều cao.
+        // Khi Camera nghiêng 55 độ, tấm Mesh vốn đã bị lùn (phối cảnh) lại bị lùn thêm bởi biến này.
+        // Dẫn đến KHÔNG BAO GIỜ bao phủ đủ màn hình theo chiều dọc => Lòi mép!
+        const planeSizeY = planeSizeX;
         
         meshRef.current.scale.set(planeSizeX, planeSizeY, 1);
         
