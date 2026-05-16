@@ -69,6 +69,7 @@ export default function SceneContent({
   selectedUser,
   onSelectUser,
   onSelectSelf,
+  onOpenBillboardPost,
   onRequestMove,
   onStopBoat,
   onSelfDragEnd,
@@ -154,7 +155,7 @@ export default function SceneContent({
     const latPx = latDelta * MAP_COORD_SCENE_SCALE * DEGREES_TO_PX;
     const lngPx = lngDelta * MAP_COORD_SCENE_SCALE * DEGREES_TO_PX;
     const travelPx = Math.sqrt(latPx * latPx + lngPx * lngPx);
-    const durationMs = Math.max(140, Math.min(260, travelPx * 18));
+    const durationMs = Math.max(260, Math.min(540, travelPx * 28));
 
     renderOriginTweenRef.current = {
       active: true,
@@ -356,6 +357,7 @@ export default function SceneContent({
           looterStateObj={looterStateObj}
           onSelectUser={onSelectUser}
           onSelectSelf={onSelectSelf}
+          onOpenBillboardPost={onOpenBillboardPost}
           performance={performance}
         />
 

@@ -49,6 +49,7 @@ export interface AlinMapThreeSceneProps {
   selectedUser?: any;
   onSelectUser?: (user: any) => void;
   onSelectSelf?: (user: any) => void;
+  onOpenBillboardPost?: (user: any) => void;
   onRequestMove?: (lat: number, lng: number, source?: string) => void;
   onStopBoat?: () => void;
   onSelfDragEnd?: (newLat: number, newLng: number) => void;

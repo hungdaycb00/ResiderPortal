@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import type { ThreeEvent } from '@react-three/fiber';
 import { resolveRenderableImageUrl } from './sceneUtils';
 
 interface GalleryImageProps {
@@ -8,9 +9,10 @@ interface GalleryImageProps {
     title?: string;
     avatarPlaneSize: number;
     scaleFactor?: number;
+    onClick?: (e: ThreeEvent<MouseEvent>) => void;
 }
 
-export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor = 4 }: GalleryImageProps) {
+export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor = 4, onClick }: GalleryImageProps) {
     const texture = useMemo(() => {
         if (!url) return null;
         const normalized = resolveRenderableImageUrl(url);
@@ -31,7 +33,15 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
     const borderHeight = billboardHeight * 1.09;
 
     return (
-        <group position={[0, billboardYOffset, 0]}>
+        <group
+            position={[0, billboardYOffset, 0]}
+            onClick={(e) => {
+                e.stopPropagation();
+                onClick?.(e);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+        >
             <mesh position={[0, 0, 0.05]} renderOrder={30}>
                 <planeGeometry args={[billboardWidth, billboardHeight]} />
                 {texture ? (

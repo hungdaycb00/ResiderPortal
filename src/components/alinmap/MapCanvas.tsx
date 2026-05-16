@@ -59,6 +59,7 @@ interface MapCanvasProps {
     selectedUser?: any;
     setSelectedUser: (user: any) => void;
     setActiveTab: (tab: 'info' | 'posts') => void;
+    onOpenBillboardPost?: (user: any) => void;
     isSheetExpanded: boolean;
     setIsSheetExpanded: (v: boolean) => void;
     setMyObfPos: (pos: { lat: number; lng: number }) => void;
@@ -88,7 +89,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
         isVisibleOnMap, isSocketConnecting, isDesktop, currentProvince, galleryActive, galleryTitle, galleryImages,
         searchTag, filterDistance, filterAgeMin, filterAgeMax, searchMarkerPos,
         scale, cameraZ, tiltAngle, planeYScale, perspectivePx, cameraHeightOffset, cameraRotateDeg, cameraPitchOverride, cameraRotateYDeg, panX, panY, selfDragX, selfDragY, ws,
-        requestLocation, selectedUser, setSelectedUser, setActiveTab, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
+        requestLocation, selectedUser, setSelectedUser, setActiveTab, onOpenBillboardPost, isSheetExpanded, setIsSheetExpanded, setMyObfPos, addLog, handleWheel,
         mapMode, setContextMenu, isBackpackLoading, setMainTab, showNotification,
         setBoatCenterHandler, setIsTierSelectorOpen, performance,
         setCameraFov, cameraFov,
@@ -305,6 +306,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         selectedUser={selectedUser}
                         onSelectUser={handleSelectUser}
                         onSelectSelf={handleSelectSelf}
+                        onOpenBillboardPost={onOpenBillboardPost}
                         cameraFov={cameraFov}
                         performance={performance}
                     />

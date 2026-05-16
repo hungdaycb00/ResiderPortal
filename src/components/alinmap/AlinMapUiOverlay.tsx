@@ -55,6 +55,8 @@ interface AlinMapUiOverlayProps {
   onOpenChat?: (id: string, name: string, avatar?: string) => void;
   contextMenu: { x: number; y: number; target: 'map' | 'user'; data: any } | null;
   setContextMenu: (menu: { x: number; y: number; target: 'map' | 'user'; data: any } | null) => void;
+  selectedPost: any | null;
+  setSelectedPost: (post: any | null) => void;
   pickupRewardItem: any;
   handleDiscardPickupItem: () => void;
   handleOpenBackpackFromPickup: () => void;
@@ -108,6 +110,8 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   onOpenChat,
   contextMenu,
   setContextMenu,
+  selectedPost,
+  setSelectedPost,
   pickupRewardItem,
   handleDiscardPickupItem,
   handleOpenBackpackFromPickup,
@@ -142,7 +146,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
 }) => {
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
-  const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [exploreSubTab, setExploreSubTab] = useState<string>('games');
   const [socialSubTab, setSocialSubTab] = useState<string>('posts');
   const looterUi = useLooterState();
@@ -357,10 +360,10 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
           <PostDetailOverlay
             post={selectedPost}
             isSelf={isSelectedPostSelf}
-            onClose={() => setSelectedPost(null)}
-            onAuthorClick={(author) => {
-              setSelectedPost(null);
-              nav.setSelectedUser(author);
+          onClose={() => setSelectedPost(null)}
+          onAuthorClick={(author) => {
+            setSelectedPost(null);
+            nav.setSelectedUser(author);
               nav.setActiveTab('posts');
             }}
             isDesktop={isDesktop}

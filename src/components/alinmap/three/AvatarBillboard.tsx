@@ -14,6 +14,9 @@ interface AvatarBillboardProps {
     isVisibleOnMap: boolean;
     labelMode?: 'full' | 'name-only' | 'focus-only';
     onClick?: () => void;
+    onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
+    onPointerUp?: (e: ThreeEvent<PointerEvent>) => void;
+    onGalleryClick?: () => void;
     showGallery?: boolean;
     galleryTitle?: string;
     galleryImages?: string[];
@@ -32,6 +35,9 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     isVisibleOnMap,
     labelMode = 'full',
     onClick,
+    onPointerDown,
+    onPointerUp,
+    onGalleryClick,
     showGallery,
     galleryTitle,
     galleryImages,
@@ -78,6 +84,8 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
         <group
             position={position}
             onClick={handleClick}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
             onPointerOver={(e) => { e.stopPropagation(); setIsHovered(true); document.body.style.cursor = 'pointer'; }}
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             renderOrder={10}
@@ -134,6 +142,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                         url={galleryImages?.[0]}
                         title={galleryTitle}
                         avatarPlaneSize={avatarPlaneSize}
+                        onClick={() => onGalleryClick?.()}
                     />
                 ) : null}
             </Billboard>

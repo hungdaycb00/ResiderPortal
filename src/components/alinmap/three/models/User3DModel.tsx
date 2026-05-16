@@ -13,6 +13,9 @@ interface User3DModelProps {
     isVisibleOnMap: boolean;
     labelMode?: 'full' | 'name-only' | 'focus-only';
     onClick?: () => void;
+    onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
+    onPointerUp?: (e: ThreeEvent<PointerEvent>) => void;
+    onGalleryClick?: () => void;
     showGallery?: boolean;
     galleryTitle?: string;
     galleryImages?: string[];
@@ -30,6 +33,9 @@ const User3DModel: React.FC<User3DModelProps> = ({
     isVisibleOnMap,
     labelMode = 'full',
     onClick,
+    onPointerDown,
+    onPointerUp,
+    onGalleryClick,
     showGallery,
     galleryTitle,
     galleryImages,
@@ -80,6 +86,8 @@ const User3DModel: React.FC<User3DModelProps> = ({
         <group
             position={position}
             onClick={handleClick}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
             onPointerOver={(e) => { e.stopPropagation(); setIsHovered(true); document.body.style.cursor = 'pointer'; }}
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             scale={[avatarScale, avatarScale, avatarScale]}
@@ -154,6 +162,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
                         url={galleryImages?.[0]}
                         title={galleryTitle}
                         avatarPlaneSize={1.2 * avatarScale}
+                        onClick={() => onGalleryClick?.()}
                     />
                 ) : null}
             </Billboard>

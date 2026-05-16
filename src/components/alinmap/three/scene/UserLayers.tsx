@@ -1,4 +1,5 @@
 import React, { useMemo, useRef } from 'react';
+import type { ThreeEvent } from '@react-three/fiber';
 import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
 import type { MotionValue } from 'framer-motion';
@@ -63,6 +64,7 @@ interface UserLayersProps {
   // Callbacks
   onSelectUser?: (user: any) => void;
   onSelectSelf?: (user: any) => void;
+  onOpenBillboardPost?: (user: any) => void;
 
   // Performance
   performance?: AdaptivePerformanceProfile;
@@ -105,6 +107,7 @@ export default function UserLayers({
   looterStateObj,
   onSelectUser,
   onSelectSelf,
+  onOpenBillboardPost,
   performance,
 }: UserLayersProps) {
   // Sync pan offset - ĐÃ LOẠI BỎ vì UserLayers đã nằm trong moveGroupRef của SceneContent
@@ -234,6 +237,21 @@ export default function UserLayers({
                 });
               }
             },
+            onGalleryClick: onOpenBillboardPost ? () => onOpenBillboardPost({
+              id: user?.uid || myUserId || 'self',
+              displayName: myDisplayName || user?.displayName || 'Me',
+              username: myDisplayName || user?.username || 'Me',
+              avatar_url: selfAvatarUrl,
+              photoURL: selfAvatarUrl,
+              gallery: {
+                active: galleryActive,
+                title: galleryTitle,
+                images: galleryImages,
+              },
+              status: myStatus,
+              lat: baseOrigin.lat,
+              lng: baseOrigin.lng,
+            }) : undefined,
             showGallery: galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode)),
             galleryTitle,
             galleryImages,
@@ -274,7 +292,17 @@ export default function UserLayers({
           isSelected: !isLooterGameMode && selectedUser?.id === u.id,
           labelMode,
           presentation: avatarPresentation,
+          onPointerDown: isLooterGameMode ? undefined : (e: ThreeEvent<PointerEvent>) => {
+            e.stopPropagation();
+            e.nativeEvent.stopPropagation();
+          },
+          onPointerUp: isLooterGameMode ? undefined : (e: ThreeEvent<PointerEvent>) => {
+            e.stopPropagation();
+            e.nativeEvent.stopPropagation();
+            onSelectUser?.(u);
+          },
           onClick: isLooterGameMode ? undefined : () => onSelectUser?.(u),
+          onGalleryClick: onOpenBillboardPost ? () => onOpenBillboardPost(u) : undefined,
           showGallery: !isLooterGameMode && u.gallery?.active,
           galleryTitle: u.gallery?.title,
           galleryImages: u.gallery?.images,

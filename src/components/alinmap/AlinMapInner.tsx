@@ -45,6 +45,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const [friendIdInput, setFriendIdInput] = useState('');
     const [searchMarkerPos, setSearchMarkerPos] = useState<{ lat: number; lng: number } | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, target: 'map' | 'user', data: any } | null>(null);
+    const [selectedPost, setSelectedPost] = useState<any | null>(null);
     const [isWeatherWidgetExpanded, setIsWeatherWidgetExpanded] = useState(false);
     const [isTierSelectorOpen, setIsTierSelectorOpen] = useState(false);
 
@@ -146,6 +147,69 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setGalleryImages: wsCtx.setGalleryImages,
     });
 
+    const handleOpenBillboardPost = useCallback((sourceUser: any) => {
+        if (!sourceUser) return;
+
+        const sourceUserId = sourceUser.id || sourceUser.uid || sourceUser.user_id || null;
+        const sourceAuthor = {
+            id: sourceUserId,
+            name: sourceUser.displayName || sourceUser.username || sourceUser.name || 'User',
+            avatar: sourceUser.avatar_url || sourceUser.photoURL || sourceUser.avatarUrl || '',
+            province: sourceUser.province || sourceUser.location || undefined,
+        };
+        const galleryTitle = String(sourceUser.gallery?.title || '').trim();
+        const galleryImages = Array.isArray(sourceUser.gallery?.images) ? sourceUser.gallery.images : [];
+        const allPosts = [
+            ...(Array.isArray(posts.feedPosts) ? posts.feedPosts : []),
+            ...(Array.isArray(posts.userPosts) ? posts.userPosts : []),
+        ];
+
+        const matchesAuthor = (post: any) => {
+            const postAuthorId = post?.author?.id || post?.user_id || post?.author_id || null;
+            return sourceUserId != null && String(postAuthorId) === String(sourceUserId);
+        };
+
+        const matchedPost = allPosts.find((post: any) => matchesAuthor(post) && post?.isStarred)
+            || allPosts.find((post: any) => matchesAuthor(post))
+            || null;
+
+        if (matchedPost) {
+            setSelectedPost({
+                ...matchedPost,
+                author: {
+                    ...sourceAuthor,
+                    ...(matchedPost.author || {}),
+                    id: matchedPost.author?.id || sourceAuthor.id,
+                },
+                title: matchedPost.title || galleryTitle || matchedPost.author?.name || sourceAuthor.name,
+                images: Array.isArray(matchedPost.images) && matchedPost.images.length > 0
+                    ? matchedPost.images
+                    : galleryImages,
+                user_id: matchedPost.user_id || sourceUserId,
+                isStarred: matchedPost.isStarred ?? true,
+            });
+            return;
+        }
+
+        setSelectedPost({
+            id: `billboard-${sourceUserId || 'unknown'}`,
+            title: galleryTitle || `${sourceAuthor.name}'s Billboard`,
+            images: galleryImages,
+            author: sourceAuthor,
+            user_id: sourceUserId,
+            privacy: sourceUser.gallery?.privacy || 'public',
+            createdAt: sourceUser.gallery?.updatedAt || sourceUser.gallery?.createdAt || new Date().toISOString(),
+            isStarred: true,
+            isLiked: false,
+            likeCount: Number(sourceUser.gallery?.likeCount ?? sourceUser.gallery?.likes ?? 0),
+            commentCount: Number(sourceUser.gallery?.commentCount ?? 0),
+            comments: [],
+            isArchived: false,
+            isArchivedState: false,
+            isDeleted: false,
+        });
+    }, [posts.feedPosts, posts.userPosts]);
+
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
         if (!user && Array.isArray(geo.position) && geo.position.length >= 2 && !geo.myObfPos) {
@@ -202,7 +266,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         >
         <div className="alinmap-viewport fixed inset-0 z-[100] isolate overflow-hidden bg-[#13151a] select-none">
             <div className="absolute inset-0 z-0">
-            <MapCanvas
+                <MapCanvas
                 position={geo.position} isConsentOpen={geo.isConsentOpen}
                 nearbyUsers={wsCtx.nearbyUsers} friends={friends}
                 myUserId={resolvedMyUserId} user={user}
@@ -219,6 +283,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 	                    requestLocation={geo.requestLocation} selectedUser={nav.selectedUser} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
 	                    isSheetExpanded={nav.isSheetExpanded} setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
                     mapMode={nav.mapMode}
+                    onOpenBillboardPost={handleOpenBillboardPost}
                     setContextMenu={setContextMenu}
                     isLooterGameMode={isLooterGameMode}
                     isBackpackLoading={nav.isBackpackLoading}
@@ -256,6 +321,8 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 onOpenChat={onOpenChat}
                 contextMenu={contextMenu}
                 setContextMenu={setContextMenu}
+                selectedPost={selectedPost}
+                setSelectedPost={setSelectedPost}
                 pickupRewardItem={pickupRewardItem}
                 handleDiscardPickupItem={handleDiscardPickupItem}
                 handleOpenBackpackFromPickup={handleOpenBackpackFromPickup}
