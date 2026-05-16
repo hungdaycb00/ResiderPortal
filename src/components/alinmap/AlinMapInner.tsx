@@ -148,7 +148,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     });
 
     const logBillboard = useCallback((stage: string, details: Record<string, unknown> = {}) => {
-        console.log(`[AlinMap][Billboard] ${stage}`, details);
+        console.warn(`[AlinMap][Billboard] ${stage}`, details);
     }, []);
 
     const handleOpenBillboardPost = useCallback(async (sourceUser: any) => {
