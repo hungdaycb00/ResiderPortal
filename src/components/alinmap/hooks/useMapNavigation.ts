@@ -232,9 +232,9 @@ export function useMapNavigation({
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
     const pxY = -(lat - myObfPos.lat) * DEGREES_TO_PX;
     animate(panX, -pxX * MAP_PLANE_SCALE, { duration: 3.0, ease: "easeInOut" });
-    // Reverse yOffsetPx sign: subtract to push the boat UP on screen when sheet is open
-    animate(panY, -pxY * planeYScale.get() - yOffsetPx, { duration: 3.0, ease: "easeInOut" });
-  }, [myObfPos, panX, panY, planeYScale]);
+    // CHUYÊN GIA FIX: panY cũng phải dùng MAP_PLANE_SCALE, đồng nhất với panX và moveGroupRef.
+    animate(panY, -pxY * MAP_PLANE_SCALE - yOffsetPx, { duration: 3.0, ease: "easeInOut" });
+  }, [myObfPos, panX, panY]);
 
   const requestBoatAutoFocus = useCallback(() => {
     pendingBoatFocusRef.current = true;

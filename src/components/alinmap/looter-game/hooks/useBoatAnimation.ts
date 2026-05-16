@@ -140,7 +140,8 @@ export function useBoatAnimation({
     cameraXOffsetRef.current = xOffsetPx;
     
     const boatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
-    const boatY = (boatOffsetY?.get?.() ?? 0) * planeYScale.get();
+    // CHUYÊN GIA FIX: boatY cũng dùng MAP_PLANE_SCALE, đồng nhất với centerOnBoat và pan system.
+    const boatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
     const midX = boatX + GAME_CONFIG.COMBAT_MIDPOINT_OFFSET_PX;
     const midY = boatY;
     panMoveXRef.current = animate(panX, -midX + xOffsetPx, { duration: 1.6, ease: 'easeInOut' });
@@ -149,7 +150,7 @@ export function useBoatAnimation({
       ease: 'easeInOut',
       onComplete: () => stopPanAnimations(),
     });
-  }, [stopAllAnimations, boatOffsetX, boatOffsetY, panX, panY, planeYScale, stopPanAnimations]);
+  }, [stopAllAnimations, boatOffsetX, boatOffsetY, panX, panY, stopPanAnimations]);
 
   return {
     boatOffsetX, boatOffsetY,

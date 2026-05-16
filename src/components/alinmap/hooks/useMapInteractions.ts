@@ -169,8 +169,12 @@ export function useMapInteractions({
         }
 
         // Apply absolute position instead of reading panX.get() which can have frame delay
+        // CHUYÊN GIA FIX: panX và panY PHẢI dùng CÙNG hệ số chia (mapPlaneScale).
+        // moveGroupRef trong SceneContent.tsx nhân cả liftX và liftZ với cùng hệ số.
+        // Nếu panY dùng planeYScale thay vì mapPlaneScale, thế giới 3D sẽ trượt khác tốc độ Mapbox!
+        // Góc nghiêng (perspective) đã được Camera 3D xử lý, KHÔNG cần bù đắp trong pan.
         panX.set(dragState.initialPanX + totalDeltaX / mapPlaneScale);
-        panY.set(dragState.initialPanY + (totalDeltaY / currentPlaneYScale) * mapPlaneScale);
+        panY.set(dragState.initialPanY + totalDeltaY / mapPlaneScale);
 
         // Update relative for potential velocity calculations later, but rendering relies on absolute pan
         dragState.startX = e.clientX;

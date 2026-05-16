@@ -125,10 +125,11 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
         wsCtx.setIsSocketConnecting(true);
         const scanLng = geo.myObfPos.lng + (-nav.panX.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
-        const scanLat = geo.myObfPos.lat + (nav.panY.get() / nav.planeYScale.get() / DEGREES_TO_PX);
+        // CHUYÊN GIA FIX: panY giờ đồng nhất với panX, dùng MAP_PLANE_SCALE thay vì planeYScale.
+        const scanLat = geo.myObfPos.lat + (nav.panY.get() / MAP_PLANE_SCALE / DEGREES_TO_PX);
         wsCtx.ws.current.send(JSON.stringify({ type: 'MAP_MOVE', payload: { lat: scanLat, lng: scanLng, zoom: 13 } }));
         setTimeout(() => wsCtx.setIsSocketConnecting(false), 1000);
-    }, [wsCtx.ws, wsCtx.setIsSocketConnecting, geo.myObfPos, nav.panX, nav.panY, nav.planeYScale]);
+    }, [wsCtx.ws, wsCtx.setIsSocketConnecting, geo.myObfPos, nav.panX, nav.panY]);
 
     // --- Posts CRUD ---
     const posts = usePosts({

@@ -102,12 +102,13 @@ export const buildMapMoveFromPan = (params: {
     myObfPos: { lat: number; lng: number };
     panX: number;
     panY: number;
-    planeYScale: number;
+    planeYScale: number; // Giữ nguyên tham số để tránh lỗi interface
 }) => {
-    const { myObfPos, panX, panY, planeYScale } = params;
-    const safePlaneYScale = Math.max(0.001, planeYScale || 1);
+    const { myObfPos, panX, panY } = params;
+    // CHUYÊN GIA FIX: panY giờ đã đồng nhất với panX (cùng chia MAP_PLANE_SCALE).
+    // Nên lat cũng phải chia cho MAP_PLANE_SCALE thay vì planeYScale.
     return {
-        lat: myObfPos.lat + (panY / safePlaneYScale / DEGREES_TO_PX),
+        lat: myObfPos.lat + (panY / MAP_PLANE_SCALE / DEGREES_TO_PX),
         lng: myObfPos.lng + (-panX / MAP_PLANE_SCALE / DEGREES_TO_PX),
         zoom: 13,
     };
