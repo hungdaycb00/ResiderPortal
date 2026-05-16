@@ -147,18 +147,13 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setGalleryImages: wsCtx.setGalleryImages,
     });
 
-    const handleOpenBillboardPost = useCallback((sourceUser: any) => {
+    const handleOpenBillboardPost = useCallback(async (sourceUser: any) => {
         if (!sourceUser) return;
 
         const sourceUserId = sourceUser.id || sourceUser.uid || sourceUser.user_id || null;
-        const sourceAuthor = {
-            id: sourceUserId,
-            name: sourceUser.displayName || sourceUser.username || sourceUser.name || 'User',
-            avatar: sourceUser.avatar_url || sourceUser.photoURL || sourceUser.avatarUrl || '',
-            province: sourceUser.province || sourceUser.location || undefined,
-        };
         const galleryTitle = String(sourceUser.gallery?.title || '').trim();
         const galleryImages = Array.isArray(sourceUser.gallery?.images) ? sourceUser.gallery.images : [];
+        const galleryPostId = sourceUser.gallery?.postId || sourceUser.gallery?.post_id || sourceUser.gallery?.id || null;
         const allPosts = [
             ...(Array.isArray(posts.feedPosts) ? posts.feedPosts : []),
             ...(Array.isArray(posts.userPosts) ? posts.userPosts : []),
@@ -169,46 +164,49 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             return sourceUserId != null && String(postAuthorId) === String(sourceUserId);
         };
 
-        const matchedPost = allPosts.find((post: any) => matchesAuthor(post) && post?.isStarred)
+        const matchesGallery = (post: any) => {
+            if (!post) return false;
+            if (galleryPostId && String(post.id) === String(galleryPostId)) return true;
+            const sameTitle = galleryTitle && String(post.title || '').trim() === galleryTitle;
+            const postImages = Array.isArray(post.images) ? post.images : [];
+            const sameImage = galleryImages.length > 0 && postImages.some((img: string) => galleryImages.includes(img));
+            return !!(sameTitle || sameImage);
+        };
+
+        const openPost = (post: any) => {
+            if (!post) return false;
+            setSelectedPost(post);
+            return true;
+        };
+
+        const localPost = allPosts.find((post: any) => matchesAuthor(post) && matchesGallery(post))
+            || allPosts.find((post: any) => matchesAuthor(post) && post?.isStarred)
             || allPosts.find((post: any) => matchesAuthor(post))
             || null;
 
-        if (matchedPost) {
-            setSelectedPost({
-                ...matchedPost,
-                author: {
-                    ...sourceAuthor,
-                    ...(matchedPost.author || {}),
-                    id: matchedPost.author?.id || sourceAuthor.id,
-                },
-                title: matchedPost.title || galleryTitle || matchedPost.author?.name || sourceAuthor.name,
-                images: Array.isArray(matchedPost.images) && matchedPost.images.length > 0
-                    ? matchedPost.images
-                    : galleryImages,
-                user_id: matchedPost.user_id || sourceUserId,
-                isStarred: matchedPost.isStarred ?? true,
-            });
+        if (openPost(localPost)) {
             return;
         }
 
-        setSelectedPost({
-            id: `billboard-${sourceUserId || 'unknown'}`,
-            title: galleryTitle || `${sourceAuthor.name}'s Billboard`,
-            images: galleryImages,
-            author: sourceAuthor,
-            user_id: sourceUserId,
-            privacy: sourceUser.gallery?.privacy || 'public',
-            createdAt: sourceUser.gallery?.updatedAt || sourceUser.gallery?.createdAt || new Date().toISOString(),
-            isStarred: true,
-            isLiked: false,
-            likeCount: Number(sourceUser.gallery?.likeCount ?? sourceUser.gallery?.likes ?? 0),
-            commentCount: Number(sourceUser.gallery?.commentCount ?? 0),
-            comments: [],
-            isArchived: false,
-            isArchivedState: false,
-            isDeleted: false,
-        });
-    }, [posts.feedPosts, posts.userPosts]);
+        if (!sourceUserId) return;
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/user/${sourceUserId}/posts`, {
+                headers: { 'X-Device-Id': externalApi.getDeviceId() },
+            });
+            const data = await resp.json();
+            const fetchedPosts = Array.isArray(data?.posts) ? data.posts : [];
+            const fetchedPost = fetchedPosts.find(matchesGallery)
+                || fetchedPosts.find((post: any) => post?.isStarred)
+                || null;
+            if (!openPost(fetchedPost)) {
+                showNotification?.('Không tìm thấy bài viết billboard', 'info');
+            }
+        } catch (err) {
+            console.error('Open billboard post error:', err);
+            showNotification?.('Không mở được bài viết billboard', 'error');
+        }
+    }, [API_BASE, externalApi, posts.feedPosts, posts.userPosts, showNotification]);
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
