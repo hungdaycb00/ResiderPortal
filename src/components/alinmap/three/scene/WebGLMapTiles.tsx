@@ -297,9 +297,9 @@ export default function WebGLMapTiles({
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // Tăng buffer lên 4.0 để Plane 3D phình to ra, che khuất hoàn toàn các góc viền trắng
-    // khi camera nhìn nghiêng (pitch) hoặc zoom ra cực xa.
-    const buffer = 4.0;
+    // Đưa buffer về 1.4 để đảm bảo Text và Đường giao thông Sắc nét hoàn hảo (1:1 mapping).
+    // Viền hụt góc sẽ được che giấu bởi tấm nền "vô cực" ở dưới.
+    const buffer = 1.4;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
     );
@@ -348,9 +348,21 @@ export default function WebGLMapTiles({
   if (mode !== 'roadmap') return null;
 
   return (
-    <mesh ref={meshRef} rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
-      <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial ref={materialRef} color="#e8e8e4" />
-    </mesh>
+    <group>
+      {/* Tấm nền vô cực: Cùng tông màu với bản đồ MapLibre Positron. 
+          Nó được đặt ngay dưới tấm map (-0.3). Khi bạn nhìn nghiêng hoặc zoom xa bị hụt góc, 
+          góc hụt sẽ lộ tấm nền này ra thay vì màu trắng của R3F. Hai màu sẽ hòa vào nhau
+          tạo cảm giác bản đồ trải dài vô tận mà không hề tốn RAM! */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.3, 0]}>
+        <planeGeometry args={[100000, 100000]} />
+        <meshBasicMaterial color="#EAEAEA" />
+      </mesh>
+
+      {/* Tấm map chính */}
+      <mesh ref={meshRef} rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial ref={materialRef} color="#EAEAEA" />
+      </mesh>
+    </group>
   );
 }

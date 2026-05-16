@@ -50,6 +50,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const zoomMultiplier = 1 + zoomOutT * 2;
     const avatarScale = baseAvatarScale * zoomMultiplier;
     const avatarPlaneSize = AVATAR_PLANE_SIZE * avatarScale;
+    const billboardPlaneSize = avatarPlaneSize * 4;
     const ringRadius = AVATAR_RING_RADIUS * avatarScale;
     const labelYOffset = isRoadmapPresentation ? -2.45 : -3.65;
     const labelDistanceFactor = isRoadmapPresentation ? 8.4 : 7;
@@ -89,6 +90,10 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
             renderOrder={10}
         >
             <Billboard follow lockX lockZ>
+                <mesh position={[0, 1.15 * avatarScale, -0.01]} renderOrder={19}>
+                    <planeGeometry args={[billboardPlaneSize, billboardPlaneSize]} />
+                    <meshBasicMaterial transparent opacity={0.01} depthWrite={false} color="#ffffff" />
+                </mesh>
                 <mesh position={[0, 1.15 * avatarScale, 0.02]} renderOrder={20}>
                     <planeGeometry args={[avatarPlaneSize, avatarPlaneSize]} />
                     <meshBasicMaterial map={texture} transparent alphaTest={0.1} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
