@@ -295,13 +295,15 @@ export default function WebGLMapTiles({
       myObfPos, panX.get() || 0, panY.get() || 0, planeYScale.get() || 0.66
     );
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1024;
+    const maxViewportDimension = Math.max(viewportWidth, viewportHeight);
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // Đưa buffer về 1.4 để đảm bảo Text và Đường giao thông Sắc nét hoàn hảo (1:1 mapping).
-    // Viền hụt góc sẽ được che giấu bởi tấm nền "vô cực" ở dưới.
-    const buffer = 1.4;
+    // Sử dụng maxViewportDimension thay vì viewportWidth để đảm bảo màn hình DỌC (Mobile) 
+    // vẫn được bao phủ kín cả trên và dưới.
+    const buffer = 1.5;
     const exactZoom = Math.log2(
-      (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (viewportWidth * buffer)
+      (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (maxViewportDimension * buffer)
     );
     
     let zoom = exactZoom;
