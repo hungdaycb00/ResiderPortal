@@ -228,10 +228,13 @@ export default function WebGLMapTiles({
             try {
               // Vẽ với kích thước thật của canvas
               ctx2d.drawImage(mapCanvas, 0, 0, canvasWidth, canvasHeight);
+              
               // LƯU LẠI MAP CENTER VÀ ZOOM CỦA ĐÚNG KHUNG HÌNH TEXTURE NÀY!
               // (Điều này cực kỳ quan trọng để đồng bộ Tọa độ 3D và Hình ảnh Texture - Fix Jitter)
               textureCenterRef.current = map.getCenter();
               textureZoomRef.current = map.getZoom();
+              
+              textureDirtyRef.current = true; // QUAN TRỌNG: Phải đánh dấu để useFrame upload texture lên GPU!
 
               invalidateRef.current(); // Sprint 2: trigger R3F frame
             } catch {
