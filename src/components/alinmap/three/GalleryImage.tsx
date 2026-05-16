@@ -60,6 +60,7 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
     const handleBillboardPointerDown = (e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         logBillboardEvent('pointerdown');
+        openBillboardOnce();
     };
 
     const handleBillboardPointerUp = (e: ThreeEvent<PointerEvent>) => {
