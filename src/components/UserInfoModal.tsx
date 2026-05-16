@@ -2,7 +2,9 @@ import React, { useState, useRef } from 'react';
 import { X, LogIn, LogOut, Trophy, Wallet, User as UserIcon, Settings, Camera, Gamepad2, Edit2, Check, Upload, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../App';
-import { externalApi, normalizeImageUrl } from '../services/externalApi';
+import { externalApi } from '../services/externalApi';
+import { PROFILE_AVATAR_PRESETS } from './alinmap/features/profile/avatarPresets';
+import { resolveAvatarSrc } from '../utils/avatar';
 
 interface UserInfoModalProps {
   isOpen: boolean;
@@ -17,17 +19,8 @@ interface UserInfoModalProps {
     xp: number;
     rankScore: number;
   } | null;
-  onUpdateAvatar: (url: string) => void;
+  onUpdateAvatar: (url: string) => Promise<void> | void;
 }
-
-const DEFAULT_AVATARS = [
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jace',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Midnight',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
-];
 
 export default function UserInfoModal({ 
   isOpen, 
@@ -118,9 +111,9 @@ export default function UserInfoModal({
           {/* Avatar Section */}
           <div className="flex flex-col items-center mb-5 pt-2">
             <div className="relative group cursor-pointer" onClick={() => setShowAvatars(!showAvatars)}>
-              <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-gray-800 bg-[#252830] shadow-xl relative transition-transform active:scale-95 group-hover:border-purple-500/50">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-gray-800 bg-[#252830] shadow-xl relative transition-transform active:scale-95 group-hover:border-purple-500/50">
                 <img 
-                  src={normalizeImageUrl(user?.photoURL) || `https://i.pravatar.cc/150?u=${user?.uid || 'guest'}`} 
+                  src={resolveAvatarSrc(user?.photoURL, user?.displayName || user?.email || user?.uid || 'Guest')} 
                   className="w-full h-full object-cover"
                   alt="Profile"
                 />
@@ -203,11 +196,11 @@ export default function UserInfoModal({
                       <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Select System Avatar</label>
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                      {DEFAULT_AVATARS.map((url, i) => (
+                      {PROFILE_AVATAR_PRESETS.map((url, i) => (
                         <button 
                           key={i}
                           onClick={() => {
-                            onUpdateAvatar(url);
+                            void onUpdateAvatar(url);
                             setShowAvatars(false);
                           }}
                           className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${user?.photoURL === url ? 'border-purple-500 scale-105 shadow-lg shadow-purple-500/30' : 'border-transparent hover:border-gray-700'}`}
@@ -249,7 +242,7 @@ export default function UserInfoModal({
                             {myGames.map(game => (
                               <div key={game.id} className="flex items-center gap-2 bg-[#252830] p-1.5 rounded-lg border border-gray-800/50">
                                 <img 
-                                  src={normalizeImageUrl(game.thumbnail_url || game.image) || `https://api.dicebear.com/7.x/identicon/svg?seed=${game.id}`} 
+                                  src={resolveAvatarSrc(game.thumbnail_url || game.image, game.name || game.title || String(game.id || 'Game'), { background: '1f2937', color: 'fff', size: 64 })} 
                                   className="w-6 h-6 rounded bg-gray-800 object-cover"
                                 />
                                 <div className="flex flex-col overflow-hidden">

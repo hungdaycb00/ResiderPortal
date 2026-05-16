@@ -1,6 +1,6 @@
 import React from 'react';
 import { Compass, Navigation } from 'lucide-react';
-import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 interface SocialNearbySectionProps {
     myObfPos: { lat: number; lng: number } | null;
@@ -114,12 +114,12 @@ const SocialNearbySection: React.FC<SocialNearbySectionProps> = ({
                             >
                                 <span className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 shrink-0 relative">
                                     <img
-                                        src={normalizeImageUrl(u.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}`}
+                                        src={resolveAvatarSrc(u.avatar_url || u.photoURL || u.avatarUrl, u.username || u.displayName || 'U', { background: '3b82f6', color: 'fff', size: 100 })}
                                         loading="lazy"
                                         decoding="async"
                                         className="w-full h-full object-cover"
                                         alt={u.username || ''}
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || 'U')}&background=3b82f6&color=fff&size=100`; }}
+                                        onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, u.username || u.displayName || 'U', { background: '3b82f6', color: 'fff', size: 100 }); }}
                                     />
                                     {u.gallery?.active && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full animate-pulse" />}
                                 </span>

@@ -17,6 +17,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     user,
     onClose,
     externalApi,
+    handleUpdateAvatar,
     profileUserId,
     profileStatus,
     games,
@@ -147,10 +148,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setGalleryImages: wsCtx.setGalleryImages,
     });
 
-    const logBillboard = useCallback((stage: string, details: Record<string, unknown> = {}) => {
-        console.warn(`[AlinMap][Billboard] ${stage}`, details);
-    }, []);
-
     const handleOpenBillboardPost = useCallback(async (sourceUser: any) => {
         if (!sourceUser) return;
 
@@ -174,17 +171,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             ...(Array.isArray(posts.feedPosts) ? posts.feedPosts : []),
             ...(Array.isArray(posts.userPosts) ? posts.userPosts : []),
         ];
-
-        logBillboard('click received', {
-            sourceUserId,
-            sourceName: sourceUser.displayName || sourceUser.name || sourceUser.username || null,
-            isSelfSource,
-            galleryActive: !!sourceUser.gallery?.active,
-            galleryTitle,
-            galleryImageCount: galleryImages.length,
-            galleryPostId,
-            totalCachedPosts: allPosts.length,
-        });
 
         const matchesAuthor = (post: any) => {
             const postAuthorId = post?.author?.id || post?.user_id || post?.author_id || null;
@@ -228,38 +214,19 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
         const openBillboardPost = (post: any, source: string) => {
             const profileUser = normalizeProfileUser(post?.author || sourceUser);
-            logBillboard('open profile tab', {
-                source,
-                isSelfSource,
-                profileUserId: profileUser.id,
-                profileUserName: profileUser.displayName || profileUser.username || null,
-                selectedPostId: post?.id || null,
-            });
             nav.setSelectedUser(isSelfSource ? null : profileUser);
             nav.setActiveTab('posts');
             nav.setMainTab('profile');
             nav.setIsSheetExpanded(true);
 
             if (post) {
-                logBillboard('set selected post', {
-                    postId: post.id || null,
-                    postTitle: post.title || null,
-                    postAuthorId: post.author?.id || post.user_id || post.author_id || null,
-                });
                 setSelectedPost(post);
             } else {
-                logBillboard('no post resolved, clear selected post');
                 setSelectedPost(null);
             }
         };
 
         const localResolved = resolvePostFromList(allPosts);
-        logBillboard('local resolve result', {
-            match: localResolved.match,
-            postId: localResolved.post?.id || null,
-            postTitle: localResolved.post?.title || null,
-        });
-
         if (localResolved.post) {
             openBillboardPost(localResolved.post, 'local-cache');
             return;
@@ -270,25 +237,17 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             : sourceUserId;
 
         if (!fetchUserId) {
-            logBillboard('no sourceUserId, opening profile tab without post');
             openBillboardPost(null, 'no-source-user-id');
             return;
         }
 
         try {
-            logBillboard('fetching user posts', { sourceUserId: fetchUserId, isSelfSource });
             const resp = await fetch(`${API_BASE}/api/user/${fetchUserId}/posts`, {
                 headers: { 'X-Device-Id': externalApi.getDeviceId() },
             });
             const data = await resp.json();
             const fetchedPosts = Array.isArray(data?.posts) ? data.posts : [];
             const fetchedResolved = resolvePostFromList(fetchedPosts);
-            logBillboard('fetch resolve result', {
-                match: fetchedResolved.match,
-                postId: fetchedResolved.post?.id || null,
-                postTitle: fetchedResolved.post?.title || null,
-                fetchedCount: fetchedPosts.length,
-            });
 
             openBillboardPost(fetchedResolved.post, 'fetched-api');
             if (!fetchedResolved.post) {
@@ -296,14 +255,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             }
         } catch (err) {
             console.error('Open billboard post error:', err);
-            logBillboard('fetch failed', {
-                sourceUserId: fetchUserId,
-                error: err instanceof Error ? err.message : String(err),
-            });
             openBillboardPost(null, 'fetch-error');
             showNotification?.('Không mở được bài viết billboard', 'error');
         }
-    }, [API_BASE, externalApi, logBillboard, nav, posts.feedPosts, posts.userPosts, profileUserId, resolvedMyUserId, showNotification, user?.uid, wsCtx.myUserId]);
+    }, [API_BASE, externalApi, nav, posts.feedPosts, posts.userPosts, profileUserId, resolvedMyUserId, showNotification, user?.uid, wsCtx.myUserId]);
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {
@@ -442,6 +397,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 mainTab={nav.mainTab}
                 myAvatarUrl={wsCtx.myAvatarUrl}
                 myDisplayName={wsCtx.myDisplayName}
+                handleUpdateAvatar={handleUpdateAvatar}
                 myObfPos={geo.myObfPos}
                 currentProvince={geo.currentProvince}
                 weatherData={geo.weatherData}

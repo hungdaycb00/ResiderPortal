@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout, Copy, CheckCircle2, AlertCircle, Send as SendIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { externalApi, normalizeImageUrl } from '../services/externalApi';
+import { externalApi } from '../services/externalApi';
+import { resolveAvatarSrc } from '../utils/avatar';
 
 interface FriendsModalProps {
   isOpen: boolean;
@@ -176,7 +177,7 @@ export default function FriendsModal({
                       {friends.map((friend) => (
                         <div key={friend.id} className="flex items-center justify-between px-1 py-2 group">
                           <div className="flex items-center gap-4">
-                            <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-10 h-10 rounded-full bg-[#24252a] object-cover" alt="" />
+                            <img src={resolveAvatarSrc(friend.photoURL || friend.avatar_url || friend.avatarUrl, friend.display_name || friend.displayName || friend.username || friend.id)} className="w-10 h-10 rounded-full bg-[#24252a] object-cover" alt="" />
                             <p className="font-normal text-gray-100 text-[17px]">{friend.display_name || friend.displayName || friend.id}</p>
                           </div>
                           
@@ -210,7 +211,7 @@ export default function FriendsModal({
                     {requests.map((req) => (
                       <div key={req.id} className="flex items-center justify-between p-4 bg-[#24252a] rounded-2xl">
                         <div className="flex items-center gap-4">
-                          <img src={normalizeImageUrl(req.photoURL || req.avatar_url) || `https://i.pravatar.cc/150?u=${req.id}`} className="w-12 h-12 rounded-full object-cover" alt="" />
+                          <img src={resolveAvatarSrc(req.photoURL || req.avatar_url || req.avatarUrl, req.display_name || req.displayName || req.username || req.id)} className="w-12 h-12 rounded-full object-cover" alt="" />
                           <div>
                             <p className="font-medium text-white text-base">{req.display_name || req.displayName || req.id}</p>
                             <p className="text-[11px] text-gray-500 uppercase font-medium mt-0.5">Incoming Request</p>

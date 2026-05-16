@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageCircle, Globe, Users } from 'lucide-react';
-import { normalizeImageUrl } from '../../services/externalApi';
+import { resolveAvatarSrc } from '../../utils/avatar';
 
 interface RoomInfo {
     room_id: number;
@@ -71,7 +71,7 @@ export default function ChatSidebar({
                                 className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all active:scale-95 ${isActive ? 'bg-blue-600/10' : 'hover:bg-gray-800/40'}`}
                             >
                                 <div className="relative w-9 h-9 rounded-full shrink-0 border border-gray-700 overflow-hidden bg-[#252830]">
-                                    <img src={normalizeImageUrl(friend.photoURL || friend.avatar_url) || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-full h-full object-cover" />
+                                    <img src={resolveAvatarSrc(friend.photoURL || friend.avatar_url || friend.avatarUrl, friend.displayName || friend.display_name || friend.username || friend.id)} className="w-full h-full object-cover" />
                                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#16181d] ${friend.is_online ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-gray-600'}`}></div>
                                 </div>
                                 <div className="flex-1 text-left min-w-0">

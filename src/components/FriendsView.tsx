@@ -1,5 +1,6 @@
 import { Users, UserPlus, UserMinus, Check, X, Mail, RefreshCw, Layout } from 'lucide-react';
 import { externalApi } from '../services/externalApi';
+import { resolveAvatarSrc } from '../utils/avatar';
 
 export default function FriendsView({ friends, requests, onAddFriend, onAccept, onReject, onRemove, friendInput, setFriendInput, onRefresh }: { 
   friends: any[], 
@@ -30,7 +31,7 @@ export default function FriendsView({ friends, requests, onAddFriend, onAccept, 
                   <div key={friend.id} className="flex items-center justify-between p-3 bg-[#252830]/50 border border-gray-800 rounded-xl hover:border-gray-700 transition-colors group">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <img src={friend.photoURL || `https://i.pravatar.cc/150?u=${friend.id}`} className="w-10 h-10 rounded-full border border-gray-700" alt="" />
+                        <img src={resolveAvatarSrc(friend.photoURL || friend.avatar_url || friend.avatarUrl, friend.displayName || friend.display_name || friend.username || friend.id)} className="w-10 h-10 rounded-full border border-gray-700" alt="" />
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#1a1d24] rounded-full"></div>
                       </div>
                       <div>
@@ -78,7 +79,7 @@ export default function FriendsView({ friends, requests, onAddFriend, onAccept, 
             {requests.length > 0 ? requests.map((req) => (
               <div key={req.id} className="flex items-center justify-between p-3 bg-[#252830]/50 border border-gray-800 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <img src={req.photoURL || `https://i.pravatar.cc/150?u=${req.id}`} className="w-10 h-10 rounded-full border border-gray-700" alt="" />
+                  <img src={resolveAvatarSrc(req.photoURL || req.avatar_url || req.avatarUrl, req.displayName || req.display_name || req.username || req.id)} className="w-10 h-10 rounded-full border border-gray-700" alt="" />
                   <div>
                     <p className="text-sm font-bold text-white">{req.display_name || req.displayName || req.id}</p>
                     <p className="text-[10px] text-gray-500">Wants to be your friend</p>

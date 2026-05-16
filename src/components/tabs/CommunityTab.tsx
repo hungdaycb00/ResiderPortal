@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, RefreshCw, MessageSquare } from 'lucide-react';
+import { resolveAvatarSrc } from '../../utils/avatar';
 
 export interface CommunityTabProps {
     fetchedFriends: any[];
@@ -50,7 +51,7 @@ const CommunityTab: React.FC<CommunityTabProps> = ({ fetchedFriends, fetchExtern
                                 fetchedFriends.map((friend, i) => (
                                     <div key={i} className="flex items-center gap-3">
                                         <div className="relative">
-                                            <img src={friend.photoURL || `https://i.pravatar.cc/150?u=${i}`} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
+                                            <img src={resolveAvatarSrc(friend.photoURL || friend.avatar_url || friend.avatarUrl, friend.displayName || friend.name || `User_${i}`)} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
                                             <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 ${friend.online ? 'bg-green-500' : 'bg-gray-500'} rounded-full border-2 border-[#1a1d24]`} />
                                         </div>
                                         <span className="text-sm font-medium text-gray-300">{friend.displayName || friend.name || `User_${i}`}</span>
@@ -60,7 +61,7 @@ const CommunityTab: React.FC<CommunityTabProps> = ({ fetchedFriends, fetchExtern
                                 [1, 2, 3, 4, 5].map((i) => (
                                     <div key={i} className="flex items-center gap-3">
                                         <div className="relative">
-                                            <img src={`https://i.pravatar.cc/150?u=${i}`} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
+                                            <img src={resolveAvatarSrc(null, `User_${i}`)} className="w-8 h-8 rounded-full border border-gray-700" alt="User" />
                                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#1a1d24]" />
                                         </div>
                                         <span className="text-sm font-medium text-gray-300">User_{i}42</span>

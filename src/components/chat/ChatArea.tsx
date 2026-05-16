@@ -1,6 +1,6 @@
 import React from 'react';
 import { Send as SendIcon, MessageSquare, ChevronLeft, Globe, User } from 'lucide-react';
-import { normalizeImageUrl } from '../../services/externalApi';
+import { resolveAvatarSrc } from '../../utils/avatar';
 
 interface ChatAreaProps {
     messages: any[];
@@ -56,7 +56,7 @@ export default function ChatArea({
                             {activeRoomName === 'World Chat' ? (
                                 <Globe className="w-4 h-4 text-blue-400" />
                             ) : activeRoomAvatar ? (
-                                <img src={normalizeImageUrl(activeRoomAvatar)} className="w-5 h-5 rounded-full object-cover border border-gray-700" alt="avatar" />
+                                <img src={resolveAvatarSrc(activeRoomAvatar, activeRoomName || 'User', { size: 80 })} className="w-5 h-5 rounded-full object-cover border border-gray-700" alt="avatar" />
                             ) : (
                                 <User className="w-4 h-4 text-emerald-400" />
                             )}

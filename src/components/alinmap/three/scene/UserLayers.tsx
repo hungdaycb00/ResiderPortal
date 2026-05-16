@@ -254,12 +254,6 @@ export default function UserLayers({
                 lng: baseOrigin.lng,
                 isSelf: true,
               };
-              console.warn('[AlinMap][Billboard] self callback from UserLayers', {
-                userId: selfBillboardUser.id,
-                galleryActive,
-                galleryTitle,
-                imageCount: galleryImages.length,
-              });
               onOpenBillboardPost(selfBillboardUser);
             } : undefined,
             showGallery: galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode)),
@@ -313,13 +307,6 @@ export default function UserLayers({
           },
           onClick: isLooterGameMode ? undefined : () => onSelectUser?.(u),
           onGalleryClick: onOpenBillboardPost ? () => {
-            console.warn('[AlinMap][Billboard] nearby callback from UserLayers', {
-              userId: u.id || u.uid || u.user_id || null,
-              name: u.displayName || u.username || null,
-              galleryActive: !!u.gallery?.active,
-              galleryTitle: u.gallery?.title || '',
-              imageCount: Array.isArray(u.gallery?.images) ? u.gallery.images.length : 0,
-            });
             onOpenBillboardPost(u);
           } : undefined,
           showGallery: !isLooterGameMode && u.gallery?.active,

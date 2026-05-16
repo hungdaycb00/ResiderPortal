@@ -81,6 +81,7 @@ interface AlinMapUiOverlayProps {
   mainTab: string;
   myAvatarUrl: string;
   myDisplayName: string;
+  handleUpdateAvatar?: (url: string) => Promise<void> | void;
   myObfPos: { lat: number; lng: number } | null;
   currentProvince: string | null;
   weatherData: { temp: number; desc: string; icon: string; humidity?: number; feelsLike?: number } | null;
@@ -136,6 +137,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   mainTab,
   myAvatarUrl,
   myDisplayName,
+  handleUpdateAvatar,
   myObfPos,
   currentProvince,
   weatherData,
@@ -306,6 +308,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setMyDisplayName={wsCtx.setMyDisplayName}
         myAvatarUrl={wsCtx.myAvatarUrl}
         setMyAvatarUrl={wsCtx.setMyAvatarUrl}
+        handleUpdateAvatar={handleUpdateAvatar}
         setIsCreatingPost={posts.setIsCreatingPost}
         setPostTitle={posts.setPostTitle}
         setPostPrivacy={posts.setPostPrivacy}

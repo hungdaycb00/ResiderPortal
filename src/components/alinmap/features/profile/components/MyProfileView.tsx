@@ -34,6 +34,7 @@ interface MyProfileViewProps {
     fetchUserPosts: (uid: string) => void;
     externalApi: any;
     setMyAvatarUrl: (v: string) => void;
+    handleUpdateAvatar?: (url: string) => Promise<void> | void;
     triggerAuth?: (callback: () => void) => void;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     logout?: () => void;
@@ -61,7 +62,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         games, userPosts,
         ws, myObfPos, user, showNotification, setIsSheetExpanded, setMainTab,
         handleStarPost, handleDeletePost, handleUpdatePostPrivacy, fetchUserPosts, externalApi,
-        setMyAvatarUrl,
+        setMyAvatarUrl, handleUpdateAvatar,
         triggerAuth, requireAuth, logout, requestLocation,
         friends, setSelectedUser,
         isCreatingPost, setIsCreatingPost, postTitle, setPostTitle,
@@ -145,7 +146,7 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
         .filter(w => w.startsWith('#'))
         .map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9#]/g, '')), [myStatus]);
 
-    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, triggerAuth, externalApi });
+    const avatar = useAvatarUpload({ user, ws, setMyAvatarUrl, onUpdateAvatar: handleUpdateAvatar, showNotification, triggerAuth, externalApi });
 
     return (
         <div className="space-y-4">
@@ -176,7 +177,9 @@ const MyProfileView: React.FC<MyProfileViewProps> = (props) => {
                 setMyDisplayName={setMyDisplayName}
                 ws={ws} showNotification={showNotification}
                 showAvatarMenu={avatar.showAvatarMenu} setShowAvatarMenu={avatar.setShowAvatarMenu}
-                avatarInputRef={avatar.avatarInputRef} handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
+                avatarInputRef={avatar.avatarInputRef} presetAvatars={avatar.presetAvatars}
+                handleAvatarUpload={avatar.handleAvatarUpload} handleDefaultAvatar={avatar.handleDefaultAvatar}
+                handlePresetAvatarSelect={avatar.handlePresetAvatarSelect}
                 externalApi={externalApi}
                 requireAuth={requireAuth}
             />

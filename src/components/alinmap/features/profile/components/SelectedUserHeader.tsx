@@ -1,5 +1,5 @@
 import React from 'react';
-import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 interface SelectedUserHeaderProps {
     selectedUser: any;
@@ -10,12 +10,12 @@ const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser })
     <div className="flex items-start gap-4 mb-6">
         <div className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar">
             <img
-                src={normalizeImageUrl(selectedUser.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`}
+                src={resolveAvatarSrc(selectedUser.avatar_url || selectedUser.photoURL || selectedUser.avatarUrl, selectedUser.username || selectedUser.displayName || 'U')}
                 alt="Avatar"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username || 'U')}&background=3b82f6&color=fff&size=150&bold=true`; }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = resolveAvatarSrc(null, selectedUser.username || selectedUser.displayName || 'U'); }}
             />
         </div>
         <div className="flex-1 min-w-0 pt-1">

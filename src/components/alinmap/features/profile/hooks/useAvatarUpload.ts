@@ -1,24 +1,49 @@
 import React, { useState, useRef } from 'react';
 import { getBaseUrl } from '../../../../../services/externalApi';
+import { PROFILE_AVATAR_PRESETS } from '../avatarPresets';
 
 interface UseAvatarUploadParams {
     user: any;
     ws: React.MutableRefObject<WebSocket | null>;
     setMyAvatarUrl: (v: string) => void;
+    onUpdateAvatar?: (avatarUrl: string) => Promise<void> | void;
     showNotification?: (message: string, type: 'success' | 'error' | 'info') => void;
     triggerAuth?: (callback: () => void) => void;
     externalApi: any;
 }
 
-export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, triggerAuth, externalApi }: UseAvatarUploadParams) {
+export function useAvatarUpload({ user, ws, setMyAvatarUrl, onUpdateAvatar, showNotification, triggerAuth, externalApi }: UseAvatarUploadParams) {
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
 
-    const syncAvatarToServer = async (avatarUrl: string) => {
-        await externalApi.request('/api/update-profile', {
-            method: 'POST',
-            body: JSON.stringify({ avatarUrl }),
-        });
+    const persistAvatar = async (avatarUrl: string) => {
+        if (!user) {
+            triggerAuth?.(() => {});
+            return false;
+        }
+
+        if (onUpdateAvatar) {
+            await onUpdateAvatar(avatarUrl);
+        } else {
+            await externalApi.request('/api/update-profile', {
+                method: 'POST',
+                body: JSON.stringify({ avatarUrl }),
+            });
+        }
+
+        try {
+            const savedUserRaw = localStorage.getItem('user');
+            if (savedUserRaw) {
+                const savedUser = JSON.parse(savedUserRaw);
+                localStorage.setItem('user', JSON.stringify({ ...savedUser, photoURL: avatarUrl }));
+            }
+        } catch {}
+
+        setMyAvatarUrl(avatarUrl);
+        if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: avatarUrl } }));
+        }
+        return true;
     };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,11 +71,7 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, tr
             const imageUrl = data.imageUrl || data.url;
             if (res.ok && imageUrl) {
                 try {
-                    await syncAvatarToServer(imageUrl);
-                    setMyAvatarUrl(imageUrl);
-                    if (ws.current?.readyState === WebSocket.OPEN) {
-                        ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: imageUrl } }));
-                    }
+                    await persistAvatar(imageUrl);
                     showNotification?.('Cap nhat anh dai dien thanh cong', 'success');
                 } catch (profileErr) {
                     console.error(profileErr);
@@ -67,15 +88,11 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, tr
     };
 
     const handleDefaultAvatar = async () => {
-        if (!user) {
-            triggerAuth?.(() => {});
-            return;
-        }
         try {
-            await syncAvatarToServer('');
-            setMyAvatarUrl('');
-            if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({ type: 'UPDATE_PROFILE', payload: { avatar_url: '' } }));
+            const updated = await persistAvatar('');
+            if (!updated) {
+                setShowAvatarMenu(false);
+                return;
             }
             showNotification?.('Da doi ve anh mac dinh', 'success');
         } catch (err) {
@@ -85,11 +102,28 @@ export function useAvatarUpload({ user, ws, setMyAvatarUrl, showNotification, tr
         setShowAvatarMenu(false);
     };
 
+    const handlePresetAvatarSelect = async (avatarUrl: string) => {
+        try {
+            const updated = await persistAvatar(avatarUrl);
+            if (!updated) {
+                setShowAvatarMenu(false);
+                return;
+            }
+            showNotification?.('Da cap nhat avatar san co', 'success');
+        } catch (err) {
+            console.error(err);
+            showNotification?.('Khong the luu avatar san co', 'error');
+        }
+        setShowAvatarMenu(false);
+    };
+
     return {
         showAvatarMenu,
         setShowAvatarMenu,
         avatarInputRef,
+        presetAvatars: PROFILE_AVATAR_PRESETS,
         handleAvatarUpload,
         handleDefaultAvatar,
+        handlePresetAvatarSelect,
     };
 }

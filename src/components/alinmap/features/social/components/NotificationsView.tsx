@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
-import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { useSocial } from '../context/SocialContext';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 interface NotificationsViewProps {
     externalApi: any;
@@ -32,7 +32,7 @@ const NotificationsView: React.FC<NotificationsViewProps> = ({ externalApi }) =>
                     {notifications.map((n: any) => (
                         <div key={n.id} className={`flex items-start gap-3 p-4 transition-colors ${!n.isRead ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}>
                             <div className="relative shrink-0">
-                                <img src={normalizeImageUrl(n.actor?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(n.actor?.name || 'User')}&background=random`} className="w-10 h-10 rounded-full object-cover" alt="avatar" />
+                                <img src={resolveAvatarSrc(n.actor?.avatar || n.actor?.avatar_url || n.actor?.photoURL, n.actor?.name || 'User', { background: '64748b', color: 'fff', size: 100 })} className="w-10 h-10 rounded-full object-cover" alt="avatar" />
                                 {!n.isRead && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />}
                             </div>
                             <div className="flex-1 min-w-0 pt-0.5">

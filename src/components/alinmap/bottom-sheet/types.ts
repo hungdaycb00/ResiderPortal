@@ -59,6 +59,7 @@ export interface BottomSheetProps {
     setMyDisplayName: (v: string) => void;
     myAvatarUrl: string;
     setMyAvatarUrl: (v: string) => void;
+    handleUpdateAvatar?: (url: string) => Promise<void> | void;
     setIsCreatingPost: (v: boolean) => void;
     setPostTitle: (v: string) => void;
     setPostPrivacy: (v: 'public' | 'friends' | 'private') => void;

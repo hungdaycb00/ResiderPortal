@@ -3,6 +3,7 @@ import { normalizeImageUrl } from '../../services/externalApi';
 import { Diamond } from 'lucide-react';
 import { motion, useTransform } from 'framer-motion';
 import { DEGREES_TO_PX, FEATURED_BILLBOARD_FAR_SCALE, LIKE_THRESHOLD_FOR_SCALE, SpatialNodeProps } from './constants';
+import { resolveAvatarSrc } from '../../utils/avatar';
 
 const billboardTransform = (_: unknown, generated: string) =>
     `${generated} scale(var(--alin-map-node-counter-scale)) scale(var(--alin-map-featured-scale, 1))`;
@@ -72,11 +73,11 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
             <div className="relative w-full h-full alin-map-upright-sprite">
                 <div className={`w-full h-full rounded-full border-[2.5px] overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.4)] border-cyan-500 bg-[#1a1d24] ${isRoadmapNode ? 'shadow-[0_0_10px_rgba(34,211,238,0.28)]' : ''}`}>
                     <img
-                        src={normalizeImageUrl(user.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`}
+                        src={resolveAvatarSrc(user.avatar_url || user.photoURL || user.avatarUrl, user.username || user.displayName || 'U', { background: '1a1d24', color: '3b82f6', size: 150, bold: true })}
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=1a1d24&color=3b82f6&size=150&bold=true`; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, user.username || user.displayName || 'U', { background: '1a1d24', color: '3b82f6', size: 150, bold: true }); }}
                     />
                 </div>
 
@@ -94,12 +95,12 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
                         </div>
                         {user.gallery.images?.[0] ? (
                             <div className="w-full aspect-video bg-black/40">
-                                <img
-                                    src={normalizeImageUrl(user.gallery.images[0])}
-                                    loading="lazy"
-                                    decoding="async"
-                                    className="w-full h-full object-cover opacity-80"
-                                    alt="Ads"
+                                    <img
+                                        src={normalizeImageUrl(user.gallery.images[0])}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover opacity-80"
+                                        alt="Ads"
                                 />
                             </div>
                         ) : (
@@ -123,12 +124,12 @@ const SpatialNode: React.FC<SpatialNodeProps> = ({
                     >
                         <div className="flex items-center gap-1.5">
                             {user.gallery.images?.[0] ? (
-                                <img
-                                    src={normalizeImageUrl(user.gallery.images[0])}
-                                    loading="lazy"
-                                    decoding="async"
-                                    className="h-5 w-5 shrink-0 rounded-md object-cover"
-                                    alt=""
+                                    <img
+                                        src={normalizeImageUrl(user.gallery.images[0])}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="h-5 w-5 shrink-0 rounded-md object-cover"
+                                        alt=""
                                 />
                             ) : (
                                 <div className={`h-5 w-5 shrink-0 rounded-md text-[8px] font-black leading-5 text-center ${isFeaturedBillboard ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'}`}>

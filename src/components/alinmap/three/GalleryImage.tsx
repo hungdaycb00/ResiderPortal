@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { ThreeEvent } from '@react-three/fiber';
 import { resolveRenderableImageUrl } from './sceneUtils';
@@ -30,26 +30,6 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
     const billboardHeight = billboardWidth * (9 / 16);
     const billboardYOffset = avatarPlaneSize * 1.35 + billboardHeight * 0.5;
 
-    useEffect(() => {
-        console.warn('[AlinMap][Billboard] mounted image-only billboard', {
-            title: title || 'GALLERY',
-            url: url || null,
-            hasTexture: !!texture,
-            billboardWidth,
-            billboardHeight,
-        });
-    }, [billboardHeight, billboardWidth, texture, title, url]);
-
-    const logBillboardEvent = (eventName: string) => {
-        console.warn(`[AlinMap][Billboard] ${eventName}`, {
-            title: title || 'GALLERY',
-            url: url || null,
-            hasTexture: !!texture,
-            billboardWidth,
-            billboardHeight,
-        });
-    };
-
     const openBillboardOnce = () => {
         const now = performance.now();
         if (now - lastOpenAtRef.current < 180) return;
@@ -59,19 +39,16 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
 
     const handleBillboardPointerDown = (e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
-        logBillboardEvent('pointerdown');
         openBillboardOnce();
     };
 
     const handleBillboardPointerUp = (e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
-        logBillboardEvent('pointerup');
         openBillboardOnce();
     };
 
     const handleBillboardClick = (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        logBillboardEvent('click');
         openBillboardOnce();
     };
 

@@ -123,6 +123,7 @@ export interface AlinMapProps {
     user: any;
     onClose: () => void;
     externalApi: any;
+    handleUpdateAvatar?: (url: string) => Promise<void> | void;
     profileUserId?: string | null;
     profileStatus?: string;
     games: any[];

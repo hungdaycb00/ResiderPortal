@@ -71,6 +71,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     setMainTab,
     setMyAvatarUrl,
     setMyDisplayName,
+    handleUpdateAvatar,
     setPostPrivacy,
     setPostIsStarred,
     setPostTitle,
@@ -324,6 +325,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                                     fetchUserPosts={fetchUserPosts}
                                     externalApi={externalApi}
                                     setMyAvatarUrl={setMyAvatarUrl}
+                                    handleUpdateAvatar={handleUpdateAvatar}
                                     triggerAuth={triggerAuth}
                                     requireAuth={requireAuth}
                                     logout={logout}

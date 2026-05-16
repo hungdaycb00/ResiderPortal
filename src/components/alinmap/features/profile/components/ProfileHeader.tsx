@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit, Copy } from 'lucide-react';
-import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { useProfile } from '../context/ProfileContext';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 const PROFILE_DISPLAY_NAME_KEY = 'alin_profile_display_name';
 
@@ -17,8 +17,10 @@ interface ProfileHeaderProps {
     showAvatarMenu: boolean;
     setShowAvatarMenu: (v: boolean) => void;
     avatarInputRef: React.RefObject<HTMLInputElement>;
+    presetAvatars: readonly string[];
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDefaultAvatar: () => void;
+    handlePresetAvatarSelect: (avatarUrl: string) => void;
     externalApi: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
 }
@@ -27,9 +29,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     myUserId, userEmail, myDisplayName, myAvatarUrl, currentProvince,
     setMyDisplayName,
     ws, showNotification, showAvatarMenu, setShowAvatarMenu,
-    avatarInputRef, handleAvatarUpload, handleDefaultAvatar, externalApi, requireAuth,
+    avatarInputRef, presetAvatars, handleAvatarUpload, handleDefaultAvatar, handlePresetAvatarSelect, externalApi, requireAuth,
 }) => {
     const { isEditingName, setIsEditingName, nameInput, setNameInput } = useProfile();
+
     const saveName = async () => {
         if (requireAuth && !requireAuth('doi ten hien thi')) return;
         const nextName = nameInput.trim();
@@ -60,78 +63,111 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }
     };
 
+    const currentAvatar = resolveAvatarSrc(myAvatarUrl, myDisplayName, { background: '3b82f6', color: 'fff', size: 150 });
+
     return (
-        <div className="flex items-start gap-4 mb-6 px-1 relative">
+        <div className="relative mb-6 flex items-start gap-4 px-1">
             <div
-                className="w-20 h-20 bg-gray-100 rounded-[20px] overflow-hidden shrink-0 shadow-sm border border-gray-200 relative group/avatar cursor-pointer"
+                className="group/avatar relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-[20px] border border-gray-200 bg-gray-100 shadow-sm"
                 onClick={() => {
                     if (requireAuth && !requireAuth('cap nhat avatar')) return;
                     setShowAvatarMenu(!showAvatarMenu);
                 }}
             >
                 <img
-                    src={normalizeImageUrl(myAvatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`}
+                    src={currentAvatar}
                     alt="Avatar"
-                    className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
-                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(myDisplayName)}&background=3b82f6&color=fff&size=150&bold=true`; }}
+                    className="h-full w-full object-cover transition-transform group-hover/avatar:scale-110"
+                    onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, myDisplayName, { background: '3b82f6', color: 'fff', size: 150 }); }}
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity justify-center items-center flex">
-                    <Edit className="w-6 h-6 text-white drop-shadow-md" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover/avatar:opacity-100">
+                    <Edit className="h-6 w-6 text-white drop-shadow-md" />
                 </div>
             </div>
 
-            {/* Avatar Menu */}
             {showAvatarMenu && (
-                <div className="absolute top-20 left-1 bg-white shadow-xl rounded-xl border border-gray-200 p-1.5 z-50 flex flex-col min-w-[140px] animate-in fade-in zoom-in duration-200">
-                    <button onClick={() => avatarInputRef.current?.click()} className="text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors">Tải ảnh lên</button>
-                    <button onClick={handleDefaultAvatar} className="text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">Ảnh mặc định</button>
+                <div className="absolute left-1 top-20 z-50 w-[286px] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in duration-200">
+                    <div className="px-1.5 py-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">Chon avatar co san</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 p-1.5">
+                        {presetAvatars.map((avatarUrl) => {
+                            const normalizedAvatar = resolveAvatarSrc(avatarUrl, myDisplayName, { background: '3b82f6', color: 'fff', size: 150 });
+                            const isSelected = resolveAvatarSrc(myAvatarUrl, myDisplayName, { background: '3b82f6', color: 'fff', size: 150 }) === normalizedAvatar;
+                            return (
+                                <button
+                                    key={avatarUrl}
+                                    type="button"
+                                    onClick={() => { void handlePresetAvatarSelect(avatarUrl); }}
+                                    className={`relative aspect-square overflow-hidden rounded-xl border transition-all active:scale-95 ${
+                                        isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-blue-300'
+                                    }`}
+                                    title="Chon avatar nay"
+                                >
+                                    <img
+                                        src={normalizedAvatar}
+                                        alt="Avatar preset"
+                                        className="h-full w-full object-cover bg-gray-50"
+                                    />
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="my-1 h-px bg-gray-100" />
+                    <button onClick={() => avatarInputRef.current?.click()} className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Tai anh len</button>
+                    <button onClick={handleDefaultAvatar} className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50">Anh mac dinh</button>
                 </div>
             )}
             <input type="file" accept="image/*" className="hidden" ref={avatarInputRef} onChange={handleAvatarUpload} />
 
-            <div className="flex-1 min-w-0 pt-1">
+            <div className="min-w-0 flex-1 pt-1">
                 {isEditingName ? (
-                    <div className="flex gap-2 mb-2">
+                    <div className="mb-2 flex gap-2">
                         <input
-                            autoFocus type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)}
+                            autoFocus
+                            type="text"
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') void saveName(); }}
-                            className="bg-gray-100 border border-blue-500 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 w-full outline-none focus:border-blue-500 transition-colors"
+                            className="w-full rounded-lg border border-blue-500 bg-gray-100 px-2 py-1 text-sm font-bold text-gray-900 outline-none transition-colors focus:border-blue-500"
                         />
-                        <button onClick={() => { void saveName(); }} className="bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg text-xs font-bold transition-colors">Save</button>
+                        <button onClick={() => { void saveName(); }} className="rounded-lg bg-blue-600 px-3 text-xs font-bold text-white transition-colors hover:bg-blue-500">Save</button>
                     </div>
                 ) : (
                     <div className="mb-1">
                         <div
-                            className="group/name inline-flex items-center gap-2 cursor-pointer"
+                            className="group/name inline-flex cursor-pointer items-center gap-2"
                             onClick={() => {
                                 if (requireAuth && !requireAuth('doi ten hien thi')) return;
                                 setNameInput(myDisplayName);
                                 setIsEditingName(true);
                             }}
                         >
-                            <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight">{myDisplayName}</h3>
-                            <Edit className="w-4 h-4 text-blue-500 opacity-40 group-hover/name:opacity-100 transition-opacity" />
+                            <h3 className="truncate text-2xl font-black tracking-tight text-gray-900">{myDisplayName}</h3>
+                            <Edit className="h-4 w-4 text-blue-500 opacity-40 transition-opacity group-hover/name:opacity-100" />
                         </div>
                         {currentProvince && (
-                            <p className="text-sm text-gray-500 font-medium">📍 {currentProvince}</p>
+                            <p className="text-sm font-medium text-gray-500">{"\u{1F4CD}"} {currentProvince}</p>
                         )}
                     </div>
                 )}
 
-                {/* ID Copy */}
-                <div className="group/id inline-flex max-w-full items-start gap-1.5 bg-gray-100/80 hover:bg-blue-50 px-2 py-1 rounded-md cursor-pointer transition-colors mt-2" onClick={() => {
-                    if (!myUserId) {
-                        requireAuth?.('lay User ID');
-                        return;
-                    }
-                    navigator.clipboard.writeText(myUserId);
-                    showNotification?.("ID copied to clipboard!", "success");
-                }}>
-                    <span className="text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600 break-all">ID: {myUserId}</span>
-                    <Copy className="w-3 h-3 text-gray-400 group-hover/id:text-blue-500 shrink-0 mt-0.5" />
+                <div
+                    className="group/id mt-2 inline-flex max-w-full cursor-pointer items-start gap-1.5 rounded-md bg-gray-100/80 px-2 py-1 transition-colors hover:bg-blue-50"
+                    onClick={() => {
+                        if (!myUserId) {
+                            requireAuth?.('lay User ID');
+                            return;
+                        }
+                        navigator.clipboard.writeText(myUserId);
+                        showNotification?.('ID copied to clipboard!', 'success');
+                    }}
+                >
+                    <span className="break-all text-[10px] font-bold text-gray-500 group-hover/id:text-blue-600">ID: {myUserId}</span>
+                    <Copy className="mt-0.5 h-3 w-3 shrink-0 text-gray-400 group-hover/id:text-blue-500" />
                 </div>
                 {userEmail && (
-                    <p className="text-[10px] font-semibold text-gray-400 mt-1 truncate max-w-[220px]">
+                    <p className="mt-1 max-w-[220px] truncate text-[10px] font-semibold text-gray-400">
                         Gmail: {userEmail}
                     </p>
                 )}

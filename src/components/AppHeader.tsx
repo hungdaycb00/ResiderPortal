@@ -1,9 +1,9 @@
 import React from 'react';
 import { Search, MapPin, Filter, Trash2, Plus, LogIn, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { normalizeImageUrl } from '../services/externalApi';
 import UserInfoModal from './UserInfoModal';
 import { User } from '../types';
+import { resolveAvatarSrc } from '../utils/avatar';
 
 export interface AppHeaderProps {
     user: User | null;
@@ -22,7 +22,7 @@ export interface AppHeaderProps {
     setIsUserInfoOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setIsAuthOpen: (open: boolean) => void;
     logout: () => void;
-    handleUpdateAvatar: (url: string) => void;
+    handleUpdateAvatar: (url: string) => Promise<void> | void;
     setIsMyGamesOverlayOpen: (open: boolean) => void;
 }
 
@@ -169,7 +169,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                                     className="relative group transition-all active:scale-95"
                                 >
                                     <img
-                                        src={normalizeImageUrl(user.photoURL) || `https://i.pravatar.cc/150?u=${user.uid}`}
+                                        src={resolveAvatarSrc(user.photoURL, user.displayName || user.email || user.uid || 'User')}
                                         alt="Avatar"
                                         className="w-10 h-10 rounded-2xl border-2 border-blue-500/20 group-hover:border-blue-500/50 transition-colors object-cover"
                                     />

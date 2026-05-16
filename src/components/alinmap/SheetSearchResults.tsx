@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Gamepad2, Hash, Search } from 'lucide-react';
 import { normalizeImageUrl } from '../../services/externalApi';
+import { resolveAvatarSrc } from '../../utils/avatar';
 import {
     EMPTY_SEARCH_RESULTS,
     fetchAlinSearch,
@@ -141,12 +142,12 @@ const SheetSearchResults: React.FC<SheetSearchResultsProps> = ({
                                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.98] text-left"
                             >
                                 <img
-                                    src={normalizeImageUrl(u.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'U')}&background=3b82f6&color=fff&size=80`}
+                                    src={resolveAvatarSrc(u.avatar || u.avatar_url || u.photoURL, u.displayName || u.username || 'U', { background: '3b82f6', color: 'fff', size: 80 })}
                                     loading="lazy"
                                     decoding="async"
                                     className="w-9 h-9 rounded-full object-cover bg-gray-100 shrink-0"
                                     alt=""
-                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'U')}&background=3b82f6&color=fff&size=80`; }}
+                                    onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, u.displayName || u.username || 'U', { background: '3b82f6', color: 'fff', size: 80 }); }}
                                 />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-gray-900 truncate">{u.displayName || u.username}</p>

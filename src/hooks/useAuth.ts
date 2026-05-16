@@ -88,7 +88,6 @@ export function useAuth(
             cancel_on_tap_outside: false
         });
         gsiInitialized.current = true;
-        console.log('✅ GSI initialized once');
     }, [handleCredentialResponse]);
 
     const handleLogin = () => {
@@ -127,12 +126,20 @@ export function useAuth(
     const handleUpdateAvatar = async (url: string) => {
         if (!user) return;
         try {
-            await externalApi.syncUser({
-                uid: user.uid,
-                displayName: user.displayName,
-                photoURL: url,
-                email: user.email
+            await externalApi.request('/api/update-profile', {
+                method: 'POST',
+                body: JSON.stringify({ avatarUrl: url }),
             });
+            try {
+                await externalApi.syncUser({
+                    uid: user.uid,
+                    displayName: user.displayName,
+                    photoURL: url,
+                    email: user.email
+                });
+            } catch (syncErr) {
+                console.error('Avatar syncUser fallback failed:', syncErr);
+            }
             setUser(prev => prev ? { ...prev, photoURL: url } : null);
             showNotification('Avatar updated!', 'success');
         } catch (err) {

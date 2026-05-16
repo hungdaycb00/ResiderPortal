@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Users, Ban, MessageCircle, UserPlus, AlertTriangle, Mail, Check, X } from 'lucide-react';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
 import { useSocial } from '../../social/context/SocialContext';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 interface ProfileInfoTabProps {
     myUserId: string | null;
@@ -71,7 +72,7 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                     className="flex items-center gap-3 py-3 hover:bg-gray-50 rounded-2xl px-2 transition-colors cursor-pointer"
                                 >
                                     <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                                        <img src={normalizeImageUrl(f.avatar_url || f.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}`} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(f.username || f.displayName || 'U')}&background=3b82f6&color=fff&size=100&bold=true`; }} />
+                                        <img src={resolveAvatarSrc(f.avatar_url || f.photoURL || f.avatarUrl, f.username || f.displayName || 'U')} className="w-full h-full object-cover" alt={f.username} onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, f.username || f.displayName || 'U', { background: '3b82f6', color: 'fff', size: 100 }); }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-gray-900 text-sm truncate">{f.displayName || f.username}</h4>
@@ -130,10 +131,10 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                     >
                                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                                             <img
-                                                src={normalizeImageUrl(req.avatar_url || req.photoURL || req.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username || req.displayName || req.name || 'U')}&background=amber-500&color=fff&size=100&bold=true`}
+                                                src={resolveAvatarSrc(req.avatar_url || req.photoURL || req.avatar || req.avatarUrl, req.username || req.displayName || req.name || 'U', { background: 'amber-500', color: 'fff', size: 100 })}
                                                 className="w-full h-full object-cover"
                                                 alt={req.username || req.displayName || req.name || 'User'}
-                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username || req.displayName || req.name || 'U')}&background=amber-500&color=fff&size=100&bold=true`; }}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, req.username || req.displayName || req.name || 'U', { background: 'amber-500', color: 'fff', size: 100 }); }}
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -166,10 +167,10 @@ const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                                     >
                                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                                             <img
-                                                src={normalizeImageUrl(req.photoURL || req.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.displayName || req.display_name || req.id)}&background=3b82f6&color=fff&size=100&bold=true`}
+                                                src={resolveAvatarSrc(req.photoURL || req.avatar_url || req.avatarUrl, req.displayName || req.display_name || req.id, { background: '3b82f6', color: 'fff', size: 100 })}
                                                 className="w-full h-full object-cover"
                                                 alt={req.displayName || req.display_name || req.id}
-                                                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.displayName || req.display_name || req.id)}&background=3b82f6&color=fff&size=100&bold=true`; }}
+                                                onError={(e) => { (e.target as HTMLImageElement).src = resolveAvatarSrc(null, req.displayName || req.display_name || req.id, { background: '3b82f6', color: 'fff', size: 100 }); }}
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">

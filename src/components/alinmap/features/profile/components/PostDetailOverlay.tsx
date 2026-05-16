@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Globe, Users, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
+import { resolveAvatarSrc } from '../../../../../utils/avatar';
 
 interface PostDetailOverlayProps {
   post: any;
@@ -190,7 +191,7 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
             className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-xl p-2 -m-2 transition-colors active:scale-[0.98]"
           >
             <img
-              src={normalizeImageUrl(post.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'User')}&background=random`}
+              src={resolveAvatarSrc(post.author?.avatar || post.author?.avatar_url || post.author?.photoURL, post.author?.name || post.author?.username || 'User')}
               alt="author"
               loading="lazy"
               decoding="async"
@@ -298,7 +299,7 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
               ) : (
                 comments.map((c: any) => (
                   <div key={c.id} className="flex gap-2">
-                    <img src={normalizeImageUrl(c.author?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'User')}&background=random`} loading="lazy" decoding="async" alt="cmt-author" className="w-7 h-7 rounded-full bg-gray-200 mt-0.5 object-cover" />
+                    <img src={resolveAvatarSrc(c.author?.avatar || c.author?.avatar_url || c.author?.photoURL, c.author?.name || c.author?.username || 'User')} loading="lazy" decoding="async" alt="cmt-author" className="w-7 h-7 rounded-full bg-gray-200 mt-0.5 object-cover" />
                     <div className="flex-1 min-w-0">
                       <div className="bg-gray-100 px-3 py-2 rounded-2xl rounded-tl-sm inline-block max-w-full">
                         <p className="text-xs font-bold text-gray-900">{c.author?.name}</p>

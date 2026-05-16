@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Loader2, MessageSquare, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { FeedbackData } from '../types';
+import { resolveAvatarSrc } from '../../../utils/avatar';
 
 interface FeedbackModalProps {
   game: any;
@@ -55,9 +56,9 @@ export default function FeedbackModal({
                 <div key={idx} className="bg-black/20 border border-white/5 rounded-2xl p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
                         {fb.avatar_url ? (
-                          <img src={fb.avatar_url} className="w-full h-full object-cover" alt="" />
+                          <img src={resolveAvatarSrc(fb.avatar_url, fb.display_name || 'User')} className="w-full h-full object-cover" alt="" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
                             {fb.display_name?.charAt(0) || '?'}

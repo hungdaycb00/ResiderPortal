@@ -246,11 +246,12 @@ export default function App() {
         {ALIN_MAP_TABS.includes(activeTab) && (
           <Suspense fallback={<div className="fixed inset-0 z-[100] bg-[#0a0c12] flex items-center justify-center"><div className="w-12 h-12 rounded-full border-4 border-blue-500/30 border-t-blue-400 animate-spin" /></div>}>
           <AlinMap
-            key="alin-map-instance"
-            user={user} 
-            onClose={() => setActiveTab('home')} 
-            externalApi={externalApi}
-            profileUserId={profileUserId}
+          key="alin-map-instance"
+          user={user} 
+          onClose={() => setActiveTab('home')} 
+          externalApi={externalApi}
+          handleUpdateAvatar={handleUpdateAvatar}
+          profileUserId={profileUserId}
             profileStatus={profileStatus}
             games={allGames}
             handlePlayGame={handlePlayGame}

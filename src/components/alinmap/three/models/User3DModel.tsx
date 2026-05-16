@@ -72,11 +72,6 @@ const User3DModel: React.FC<User3DModelProps> = ({
         ? 'block max-w-[180px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]'
         : 'block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]';
 
-    React.useEffect(() => {
-        console.log(`[User3DModel] MOUNTED for user: ${name} at position:`, position);
-        return () => console.log(`[User3DModel] UNMOUNTED for user: ${name}`);
-    }, [name, position]);
-
     const handleClick = (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onClick?.();
