@@ -73,6 +73,10 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             renderOrder={10}
         >
+            <mesh position={[0, 1.15 * avatarScale, 0.005]} renderOrder={19}>
+                <planeGeometry args={[avatarPlaneSize * 2.8, avatarPlaneSize * 2.8]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} depthTest={false} />
+            </mesh>
             <Billboard follow>
                 <mesh position={[0, 1.15 * avatarScale, 0.02]} renderOrder={20}>
                     <planeGeometry args={[avatarPlaneSize, avatarPlaneSize]} />
