@@ -210,7 +210,7 @@ export default function SceneContent({
       {/* Fog chân trời — màu thay đổi theo mode */}
       {isRoadmapOverlay ? (
         // Roadmap: fog trắng nhạt (đúng màu nền Positron/CartoDB)
-        <fogExp2 attach="fog" color="#e8e8e4" density={0.000006} />
+        <fogExp2 attach="fog" color="#f2f3f0" density={0.000006} />
       ) : (
         // Satellite / Looter: fog đẮm tối
         <fogExp2 attach="fog" color="#071a2e" density={0.000018} />
@@ -219,9 +219,9 @@ export default function SceneContent({
       {/* Background fill plane — chỉ hiển thị trong roadmap mode
           Phủ khắp mặt đất bằng màu nền map để lấp đầy khoảng trống */}
       {isRoadmapOverlay && (
-        <mesh rotation-x={-Math.PI / 2} position={[0, -0.4, 0]}>
-          <planeGeometry args={[6000, 6000]} />
-          <meshBasicMaterial color="#e8e8e4" depthWrite={false} />
+        <mesh rotation-x={-Math.PI / 2} position={[0, -0.4, 0]} renderOrder={-2}>
+          <planeGeometry args={[2000000, 2000000]} />
+          <meshBasicMaterial color="#f2f3f0" depthWrite={false} fog={false} />
         </mesh>
       )}
 

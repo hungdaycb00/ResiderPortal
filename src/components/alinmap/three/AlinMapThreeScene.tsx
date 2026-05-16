@@ -33,7 +33,9 @@ const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
       camera={{ fov: props.cameraFov || 35, near: 1, far: 2000000, position: [0, 1600, 2200] }}
       onCreated={({ gl }) => {
         // Màu nền Canvas — dùng màu trung tính để blend giữa roadmap (sáng) và satellite (tối)
-        gl.setClearColor('#d8d8d4', 1);
+        // CHUYÊN GIA FIX: Clear color PHẢI khớp 100% với fog + background plane (#f2f3f0)
+        // để khi camera nhìn xuyên qua mọi geometry, không lộ seam màu!
+        gl.setClearColor('#f2f3f0', 1);
         gl.outputColorSpace = SRGBColorSpace;
         gl.toneMapping = NoToneMapping;
         gl.toneMappingExposure = 1;
