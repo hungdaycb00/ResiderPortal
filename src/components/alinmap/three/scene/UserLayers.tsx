@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
 import type { MotionValue } from 'framer-motion';
 import AvatarBillboard from '../AvatarBillboard';
+import HomeMarker from '../HomeMarker';
 import User3DModel from '../models/User3DModel';
 import ProceduralBoat from '../models/ProceduralBoat';
 import { useDragHandlers } from './useDragHandlers';
@@ -194,6 +195,7 @@ export default function UserLayers({
   });
 
   const selfPos = scaleScenePoint(worldToScene(origin, baseOrigin));
+  const realSelfPos = position ? scaleScenePoint(worldToScene(origin, { lat: position[0], lng: position[1] })) : selfPos;
   const selfLift = pxToScaledScene(dragOffset.x);
   const selfDepth = pxToScaledScene(dragOffset.y);
 
@@ -235,6 +237,12 @@ export default function UserLayers({
             galleryTitle,
             galleryImages,
         };
+
+        if (!isVisibleOnMap) {
+          return (
+            <HomeMarker position={[realSelfPos.x, 0.02, realSelfPos.z]} />
+          );
+        }
 
         return (
           <group
