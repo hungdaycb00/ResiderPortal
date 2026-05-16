@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { getBaseUrl } from '../../../../../services/externalApi';
-import { PROFILE_AVATAR_PRESETS } from '../avatarPresets';
+import { PROFILE_AVATAR_PRESETS } from '../../../../../utils/avatarPresets';
 
 interface UseAvatarUploadParams {
     user: any;

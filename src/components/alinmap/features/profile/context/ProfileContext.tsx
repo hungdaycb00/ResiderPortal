@@ -35,6 +35,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode, initialIsVisible: 
 
     useEffect(() => {
         localStorage.setItem('alinmap_visible', String(isVisibleOnMap));
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('alinmap:visibility-change', {
+                detail: { visible: isVisibleOnMap },
+            }));
+        }
     }, [isVisibleOnMap]);
 
     const [isReporting, setIsReporting] = useState(false);

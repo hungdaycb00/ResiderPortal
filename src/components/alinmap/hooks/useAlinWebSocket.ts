@@ -53,6 +53,7 @@ export function useAlinWebSocket({
   const [isSocketConnecting, setIsSocketConnecting] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [wsStatus, setWsStatus] = useState('IDLE');
+  const [visibleOnMap, setVisibleOnMap] = useState(isVisibleOnMap);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const myUserIdRef = useRef<string | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
@@ -106,6 +107,7 @@ export function useAlinWebSocket({
   useEffect(() => { currentProvinceRef.current = currentProvince; }, [currentProvince]);
   useEffect(() => { externalApiRef.current = externalApi; }, [externalApi]);
   useEffect(() => { isSocketConnectingRef.current = isSocketConnecting; }, [isSocketConnecting]);
+  useEffect(() => { setVisibleOnMap(isVisibleOnMap); }, [isVisibleOnMap]);
   useEffect(() => { if (user?.displayName) setMyDisplayName(user.displayName); }, [user?.displayName]);
   useEffect(() => { if (user?.photoURL !== undefined) setMyAvatarUrl(user.photoURL || ''); }, [user?.photoURL]);
   useEffect(() => {
@@ -147,6 +149,33 @@ export function useAlinWebSocket({
       }
     };
   }, [performance?.wsPingIntervalMs]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleVisibilityChangeEvent = (event: Event) => {
+      const detail = (event as CustomEvent<{ visible?: boolean }>).detail;
+      if (typeof detail?.visible === 'boolean') {
+        setVisibleOnMap(detail.visible);
+        isVisibleOnMapRef.current = detail.visible;
+      }
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== 'alinmap_visible') return;
+      const nextVisible = event.newValue === 'true';
+      setVisibleOnMap(nextVisible);
+      isVisibleOnMapRef.current = nextVisible;
+    };
+
+    window.addEventListener('alinmap:visibility-change', handleVisibilityChangeEvent as EventListener);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('alinmap:visibility-change', handleVisibilityChangeEvent as EventListener);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   const hasPosition = Array.isArray(position) && position.length >= 2;
 
@@ -354,7 +383,7 @@ export function useAlinWebSocket({
     ws,
     isSocketConnecting,
     wsStatus,
-    isVisibleOnMap: isVisibleOnMapRef.current,
+    isVisibleOnMap: visibleOnMap,
     myUserId,
     addLog,
     nearbyUsers,
@@ -379,6 +408,6 @@ export function useAlinWebSocket({
     setIsSocketConnecting,
   }), [
     isSocketConnecting, wsStatus, myUserId, addLog, nearbyUsers, selectedUser, myDisplayName,
-    myAvatarUrl, localMyStatus, statusInput, galleryActive, galleryTitle, galleryImages, handleRefresh,
+    myAvatarUrl, localMyStatus, statusInput, galleryActive, galleryTitle, galleryImages, handleRefresh, visibleOnMap,
   ]);
 }

@@ -3,8 +3,8 @@ import { X, LogIn, LogOut, Trophy, Wallet, User as UserIcon, Settings, Camera, G
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../App';
 import { externalApi } from '../services/externalApi';
-import { PROFILE_AVATAR_PRESETS } from './alinmap/features/profile/avatarPresets';
 import { resolveAvatarSrc } from '../utils/avatar';
+import { PROFILE_AVATAR_PRESETS } from '../utils/avatarPresets';
 
 interface UserInfoModalProps {
   isOpen: boolean;
