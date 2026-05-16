@@ -356,7 +356,7 @@ export default function WebGLMapTiles({
   return (
     <mesh ref={meshRef} rotation-x={-Math.PI / 2} position={[0, -0.2, 0]}>
       <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial ref={materialRef} color="#ffffff" />
+      <meshBasicMaterial ref={materialRef} color="#e8e8e4" />
     </mesh>
   );
 }
