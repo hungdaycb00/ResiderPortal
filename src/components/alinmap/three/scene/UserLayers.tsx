@@ -237,21 +237,31 @@ export default function UserLayers({
                 });
               }
             },
-            onGalleryClick: onOpenBillboardPost ? () => onOpenBillboardPost({
-              id: user?.uid || myUserId || 'self',
-              displayName: myDisplayName || user?.displayName || 'Me',
-              username: myDisplayName || user?.username || 'Me',
-              avatar_url: selfAvatarUrl,
-              photoURL: selfAvatarUrl,
-              gallery: {
-                active: galleryActive,
-                title: galleryTitle,
-                images: galleryImages,
-              },
-              status: myStatus,
-              lat: baseOrigin.lat,
-              lng: baseOrigin.lng,
-            }) : undefined,
+            onGalleryClick: onOpenBillboardPost ? () => {
+              const selfBillboardUser = {
+                id: user?.uid || myUserId || 'self',
+                displayName: myDisplayName || user?.displayName || 'Me',
+                username: myDisplayName || user?.username || 'Me',
+                avatar_url: selfAvatarUrl,
+                photoURL: selfAvatarUrl,
+                gallery: {
+                  active: galleryActive,
+                  title: galleryTitle,
+                  images: galleryImages,
+                },
+                status: myStatus,
+                lat: baseOrigin.lat,
+                lng: baseOrigin.lng,
+                isSelf: true,
+              };
+              console.warn('[AlinMap][Billboard] self callback from UserLayers', {
+                userId: selfBillboardUser.id,
+                galleryActive,
+                galleryTitle,
+                imageCount: galleryImages.length,
+              });
+              onOpenBillboardPost(selfBillboardUser);
+            } : undefined,
             showGallery: galleryActive && (isSelfSelected || (isVisibleOnMap && !isLooterGameMode)),
             galleryTitle,
             galleryImages,
@@ -259,7 +269,7 @@ export default function UserLayers({
 
         return (
           <>
-            <HomeMarker position={[realSelfPos.x, isRoadmapOverlay ? 3.2 : 4.0, realSelfPos.z]} />
+            <HomeMarker position={[realSelfPos.x, 0.04, realSelfPos.z]} />
             {isVisibleOnMap ? (
               <group
                 onPointerDown={handleSelfPointerDown}
@@ -302,7 +312,16 @@ export default function UserLayers({
             onSelectUser?.(u);
           },
           onClick: isLooterGameMode ? undefined : () => onSelectUser?.(u),
-          onGalleryClick: onOpenBillboardPost ? () => onOpenBillboardPost(u) : undefined,
+          onGalleryClick: onOpenBillboardPost ? () => {
+            console.warn('[AlinMap][Billboard] nearby callback from UserLayers', {
+              userId: u.id || u.uid || u.user_id || null,
+              name: u.displayName || u.username || null,
+              galleryActive: !!u.gallery?.active,
+              galleryTitle: u.gallery?.title || '',
+              imageCount: Array.isArray(u.gallery?.images) ? u.gallery.images.length : 0,
+            });
+            onOpenBillboardPost(u);
+          } : undefined,
           showGallery: !isLooterGameMode && u.gallery?.active,
           galleryTitle: u.gallery?.title,
           galleryImages: u.gallery?.images,

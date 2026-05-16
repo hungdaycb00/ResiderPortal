@@ -155,6 +155,18 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         if (!sourceUser) return;
 
         const sourceUserId = sourceUser.id || sourceUser.uid || sourceUser.user_id || null;
+        const selfIdCandidates = [
+            resolvedMyUserId,
+            wsCtx.myUserId,
+            profileUserId,
+            user?.uid,
+            localStorage.getItem('alin_profile_user_id'),
+        ].filter(Boolean).map(String);
+        const isSelfSource = !!sourceUser.isSelf || String(sourceUserId) === 'self' || selfIdCandidates.includes(String(sourceUserId));
+        const authorIdCandidates = new Set([
+            sourceUserId,
+            ...(isSelfSource ? selfIdCandidates : []),
+        ].filter(Boolean).map(String));
         const galleryTitle = String(sourceUser.gallery?.title || '').trim();
         const galleryImages = Array.isArray(sourceUser.gallery?.images) ? sourceUser.gallery.images : [];
         const galleryPostId = sourceUser.gallery?.postId || sourceUser.gallery?.post_id || sourceUser.gallery?.id || null;
@@ -166,6 +178,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         logBillboard('click received', {
             sourceUserId,
             sourceName: sourceUser.displayName || sourceUser.name || sourceUser.username || null,
+            isSelfSource,
             galleryActive: !!sourceUser.gallery?.active,
             galleryTitle,
             galleryImageCount: galleryImages.length,
@@ -175,7 +188,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
 
         const matchesAuthor = (post: any) => {
             const postAuthorId = post?.author?.id || post?.user_id || post?.author_id || null;
-            return sourceUserId != null && String(postAuthorId) === String(sourceUserId);
+            return postAuthorId != null && authorIdCandidates.has(String(postAuthorId));
         };
 
         const matchesGallery = (post: any) => {
@@ -217,11 +230,12 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             const profileUser = normalizeProfileUser(post?.author || sourceUser);
             logBillboard('open profile tab', {
                 source,
+                isSelfSource,
                 profileUserId: profileUser.id,
                 profileUserName: profileUser.displayName || profileUser.username || null,
                 selectedPostId: post?.id || null,
             });
-            nav.setSelectedUser(profileUser);
+            nav.setSelectedUser(isSelfSource ? null : profileUser);
             nav.setActiveTab('posts');
             nav.setMainTab('profile');
             nav.setIsSheetExpanded(true);
@@ -251,15 +265,19 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
             return;
         }
 
-        if (!sourceUserId) {
+        const fetchUserId = isSelfSource
+            ? (resolvedMyUserId || wsCtx.myUserId || profileUserId || user?.uid || sourceUserId)
+            : sourceUserId;
+
+        if (!fetchUserId) {
             logBillboard('no sourceUserId, opening profile tab without post');
             openBillboardPost(null, 'no-source-user-id');
             return;
         }
 
         try {
-            logBillboard('fetching user posts', { sourceUserId });
-            const resp = await fetch(`${API_BASE}/api/user/${sourceUserId}/posts`, {
+            logBillboard('fetching user posts', { sourceUserId: fetchUserId, isSelfSource });
+            const resp = await fetch(`${API_BASE}/api/user/${fetchUserId}/posts`, {
                 headers: { 'X-Device-Id': externalApi.getDeviceId() },
             });
             const data = await resp.json();
@@ -279,13 +297,13 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         } catch (err) {
             console.error('Open billboard post error:', err);
             logBillboard('fetch failed', {
-                sourceUserId,
+                sourceUserId: fetchUserId,
                 error: err instanceof Error ? err.message : String(err),
             });
             openBillboardPost(null, 'fetch-error');
             showNotification?.('Không mở được bài viết billboard', 'error');
         }
-    }, [API_BASE, externalApi, logBillboard, nav, posts.feedPosts, posts.userPosts, showNotification]);
+    }, [API_BASE, externalApi, logBillboard, nav, posts.feedPosts, posts.userPosts, profileUserId, resolvedMyUserId, showNotification, user?.uid, wsCtx.myUserId]);
 
     // --- Fallback myObfPos for unauthenticated users ---
     useEffect(() => {

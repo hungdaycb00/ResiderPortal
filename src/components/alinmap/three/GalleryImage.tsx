@@ -9,7 +9,7 @@ interface GalleryImageProps {
     title?: string;
     avatarPlaneSize: number;
     scaleFactor?: number;
-    onClick?: (e: ThreeEvent<MouseEvent>) => void;
+    onClick?: () => void;
 }
 
 export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor = 4, onClick }: GalleryImageProps) {
@@ -31,28 +31,46 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
     const billboardYOffset = avatarPlaneSize * 1.35 + billboardHeight * 0.5;
     const borderWidth = billboardWidth * 1.05;
     const borderHeight = billboardHeight * 1.09;
+    const handleBillboardPointerUp = (e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        console.warn('[AlinMap][Billboard] pointerup', {
+            title: title || 'GALLERY',
+            url: url || null,
+            hasTexture: !!texture,
+            billboardWidth,
+            billboardHeight,
+        });
+        onClick?.();
+    };
 
     return (
         <group
             position={[0, billboardYOffset, 0]}
             onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
+            onPointerUp={handleBillboardPointerUp}
         >
+            <mesh
+                position={[0, 0, 0.16]}
+                renderOrder={32}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={handleBillboardPointerUp}
+                onPointerOver={(e) => {
+                    e.stopPropagation();
+                    document.body.style.cursor = 'pointer';
+                }}
+                onPointerOut={(e) => {
+                    e.stopPropagation();
+                    document.body.style.cursor = 'auto';
+                }}
+            >
+                <planeGeometry args={[borderWidth, borderHeight]} />
+                <meshBasicMaterial transparent opacity={0.001} depthTest={false} depthWrite={false} />
+            </mesh>
             <mesh
                 position={[0, 0, 0.05]}
                 renderOrder={30}
                 onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => {
-                    e.stopPropagation();
-                    console.warn('[AlinMap][Billboard] pointerup', {
-                        title: title || 'GALLERY',
-                        url: url || null,
-                        hasTexture: !!texture,
-                        billboardWidth,
-                        billboardHeight,
-                    });
-                    onClick?.(e);
-                }}
+                onPointerUp={handleBillboardPointerUp}
                 onPointerOver={(e) => {
                     e.stopPropagation();
                     document.body.style.cursor = 'pointer';
@@ -69,7 +87,7 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
                     <meshBasicMaterial color="#0f172a" transparent depthTest={false} depthWrite={false} />
                 )}
             </mesh>
-            <mesh position={[0, 0, 0.02]} renderOrder={29}>
+            <mesh position={[0, 0, 0.02]} renderOrder={29} onPointerUp={handleBillboardPointerUp}>
                 <planeGeometry args={[borderWidth, borderHeight]} />
                 <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} depthTest={false} depthWrite={false} />
             </mesh>
@@ -81,6 +99,7 @@ export default function GalleryImage({ url, title, avatarPlaneSize, scaleFactor 
                 anchorY="middle"
                 outlineWidth={0.15}
                 outlineColor="#000000"
+                onPointerUp={handleBillboardPointerUp}
             >
                 {title || 'GALLERY'}
             </Text>

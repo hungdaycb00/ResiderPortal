@@ -189,7 +189,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     const handleSelectSelf = useCallback(() => {
         setSelectedUser(null);
-        setActiveTab('info');
+        setActiveTab('posts');
         setMainTab?.('profile');
         setIsSheetExpanded(true);
     }, [setSelectedUser, setActiveTab, setMainTab, setIsSheetExpanded]);
