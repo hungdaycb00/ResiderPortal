@@ -12,8 +12,8 @@ export type { AlinMapThreeSceneProps };
 
 // ─── Canvas Entry Point ───────────────────────────────────────────────────────
 const AlinMapThreeScene: React.FC<AlinMapThreeSceneProps> = (props) => {
-  const dprRange = props.performance?.dpr ?? (props.isDesktop ? [1, 1.5] : [0.85, 1]);
-  const maxDpr = props.performance?.maxDevicePixelRatio ?? (props.isDesktop ? 1.5 : 1);
+  const dprRange = props.performance?.dpr ?? (props.isDesktop ? [1.5, 2] : [1, 1.5]);
+  const maxDpr = props.performance?.maxDevicePixelRatio ?? (props.isDesktop ? 2 : 1.5);
   const powerPreference = props.performance?.powerPreference ?? 'high-performance';
   const antialias = props.performance?.antialias ?? props.isDesktop;
   const isMinimalMode = props.performance?.mode === 'low';

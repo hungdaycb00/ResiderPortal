@@ -113,11 +113,14 @@ interface WebGLMapTilesProps {
   sceneWorldScale?: number;
 }
 
-// SPRINT 1: Adaptive proxy size theo device capability
+// Adaptive proxy size: desktop dùng viewport*2 để texture luôn sắc nét sau khi tilt 55°
 const getProxySize = (isDesktop = false, perfMode = 'high'): number => {
   if (typeof window !== 'undefined') {
     const maxSize = Math.max(window.innerWidth, window.innerHeight);
     if (perfMode === 'low') return Math.min(maxSize, 2048);
+    // Desktop: cần ít nhất 2x viewport vì perspective tilt kéo giãn texture
+    if (isDesktop) return Math.min(maxSize * 2, 4096);
+    // Mobile: dùng maxSize nhưng tối thiểu 2048
     return Math.min(Math.max(maxSize, 2048), 4096);
   }
   return isDesktop ? 4096 : 2048;
