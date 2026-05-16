@@ -243,11 +243,11 @@ export default function UserLayers({
             onPointerUp={handleSelfPointerUp}
           >
             {shouldUseRoadmapBillboards ? (
-              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} />
+              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
             ) : USE_3D_AVATARS ? (
               <User3DModel {...avatarProps} color="#3b82f6" /> // Blue for self
             ) : (
-              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} />
+              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} zoomScale={scale} />
             )}
           </group>
         );
@@ -276,6 +276,7 @@ export default function UserLayers({
             key={u.id}
             {...avatarProps}
             avatarUrl={avatarUrl}
+            zoomScale={scale}
           />
         ) : USE_3D_AVATARS ? (
           <User3DModel key={u.id} {...avatarProps} />
@@ -284,6 +285,7 @@ export default function UserLayers({
             key={u.id}
             {...avatarProps}
             avatarUrl={avatarUrl}
+            zoomScale={scale}
           />
         );
       })}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Billboard, Text } from '@react-three/drei';
+import type { MotionValue } from 'framer-motion';
 import GalleryImage from './GalleryImage';
 import { makeAvatarTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from './sceneUtils';
 
@@ -16,6 +17,7 @@ interface AvatarBillboardProps {
     galleryImages?: string[];
     isSelected?: boolean;
     presentation?: 'default' | 'roadmap';
+    zoomScale?: MotionValue<number>;
     /** Khi ở looter mode, avatar bị làm mờ */
     dimmed?: boolean;
 }
@@ -33,14 +35,20 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     galleryImages,
     isSelected,
     presentation = 'default',
+    zoomScale,
     dimmed = false,
 }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [currentZoomScale, setCurrentZoomScale] = useState(() => zoomScale?.get?.() ?? 1);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
     const shouldShowDetails = isHovered || !!isSelected;
     const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
     const isRoadmapPresentation = presentation === 'roadmap';
-    const avatarScale = isRoadmapPresentation ? 0.72 : 1;
+    const presentationScale = isRoadmapPresentation ? 0.72 : 1;
+    const baseAvatarScale = presentationScale * 0.2;
+    const zoomOutT = Math.max(0, Math.min(1, (1 - currentZoomScale) / 0.5));
+    const zoomMultiplier = 1 + zoomOutT * 2;
+    const avatarScale = baseAvatarScale * zoomMultiplier;
     const avatarPlaneSize = AVATAR_PLANE_SIZE * avatarScale;
     const ringRadius = AVATAR_RING_RADIUS * avatarScale;
     const labelYOffset = isRoadmapPresentation ? -2.45 : -3.65;
@@ -57,6 +65,18 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const statusTextClass = isRoadmapPresentation
         ? 'block max-w-[180px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]'
         : 'block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]';
+
+    useEffect(() => {
+        if (!zoomScale) {
+            setCurrentZoomScale(1);
+            return;
+        }
+        setCurrentZoomScale(zoomScale.get());
+        const unsubscribe = zoomScale.on('change', (value) => {
+            setCurrentZoomScale(value);
+        });
+        return unsubscribe;
+    }, [zoomScale]);
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
 

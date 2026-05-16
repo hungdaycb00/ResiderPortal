@@ -76,7 +76,7 @@ export function useMapInteractions({
         // Capture pointer to ensure smooth drag and prevent losing focus
         if (e.currentTarget && e.currentTarget.setPointerCapture) {
             e.currentTarget.setPointerCapture(e.pointerId);
-            console.warn('[Map_Drag] Pointer captured:', e.pointerId, 'startX:', e.clientX, 'startY:', e.clientY);
+
         }
 
         mapDragRef.current = {
@@ -160,9 +160,9 @@ export function useMapInteractions({
         const totalMovX = e.clientX - dragState.initialClientX;
         const totalMovY = e.clientY - dragState.initialClientY;
         
-        // Tốc độ 1.0 là tỷ lệ 1:1 hoàn hảo (kéo 1 pixel màn hình = map đi 1 pixel). Không nhân lên để tránh phóng đại độ rung tay.
-        const totalDeltaX = totalMovX / currentScale * 1.0;
-        const totalDeltaY = totalMovY / currentScale * 1.0;
+        // Tốc độ 3.0 theo yêu cầu (kéo 1 pixel màn hình = map đi 3 pixel).
+        const totalDeltaX = totalMovX / currentScale * 3.0;
+        const totalDeltaY = totalMovY / currentScale * 3.0;
 
         if (Math.abs(totalMovX) > 4 || Math.abs(totalMovY) > 4) {
             dragState.moved = true;
@@ -197,7 +197,7 @@ export function useMapInteractions({
         if (e.currentTarget && e.currentTarget.releasePointerCapture) {
             try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
-                console.warn('[Map_Drag] Pointer released:', e.pointerId);
+
             } catch (err) {}
         }
 
@@ -241,7 +241,7 @@ export function useMapInteractions({
         if (e.currentTarget && e.currentTarget.releasePointerCapture) {
             try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
-                console.warn('[Map_Drag] Pointer capture cancelled:', e.pointerId);
+
             } catch (err) {}
         }
 

@@ -187,7 +187,7 @@ export function useMapNavigation({
       targetScaleRef.current = null;
     }, 150);
     
-    console.warn(`[Map_Wheel] deltaY=${e.deltaY}, currentScale=${baseScale.toFixed(2)}, nextScale=${nextScale.toFixed(2)}, nextZ=${nextZ.toFixed(1)}`);
+
       
     // Dùng lò xo (spring) tạo đà và mượt thay vì giật cục (tween)
     animate(cameraZ, nextZ, { 
