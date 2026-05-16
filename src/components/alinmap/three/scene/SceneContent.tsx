@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Group, Mesh } from 'three';
 import { useMotionValueEvent } from 'framer-motion';
 import { sanitizeWorldItems, useLooterActions, useLooterState } from '../../looter-game/LooterGameContext';
-import { getRoadmapCenterFromPan, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../../constants';
+import { getRoadmapCenterFromPan, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE, DEGREES_TO_PX } from '../../constants';
 
 // Sub-components
 import Ground from '../Ground';
@@ -86,6 +86,17 @@ export default function SceneContent({
   const lastBoatPosRef = useRef<[number, number, number]>([0, 0, 0]);
   const frameSkipRef = useRef(0);
   const groundMeshRef = useRef<Mesh>(null);
+  const [renderOrigin, setRenderOrigin] = useState<LatLng>(() => (
+    myObfPos ?? (position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 })
+  ));
+  const renderOriginRef = useRef<LatLng | null>(null);
+  const renderOriginTweenRef = useRef<{
+    active: boolean;
+    start: LatLng;
+    target: LatLng;
+    elapsedMs: number;
+    durationMs: number;
+  } | null>(null);
 
   const looterState = useLooterState();
   const looterActions = useLooterActions();
@@ -126,7 +137,37 @@ export default function SceneContent({
   const baseOrigin: LatLng =
     myObfPos ??
     (position ? { lat: position[0], lng: position[1] } : { lat: 0, lng: 0 });
-  const origin: LatLng = baseOrigin;
+
+  useEffect(() => {
+    const current = renderOriginRef.current ?? baseOrigin;
+    const target = baseOrigin;
+    const latDelta = Math.abs(target.lat - current.lat);
+    const lngDelta = Math.abs(target.lng - current.lng);
+
+    if (latDelta < 1e-9 && lngDelta < 1e-9) {
+      renderOriginRef.current = target;
+      setRenderOrigin(target);
+      renderOriginTweenRef.current = null;
+      return;
+    }
+
+    const latPx = latDelta * MAP_COORD_SCENE_SCALE * DEGREES_TO_PX;
+    const lngPx = lngDelta * MAP_COORD_SCENE_SCALE * DEGREES_TO_PX;
+    const travelPx = Math.sqrt(latPx * latPx + lngPx * lngPx);
+    const durationMs = Math.max(140, Math.min(260, travelPx * 18));
+
+    renderOriginTweenRef.current = {
+      active: true,
+      start: current,
+      target,
+      elapsedMs: 0,
+      durationMs,
+    };
+  }, [baseOrigin.lat, baseOrigin.lng]);
+
+  useEffect(() => {
+    renderOriginRef.current = renderOrigin;
+  }, [renderOrigin.lat, renderOrigin.lng]);
 
   // ── Looter interaction ─────────────────────────────────────────────────────
   const {
@@ -136,7 +177,7 @@ export default function SceneContent({
   } = useLooterInteraction({
     isLooterGameMode: !!isLooterGameMode,
     isDesktop,
-    origin,
+    origin: renderOrigin,
     safeWorldItems,
     looterStateObj,
     encounter,
@@ -158,7 +199,7 @@ export default function SceneContent({
   // LƯU Ý KIẾN TRÚC: Trong hệ thống Camera 3D mới, chúng ta KHÔNG xoay tiltGroupRef
   // vì góc nhìn được tạo ra bởi Camera Orbit (CameraRig).
   // tiltGroupRef chỉ còn là container trung gian, không có rotation.
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!moveGroupRef.current) return;
     const liftX = panX.get();
     const liftZ = panY.get();
@@ -174,10 +215,28 @@ export default function SceneContent({
       lastLiftZRef.current = liftZ;
     }
 
+    const originTween = renderOriginTweenRef.current;
+    if (originTween?.active) {
+      originTween.elapsedMs += delta * 1000;
+      const progress = Math.min(1, originTween.elapsedMs / originTween.durationMs);
+      const nextOrigin = {
+        lat: originTween.start.lat + (originTween.target.lat - originTween.start.lat) * progress,
+        lng: originTween.start.lng + (originTween.target.lng - originTween.start.lng) * progress,
+      };
+      renderOriginRef.current = nextOrigin;
+      setRenderOrigin(nextOrigin);
+
+      if (progress >= 1) {
+        originTween.active = false;
+      }
+
+      invalidate();
+    }
+
     if (position && isLooterGameMode) {
       frameSkipRef.current = (frameSkipRef.current + 1) % 3;
       if (frameSkipRef.current === 0) {
-        const sp = scaleScenePoint(worldToScene(origin, baseOrigin));
+        const sp = scaleScenePoint(worldToScene(renderOrigin, baseOrigin));
         const visualBoatX = (boatOffsetX?.get?.() ?? 0) * MAP_PLANE_SCALE;
         const visualBoatY = (boatOffsetY?.get?.() ?? 0) * MAP_PLANE_SCALE;
         const nx = sp.x + pxToScaledScene(visualBoatX);
@@ -192,12 +251,12 @@ export default function SceneContent({
   });
 
   // ── Derived scene positions ────────────────────────────────────────────────
-  const selfPos = scaleScenePoint(worldToScene(origin, baseOrigin));
-  const searchMarkerScene = searchMarkerPos ? scaleScenePoint(worldToScene(origin, searchMarkerPos)) : null;
+  const selfPos = scaleScenePoint(worldToScene(renderOrigin, baseOrigin));
+  const searchMarkerScene = searchMarkerPos ? scaleScenePoint(worldToScene(renderOrigin, searchMarkerPos)) : null;
   const fortressScene = looterStateObj?.fortressLat && looterStateObj?.fortressLng
-    ? scaleScenePoint(worldToScene(origin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng }))
+    ? scaleScenePoint(worldToScene(renderOrigin, { lat: looterStateObj.fortressLat, lng: looterStateObj.fortressLng }))
     : null;
-  const boatTargetScene = boatTargetPin ? scaleScenePoint(worldToScene(origin, boatTargetPin)) : null;
+  const boatTargetScene = boatTargetPin ? scaleScenePoint(worldToScene(renderOrigin, boatTargetPin)) : null;
 
   if (!position) return null;
 
@@ -234,7 +293,7 @@ export default function SceneContent({
           panY={panY} 
           scale={scale} 
           planeYScale={planeYScale} 
-          myObfPos={origin} 
+          myObfPos={renderOrigin} 
           mode={mapMode}
           isDesktop={isDesktop}
           performanceMode={performance?.mode ?? 'high'}
@@ -261,7 +320,7 @@ export default function SceneContent({
 
         {/* User layers (Self + Nearby avatars / Boat) */}
         <UserLayers
-          origin={origin}
+          origin={renderOrigin}
           baseOrigin={baseOrigin}
           sceneWorldScale={sceneWorldScale}
           myUserId={myUserId}
