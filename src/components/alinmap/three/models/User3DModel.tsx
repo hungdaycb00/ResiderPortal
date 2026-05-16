@@ -3,11 +3,13 @@ import { Billboard, Text } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import GalleryImage from '../GalleryImage';
+import { getAvatarTagList } from '../sceneCoords';
 
 interface User3DModelProps {
     name: string;
     position: [number, number, number];
     status?: string;
+    tags?: string[] | null;
     isVisibleOnMap: boolean;
     labelMode?: 'full' | 'name-only' | 'focus-only';
     onClick?: () => void;
@@ -24,6 +26,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
     name,
     position,
     status,
+    tags,
     isVisibleOnMap,
     labelMode = 'full',
     onClick,
@@ -40,6 +43,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
     const shouldShowDetails = isHovered || !!isSelected;
     const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
     const isRoadmapPresentation = presentation === 'roadmap';
+    const displayTags = getAvatarTagList(tags, status);
     
     // Scale down a bit for roadmap to match 2D behavior
     const avatarScale = isRoadmapPresentation ? 0.72 : 1.0;
@@ -117,9 +121,21 @@ const User3DModel: React.FC<User3DModelProps> = ({
                         >
                             {name}
                         </Text>
-                        {status && labelMode === 'full' && (
+                        <Text
+                            position={[0, isRoadmapPresentation ? -0.38 : -0.55, 0]}
+                            fontSize={isRoadmapPresentation ? 0.16 : 0.22}
+                            color="#334155"
+                            outlineWidth={0.02}
+                            outlineColor="#ffffff"
+                            anchorX="center"
+                            anchorY="middle"
+                            fontWeight="bold"
+                        >
+                            {displayTags.join(' ')}
+                        </Text>
+                        {status && (
                             <Text
-                                position={[0, isRoadmapPresentation ? -0.4 : -0.6, 0]}
+                                position={[0, isRoadmapPresentation ? -0.75 : -1.05, 0]}
                                 fontSize={isRoadmapPresentation ? 0.2 : 0.25}
                                 color="#0284c7"
                                 outlineWidth={0.02}

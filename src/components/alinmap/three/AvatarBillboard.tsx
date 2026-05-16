@@ -3,13 +3,14 @@ import { Billboard, Text } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { MotionValue } from 'framer-motion';
 import GalleryImage from './GalleryImage';
-import { makeAvatarTexture, AVATAR_PLANE_SIZE } from './sceneUtils';
+import { makeAvatarTexture, AVATAR_PLANE_SIZE, getAvatarTagList } from './sceneUtils';
 
 interface AvatarBillboardProps {
     name: string;
     avatarUrl?: string | null;
     position: [number, number, number];
     status?: string;
+    tags?: string[] | null;
     isVisibleOnMap: boolean;
     labelMode?: 'full' | 'name-only' | 'focus-only';
     onClick?: () => void;
@@ -27,6 +28,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     avatarUrl,
     position,
     status,
+    tags,
     isVisibleOnMap,
     labelMode = 'full',
     onClick,
@@ -41,6 +43,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const [currentZoomScale, setCurrentZoomScale] = useState(() => zoomScale?.get?.() ?? 1);
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
+    const displayTags = useMemo(() => getAvatarTagList(tags, status), [tags, status]);
     const shouldShowDetails = isHovered || !!isSelected;
     const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
     const isRoadmapPresentation = presentation === 'roadmap';
@@ -98,9 +101,21 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                         >
                             {name}
                         </Text>
-                        {status && labelMode === 'full' && (
+                        <Text
+                            position={[0, isRoadmapPresentation ? -0.43 : -0.58, 0]}
+                            fontSize={isRoadmapPresentation ? 0.18 : 0.28}
+                            color="#334155"
+                            outlineWidth={0.02}
+                            outlineColor="#ffffff"
+                            anchorX="center"
+                            anchorY="middle"
+                            fontWeight="bold"
+                        >
+                            {displayTags.join(' ')}
+                        </Text>
+                        {status && (
                             <Text
-                                position={[0, isRoadmapPresentation ? -0.5 : -0.7, 0]}
+                                position={[0, isRoadmapPresentation ? -0.87 : -1.18, 0]}
                                 fontSize={isRoadmapPresentation ? 0.25 : 0.35}
                                 color="#0284c7"
                                 outlineWidth={0.02}

@@ -40,6 +40,33 @@ export const colorFromString = (value: string) => {
     return `hsl(${hue} 70% 48%)`;
 };
 
+const normalizeTagToken = (value: string) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return '';
+    const prefixed = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+    const compact = prefixed.replace(/\s+/g, '');
+    return compact.replace(/[^#\p{L}\p{N}_-]/gu, '');
+};
+
+export const getAvatarTagList = (
+    tags?: string[] | null,
+    status?: string | null,
+    fallback = '#ALIN'
+) => {
+    const fromTags = Array.isArray(tags)
+        ? tags.map(normalizeTagToken).filter(Boolean)
+        : [];
+    if (fromTags.length > 0) return fromTags.slice(0, 3);
+
+    const extracted = String(status || '')
+        .match(/#[\p{L}\p{N}_-]+/gu)
+        ?.map(normalizeTagToken)
+        .filter(Boolean) ?? [];
+
+    if (extracted.length > 0) return extracted.slice(0, 3);
+    return [fallback];
+};
+
 // ─── Image URL Validation ─────────────────────────────────────────────────────
 export const isRenderableImageUrl = (value?: string | null): boolean => {
     if (!value) return false;

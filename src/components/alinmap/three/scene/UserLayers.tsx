@@ -212,11 +212,13 @@ export default function UserLayers({
       ) : !isLooterGameMode && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
         const selfAvatarUrl = myAvatarUrl || user?.photoURL || null;
+        const selfTags = Array.isArray(user?.tags) ? user.tags : null;
         
         const avatarProps = {
             name: myDisplayName || user?.displayName || 'Me',
             position: [selfPos.x + selfLift, 0.01, selfPos.z + selfDepth] as [number, number, number],
             status: myStatus,
+            tags: selfTags,
             isVisibleOnMap,
             isSelected: isSelfSelected,
             labelMode,
@@ -262,10 +264,12 @@ export default function UserLayers({
       {/* Nearby users */}
       {userRenderData.map(({ user: u, pos }) => {
         const avatarUrl = isLooterGameMode ? null : (u.avatar_url || u.photoURL || u.avatarUrl || null);
+        const avatarTags = Array.isArray(u.tags) ? u.tags : null;
         const avatarProps = {
           name: u.displayName || u.username || 'U',
           position: [pos.x, 0.01, pos.z] as [number, number, number],
           status: isLooterGameMode ? undefined : u.status,
+          tags: avatarTags,
           isVisibleOnMap: true,
           isSelected: !isLooterGameMode && selectedUser?.id === u.id,
           labelMode,
