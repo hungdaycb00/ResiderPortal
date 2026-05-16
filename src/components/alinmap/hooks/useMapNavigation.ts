@@ -164,24 +164,28 @@ export function useMapNavigation({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const currentZ = cameraZ.get();
-    const step = e.deltaMode === 0 ? TRACKPAD_ZOOM_STEP : WHEEL_ZOOM_STEP;
+    const distance = Math.max(1, perspectivePx - currentZ);
+    const stepRatio = e.deltaMode === 0 ? 0.05 : 0.2;
+    const step = distance * stepRatio;
     const nextZ = e.deltaY > 0
       ? currentZ - step
       : Math.min(currentZ + step, CAMERA_Z_NEAR);
     animate(cameraZ, nextZ, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
-  }, [cameraZ]);
+  }, [cameraZ, perspectivePx]);
 
   const setCameraZ = useCallback((z: number) => {
     animate(cameraZ, z, { type: 'spring', damping: 25, stiffness: 200, restDelta: 0.001 });
   }, [cameraZ]);
 
   const zoomIn = useCallback(() => {
-    setCameraZ(Math.min(cameraZ.get() + TRACKPAD_ZOOM_STEP, CAMERA_Z_NEAR));
-  }, [cameraZ, setCameraZ]);
+    const distance = Math.max(1, perspectivePx - cameraZ.get());
+    setCameraZ(Math.min(cameraZ.get() + distance * 0.2, CAMERA_Z_NEAR));
+  }, [cameraZ, setCameraZ, perspectivePx]);
 
   const zoomOut = useCallback(() => {
-    setCameraZ(cameraZ.get() - TRACKPAD_ZOOM_STEP);
-  }, [cameraZ, setCameraZ]);
+    const distance = Math.max(1, perspectivePx - cameraZ.get());
+    setCameraZ(cameraZ.get() - distance * 0.2);
+  }, [cameraZ, setCameraZ, perspectivePx]);
 
   const setVisualScale = useCallback((visualScale: number) => {
     setCameraZ(getCameraZForVisualScale(visualScale, perspectivePx));
