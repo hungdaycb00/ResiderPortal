@@ -227,6 +227,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
             nav.handleCenter(ROADMAP_LOCATE_VISUAL_SCALE);
           }
         }}
+        handleCenterAvatar={nav.handleCenterAvatar}
         handleCenterTo={nav.handleCenterTo}
         setMapMode={nav.setMapMode}
         cameraZ={camera.cameraZ}

@@ -6,12 +6,12 @@ import {
   CAMERA_PITCH_DEFAULT,
   CAMERA_ROTATE_DEFAULT_DEG,
   CAMERA_ROTATE_Y_DEFAULT_DEG,
-  CAMERA_Z_DEFAULT,
   CAMERA_Z_NEAR,
   CAMERA_HEIGHT_OFFSET_DEFAULT,
   CAMERA_HEIGHT_RATIO_DEFAULT,
   CAMERA_TILT_FAR_DEGREES,
   CAMERA_Z_FAR,
+  CAMERA_Z_OPEN_DEFAULT,
   DEGREES_TO_PX,
   MAP_PLANE_SCALE,
   ROADMAP_VISUAL_SCALE_DEFAULT,
@@ -59,7 +59,7 @@ export function useMapNavigation({
   const initialPerspectivePx = getPerspectivePx(typeof window !== 'undefined' ? window.innerHeight : 720);
   const panX = useMotionValue(0);
   const panY = useMotionValue(0);
-  const cameraZ = useMotionValue(CAMERA_Z_DEFAULT);
+  const cameraZ = useMotionValue(CAMERA_Z_OPEN_DEFAULT);
   const selfDragX = useMotionValue(0);
   const selfDragY = useMotionValue(0);
 
@@ -234,6 +234,12 @@ export function useMapNavigation({
     animate(cameraZ, getCameraZForVisualScale(targetVisualScale, perspectivePx), { duration: 1.6, ease: "easeInOut" });
   }, [panX, panY, cameraZ, mapMode, isLooterGameMode, perspectivePx]);
 
+  const handleCenterAvatar = useCallback(() => {
+    animate(panX, 0, { duration: 1.6, ease: "easeInOut" });
+    animate(panY, 0, { duration: 1.6, ease: "easeInOut" });
+    animate(cameraZ, CAMERA_Z_OPEN_DEFAULT, { duration: 1.6, ease: "easeInOut" });
+  }, [panX, panY, cameraZ]);
+
   const handleCenterTo = useCallback((lat: number, lng: number, yOffsetPx: number = 0, targetVisualScale?: number) => {
     if (!myObfPos) return;
     const pxX = (lng - myObfPos.lng) * DEGREES_TO_PX;
@@ -367,7 +373,7 @@ export function useMapNavigation({
     selectedUser, setSelectedUser,
     radius, setRadius,
     isBackpackLoading, setIsBackpackLoading,
-    handleWheel, handleCenter, handleCenterTo,
+    handleWheel, handleCenter, handleCenterAvatar, handleCenterTo,
     setCameraZ, setVisualScale, zoomIn, zoomOut,
     setCameraHeightOffset: (v: number) => setCameraHeightOffset(v),
     setCameraRotateDeg: (v: number) => setCameraRotateDeg(v),

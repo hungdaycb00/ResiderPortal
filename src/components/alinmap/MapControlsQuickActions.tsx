@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MotionValue } from 'framer-motion';
-import { Map, RefreshCw, Waves, LocateFixed } from 'lucide-react';
+import { Map, RefreshCw, Waves, LocateFixed, UserRound } from 'lucide-react';
 import { LocateBoatButton } from './looter-game/components/LocateBoatButton';
 import BoatSpeedPanel from './looter-game/components/BoatSpeedPanel';
 import type { AlinMapMode } from './constants';
@@ -11,6 +11,7 @@ interface MapControlsQuickActionsProps {
     mapMode: AlinMapMode;
     handleRefresh: () => void;
     handleCenter: () => void;
+    handleCenterAvatar: () => void;
     setMapMode: (v: AlinMapMode) => void;
     cameraZ: MotionValue<number>;
     perspectivePx: number;
@@ -23,6 +24,7 @@ const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
     mapMode,
     handleRefresh,
     handleCenter,
+    handleCenterAvatar,
     setMapMode,
     cameraZ,
     perspectivePx,
@@ -59,13 +61,20 @@ const MapControlsQuickActions: React.FC<MapControlsQuickActionsProps> = ({
             )}
 
             {!isLooterGameMode && (
-                <div className="flex flex-col bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
+                <div className="grid grid-cols-2 bg-white/60 md:bg-white rounded-[10px] md:rounded-[14px] shadow-md overflow-hidden mt-1 pointer-events-auto backdrop-blur-md md:backdrop-blur-none">
                     <button
                         onClick={handleCenter}
-                        className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
+                        className="w-8 h-8 md:w-[42px] md:h-11 text-blue-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors border-r border-white/40 md:border-gray-100"
                         title="Your Position"
                     >
                         <LocateFixed className="w-4 h-4 md:w-5 md:h-5" />
+                    </button>
+                    <button
+                        onClick={handleCenterAvatar}
+                        className="w-8 h-8 md:w-[42px] md:h-11 text-cyan-600 md:hover:bg-gray-50 flex items-center justify-center transition-colors"
+                        title="Avatar Position"
+                    >
+                        <UserRound className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                 </div>
             )}

@@ -28,6 +28,7 @@ interface MapControlsProps {
     setSearchTag: (v: string) => void;
     handleRefresh: () => void;
     handleCenter: () => void;
+    handleCenterAvatar: () => void;
     handleCenterTo: (lat: number, lng: number, offset?: number) => void;
     setMapMode: (v: AlinMapMode) => void;
     cameraZ: MotionValue<number>;
@@ -67,6 +68,7 @@ const MapControls: React.FC<MapControlsProps> = ({
     setSearchTag,
     handleRefresh,
     handleCenter,
+    handleCenterAvatar,
     handleCenterTo,
     setMapMode,
     cameraZ,
@@ -111,6 +113,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                         mapMode={mapMode}
                         handleRefresh={handleRefresh}
                         handleCenter={handleCenter}
+                        handleCenterAvatar={handleCenterAvatar}
                         setMapMode={setMapMode}
                         cameraZ={cameraZ}
                         perspectivePx={perspectivePx}

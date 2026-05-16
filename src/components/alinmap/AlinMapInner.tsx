@@ -111,7 +111,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                 if (isLooterGameMode) {
                     looterActions.centerOnBoat();
                 } else {
-                    nav.handleCenter();
+                    nav.handleCenterAvatar();
                 }
             }, 500);
         }
