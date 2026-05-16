@@ -222,20 +222,21 @@ export default function SceneContent({
         </mesh>
       )}
 
-      {/* Lớp bản đồ nền (WebGL) không bị gắn vào moveGroupRef 
-          vì MapLibre đã tự handle việc trượt tọa độ theo panX, panY */}
-      <WebGLMapTiles 
-        panX={panX} 
-        panY={panY} 
-        scale={scale} 
-        planeYScale={planeYScale} 
-        myObfPos={origin} 
-        mode={mapMode}
-        isDesktop={isDesktop}
-        performanceMode={performance?.mode ?? 'high'}
-      />
+
 
       <group ref={moveGroupRef}>
+        {/* Lớp bản đồ nền (WebGL) */}
+        <WebGLMapTiles 
+          panX={panX} 
+          panY={panY} 
+          scale={scale} 
+          planeYScale={planeYScale} 
+          myObfPos={origin} 
+          mode={mapMode}
+          isDesktop={isDesktop}
+          performanceMode={performance?.mode ?? 'high'}
+        />
+
         {/* Ground */}
         <Ground
           mapMode={mapMode}

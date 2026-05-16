@@ -78,7 +78,7 @@ export const getRoadmapCenterFromPan = (
 export const getRoadmapTileZoom = (visualScale: number) => {
     const safeScale = Math.max(visualScale || 1, 0.05);
     return clamp(
-        Math.round(ROADMAP_ZOOM_BASE + Math.log2(safeScale / ROADMAP_ZOOM_SCALE_FACTOR) * ROADMAP_ZOOM_SLOPE),
+        ROADMAP_ZOOM_BASE + Math.log2(safeScale / ROADMAP_ZOOM_SCALE_FACTOR) * ROADMAP_ZOOM_SLOPE,
         ROADMAP_MIN_ZOOM,
         ROADMAP_MAX_ZOOM
     );
