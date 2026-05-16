@@ -74,7 +74,6 @@ export function useMapInteractions({
             pointerId: e.pointerId,
             startX: e.clientX,
             startY: e.clientY,
-            startY: e.clientY,
             startPanX: panX.get(),
             startPanY: panY.get(),
             moved: false,
