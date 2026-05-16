@@ -150,6 +150,7 @@ export default function WebGLMapTiles({
   isDesktop = false, performanceMode = 'high',
   sceneWorldScale = 1,
 }: WebGLMapTilesProps) {
+  const hasMapOrigin = !!myObfPos;
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
@@ -287,7 +288,7 @@ export default function WebGLMapTiles({
         materialRef.current.needsUpdate = true;
       }
     };
-  }, [mode, myObfPos, isDesktop, performanceMode]);
+  }, [mode, hasMapOrigin, isDesktop, performanceMode]);
 
   useFrame((_, delta) => {
     if (!mapReadyRef.current || !mapRef.current || !myObfPos) return;

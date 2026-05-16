@@ -56,7 +56,9 @@ export default defineConfig(({mode}) => {
     build: {
       // Empty the outDir before build to keep it clean.
       emptyOutDir: true,
-      chunkSizeWarningLimit: 800,
+      // MapLibre is a large monolithic map renderer. Keep it isolated in its
+      // own lazy AlinMap vendor chunk and warn only for chunks larger than it.
+      chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {
           entryFileNames: 'assets/app-[hash].js',
@@ -74,12 +76,13 @@ export default defineConfig(({mode}) => {
               if (normalizedId.includes('/src/hooks/') || normalizedId.includes('/src/services/') || normalizedId.includes('/src/utils/')) return 'app-services';
               return undefined;
             }
+            if (normalizedId.includes('/node_modules/maplibre-gl/') || normalizedId.includes('/node_modules/@maplibre/')) return 'vendor-maplibre';
             if (normalizedId.includes('/node_modules/@react-three/fiber/')) return 'vendor-r3f-fiber';
             if (normalizedId.includes('/node_modules/@react-three/drei/')) return 'vendor-r3f-drei';
             if (normalizedId.includes('/node_modules/three/examples/jsm/')) return 'vendor-three-examples';
             if (normalizedId.includes('/node_modules/three/')) return 'vendor-three-core';
             if (normalizedId.includes('/node_modules/react/') || normalizedId.includes('/node_modules/react-dom/') || normalizedId.includes('/node_modules/react-router-dom/')) return 'vendor-react';
-            if (normalizedId.includes('/node_modules/firebase/')) return 'vendor-firebase';
+            if (normalizedId.includes('/node_modules/firebase/') || normalizedId.includes('/node_modules/@firebase/')) return 'vendor-firebase';
             if (normalizedId.includes('/node_modules/framer-motion/') || normalizedId.includes('/node_modules/motion/')) return 'vendor-motion';
             if (normalizedId.includes('/node_modules/lucide-react/')) return 'vendor-icons';
             if (normalizedId.includes('/node_modules/socket.io')) return 'vendor-socket';

@@ -196,8 +196,9 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
     const handleSelectUser = useCallback((targetUser: any) => {
         setSelectedUser(targetUser);
         setActiveTab('info');
+        setMainTab?.('profile');
         setIsSheetExpanded(true);
-    }, [setSelectedUser, setActiveTab, setIsSheetExpanded]);
+    }, [setSelectedUser, setActiveTab, setMainTab, setIsSheetExpanded]);
 
     // Pointer Interactions Hook
     const {
