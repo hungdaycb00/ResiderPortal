@@ -164,18 +164,27 @@ export function useMapNavigation({
   }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode, initGame, loadWorldItems, myObfPos]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    const currentZ = cameraZ.get();
-    const currentScale = getVisualScaleFromCameraZ(currentZ, perspectivePx);
+    let baseScale = targetScaleRef.current;
+    if (baseScale === null) {
+      baseScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
+    }
     
     // Exponential scale factor: e.deltaY > 0 is zooming out (scrolling down)
     const zoomSensitivity = e.deltaMode === 0 ? 0.08 : 0.3; 
     const factor = e.deltaY > 0 ? (1 - zoomSensitivity) : (1 + zoomSensitivity);
     
-    // Very wide safe bounds to prevent math errors (0.005 to 500x zoom)
-    const nextScale = Math.max(0.005, Math.min(500, currentScale * factor));
+    // Unrestricted bounds (effectively no clamp)
+    const nextScale = Math.max(0.0001, Math.min(5000, baseScale * factor));
+    targetScaleRef.current = nextScale;
+    
     const nextZ = getCameraZForVisualScale(nextScale, perspectivePx);
     
-    console.warn(`[Map_Wheel] deltaY=${e.deltaY}, currentScale=${currentScale.toFixed(2)}, nextScale=${nextScale.toFixed(2)}, nextZ=${nextZ.toFixed(1)}`);
+    if (wheelTimeoutRef.current) window.clearTimeout(wheelTimeoutRef.current);
+    wheelTimeoutRef.current = window.setTimeout(() => {
+      targetScaleRef.current = null;
+    }, 150);
+    
+    console.warn(`[Map_Wheel] deltaY=${e.deltaY}, currentScale=${baseScale.toFixed(2)}, nextScale=${nextScale.toFixed(2)}, nextZ=${nextZ.toFixed(1)}`);
       
     animate(cameraZ, nextZ, { type: 'tween', duration: 0.15, ease: 'easeOut' });
   }, [cameraZ, perspectivePx]);
@@ -186,14 +195,14 @@ export function useMapNavigation({
 
   const zoomIn = useCallback(() => {
     const currentScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
-    const nextScale = Math.max(0.005, Math.min(500, currentScale * 1.5));
+    const nextScale = Math.max(0.0001, Math.min(5000, currentScale * 1.5));
     console.warn(`[Map_ZoomIn] nextScale=${nextScale.toFixed(2)}`);
     setCameraZ(getCameraZForVisualScale(nextScale, perspectivePx));
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const zoomOut = useCallback(() => {
     const currentScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
-    const nextScale = Math.max(0.005, Math.min(500, currentScale * 0.66));
+    const nextScale = Math.max(0.0001, Math.min(5000, currentScale * 0.66));
     console.warn(`[Map_ZoomOut] nextScale=${nextScale.toFixed(2)}`);
     setCameraZ(getCameraZForVisualScale(nextScale, perspectivePx));
   }, [cameraZ, setCameraZ, perspectivePx]);

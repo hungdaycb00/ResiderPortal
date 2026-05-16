@@ -80,6 +80,10 @@ export function useMapInteractions({
             suppressClick: false,
         };
         
+        // Dừng toàn bộ animation pan (do setCenterAndZoom hoặc click) nếu user chạm vào map
+        if (typeof panX.stop === 'function') panX.stop();
+        if (typeof panY.stop === 'function') panY.stop();
+        
         activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (activePointersRef.current.size === 2) {
             const pts = Array.from(activePointersRef.current.values());
