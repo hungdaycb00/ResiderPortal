@@ -357,9 +357,10 @@ export default function WebGLMapTiles({
           Nó được đặt ngay dưới tấm map (-0.3). Khi bạn nhìn nghiêng hoặc zoom xa bị hụt góc, 
           góc hụt sẽ lộ tấm nền này ra thay vì màu trắng của R3F. Hai màu sẽ hòa vào nhau
           tạo cảm giác bản đồ trải dài vô tận mà không hề tốn RAM! */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.3, 0]}>
-        <planeGeometry args={[100000, 100000]} />
-        <meshBasicMaterial color="#f2f3f0" />
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.3, 0]} renderOrder={-1}>
+        <planeGeometry args={[1000000, 1000000]} />
+        {/* CHUYÊN GIA FIX: Tắt depthWrite và set renderOrder=-1 để KHỬ 100% HIỆN TƯỢNG Z-FIGHTING (Nhấp nháy khi zoom cực xa) */}
+        <meshBasicMaterial color="#f2f3f0" depthWrite={false} />
       </mesh>
 
       {/* Tấm map chính */}
