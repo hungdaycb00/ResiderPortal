@@ -9,8 +9,8 @@ export default function HomeMarker({ position }: HomeMarkerProps) {
   return (
     <Billboard follow position={position} renderOrder={999} raycast={() => null}>
       <Text
-        position={[0, 0.15, 0]}
-        fontSize={0.78}
+        position={[0, 0.24, 0]}
+        fontSize={0.74}
         color="#38bdf8"
         outlineColor="#0f172a"
         outlineWidth={0.05}
