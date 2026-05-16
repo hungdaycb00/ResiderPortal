@@ -19,30 +19,11 @@ export function useDragHandlers(params: DragHandlersParams) {
     { active: false, startClientX: 0, startClientY: 0, moved: false }
   );
 
-  const capturePointer = (e: any) => {
-    const target = e?.target ?? e?.currentTarget ?? e?.sourceEvent?.target;
-    if (target?.setPointerCapture && typeof e?.pointerId === 'number') {
-      try {
-        target.setPointerCapture(e.pointerId);
-      } catch {}
-    }
-  };
-
-  const releasePointer = (e: any) => {
-    const target = e?.target ?? e?.currentTarget ?? e?.sourceEvent?.target;
-    if (target?.releasePointerCapture && typeof e?.pointerId === 'number') {
-      try {
-        target.releasePointerCapture(e.pointerId);
-      } catch {}
-    }
-  };
-
   const handleSelfPointerDown = React.useCallback((e: any) => {
     if (isLooterGameMode || !onSelfDragEnd) return;
     e.stopPropagation();
     e.sourceEvent?.stopPropagation?.();
     e.sourceEvent?.preventDefault?.();
-    capturePointer(e);
     selfDragRef.current = {
       active: true,
       startClientX: e.sourceEvent?.clientX ?? 0,
@@ -71,7 +52,6 @@ export function useDragHandlers(params: DragHandlersParams) {
     if (!state.active) return;
     e.stopPropagation();
     e.sourceEvent?.stopPropagation?.();
-    releasePointer(e);
     state.active = false;
     document.body.style.cursor = state.moved ? 'auto' : 'pointer';
     if (state.moved && onSelfDragEnd) {
