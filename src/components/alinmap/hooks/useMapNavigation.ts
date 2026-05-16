@@ -163,6 +163,9 @@ export function useMapNavigation({
     })();
   }, [mainTab, looterStateObj.initialized, isLooterGameMode, setIsLooterGameMode, initGame, loadWorldItems, myObfPos]);
 
+  const targetScaleRef = useRef<number | null>(null);
+  const wheelTimeoutRef = useRef<number | null>(null);
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
     let baseScale = targetScaleRef.current;
     if (baseScale === null) {
