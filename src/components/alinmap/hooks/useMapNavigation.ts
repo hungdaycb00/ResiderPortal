@@ -189,7 +189,13 @@ export function useMapNavigation({
     
     console.warn(`[Map_Wheel] deltaY=${e.deltaY}, currentScale=${baseScale.toFixed(2)}, nextScale=${nextScale.toFixed(2)}, nextZ=${nextZ.toFixed(1)}`);
       
-    animate(cameraZ, nextZ, { type: 'tween', duration: 0.15, ease: 'easeOut' });
+    // Dùng lò xo (spring) tạo đà và mượt thay vì giật cục (tween)
+    animate(cameraZ, nextZ, { 
+      type: 'spring', 
+      damping: 25, 
+      stiffness: 200, 
+      mass: 1 
+    });
   }, [cameraZ, perspectivePx]);
 
   const setCameraZ = useCallback((z: number) => {

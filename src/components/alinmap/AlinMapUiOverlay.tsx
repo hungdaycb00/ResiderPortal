@@ -215,7 +215,17 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         setFilterAgeMax={() => {}}
         setSearchTag={setSearchTag}
         handleRefresh={handleRefresh}
-        handleCenter={nav.handleCenter}
+        handleCenter={() => {
+          if (geo.position && geo.position.length >= 2) {
+            // Bay về đúng tọa độ GPS thật thay vì tọa độ bị làm mờ (myObfPos)
+            nav.handleCenterTo(geo.position[0], geo.position[1]);
+            if (typeof geo.requestLocation === 'function') {
+              geo.requestLocation(); // Cập nhật GPS mới nhất luôn
+            }
+          } else {
+            nav.handleCenter();
+          }
+        }}
         handleCenterTo={nav.handleCenterTo}
         setMapMode={nav.setMapMode}
         cameraZ={camera.cameraZ}

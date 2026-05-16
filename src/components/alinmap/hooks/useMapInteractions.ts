@@ -19,6 +19,21 @@ interface UseMapInteractionsProps {
     useDomLooterLayer?: boolean;
 }
 
+interface MapDragState {
+    active: boolean;
+    pointerId: number | null;
+    startX: number;
+    startY: number;
+    startPanX: number;
+    startPanY: number;
+    initialClientX: number;
+    initialClientY: number;
+    initialPanX: number;
+    initialPanY: number;
+    moved: boolean;
+    suppressClick: boolean;
+}
+
 export function useMapInteractions({
     panX, panY, scale,
     isLooterGameMode,
@@ -27,22 +42,17 @@ export function useMapInteractions({
     useDomLooterLayer = false,
 }: UseMapInteractionsProps) {
 
-    const mapDragRef = useRef<{
-        active: boolean;
-        pointerId: number | null;
-        startX: number;
-        startY: number;
-        startPanX: number;
-        startPanY: number;
-        moved: boolean;
-        suppressClick: boolean;
-    }>({
+    const mapDragRef = useRef<MapDragState>({
         active: false,
         pointerId: null,
         startX: 0,
         startY: 0,
         startPanX: 0,
         startPanY: 0,
+        initialClientX: 0,
+        initialClientY: 0,
+        initialPanX: 0,
+        initialPanY: 0,
         moved: false,
         suppressClick: false,
     });
@@ -74,8 +84,12 @@ export function useMapInteractions({
             pointerId: e.pointerId,
             startX: e.clientX,
             startY: e.clientY,
+            initialClientX: e.clientX,
+            initialClientY: e.clientY,
             startPanX: panX.get(),
             startPanY: panY.get(),
+            initialPanX: panX.get(),
+            initialPanY: panY.get(),
             moved: false,
             suppressClick: false,
         };
@@ -141,26 +155,24 @@ export function useMapInteractions({
         const currentScale = scale?.get?.() ?? 1;
         const currentPlaneYScale = planeYScale?.get?.() || 0.66;
         const mapPlaneScale = MAP_PLANE_SCALE;
-        const movX = e.clientX - dragState.startX;
-        const movY = e.clientY - dragState.startY;
         
-        // Speed multiplier increased to 3.5 for faster dragging
-        const deltaX = movX / currentScale * 3.5;
-        const deltaY = movY / currentScale * 3.5;
+        // Calculate the absolute offset from the moment the pointer went down
+        const totalMovX = e.clientX - dragState.initialClientX;
+        const totalMovY = e.clientY - dragState.initialClientY;
+        
+        // Tốc độ 2.5 cho cảm giác cầm nắm chắc chắn, mượt mà và không giật cục (không dùng delta)
+        const totalDeltaX = totalMovX / currentScale * 2.5;
+        const totalDeltaY = totalMovY / currentScale * 2.5;
 
-        if (Math.abs(movX) > 5 || Math.abs(movY) > 5) {
-            console.warn(`[Map_Drag] Moving. movX: ${movX.toFixed(2)}, movY: ${movY.toFixed(2)}, panX: ${panX.get().toFixed(4)}`);
-        }
-
-        if (Math.abs(movX) + Math.abs(movY) > 4) {
+        if (Math.abs(totalMovX) > 4 || Math.abs(totalMovY) > 4) {
             dragState.moved = true;
         }
 
-        // Tích luỹ pan theo di chuyển nhỏ
-        panX.set(panX.get() + deltaX / mapPlaneScale);
-        panY.set(panY.get() + (deltaY / currentPlaneYScale) * mapPlaneScale);
+        // Apply absolute position instead of reading panX.get() which can have frame delay
+        panX.set(dragState.initialPanX + totalDeltaX / mapPlaneScale);
+        panY.set(dragState.initialPanY + (totalDeltaY / currentPlaneYScale) * mapPlaneScale);
 
-        // Cập nhật điểm gốc cho lần move tiếp theo (Incremental update)
+        // Update relative for potential velocity calculations later, but rendering relies on absolute pan
         dragState.startX = e.clientX;
         dragState.startY = e.clientY;
 

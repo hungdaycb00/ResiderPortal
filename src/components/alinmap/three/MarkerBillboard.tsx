@@ -15,7 +15,7 @@ const MarkerBillboard: React.FC<MarkerBillboardProps> = ({ position, icon, label
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
     return (
-        <Billboard follow lockX lockY lockZ position={position}>
+        <Billboard follow lockX lockZ position={position}>
             <mesh position={[0, 0.45, 0.08]} renderOrder={30}>
                 <planeGeometry args={MARKER_PLANE_SIZE} />
                 <meshBasicMaterial map={texture} transparent depthTest={false} depthWrite={false} />

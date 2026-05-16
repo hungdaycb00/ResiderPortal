@@ -114,6 +114,7 @@ export default function UserLayers({
   const avatarPresentation: 'roadmap' | 'default' = mapMode === 'roadmap' ? 'roadmap' : 'default';
 
   const USE_3D_AVATARS = true;
+  const shouldUseRoadmapBillboards = isRoadmapOverlay;
 
   const scaleScenePoint = (point: { x: number; z: number }) => ({
     x: point.x * sceneWorldScale,
@@ -205,8 +206,9 @@ export default function UserLayers({
           reducedMotion={performanceMode === 'low'}
           sceneWorldScale={sceneWorldScale}
         />
-      ) : !isLooterGameMode && !isRoadmapOverlay && (() => {
+      ) : !isLooterGameMode && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
+        const selfAvatarUrl = myAvatarUrl || user?.photoURL || null;
         
         const avatarProps = {
             name: myDisplayName || user?.displayName || 'Me',
@@ -238,17 +240,20 @@ export default function UserLayers({
             onPointerMove={handleSelfPointerMove}
             onPointerUp={handleSelfPointerUp}
           >
-            {USE_3D_AVATARS ? (
+            {shouldUseRoadmapBillboards ? (
+              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} />
+            ) : USE_3D_AVATARS ? (
               <User3DModel {...avatarProps} color="#3b82f6" /> // Blue for self
             ) : (
-              <AvatarBillboard {...avatarProps} avatarUrl={myAvatarUrl || user?.photoURL} />
+              <AvatarBillboard {...avatarProps} avatarUrl={selfAvatarUrl} />
             )}
           </group>
         );
       })()}
 
       {/* Nearby users */}
-      {!isRoadmapOverlay && userRenderData.map(({ user: u, pos }) => {
+      {userRenderData.map(({ user: u, pos }) => {
+        const avatarUrl = isLooterGameMode ? null : (u.avatar_url || u.photoURL || u.avatarUrl || null);
         const avatarProps = {
           name: u.displayName || u.username || 'U',
           position: [pos.x, 0.01, pos.z] as [number, number, number],
@@ -264,13 +269,19 @@ export default function UserLayers({
           dimmed: isLooterGameMode,
         };
 
-        return USE_3D_AVATARS ? (
+        return shouldUseRoadmapBillboards ? (
+          <AvatarBillboard
+            key={u.id}
+            {...avatarProps}
+            avatarUrl={avatarUrl}
+          />
+        ) : USE_3D_AVATARS ? (
           <User3DModel key={u.id} {...avatarProps} />
         ) : (
           <AvatarBillboard
             key={u.id}
             {...avatarProps}
-            avatarUrl={isLooterGameMode ? null : u.avatar_url}
+            avatarUrl={avatarUrl}
           />
         );
       })}

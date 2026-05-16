@@ -20,7 +20,7 @@ export default function SceneMarkers({
   searchMarkerPos,
   searchMarkerScene,
 }: SceneMarkersProps) {
-  if (isRoadmapOverlay) return null;
+  if (!isRoadmapOverlay) return null;
 
   return (
     <>
