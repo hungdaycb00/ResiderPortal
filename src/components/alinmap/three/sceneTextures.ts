@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { normalizeImageUrl } from '../../../services/externalApi';
-import { colorFromString, initialsForName, isRenderableImageUrl } from './sceneCoords';
+import { initialsForName, isRenderableImageUrl } from './sceneCoords';
 
 // ─── URL Resolution ───────────────────────────────────────────────────────────
 export const resolveRenderableImageUrl = (value?: string | null): string => {
@@ -19,28 +19,14 @@ export const makeAvatarTexture = (name: string, imageUrl?: string | null): THREE
         return new THREE.CanvasTexture(canvas);
     }
 
-    const bg = colorFromString(name || imageUrl || 'alin');
     const drawFallback = () => {
-        const gradient = ctx.createLinearGradient(0, 0, size, size);
-        gradient.addColorStop(0, bg);
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.42, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fill();
-        ctx.restore();
-
+        ctx.clearRect(0, 0, size, size);
         ctx.fillStyle = '#ffffff';
         ctx.font = '800 92px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.35)';
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = 12;
         ctx.fillText(initialsForName(name), size / 2, size / 2 + 4);
     };
 
@@ -56,24 +42,12 @@ export const makeAvatarTexture = (name: string, imageUrl?: string | null): THREE
     img.crossOrigin = 'anonymous';
     img.onload = () => {
         ctx.clearRect(0, 0, size, size);
-        const gradient = ctx.createLinearGradient(0, 0, size, size);
-        gradient.addColorStop(0, bg);
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-
         ctx.save();
         ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
+        ctx.arc(size / 2, size / 2, size * 0.48, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(img, 0, 0, size, size);
         ctx.restore();
-
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-        ctx.stroke();
 
         texture.needsUpdate = true;
     };

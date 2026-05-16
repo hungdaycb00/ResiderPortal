@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Billboard, Text } from '@react-three/drei';
 import type { MotionValue } from 'framer-motion';
 import GalleryImage from './GalleryImage';
-import { makeAvatarTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from './sceneUtils';
+import { makeAvatarTexture, AVATAR_PLANE_SIZE } from './sceneUtils';
 
 interface AvatarBillboardProps {
     name: string;
@@ -18,7 +18,6 @@ interface AvatarBillboardProps {
     isSelected?: boolean;
     presentation?: 'default' | 'roadmap';
     zoomScale?: MotionValue<number>;
-    /** Khi ở looter mode, avatar bị làm mờ */
     dimmed?: boolean;
 }
 
@@ -50,21 +49,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const zoomMultiplier = 1 + zoomOutT * 2;
     const avatarScale = baseAvatarScale * zoomMultiplier;
     const avatarPlaneSize = AVATAR_PLANE_SIZE * avatarScale;
-    const ringRadius = AVATAR_RING_RADIUS * avatarScale;
     const labelYOffset = isRoadmapPresentation ? -2.45 : -3.65;
-    const labelDistanceFactor = isRoadmapPresentation ? 8.4 : 7;
-    const labelShellClass = isRoadmapPresentation
-        ? 'max-w-[260px] rounded-full border border-white/80 bg-white/94 px-4 py-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.14)] backdrop-blur-md'
-        : 'max-w-[420px] rounded-full border border-white/80 bg-white/95 px-8 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] backdrop-blur-md';
-    const labelTextClass = isRoadmapPresentation
-        ? 'block max-w-[220px] truncate text-[30px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[33px]'
-        : 'block max-w-[360px] truncate text-[50px] leading-none font-extrabold tracking-tight text-slate-900 sm:text-[55px]';
-    const statusShellClass = isRoadmapPresentation
-        ? 'max-w-[200px] rounded-full border border-sky-100 bg-sky-50/95 px-2.5 py-1 shadow-[0_6px_16px_rgba(14,165,233,0.1)] backdrop-blur-md'
-        : 'max-w-[260px] rounded-full border border-sky-100 bg-sky-50/95 px-3 py-1 shadow-[0_6px_18px_rgba(14,165,233,0.12)] backdrop-blur-md';
-    const statusTextClass = isRoadmapPresentation
-        ? 'block max-w-[180px] truncate text-[9px] font-semibold text-slate-600 sm:text-[10px]'
-        : 'block max-w-[220px] truncate text-[12px] font-semibold text-slate-600 sm:text-[13px]';
 
     useEffect(() => {
         if (!zoomScale) {
@@ -81,9 +66,9 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
     return (
-        <group 
-            position={position} 
-            onClick={onClick} 
+        <group
+            position={position}
+            onClick={onClick}
             onPointerOver={(e) => { e.stopPropagation(); setIsHovered(true); document.body.style.cursor = 'pointer'; }}
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             renderOrder={10}
@@ -131,34 +116,6 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                     />
                 ) : null}
             </Billboard>
-
-            {/* Vòng tròn dưới đất (footprint) */}
-            <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[ringRadius, 48]} />
-                <meshBasicMaterial
-                    color={isVisibleOnMap ? '#22d3ee' : '#10b981'}
-                    transparent
-                    opacity={0.2}
-                    depthWrite={false}
-                />
-            </mesh>
-            {(isSelected || isHovered) && (
-                <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <circleGeometry args={[ringRadius * 1.15, 48]} />
-                    <meshBasicMaterial
-                        color="#ffffff"
-                        transparent
-                        opacity={0.4}
-                        depthWrite={false}
-                    />
-                </mesh>
-            )}
-            
-            {/* Fake Drop Shadow */}
-            <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[ringRadius * 0.8, 32]} />
-                <meshBasicMaterial color="black" transparent opacity={0.15} depthWrite={false} />
-            </mesh>
         </group>
     );
 };
