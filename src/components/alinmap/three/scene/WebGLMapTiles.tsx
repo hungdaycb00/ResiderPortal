@@ -303,11 +303,10 @@ export default function WebGLMapTiles({
     const maxViewportDimension = Math.max(viewportWidth, viewportHeight);
     const currentProxySize = getProxySize(isDesktop, performanceMode);
     
-    // buffer=3.0: đủ coverage (3.0 > 2.64 minimum tại tilt=55°, FOV=75°)
-    // Math.floor thay Math.round: luôn làm tròn XUỐNG → plane lớn hơn 2x worst-case
-    // → kết hợp buffer=3.0 + floor = effective coverage 3.0-6.0x → phủ kín frustum
-    // → MapLibre zoom chỉ giảm ~0.6 level so với buffer=2.0 → text vẫn nét!
-    const buffer = 3.0;
+    // Desktop: buffer=1.5 → MapLibre zoom +1 level → text 2x nét hơn
+    // Mobile: buffer=3.0 → coverage ưu tiên hơn sharpness
+    // Math.floor đảm bảo plane luôn đủ lớn phủ kín frustum
+    const buffer = isDesktop ? 1.5 : 3.0;
     const exactZoom = Math.log2(
       (currentProxySize * 6255 * sceneWorldScale * Math.max(scale.get() || 1, 0.01)) / (maxViewportDimension * buffer)
     );
