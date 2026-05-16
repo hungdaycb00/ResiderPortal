@@ -188,10 +188,16 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
 
     const handleSelectSelf = useCallback(() => {
         setSelectedUser(null);
-        setActiveTab('posts');
+        setActiveTab('info');
         setMainTab?.('profile');
         setIsSheetExpanded(true);
     }, [setSelectedUser, setActiveTab, setMainTab, setIsSheetExpanded]);
+
+    const handleSelectUser = useCallback((targetUser: any) => {
+        setSelectedUser(targetUser);
+        setActiveTab('info');
+        setIsSheetExpanded(true);
+    }, [setSelectedUser, setActiveTab, setIsSheetExpanded]);
 
     // Pointer Interactions Hook
     const {
@@ -296,7 +302,7 @@ const MapCanvas: React.FC<MapCanvasProps> = (props) => {
                         onSetArrivalAction={looterBoat.setOnArrivalAction}
                         setIsTierSelectorOpen={setIsTierSelectorOpen}
                         selectedUser={selectedUser}
-                        onSelectUser={setSelectedUser}
+                        onSelectUser={handleSelectUser}
                         onSelectSelf={handleSelectSelf}
                         cameraFov={cameraFov}
                         performance={performance}

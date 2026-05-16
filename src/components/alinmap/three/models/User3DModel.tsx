@@ -1,5 +1,6 @@
 import React from 'react';
 import { Billboard, Text } from '@react-three/drei';
+import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import GalleryImage from '../GalleryImage';
 
@@ -66,10 +67,15 @@ const User3DModel: React.FC<User3DModelProps> = ({
         return () => console.log(`[User3DModel] UNMOUNTED for user: ${name}`);
     }, [name, position]);
 
+    const handleClick = (e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onClick?.();
+    };
+
     return (
         <group
             position={position}
-            onClick={onClick}
+            onClick={handleClick}
             onPointerOver={(e) => { e.stopPropagation(); setIsHovered(true); document.body.style.cursor = 'pointer'; }}
             onPointerOut={(e) => { e.stopPropagation(); setIsHovered(false); document.body.style.cursor = 'auto'; }}
             scale={[avatarScale, avatarScale, avatarScale]}

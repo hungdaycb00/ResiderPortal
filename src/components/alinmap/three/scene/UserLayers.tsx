@@ -186,9 +186,8 @@ export default function UserLayers({
 
   const { selfDragRef, handleSelfPointerDown, handleSelfPointerMove, handleSelfPointerUp } = useDragHandlers({
     isLooterGameMode,
-    position,
+    basePosition: baseOrigin,
     scale,
-    planeYScale,
     selfDragX,
     selfDragY,
     onSelfDragEnd,
