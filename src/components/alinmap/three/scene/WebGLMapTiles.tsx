@@ -314,12 +314,10 @@ export default function WebGLMapTiles({
       if (!isFinite(center.lng)) center.lng = myObfPos.lng;
 
       try {
-        // Sprint 1: easeTo smooth hơn jumpTo
-        mapRef.current.easeTo({
+        // Thay easeTo bằng jumpTo để Mapbox theo sát React state mà không tự tạo animation đè lên (tránh giật lag)
+        mapRef.current.jumpTo({
           center: [center.lng, center.lat],
           zoom,
-          duration: Math.round(throttleInterval * 1000 * 1.2),
-          easing: (t: number) => t,
         });
       } catch {
         // bỏ qua

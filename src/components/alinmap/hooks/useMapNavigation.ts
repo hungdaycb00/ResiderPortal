@@ -176,8 +176,8 @@ export function useMapNavigation({
     const zoomSensitivity = e.deltaMode === 0 ? 0.08 : 0.3; 
     const factor = e.deltaY > 0 ? (1 - zoomSensitivity) : (1 + zoomSensitivity);
     
-    // Unrestricted bounds (effectively no clamp)
-    const nextScale = Math.max(0.0001, Math.min(5000, baseScale * factor));
+    // Sane bounds to prevent map from disappearing or camera going through ground
+    const nextScale = Math.max(0.01, Math.min(100, baseScale * factor));
     targetScaleRef.current = nextScale;
     
     const nextZ = getCameraZForVisualScale(nextScale, perspectivePx);
@@ -198,14 +198,14 @@ export function useMapNavigation({
 
   const zoomIn = useCallback(() => {
     const currentScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
-    const nextScale = Math.max(0.0001, Math.min(5000, currentScale * 1.5));
+    const nextScale = Math.max(0.01, Math.min(100, currentScale * 1.5));
     console.warn(`[Map_ZoomIn] nextScale=${nextScale.toFixed(2)}`);
     setCameraZ(getCameraZForVisualScale(nextScale, perspectivePx));
   }, [cameraZ, setCameraZ, perspectivePx]);
 
   const zoomOut = useCallback(() => {
     const currentScale = getVisualScaleFromCameraZ(cameraZ.get(), perspectivePx);
-    const nextScale = Math.max(0.0001, Math.min(5000, currentScale * 0.66));
+    const nextScale = Math.max(0.01, Math.min(100, currentScale * 0.66));
     console.warn(`[Map_ZoomOut] nextScale=${nextScale.toFixed(2)}`);
     setCameraZ(getCameraZForVisualScale(nextScale, perspectivePx));
   }, [cameraZ, setCameraZ, perspectivePx]);

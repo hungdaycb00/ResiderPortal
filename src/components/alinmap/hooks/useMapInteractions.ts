@@ -144,8 +144,9 @@ export function useMapInteractions({
         const movX = e.clientX - dragState.startX;
         const movY = e.clientY - dragState.startY;
         
-        const deltaX = movX / currentScale * 2.0;
-        const deltaY = movY / currentScale * 2.0;
+        // Speed multiplier increased to 3.5 for faster dragging
+        const deltaX = movX / currentScale * 3.5;
+        const deltaY = movY / currentScale * 3.5;
 
         if (Math.abs(movX) > 5 || Math.abs(movY) > 5) {
             console.warn(`[Map_Drag] Moving. movX: ${movX.toFixed(2)}, movY: ${movY.toFixed(2)}, panX: ${panX.get().toFixed(4)}`);
