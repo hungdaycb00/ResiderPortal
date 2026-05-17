@@ -46,6 +46,17 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
 
+  const stopOverlayEvent = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleCloseClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const nativeEvent = e.nativeEvent as MouseEvent & { stopImmediatePropagation?: () => void };
+    nativeEvent.stopImmediatePropagation?.();
+    onClose();
+  };
+
   const toggleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (requireAuth && !requireAuth('thich bai viet')) return;
@@ -123,10 +134,18 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
 
   if (post.isDeleted) {
     return (
-      <div className="z-[400] bg-white flex flex-col fixed inset-0 animate-in fade-in duration-200">
+      <div
+        className="z-[400] bg-white flex flex-col fixed inset-0 animate-in fade-in duration-200"
+        onPointerDown={stopOverlayEvent}
+        onClick={stopOverlayEvent}
+      >
         <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100 bg-white shrink-0">
           <div className="flex items-center gap-2">
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95">
+            <button
+              onPointerDown={stopOverlayEvent}
+              onClick={handleCloseClick}
+              className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95"
+            >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h2 className="text-[15px] font-bold text-gray-900">Bài viết</h2>
@@ -150,12 +169,15 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
           : 'fixed inset-0 slide-in-from-bottom-2'
       }`}
       style={useDesktopPanel ? { left: 72, width: panelWidth } : undefined}
+      onPointerDown={stopOverlayEvent}
+      onClick={stopOverlayEvent}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100 bg-white shrink-0">
         <div className="flex items-center gap-2">
           <button
-            onClick={onClose}
+            onPointerDown={stopOverlayEvent}
+            onClick={handleCloseClick}
             className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95"
           >
             <ArrowLeft className="w-5 h-5" />

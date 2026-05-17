@@ -127,13 +127,10 @@ export function useMapNavigation({
     if (mainTab !== 'profile') {
       setMainTab('profile');
     }
-    if (activeTab !== 'info') {
-      setActiveTab('info');
-    }
     if (!isSheetExpanded) {
       setIsSheetExpanded(true);
     }
-  }, [activeTab, isSheetExpanded, mainTab, selectedUser, setActiveTab, setIsSheetExpanded, setMainTab]);
+  }, [isSheetExpanded, mainTab, selectedUser, setIsSheetExpanded, setMainTab]);
 
   const lastInitialTabRef = React.useRef(initialMainTab);
 

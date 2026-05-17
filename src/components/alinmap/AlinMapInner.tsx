@@ -267,12 +267,6 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         }
     }, [user, geo.position, geo.myObfPos]);
 
-    useEffect(() => {
-        if (selectedPost && nav.selectedUser) {
-            setSelectedPost(null);
-        }
-    }, [nav.selectedUser, selectedPost]);
-
     // --- URL Sub-path Sync ---
     useEffect(() => {
         if (location.pathname.startsWith('/explore/looter-game')) {

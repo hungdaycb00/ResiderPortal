@@ -24,15 +24,19 @@ const SelectedUserHeader: React.FC<SelectedUserHeaderProps> = ({ selectedUser, s
                 <div className="flex-1 min-w-0">
                     <h3 className="text-2xl font-black text-gray-900 truncate tracking-tight mb-1">{selectedUser.username || 'Mysterious User'}</h3>
                     {selectedUser.province && (
-                        <p className="text-xs text-gray-500 font-medium">📍 {selectedUser.province}</p>
+                        <p className="text-xs text-gray-500 font-medium">{selectedUser.province}</p>
                     )}
                 </div>
                 <button
                     type="button"
-                    onClick={() => setSelectedUser(null)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUser(null);
+                    }}
                     className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 active:scale-95"
-                    aria-label="Đóng hồ sơ user"
-                    title="Đóng"
+                    aria-label="Close user profile"
+                    title="Close"
                 >
                     <X className="h-4 w-4" />
                 </button>

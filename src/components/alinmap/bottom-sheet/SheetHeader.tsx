@@ -30,7 +30,9 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
         {!isDesktop && mainTab !== 'backpack' && (
             <div
                 className={`w-full flex md:hidden flex-col items-center pt-2 pb-1 cursor-pointer transition-colors ${isWhiteBg ? 'active:bg-gray-50' : 'active:bg-white/5'}`}
-                onClick={() => {
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                    e.stopPropagation();
                     if (!isSheetExpanded) {
                         setIsSheetExpanded(true);
                     } else {
@@ -67,7 +69,14 @@ const SheetHeader: React.FC<SheetHeaderProps> = ({
                         onClick={() => !isDesktop && setIsSearchOverlayOpen?.(true)}
                     />
                     {searchTag && (
-                        <button onClick={() => setSearchTag('')} className={`p-1 rounded-full ml-1 ${isWhiteBg ? 'hover:bg-gray-200' : 'hover:bg-white/10'}`}>
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSearchTag('');
+                            }}
+                            className={`p-1 rounded-full ml-1 ${isWhiteBg ? 'hover:bg-gray-200' : 'hover:bg-white/10'}`}
+                        >
                             <X className="w-3 h-3 text-gray-400" />
                         </button>
                     )}
