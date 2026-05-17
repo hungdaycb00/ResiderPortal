@@ -23,6 +23,7 @@ interface BottomSheetContentProps extends BottomSheetProps {
     setSocialSubTab: (tab: SocialSubTab) => void;
     onSearchClick: () => void;
     onEnterWorld: () => void;
+    onOpenUserFromPost?: (user: any) => void;
 }
 
 const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
@@ -92,6 +93,7 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
     ws,
     logout,
     onPostClick,
+    onOpenUserFromPost,
 }) => {
     const {
         encounter,
@@ -233,8 +235,9 @@ const BottomSheetContent: React.FC<BottomSheetContentProps> = ({
                             handleDeletePost={handleDeletePost}
                             externalApi={externalApi}
                             requireAuth={requireAuth}
-                            onPostClick={onPostClick}
-                        />
+                        onPostClick={onPostClick}
+                        onOpenUserFromPost={onOpenUserFromPost}
+                    />
                     ) : (
                         <div className="pt-2">
                             {mainTab === 'discover' && (

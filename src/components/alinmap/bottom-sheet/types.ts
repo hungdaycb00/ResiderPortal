@@ -77,6 +77,7 @@ export interface BottomSheetProps {
     onOpenListChange?: (v: boolean) => void;
     onPublishSuccess?: () => void;
     onPostClick?: (post: any) => void;
+    onOpenUserFromPost?: (user: any) => void;
     exploreSubTab?: string;
     socialSubTab?: string;
     onExploreSubTabChange?: (v: string) => void;

@@ -39,7 +39,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
     const footprintLocalY = FOOTPRINT_WORLD_Y - position[1];
 
     // Bán kính vòng tròn click — tỉ lệ với size, tối thiểu 3.5 để luôn dễ click
-    const footprintRadius = Math.max(size * 0.5, 3.5) * scale;
+    const footprintRadius = Math.max(size * scale * 0.65, 0.5);
 
     return (
         <group

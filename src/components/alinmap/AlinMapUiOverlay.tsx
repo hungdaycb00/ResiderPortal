@@ -155,6 +155,19 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   const isSelectedPostSelf = selectedPost
     ? (selectedPost.author?.id === wsCtx.myUserId || selectedPost.user_id === wsCtx.myUserId)
     : false;
+  const normalizeProfileUser = useCallback((candidate: any, fallbackSource?: any) => ({
+    ...candidate,
+    id: candidate?.id || candidate?.uid || candidate?.user_id || candidate?.author_id || fallbackSource?.id || fallbackSource?.uid || fallbackSource?.user_id || null,
+    displayName: candidate?.displayName || candidate?.name || candidate?.username || fallbackSource?.displayName || fallbackSource?.name || fallbackSource?.username || 'User',
+    username: candidate?.username || candidate?.displayName || candidate?.name || fallbackSource?.username || fallbackSource?.displayName || fallbackSource?.name || 'User',
+    avatar_url: candidate?.avatar_url || candidate?.photoURL || candidate?.avatarUrl || fallbackSource?.avatar_url || fallbackSource?.photoURL || fallbackSource?.avatarUrl || null,
+    photoURL: candidate?.photoURL || candidate?.avatar_url || candidate?.avatarUrl || fallbackSource?.photoURL || fallbackSource?.avatar_url || fallbackSource?.avatarUrl || null,
+    status: candidate?.status || fallbackSource?.status || '',
+    province: candidate?.province || fallbackSource?.province || '',
+    lat: candidate?.lat ?? fallbackSource?.lat ?? null,
+    lng: candidate?.lng ?? fallbackSource?.lng ?? null,
+    isSelf: candidate?.isSelf ?? fallbackSource?.isSelf ?? false,
+  }), []);
   const handleSearchOverlayClose = useCallback(() => {
     setIsSearchOverlayOpen(false);
   }, []);
@@ -172,6 +185,16 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
       setSelectedPost(null);
     }
   }, [setSelectedPost, setSelectedUser]);
+
+  const handleOpenAuthorFromPost = useCallback((author: any) => {
+    if (!author) return;
+    const normalizedAuthor = normalizeProfileUser(author, selectedPost?.author);
+    setSelectedPost(null);
+    nav.setSelectedUser(normalizedAuthor);
+    nav.setMainTab('profile');
+    nav.setActiveTab('info');
+    nav.setIsSheetExpanded(true);
+  }, [nav, normalizeProfileUser, selectedPost?.author, setSelectedPost]);
 
   useEffect(() => {
     if (!isSheetExpanded && selectedPost) {
@@ -348,6 +371,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         requestLocation={geo.requestLocation}
         externalApi={externalApi}
         onPostClick={(post) => setSelectedPost(post)}
+        onOpenUserFromPost={handleOpenAuthorFromPost}
         exploreSubTab={exploreSubTab}
         socialSubTab={socialSubTab}
         onExploreSubTabChange={setExploreSubTab}
@@ -384,11 +408,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
             post={selectedPost}
             isSelf={isSelectedPostSelf}
           onClose={() => setSelectedPost(null)}
-          onAuthorClick={(author) => {
-            setSelectedPost(null);
-            nav.setSelectedUser(author);
-              nav.setActiveTab('info');
-            }}
+          onAuthorClick={handleOpenAuthorFromPost}
             isDesktop={isDesktop}
             isSheetExpanded={isSheetExpanded}
             panelWidth={panelWidth}

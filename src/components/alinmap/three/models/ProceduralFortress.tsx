@@ -8,7 +8,7 @@ interface ProceduralFortressProps {
     onClick?: () => void;
 }
 
-const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 4.5, onClick }) => {
+const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 0.62, onClick }) => {
     return (
         <LootSprite
             position={position}
@@ -16,7 +16,7 @@ const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale
             title="Fortress"
             accent="#f59e0b"
             scale={scale}
-            size={AVATAR_PLANE_SIZE * 0.75}
+            size={AVATAR_PLANE_SIZE}
             onClick={onClick}
         />
     );

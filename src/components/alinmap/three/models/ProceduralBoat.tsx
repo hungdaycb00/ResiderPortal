@@ -1,13 +1,10 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
 import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { MAP_PLANE_SCALE } from '../../constants';
 import { pxToScene, AVATAR_PLANE_SIZE } from '../sceneUtils';
 import LootSprite from './LootSprite';
-import { getDistanceMeters } from '../../looter-game/backpack/utils';
-import { GAME_CONFIG } from '../../looter-game/gameConfig';
 
 interface ProceduralBoatProps {
     position: [number, number, number];
@@ -22,7 +19,7 @@ interface ProceduralBoatProps {
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 2 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER,
+    scale = 0.31,
     offsetX,
     offsetY,
     reducedMotion = false,
@@ -53,7 +50,7 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 title="You"
                 accent="#38bdf8"
                 scale={scale}
-                size={AVATAR_PLANE_SIZE * 1.1}
+                size={AVATAR_PLANE_SIZE}
                 interactive={false}
             />
         </group>

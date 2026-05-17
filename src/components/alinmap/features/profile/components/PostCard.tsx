@@ -89,6 +89,20 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
         }
     };
 
+    const normalizeAuthor = (author: any) => ({
+        ...author,
+        id: author?.id || author?.uid || author?.user_id || author?.author_id || null,
+        displayName: author?.displayName || author?.name || author?.username || 'User',
+        username: author?.username || author?.displayName || author?.name || 'User',
+        avatar_url: author?.avatar_url || author?.photoURL || author?.avatarUrl || null,
+        photoURL: author?.photoURL || author?.avatar_url || author?.avatarUrl || null,
+        status: author?.status || '',
+        province: author?.province || '',
+        lat: author?.lat ?? null,
+        lng: author?.lng ?? null,
+        isSelf: author?.isSelf ?? false,
+    });
+
     if (post.isDeleted) {
         return (
             <div className="bg-gray-50 border border-red-100 rounded-2xl overflow-hidden shadow-sm mb-4">
@@ -103,12 +117,14 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
     return (
         <div onClick={onClick} className={`bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4 ${onClick ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                <div
+                <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation();
-                        onAuthorClick?.(post.author);
+                        onAuthorClick?.(normalizeAuthor(post.author));
                     }}
-                    className={`flex items-center gap-2 ${onAuthorClick ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''}`}
+                    className={`flex flex-1 items-center gap-2 min-w-0 text-left ${onAuthorClick ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''}`}
                 >
                     <img
                         src={resolveAvatarSrc(post.author?.avatar || post.author?.avatar_url || post.author?.photoURL, post.author?.name || post.author?.username || 'User')}
@@ -122,12 +138,16 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                             <h4 className="text-[14px] font-bold text-gray-900">{post.author?.name || 'Unknown User'}</h4>
                             {post.isStarred && !post.isArchivedState && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
                         </div>
-                        <div className="flex items-center gap-2">
+                    </div>
+                </button>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
                             <p className="text-[10px] text-gray-400">
                                 {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
-                            <div className="relative">
+                            <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
                                 <button 
+                                    type="button"
+                                    onPointerDown={(e) => e.stopPropagation()}
                                     onClick={() => isSelf && setShowPrivacyPopup(!showPrivacyPopup)}
                                     className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isSelf ? 'bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer' : 'text-gray-400'}`}
                                 >
@@ -169,14 +189,12 @@ const PostCard = ({ post, isSelf, onStar, onDelete, onUpdatePrivacy, externalApi
                                 </AnimatePresence>
                             </div>
                         </div>
-                    </div>
-                </div>
                 {isSelf && !post.isArchivedState && (
                     <div className="flex items-center gap-1 shrink-0 ml-2">
-                        <button onClick={() => onStar(post.id)} className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`} title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}>
+                        <button type="button" onClick={() => onStar(post.id)} className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`} title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}>
                             <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
                         </button>
-                        <button onClick={() => onDelete(post.id)} className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90" title="Delete post">
+                        <button type="button" onClick={() => onDelete(post.id)} className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90" title="Delete post">
                             <Trash2 className="w-4 h-4" />
                         </button>
                     </div>

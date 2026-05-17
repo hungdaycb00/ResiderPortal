@@ -59,7 +59,7 @@ export default function LooterLayers({
     <>
       {/* Fortress */}
       {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-        <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} scale={20} onClick={handleFortressClick} />
+        <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} scale={0.62} onClick={handleFortressClick} />
       ) : null}
 
       {/* Waypoint items (3 gần nhất) */}
@@ -73,8 +73,8 @@ export default function LooterLayers({
             icon={getWorldItemIcon(item)}
             title={item?.item?.name || 'Loot'}
             accent={getWorldItemAccent(item)}
-            scale={2.4}
-            size={AVATAR_PLANE_SIZE * 2.0}
+            scale={0.31}
+            size={AVATAR_PLANE_SIZE}
             renderOrder={50}
             onClick={() => handleWorldItemClick(item)}
           />
@@ -95,8 +95,8 @@ export default function LooterLayers({
         <LootSprite
           position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
           type="target"
-          size={AVATAR_PLANE_SIZE * 0.2}
-          scale={2}
+          size={AVATAR_PLANE_SIZE * 0.15}
+          scale={0.08}
         />
       ) : null}
 
@@ -109,7 +109,7 @@ export default function LooterLayers({
             boatPosRef.current[2],
           ]}
           type="enemy"
-          scale={2.4 * GAME_CONFIG.COMBAT_BOAT_SCALE_MULTIPLIER}
+          scale={0.31}
         />
       ) : null}
 
@@ -124,8 +124,8 @@ export default function LooterLayers({
             icon={getWorldItemIcon(item)}
             title={item?.item?.name || 'Loot'}
             accent={getWorldItemAccent(item)}
-            scale={2}
-            size={AVATAR_PLANE_SIZE * 1.8}
+            scale={0.23}
+            size={AVATAR_PLANE_SIZE}
             renderOrder={40}
             onClick={() => handleWorldItemClick(item)}
           />

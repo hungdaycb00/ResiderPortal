@@ -23,22 +23,27 @@ interface SelectedUserViewProps {
     externalApi: any;
     requireAuth?: (actionLabel: string, afterLogin?: () => void) => boolean;
     onPostClick?: (post: any) => void;
+    onOpenUserFromPost?: (user: any) => void;
 }
 
 const SelectedUserView: React.FC<SelectedUserViewProps> = ({
     selectedUser, setSelectedUser, activeTab, setActiveTab, fetchUserPosts,
     friends,
     onLocateUser, ws,
-    games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth, onPostClick
+    games, userPosts, handleStarPost, handleDeletePost, externalApi, requireAuth, onPostClick, onOpenUserFromPost
 }) => {
     const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
     const handleOpenUser = React.useCallback((user: any) => {
+        if (onOpenUserFromPost) {
+            onOpenUserFromPost(user);
+            return;
+        }
         setSelectedUser(user);
         if (user) {
             setActiveTab('info');
         }
-    }, [setActiveTab, setSelectedUser]);
+    }, [onOpenUserFromPost, setActiveTab, setSelectedUser]);
 
     return (
         <div className="pt-2 md:pt-6 pb-24 md:pb-6 px-2">
@@ -68,13 +73,13 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                     <SelectedUserPostsSection
                         userPosts={userPosts}
                         handleStarPost={handleStarPost}
-                        handleDeletePost={handleDeletePost}
-                        externalApi={externalApi}
-                        fetchUserPosts={fetchUserPosts}
-                        requireAuth={requireAuth}
-                        onPostClick={onPostClick}
-                        onAuthorClick={handleOpenUser}
-                    />
+                    handleDeletePost={handleDeletePost}
+                    externalApi={externalApi}
+                    fetchUserPosts={fetchUserPosts}
+                    requireAuth={requireAuth}
+                    onPostClick={onPostClick}
+                    onAuthorClick={handleOpenUser}
+                />
                 </>
             )}
         </div>

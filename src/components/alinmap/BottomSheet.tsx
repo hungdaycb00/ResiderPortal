@@ -28,6 +28,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
         panelWidth,
         setPanelWidth,
         onPostClick,
+        onOpenUserFromPost,
     } = props;
 
     const [_exploreSubTab, _setExploreSubTab] = React.useState<ExploreSubTab>('games');
@@ -177,6 +178,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props) => {
                     onSearchClick={() => setIsSearchOverlayOpen?.(true)}
                     onEnterWorld={handleEnterWorld}
                     onPostClick={onPostClick}
+                    onOpenUserFromPost={onOpenUserFromPost}
                 />
 
                 {/* Desktop: SubTabSwitcher inside sheet (static positioning) */}

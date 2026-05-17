@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { ArrowLeft, Heart, Star, Trash2, MessageCircle, Bookmark, Navigation, Globe, Users, Lock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { normalizeImageUrl } from '../../../../../services/externalApi';
@@ -55,6 +55,13 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
     const nativeEvent = e.nativeEvent as MouseEvent & { stopImmediatePropagation?: () => void };
     nativeEvent.stopImmediatePropagation?.();
     onClose();
+  };
+
+  const handleAuthorClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    const nativeEvent = e.nativeEvent as MouseEvent & { stopImmediatePropagation?: () => void };
+    nativeEvent.stopImmediatePropagation?.();
+    onAuthorClick(normalizeAuthor(post.author));
   };
 
   const toggleLike = async (e: React.MouseEvent) => {
@@ -130,6 +137,20 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
     }
   };
 
+  const normalizeAuthor = (author: any) => ({
+    ...author,
+    id: author?.id || author?.uid || author?.user_id || author?.author_id || null,
+    displayName: author?.displayName || author?.name || author?.username || 'User',
+    username: author?.username || author?.displayName || author?.name || 'User',
+    avatar_url: author?.avatar_url || author?.photoURL || author?.avatarUrl || null,
+    photoURL: author?.photoURL || author?.avatar_url || author?.avatarUrl || null,
+    status: author?.status || '',
+    province: author?.province || '',
+    lat: author?.lat ?? null,
+    lng: author?.lng ?? null,
+    isSelf: author?.isSelf ?? false,
+  });
+
   const useDesktopPanel = isDesktop && isSheetExpanded;
 
   if (post.isDeleted) {
@@ -142,6 +163,7 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
         <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100 bg-white shrink-0">
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onPointerDown={stopOverlayEvent}
               onClick={handleCloseClick}
               className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors active:scale-95"
@@ -187,6 +209,7 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
         {isSelf && !post.isArchivedState && (
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onStar?.(post.id); }}
               className={`p-2 rounded-xl transition-all active:scale-90 ${post.isStarred ? 'bg-amber-50 text-amber-500' : 'text-gray-300 hover:text-amber-400 hover:bg-amber-50'}`}
               title={post.isStarred ? 'Remove from Billboard' : 'Set as Billboard'}
@@ -194,6 +217,7 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
               <Star className={`w-4 h-4 ${post.isStarred ? 'fill-amber-400' : ''}`} />
             </button>
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onDelete?.(post.id); }}
               className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all active:scale-90"
               title="Delete post"
@@ -208,9 +232,11 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
       <div className="flex-1 overflow-y-auto subtle-scrollbar">
         {/* Author Section */}
         <div className="px-4 pt-4 pb-2">
-          <div
-            onClick={() => onAuthorClick(post.author)}
-            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-xl p-2 -m-2 transition-colors active:scale-[0.98]"
+          <button
+            type="button"
+            onPointerDown={stopOverlayEvent}
+            onClick={handleAuthorClick}
+            className="w-full flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-xl p-2 -m-2 transition-colors active:scale-[0.98] text-left min-w-0"
           >
             <img
               src={resolveAvatarSrc(post.author?.avatar || post.author?.avatar_url || post.author?.photoURL, post.author?.name || post.author?.username || 'User')}
@@ -224,12 +250,16 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
                 <h3 className="text-[15px] font-bold text-gray-900">{post.author?.name || 'Unknown User'}</h3>
                 {post.isStarred && !post.isArchivedState && <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />}
               </div>
-              <div className="flex items-center gap-2">
+            </div>
+          </button>
+          <div className="flex items-center gap-2 shrink-0">
                 <p className="text-[11px] text-gray-400">
                   {new Date(post.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <div className="relative">
+                <div className="relative" onPointerDown={stopOverlayEvent}>
                   <button
+                    type="button"
+                    onPointerDown={stopOverlayEvent}
                     onClick={(e) => { e.stopPropagation(); isSelf && setShowPrivacyPopup(!showPrivacyPopup); }}
                     className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${isSelf ? 'bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer' : 'text-gray-400'}`}
                   >
@@ -272,8 +302,6 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
         {/* Post Title */}
         {post.title && (
@@ -347,3 +375,5 @@ const PostDetailOverlay: React.FC<PostDetailOverlayProps> = ({
 };
 
 export default React.memo(PostDetailOverlay);
+
+
