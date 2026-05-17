@@ -59,7 +59,8 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const zoomMultiplier = 1 + zoomOutT * 2;
     const avatarScale = baseAvatarScale * zoomMultiplier;
     const avatarPlaneSize = AVATAR_PLANE_SIZE * avatarScale;
-    const labelYOffset = isRoadmapPresentation ? -2.45 : -3.65;
+    // Keep labels close to the avatar so the name/status remain visible in roadmap mode.
+    const labelYOffset = -(avatarPlaneSize * (isRoadmapPresentation ? 1.15 : 1.35));
 
     useEffect(() => {
         if (!zoomScale) {
