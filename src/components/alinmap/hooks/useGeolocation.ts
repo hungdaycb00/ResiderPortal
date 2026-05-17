@@ -32,29 +32,12 @@ export interface WeatherData {
 
 export function useGeolocation() {
   const defaultPosition: [number, number] = [10.762622, 106.660172];
-  const [position, setPosition] = useState<[number, number] | null>(() => {
-    const lastPos = localStorage.getItem('alin_last_position');
-    if (lastPos) {
-        try {
-          const parsed = JSON.parse(lastPos);
-          if (Array.isArray(parsed) && parsed.length >= 2) return [Number(parsed[0]), Number(parsed[1])];
-        } catch (e) {}
-      }
-    return defaultPosition;
-  });
-  const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(() => {
-    const lastPos = localStorage.getItem('alin_last_position');
-    if (lastPos) {
-      try {
-        const parsed = JSON.parse(lastPos);
-        if (Array.isArray(parsed) && parsed.length >= 2) {
-          return { lat: parsed[0], lng: parsed[1] };
-        }
-      } catch (e) {}
-    }
-    return { lat: defaultPosition[0], lng: defaultPosition[1] };
-  });
-  const [isConsentOpen, setIsConsentOpen] = useState(false);
+  const hasLocationConsent = typeof window !== 'undefined'
+    ? localStorage.getItem('alin_location_consent_handled') === 'true'
+    : false;
+  const [position, setPosition] = useState<[number, number] | null>(null);
+  const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [isConsentOpen, setIsConsentOpen] = useState(!hasLocationConsent);
   const [currentProvince, setCurrentProvince] = useState<string | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
@@ -123,6 +106,20 @@ export function useGeolocation() {
       setIsConsentOpen(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const consentHandled = localStorage.getItem('alin_location_consent_handled') === 'true';
+    if (!consentHandled) {
+      setIsConsentOpen(true);
+      return;
+    }
+
+    // User đã cho phép từ trước, lấy GPS thật ngay để tránh map mở ở vị trí stale.
+    const savedVisible = localStorage.getItem('alinmap_visible');
+    requestLocation(savedVisible === 'false');
+  }, [requestLocation]);
 
   // Fetch Weather Data (cached, deferred to avoid blocking critical path)
   const weatherFetchedRef = useRef(false);
