@@ -159,6 +159,26 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
     setIsSearchOverlayOpen(false);
   }, []);
 
+  const handleSheetExpandedChange = useCallback((expanded: boolean) => {
+    nav.setIsSheetExpanded(expanded);
+    if (!expanded) {
+      setSelectedPost(null);
+    }
+  }, [nav, setSelectedPost]);
+
+  const handleSheetSelectedUserChange = useCallback((nextUser: any) => {
+    setSelectedUser(nextUser);
+    if (!nextUser) {
+      setSelectedPost(null);
+    }
+  }, [setSelectedPost, setSelectedUser]);
+
+  useEffect(() => {
+    if (!isSheetExpanded && selectedPost) {
+      setSelectedPost(null);
+    }
+  }, [isSheetExpanded, selectedPost, setSelectedPost]);
+
   useEffect(() => {
     const handlePopState = () => {
       if (isSearchOverlayOpen) {
@@ -264,7 +284,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         isDesktop={isDesktop}
         isSheetExpanded={isSheetExpanded}
         selectedUser={selectedUser}
-        setSelectedUser={setSelectedUser}
+        setSelectedUser={handleSheetSelectedUserChange}
         activeTab={nav.activeTab}
         mainTab={nav.mainTab}
         nearbyUsers={wsCtx.nearbyUsers}
@@ -298,7 +318,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
         }}
         onOpenChat={onOpenChat}
         handleUpdateRadius={nav.handleUpdateRadius}
-        setIsSheetExpanded={nav.setIsSheetExpanded}
+        setIsSheetExpanded={handleSheetExpandedChange}
         setActiveTab={nav.setActiveTab}
         setMainTab={nav.setMainTab}
         setSearchTag={setSearchTag}
