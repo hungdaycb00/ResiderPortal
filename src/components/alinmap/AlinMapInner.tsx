@@ -36,8 +36,10 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
     const API_BASE = getBaseUrl();
     const hasInitialCenteredRef = React.useRef(false);
 
+    const locationConsentKey = user ? `alin_location_consent_handled:${user.uid || user.id || profileUserId || 'signed-in'}` : null;
+
     // --- Geolocation / Weather / Province ---
-    const geo = useGeolocation();
+    const geo = useGeolocation(locationConsentKey);
     const performance = useAdaptivePerformance();
     const location = useLocation();
     const navigate = useNavigate();

@@ -30,14 +30,14 @@ export interface WeatherData {
   feelsLike?: number;
 }
 
-export function useGeolocation() {
+export function useGeolocation(consentStorageKey: string | null = null) {
   const defaultPosition: [number, number] = [10.762622, 106.660172];
-  const hasLocationConsent = typeof window !== 'undefined'
-    ? localStorage.getItem('alin_location_consent_handled') === 'true'
+  const hasSavedConsent = typeof window !== 'undefined' && consentStorageKey
+    ? localStorage.getItem(consentStorageKey) === 'true'
     : false;
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [myObfPos, setMyObfPos] = useState<{ lat: number; lng: number } | null>(null);
-  const [isConsentOpen, setIsConsentOpen] = useState(!hasLocationConsent);
+  const [isConsentOpen, setIsConsentOpen] = useState(!hasSavedConsent || !consentStorageKey);
   const [currentProvince, setCurrentProvince] = useState<string | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
@@ -63,7 +63,9 @@ export function useGeolocation() {
   }, [myObfPos?.lat, myObfPos?.lng, fetchProvinceName]);
 
   const requestLocation = useCallback((forceInvisible: boolean = false, wsRef?: React.MutableRefObject<WebSocket | null>, setIsVisibleOnMap?: (v: boolean) => void) => {
-    localStorage.setItem('alin_location_consent_handled', 'true');
+    if (consentStorageKey && typeof window !== 'undefined') {
+      localStorage.setItem(consentStorageKey, 'true');
+    }
     const updateVisibility = (visible: boolean) => {
       setIsVisibleOnMap?.(visible);
       if (wsRef?.current?.readyState === WebSocket.OPEN) {
@@ -105,12 +107,17 @@ export function useGeolocation() {
       if (!forceInvisible) updateVisibility(false);
       setIsConsentOpen(false);
     }
-  }, []);
+  }, [consentStorageKey]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const consentHandled = localStorage.getItem('alin_location_consent_handled') === 'true';
+    if (!consentStorageKey) {
+      setIsConsentOpen(true);
+      return;
+    }
+
+    const consentHandled = localStorage.getItem(consentStorageKey) === 'true';
     if (!consentHandled) {
       setIsConsentOpen(true);
       return;
@@ -119,7 +126,7 @@ export function useGeolocation() {
     // User đã cho phép từ trước, lấy GPS thật ngay để tránh map mở ở vị trí stale.
     const savedVisible = localStorage.getItem('alinmap_visible');
     requestLocation(savedVisible === 'false');
-  }, [requestLocation]);
+  }, [consentStorageKey, requestLocation]);
 
   // Fetch Weather Data (cached, deferred to avoid blocking critical path)
   const weatherFetchedRef = useRef(false);
