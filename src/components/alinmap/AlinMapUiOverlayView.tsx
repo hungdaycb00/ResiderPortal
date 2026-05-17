@@ -337,7 +337,7 @@ const AlinMapUiOverlayView: React.FC<AlinMapUiOverlayViewProps> = ({
             panX={nav.panX}
             panY={nav.panY}
             ws={wsCtx.ws}
-            setSelectedUser={setSelectedUser}
+            setSelectedUser={handleSheetSelectedUserChange}
           />
         </div>
       )}
@@ -398,7 +398,7 @@ const AlinMapUiOverlayView: React.FC<AlinMapUiOverlayViewProps> = ({
             searchTag={searchTag}
             setSearchTag={setSearchTag}
             nearbyUsers={wsCtx.nearbyUsers}
-            setSelectedUser={setSelectedUser}
+            setSelectedUser={handleSheetSelectedUserChange}
             setActiveTab={setActiveTab}
             setIsSheetExpanded={setIsSheetExpanded}
             handlePlayGame={handlePlayGame}

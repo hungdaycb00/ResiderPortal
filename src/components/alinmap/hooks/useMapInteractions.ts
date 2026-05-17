@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { MotionValue } from 'framer-motion';
-import { DEGREES_TO_PX, MAP_PLANE_SCALE } from '../constants';
+import { DEGREES_TO_PX, MAP_PLANE_SCALE, ROADMAP_WORLD_SCALE } from '../constants';
 import type { AlinMapMode } from '../constants';
 
 interface UseMapInteractionsProps {
@@ -160,9 +160,11 @@ export function useMapInteractions({
         const totalMovX = e.clientX - dragState.initialClientX;
         const totalMovY = e.clientY - dragState.initialClientY;
         
-        // Tốc độ 3.0 theo yêu cầu (kéo 1 pixel màn hình = map đi 3 pixel).
-        const totalDeltaX = totalMovX / currentScale * 15.0;
-        const totalDeltaY = totalMovY / currentScale * 15.0;
+        // Tốc độ kéo chuột được điều chỉnh để tốc độ dịch chuyển thực tế ở Looter Game và AlinMap thường đồng bộ nhau.
+        // Ở Looter Game (sceneWorldScale = 1.0), hệ số kéo giảm đi 8.33 lần (nhân với ROADMAP_WORLD_SCALE = 0.12) để tránh trượt quá nhanh.
+        const speedFactor = isLooterGameMode ? 15.0 * ROADMAP_WORLD_SCALE : 15.0;
+        const totalDeltaX = (totalMovX / currentScale) * speedFactor;
+        const totalDeltaY = (totalMovY / currentScale) * speedFactor;
 
         if (Math.abs(totalMovX) > 4 || Math.abs(totalMovY) > 4) {
             dragState.moved = true;

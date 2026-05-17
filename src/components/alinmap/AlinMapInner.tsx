@@ -299,6 +299,16 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
         setPickupRewardItem(null);
     };
 
+    const handleMapSelectedUserChange = useCallback((nextUser: any) => {
+        setSelectedPost(null);
+        nav.setSelectedUser(nextUser);
+    }, [nav.setSelectedUser]);
+
+    const handleMapActiveTabChange = useCallback((tab: 'info' | 'posts') => {
+        setSelectedPost(null);
+        nav.setActiveTab(tab);
+    }, [nav.setActiveTab]);
+
     return (
         <ProfileProvider 
             initialIsVisible={(() => {
@@ -332,7 +342,7 @@ export const AlinMapInner: React.FC<AlinMapProps> = ({
                     cameraHeightOffset={nav.cameraHeightOffset} cameraRotateDeg={nav.cameraRotateDeg}
                     cameraPitchOverride={nav.cameraPitchOverride} cameraRotateYDeg={nav.cameraRotateYDeg}
                     panX={nav.panX} panY={nav.panY} selfDragX={nav.selfDragX} selfDragY={nav.selfDragY} ws={wsCtx.ws}
-	                    requestLocation={geo.requestLocation} selectedUser={nav.selectedUser} setSelectedUser={nav.setSelectedUser} setActiveTab={nav.setActiveTab}
+	                    requestLocation={geo.requestLocation} selectedUser={nav.selectedUser} setSelectedUser={handleMapSelectedUserChange} setActiveTab={handleMapActiveTabChange}
 	                    isSheetExpanded={nav.isSheetExpanded} setIsSheetExpanded={nav.setIsSheetExpanded} setMyObfPos={geo.setMyObfPos} addLog={wsCtx.addLog} handleWheel={nav.handleWheel}
                     mapMode={nav.mapMode}
                     onOpenBillboardPost={handleOpenBillboardPost}

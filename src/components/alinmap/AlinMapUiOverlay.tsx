@@ -1,12 +1,10 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
-import { useMotionValueEvent } from 'framer-motion';
 import AlinMapUiOverlayView, { type CameraLabState } from './AlinMapUiOverlayView';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { usePosts } from './features/profile/hooks/usePosts';
-import { ROADMAP_LOCATE_VISUAL_SCALE } from './constants';
 
 interface AlinMapUiOverlayProps {
   nav: ReturnType<typeof useMapNavigation>;
@@ -125,9 +123,6 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   const [socialSubTab, setSocialSubTab] = useState<string>('posts');
   const looterUi = useLooterState();
 
-  const isSelectedPostSelf = selectedPost
-    ? (selectedPost.author?.id === wsCtx.myUserId || selectedPost.user_id === wsCtx.myUserId)
-    : false;
   const normalizeProfileUser = useCallback((candidate: any, fallbackSource?: any) => ({
     ...candidate,
     id: candidate?.id || candidate?.uid || candidate?.user_id || candidate?.author_id || fallbackSource?.id || fallbackSource?.uid || fallbackSource?.user_id || null,
@@ -153,10 +148,8 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
   }, [nav, setSelectedPost]);
 
   const handleSheetSelectedUserChange = useCallback((nextUser: any) => {
+    setSelectedPost(null);
     setSelectedUser(nextUser);
-    if (!nextUser) {
-      setSelectedPost(null);
-    }
   }, [setSelectedPost, setSelectedUser]);
 
   const handleOpenAuthorFromPost = useCallback((author: any) => {
@@ -237,7 +230,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
       setSearchTag={setSearchTag}
       handleRefresh={handleRefresh}
       selectedUser={selectedUser}
-      setSelectedUser={setSelectedUser}
+      setSelectedUser={handleSheetSelectedUserChange}
       setActiveTab={setActiveTab}
       setIsLooterGameMode={setIsLooterGameMode}
       setIsSheetExpanded={setIsSheetExpanded}
