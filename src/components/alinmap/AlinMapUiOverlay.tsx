@@ -1,39 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { MotionValue, useMotionValueEvent } from 'framer-motion';
-import BottomSheet from './BottomSheet';
-import ContextMenu from './ContextMenu';
-import FullscreenToggle from './components/FullscreenToggle';
-import MapControls from './MapControls';
-
-import NavigationBar from './NavigationBar';
-import SearchHeader from './SearchHeader';
-import SearchOverlay from './SearchOverlay';
-import PickupRewardModal from './looter-game/components/PickupRewardModal';
-import PostDetailOverlay from './features/profile/components/PostDetailOverlay';
-import TierSelectionOverlay from './looter-game/TierSelectionOverlay';
+﻿import React, { useCallback, useEffect, useState } from 'react';
+import { useMotionValueEvent } from 'framer-motion';
+import AlinMapUiOverlayView, { type CameraLabState } from './AlinMapUiOverlayView';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useLooterActions, useLooterState } from './looter-game/LooterGameContext';
 import { useAlinWebSocket } from './hooks/useAlinWebSocket';
 import { useMapNavigation } from './hooks/useMapNavigation';
 import { usePosts } from './features/profile/hooks/usePosts';
 import { ROADMAP_LOCATE_VISUAL_SCALE } from './constants';
-
-type CameraLabState = {
-  cameraZ: MotionValue<number>;
-  tiltAngle: MotionValue<number>;
-  cameraHeightOffset: number;
-  cameraRotateDeg: number;
-  cameraPitchOverride: number | null;
-  cameraRotateYDeg: number;
-  setCameraZ: (z: number) => void;
-  setCameraHeightOffset: (v: number) => void;
-  setCameraRotateDeg: (v: number) => void;
-  setCameraPitchOverride: (v: number | null) => void;
-  setCameraRotateYDeg: (v: number) => void;
-  setCameraFov: (v: number) => void;
-  cameraFov: number;
-};
 
 interface AlinMapUiOverlayProps {
   nav: ReturnType<typeof useMapNavigation>;
@@ -226,246 +199,76 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
     looterUi.isItemDragging
   );
 
-  if (!portalTarget) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[320] isolate pointer-events-none">
-      <div className="pointer-events-auto">
-        <FullscreenToggle isDesktop={isDesktop} blocked={shouldHideFullscreenHandle} />
-      </div>
-
-        <SearchHeader
-          isDesktop={isDesktop}
-          isSheetExpanded={isSheetExpanded}
-          currentProvince={currentProvince}
-          myObfPos={myObfPos}
-          onWeatherClick={() => setIsWeatherWidgetExpanded(true)}
-          setIsSearchOverlayOpen={setIsSearchOverlayOpen}
-          searchTag={searchTag}
-        />
-
-      <MapControls
-        isSocketConnecting={isSocketConnecting}
-        isSidebarOpen={false}
-        weatherData={weatherData}
-        currentProvince={currentProvince}
-        myObfPos={myObfPos}
-        friendLocInput={friendIdInput}
-        filterDistance={50}
-        filterAgeMin={13}
-        filterAgeMax={99}
-        searchTag={searchTag}
-        mapMode={nav.mapMode}
-        setIsSidebarOpen={() => {}}
-        setFriendLocInput={setFriendIdInput}
-        setSearchMarkerPos={setSearchMarkerPos}
-        setFilterDistance={() => {}}
-        setFilterAgeMin={() => {}}
-        setFilterAgeMax={() => {}}
-        setSearchTag={setSearchTag}
-        handleRefresh={handleRefresh}
-        handleCenter={() => {
-          if (geo.position && geo.position.length >= 2) {
-            // Bay về đúng tọa độ GPS thật thay vì tọa độ bị làm mờ (myObfPos)
-            nav.handleCenterTo(geo.position[0], geo.position[1], 0, ROADMAP_LOCATE_VISUAL_SCALE);
-            if (typeof geo.requestLocation === 'function') {
-              geo.requestLocation(); // Cập nhật GPS mới nhất luôn
-            }
-          } else {
-            nav.handleCenter(ROADMAP_LOCATE_VISUAL_SCALE);
-          }
-        }}
-        handleCenterAvatar={nav.handleCenterAvatar}
-        handleCenterTo={nav.handleCenterTo}
-        setMapMode={nav.setMapMode}
-        cameraZ={camera.cameraZ}
-        perspectivePx={nav.perspectivePx}
-        setCameraZ={camera.setCameraZ}
-        cameraHeightOffset={camera.cameraHeightOffset}
-        cameraPitchOverride={camera.cameraPitchOverride}
-        setCameraHeightOffset={camera.setCameraHeightOffset}
-        setCameraPitchOverride={camera.setCameraPitchOverride}
-        setCameraFov={camera.setCameraFov}
-        cameraFov={camera.cameraFov}
-        cameraRotateYDeg={camera.cameraRotateYDeg}
-        setCameraRotateYDeg={camera.setCameraRotateYDeg}
-        isWidgetExpanded={isWeatherWidgetExpanded}
-        setIsWidgetExpanded={setIsWeatherWidgetExpanded}
-        isSheetExpanded={isSheetExpanded}
-      />
-
-      <NavigationBar
-        mainTab={nav.mainTab}
-        selectedUser={selectedUser}
-        isDesktop={isDesktop}
-        handleTabClick={nav.handleTabClick}
-        user={user}
-        isSheetExpanded={isSheetExpanded}
-      />
-
-      <BottomSheet
-        isDesktop={isDesktop}
-        isSheetExpanded={isSheetExpanded}
-        selectedUser={selectedUser}
-        setSelectedUser={handleSheetSelectedUserChange}
-        activeTab={nav.activeTab}
-        mainTab={nav.mainTab}
-        nearbyUsers={wsCtx.nearbyUsers}
-        friends={friends}
-        games={games}
-        userGames={posts.userGames}
-        userPosts={posts.userPosts}
-        feedPosts={posts.feedPosts}
-        myUserId={wsCtx.myUserId || null}
-        myDisplayName={wsCtx.myDisplayName}
-        myObfPos={geo.myObfPos}
-        user={user}
-        searchTag={searchTag}
-        isCreatingPost={posts.isCreatingPost}
-        postTitle={posts.postTitle}
-        postPrivacy={posts.postPrivacy}
-        postIsStarred={posts.postIsStarred}
-        isSavingPost={posts.isSavingPost}
-        galleryActive={wsCtx.galleryActive}
-        currentProvince={currentProvince}
-        radius={nav.radius}
-        fetchUserPosts={posts.fetchUserPosts}
-        fetchFeedPosts={posts.fetchFeedPosts}
-        showNotification={showNotification}
-        ws={wsCtx.ws}
-        panX={nav.panX}
-        panY={nav.panY}
-        onLocateUser={(lat, lng) => {
-          nav.handleCenterTo(lat, lng);
-          nav.setVisualScale(2);
-        }}
-        onOpenChat={onOpenChat}
-        handleUpdateRadius={nav.handleUpdateRadius}
-        setIsSheetExpanded={handleSheetExpandedChange}
-        setActiveTab={nav.setActiveTab}
-        setMainTab={nav.setMainTab}
-        setSearchTag={setSearchTag}
-        setIsSearchOverlayOpen={setIsSearchOverlayOpen}
-        panelWidth={panelWidth}
-        setPanelWidth={setPanelWidth}
-        setMyDisplayName={wsCtx.setMyDisplayName}
-        myAvatarUrl={wsCtx.myAvatarUrl}
-        setMyAvatarUrl={wsCtx.setMyAvatarUrl}
-        handleUpdateAvatar={handleUpdateAvatar}
-        setIsCreatingPost={posts.setIsCreatingPost}
-        setPostTitle={posts.setPostTitle}
-        setPostPrivacy={posts.setPostPrivacy}
-        setPostIsStarred={posts.setPostIsStarred}
-        handleCreatePost={posts.handleCreatePost}
-        handleUpdatePostPrivacy={posts.handleUpdatePostPrivacy}
-        handleStarPost={posts.handleStarPost}
-        handleDeletePost={posts.handleDeletePost}
-        handlePlayGame={handlePlayGame}
-        cloudflareUrl={cloudflareUrl}
-        triggerAuth={triggerAuth}
-        requireAuth={requireAuth}
-        logout={logout}
-        externalOpenList={externalOpenList}
-        onOpenListChange={onOpenListChange}
-        onPublishSuccess={handleRefresh}
-        requestLocation={geo.requestLocation}
-        externalApi={externalApi}
-        onPostClick={(post) => setSelectedPost(post)}
-        onOpenUserFromPost={handleOpenAuthorFromPost}
-        exploreSubTab={exploreSubTab}
-        socialSubTab={socialSubTab}
-        onExploreSubTabChange={setExploreSubTab}
-        onSocialSubTabChange={setSocialSubTab}
-      />
-
-      {contextMenu && (
-        <div className="pointer-events-auto">
-          <ContextMenu
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            setMyObfPos={geo.setMyObfPos}
-            panX={nav.panX}
-            panY={nav.panY}
-            ws={wsCtx.ws}
-            setSelectedUser={nav.setSelectedUser}
-          />
-        </div>
-      )}
-
-      {pickupRewardItem && (
-        <div className="pointer-events-auto">
-          <PickupRewardModal
-            item={pickupRewardItem}
-            onDiscard={handleDiscardPickupItem}
-            onOpenBackpack={handleOpenBackpackFromPickup}
-          />
-        </div>
-      )}
-
-      {selectedPost && (
-        <div className="pointer-events-auto">
-          <PostDetailOverlay
-            post={selectedPost}
-            isSelf={isSelectedPostSelf}
-          onClose={() => setSelectedPost(null)}
-          onAuthorClick={handleOpenAuthorFromPost}
-            isDesktop={isDesktop}
-            isSheetExpanded={isSheetExpanded}
-            panelWidth={panelWidth}
-            externalApi={externalApi}
-            requireAuth={requireAuth}
-            onStar={posts.handleStarPost}
-            onDelete={posts.handleDeletePost}
-            onUpdatePrivacy={posts.handleUpdatePostPrivacy}
-            fetchUserPosts={posts.fetchUserPosts}
-          />
-        </div>
-      )}
-
-      <div className="pointer-events-auto">
-        <TierSelectionOverlay
-          isOpen={isTierSelectorOpen}
-          onClose={() => setIsTierSelectorOpen(false)}
-          currentGold={looterStateObj.looterGold}
-          onSelectTier={async (tier) => {
-            try {
-              if (typeof looterActions.setWorldTier === 'function') {
-                setIsTierSelectorOpen(false);
-                setIsLooterGameMode(true);
-                looterActions.setWorldTier(tier).catch(err => {
-                  console.error('[AlinMap] Background setWorldTier error:', err);
-                });
-              }
-              if (typeof nav.handleCenterTo === 'function') {
-                nav.handleCenterTo(looterStateObj.fortressLat || 0, looterStateObj.fortressLng || 0);
-              }
-            } catch (err) {
-              console.error('[AlinMap] onSelectTier error:', err);
-            }
-          }}
-        />
-      </div>
-
-      {isSearchOverlayOpen && (
-        <div className="pointer-events-auto">
-          <SearchOverlay
-            searchTag={searchTag}
-            setSearchTag={setSearchTag}
-            nearbyUsers={wsCtx.nearbyUsers}
-            setSelectedUser={nav.setSelectedUser}
-            setActiveTab={nav.setActiveTab}
-            setIsSheetExpanded={nav.setIsSheetExpanded}
-            handlePlayGame={handlePlayGame}
-            onClose={handleSearchOverlayClose}
-            isDesktop={isDesktop}
-            isSheetExpanded={isSheetExpanded}
-            panelWidth={panelWidth}
-          />
-        </div>
-      )}
-
-    </div>,
-    portalTarget
+  return (
+    <AlinMapUiOverlayView
+      portalTarget={portalTarget}
+      nav={nav}
+      geo={geo}
+      wsCtx={wsCtx}
+      posts={posts}
+      user={user}
+      friends={friends}
+      games={games}
+      handlePlayGame={handlePlayGame}
+      showNotification={showNotification}
+      triggerAuth={triggerAuth}
+      requireAuth={requireAuth}
+      logout={logout}
+      externalApi={externalApi}
+      externalOpenList={externalOpenList}
+      onOpenListChange={onOpenListChange}
+      cloudflareUrl={cloudflareUrl}
+      onOpenChat={onOpenChat}
+      contextMenu={contextMenu}
+      setContextMenu={setContextMenu}
+      selectedPost={selectedPost}
+      setSelectedPost={setSelectedPost}
+      pickupRewardItem={pickupRewardItem}
+      handleDiscardPickupItem={handleDiscardPickupItem}
+      handleOpenBackpackFromPickup={handleOpenBackpackFromPickup}
+      isTierSelectorOpen={isTierSelectorOpen}
+      setIsTierSelectorOpen={setIsTierSelectorOpen}
+      isWeatherWidgetExpanded={isWeatherWidgetExpanded}
+      setIsWeatherWidgetExpanded={setIsWeatherWidgetExpanded}
+      friendIdInput={friendIdInput}
+      setFriendIdInput={setFriendIdInput}
+      setSearchMarkerPos={setSearchMarkerPos}
+      searchTag={searchTag}
+      setSearchTag={setSearchTag}
+      handleRefresh={handleRefresh}
+      selectedUser={selectedUser}
+      setSelectedUser={setSelectedUser}
+      setActiveTab={setActiveTab}
+      setIsLooterGameMode={setIsLooterGameMode}
+      setIsSheetExpanded={setIsSheetExpanded}
+      looterStateObj={looterStateObj}
+      looterActions={looterActions}
+      isLooterGameMode={isLooterGameMode}
+      mainTab={mainTab}
+      myAvatarUrl={myAvatarUrl}
+      myDisplayName={myDisplayName}
+      handleUpdateAvatar={handleUpdateAvatar}
+      myObfPos={myObfPos}
+      currentProvince={currentProvince}
+      weatherData={weatherData}
+      isDesktop={isDesktop}
+      isSocketConnecting={isSocketConnecting}
+      isSheetExpanded={isSheetExpanded}
+      camera={camera}
+      panelWidth={panelWidth}
+      setPanelWidth={setPanelWidth}
+      isSearchOverlayOpen={isSearchOverlayOpen}
+      setIsSearchOverlayOpen={setIsSearchOverlayOpen}
+      shouldHideFullscreenHandle={shouldHideFullscreenHandle}
+      handleSearchOverlayClose={handleSearchOverlayClose}
+      handleSheetExpandedChange={handleSheetExpandedChange}
+      handleSheetSelectedUserChange={handleSheetSelectedUserChange}
+      handleOpenAuthorFromPost={handleOpenAuthorFromPost}
+      exploreSubTab={exploreSubTab}
+      socialSubTab={socialSubTab}
+      onExploreSubTabChange={setExploreSubTab}
+      onSocialSubTabChange={setSocialSubTab}
+    />
   );
 };
 
