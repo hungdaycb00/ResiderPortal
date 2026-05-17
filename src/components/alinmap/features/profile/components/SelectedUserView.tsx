@@ -33,6 +33,12 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
 }) => {
     const { isReporting, setIsReporting, reportStatus, setReportStatus, reportReason, setReportReason } = useProfile();
     const { sentFriendRequests, handleAddFriend, handleMessage } = useSocial();
+    const handleOpenUser = React.useCallback((user: any) => {
+        setSelectedUser(user);
+        if (user) {
+            setActiveTab('info');
+        }
+    }, [setActiveTab, setSelectedUser]);
 
     return (
         <div className="pt-2 md:pt-6 pb-24 md:pb-6 px-2">
@@ -67,7 +73,7 @@ const SelectedUserView: React.FC<SelectedUserViewProps> = ({
                         fetchUserPosts={fetchUserPosts}
                         requireAuth={requireAuth}
                         onPostClick={onPostClick}
-                        onAuthorClick={setSelectedUser}
+                        onAuthorClick={handleOpenUser}
                     />
                 </>
             )}

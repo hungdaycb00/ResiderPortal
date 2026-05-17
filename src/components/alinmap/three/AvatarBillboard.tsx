@@ -51,7 +51,7 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
     const texture = useMemo(() => makeAvatarTexture(name, avatarUrl), [name, avatarUrl]);
     const displayTags = useMemo(() => getAvatarTagList(tags, status), [tags, status]);
     const shouldShowDetails = isHovered || !!isSelected;
-    const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
+    const shouldRenderTags = labelMode === 'full' || shouldShowDetails;
     const isRoadmapPresentation = presentation === 'roadmap';
     const presentationScale = isRoadmapPresentation ? 0.72 : 1;
     const baseAvatarScale = presentationScale * 0.2;
@@ -95,20 +95,20 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                     <planeGeometry args={[avatarPlaneSize, avatarPlaneSize]} />
                     <meshBasicMaterial map={texture} transparent alphaTest={0.1} depthWrite={false} opacity={dimmed ? 0.18 : 1} />
                 </mesh>
-                {shouldRenderLabel && (
-                    <group position={[0, labelYOffset, 0]}>
-                        <Text
-                            position={[0, 0, 0]}
-                            fontSize={isRoadmapPresentation ? 0.4 : 0.7}
-                            color="#0f172a"
-                            outlineWidth={0.04}
-                            outlineColor="#ffffff"
-                            anchorX="center"
-                            anchorY="middle"
-                            fontWeight="bold"
-                        >
-                            {name}
-                        </Text>
+                <group position={[0, labelYOffset, 0]}>
+                    <Text
+                        position={[0, 0, 0]}
+                        fontSize={isRoadmapPresentation ? 0.4 : 0.7}
+                        color="#0f172a"
+                        outlineWidth={0.04}
+                        outlineColor="#ffffff"
+                        anchorX="center"
+                        anchorY="middle"
+                        fontWeight="bold"
+                    >
+                        {name}
+                    </Text>
+                    {status && (
                         <Text
                             position={[0, isRoadmapPresentation ? -0.43 : -0.58, 0]}
                             fontSize={isRoadmapPresentation ? 0.18 : 0.28}
@@ -119,24 +119,24 @@ const AvatarBillboard: React.FC<AvatarBillboardProps> = ({
                             anchorY="middle"
                             fontWeight="bold"
                         >
+                            {status}
+                        </Text>
+                    )}
+                    {shouldRenderTags && displayTags.length > 0 && (
+                        <Text
+                            position={[0, isRoadmapPresentation ? -0.83 : -1.08, 0]}
+                            fontSize={isRoadmapPresentation ? 0.15 : 0.24}
+                            color="#0284c7"
+                            outlineWidth={0.02}
+                            outlineColor="#e0f2fe"
+                            anchorX="center"
+                            anchorY="middle"
+                            fontWeight="bold"
+                        >
                             {displayTags.join(' ')}
                         </Text>
-                        {status && (
-                            <Text
-                                position={[0, isRoadmapPresentation ? -0.87 : -1.18, 0]}
-                                fontSize={isRoadmapPresentation ? 0.25 : 0.35}
-                                color="#0284c7"
-                                outlineWidth={0.02}
-                                outlineColor="#e0f2fe"
-                                anchorX="center"
-                                anchorY="middle"
-                                fontWeight="bold"
-                            >
-                                {status}
-                            </Text>
-                        )}
-                    </group>
-                )}
+                    )}
+                </group>
                 {showGallery ? (
                     <GalleryImage
                         url={galleryImages?.[0]}

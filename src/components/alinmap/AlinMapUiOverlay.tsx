@@ -367,7 +367,7 @@ const AlinMapUiOverlay: React.FC<AlinMapUiOverlayProps> = ({
           onAuthorClick={(author) => {
             setSelectedPost(null);
             nav.setSelectedUser(author);
-              nav.setActiveTab('posts');
+              nav.setActiveTab('info');
             }}
             isDesktop={isDesktop}
             isSheetExpanded={isSheetExpanded}

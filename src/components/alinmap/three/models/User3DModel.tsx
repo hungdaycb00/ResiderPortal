@@ -47,7 +47,7 @@ const User3DModel: React.FC<User3DModelProps> = ({
     const [isHovered, setIsHovered] = React.useState(false);
 
     const shouldShowDetails = isHovered || !!isSelected;
-    const shouldRenderLabel = labelMode === 'full' || labelMode === 'name-only' || shouldShowDetails;
+    const shouldRenderTags = labelMode === 'full' || shouldShowDetails;
     const isRoadmapPresentation = presentation === 'roadmap';
     const displayTags = getAvatarTagList(tags, status);
     
@@ -110,20 +110,20 @@ const User3DModel: React.FC<User3DModelProps> = ({
 
             {/* Labels (Using Billboard so they always face camera) */}
             <Billboard follow position={[0, 3.5, 0]}>
-                {shouldRenderLabel && (
-                    <group position={[0, isRoadmapPresentation ? 0.5 : 1.2, 0]}>
-                        <Text
-                            position={[0, 0, 0]}
-                            fontSize={isRoadmapPresentation ? 0.4 : 0.6}
-                            color="#0f172a"
-                            outlineWidth={0.04}
-                            outlineColor="#ffffff"
-                            anchorX="center"
-                            anchorY="middle"
-                            fontWeight="bold"
-                        >
-                            {name}
-                        </Text>
+                <group position={[0, isRoadmapPresentation ? 0.5 : 1.2, 0]}>
+                    <Text
+                        position={[0, 0, 0]}
+                        fontSize={isRoadmapPresentation ? 0.4 : 0.6}
+                        color="#0f172a"
+                        outlineWidth={0.04}
+                        outlineColor="#ffffff"
+                        anchorX="center"
+                        anchorY="middle"
+                        fontWeight="bold"
+                    >
+                        {name}
+                    </Text>
+                    {status && (
                         <Text
                             position={[0, isRoadmapPresentation ? -0.38 : -0.55, 0]}
                             fontSize={isRoadmapPresentation ? 0.16 : 0.22}
@@ -134,24 +134,24 @@ const User3DModel: React.FC<User3DModelProps> = ({
                             anchorY="middle"
                             fontWeight="bold"
                         >
+                            {status}
+                        </Text>
+                    )}
+                    {shouldRenderTags && displayTags.length > 0 && (
+                        <Text
+                            position={[0, isRoadmapPresentation ? -0.75 : -1.05, 0]}
+                            fontSize={isRoadmapPresentation ? 0.14 : 0.2}
+                            color="#0284c7"
+                            outlineWidth={0.02}
+                            outlineColor="#e0f2fe"
+                            anchorX="center"
+                            anchorY="middle"
+                            fontWeight="bold"
+                        >
                             {displayTags.join(' ')}
                         </Text>
-                        {status && (
-                            <Text
-                                position={[0, isRoadmapPresentation ? -0.75 : -1.05, 0]}
-                                fontSize={isRoadmapPresentation ? 0.2 : 0.25}
-                                color="#0284c7"
-                                outlineWidth={0.02}
-                                outlineColor="#e0f2fe"
-                                anchorX="center"
-                                anchorY="middle"
-                                fontWeight="bold"
-                            >
-                                {status}
-                            </Text>
-                        )}
-                    </group>
-                )}
+                    )}
+                </group>
                 {showGallery ? (
                     <GalleryImage
                         url={galleryImages?.[0]}

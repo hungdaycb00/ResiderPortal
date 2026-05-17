@@ -120,12 +120,20 @@ export function useMapNavigation({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Tự động mở bảng điều khiển khi có user được chọn
+  // Đồng bộ profile panel: cứ đổi sang user khác là ép mở profile + tab info.
   useEffect(() => {
-    if (selectedUser) {
+    if (!selectedUser) return;
+
+    if (mainTab !== 'profile') {
+      setMainTab('profile');
+    }
+    if (activeTab !== 'info') {
+      setActiveTab('info');
+    }
+    if (!isSheetExpanded) {
       setIsSheetExpanded(true);
     }
-  }, [selectedUser]);
+  }, [activeTab, isSheetExpanded, mainTab, selectedUser, setActiveTab, setIsSheetExpanded, setMainTab]);
 
   const lastInitialTabRef = React.useRef(initialMainTab);
 
