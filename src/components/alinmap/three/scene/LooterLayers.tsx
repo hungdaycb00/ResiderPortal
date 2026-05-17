@@ -3,7 +3,7 @@ import type { MotionValue } from 'framer-motion';
 import ProceduralFortress from '../models/ProceduralFortress';
 import LootSprite from '../models/LootSprite';
 import DashedPath from '../models/DashedPath';
-import { pxToScene, AVATAR_PLANE_SIZE, type LatLng } from '../sceneUtils';
+import { pxToScene, type LatLng } from '../sceneUtils';
 import { GAME_CONFIG } from '../../looter-game/gameConfig';
 
 interface LooterLayersProps {
@@ -28,6 +28,9 @@ interface LooterLayersProps {
   getWorldItemIcon: (item: any) => string;
   getWorldItemAccent: (item: any) => string;
   handleWorldItemClick: (item: any) => void;
+
+  /** MotionValue zoom — truyền xuống LootSprite để responsive theo camera */
+  zoomScale?: MotionValue<number>;
 }
 
 export default function LooterLayers({
@@ -46,6 +49,7 @@ export default function LooterLayers({
   getWorldItemIcon,
   getWorldItemAccent,
   handleWorldItemClick,
+  zoomScale,
 }: LooterLayersProps) {
   if (!isLooterGameMode) return null;
 
@@ -59,10 +63,10 @@ export default function LooterLayers({
     <>
       {/* Fortress */}
       {!encounter && looterStateObj?.fortressLat && looterStateObj?.fortressLng ? (
-        <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} scale={0.62} onClick={handleFortressClick} />
+        <ProceduralFortress position={[fortressScene!.x, 0, fortressScene!.z]} sizeMultiplier={3} onClick={handleFortressClick} zoomScale={zoomScale} />
       ) : null}
 
-      {/* Waypoint items (3 gần nhất) */}
+      {/* Waypoint items (3 gần nhất) — lớn hơn item thường 50% */}
       {waypointRenderData.map(({ item, pos }: any) => {
         const scenePos = scalePos(pos);
         return (
@@ -73,10 +77,10 @@ export default function LooterLayers({
             icon={getWorldItemIcon(item)}
             title={item?.item?.name || 'Loot'}
             accent={getWorldItemAccent(item)}
-            scale={0.31}
-            size={AVATAR_PLANE_SIZE}
+            sizeMultiplier={1.5}
             renderOrder={50}
             onClick={() => handleWorldItemClick(item)}
+            zoomScale={zoomScale}
           />
         );
       })}
@@ -90,17 +94,17 @@ export default function LooterLayers({
         />
       ) : null}
 
-      {/* Boat target pin */}
+      {/* Boat target pin — nhỏ hơn avatar (0.4×) */}
       {!encounter && boatTargetPin ? (
         <LootSprite
           position={[boatTargetScene!.x, 5.02, boatTargetScene!.z]}
           type="target"
-          size={AVATAR_PLANE_SIZE * 0.15}
-          scale={0.08}
+          sizeMultiplier={0.4}
+          zoomScale={zoomScale}
         />
       ) : null}
 
-      {/* Enemy */}
+      {/* Enemy — cùng size waypoint */}
       {encounter ? (
         <LootSprite
           position={[
@@ -109,11 +113,12 @@ export default function LooterLayers({
             boatPosRef.current[2],
           ]}
           type="enemy"
-          scale={0.31}
+          sizeMultiplier={1.5}
+          zoomScale={zoomScale}
         />
       ) : null}
 
-      {/* World loot items */}
+      {/* World loot items — cùng size avatar (1.0×) */}
       {itemRenderData.map(({ item, pos }: any) => {
         const scenePos = scalePos(pos);
         return (
@@ -124,10 +129,10 @@ export default function LooterLayers({
             icon={getWorldItemIcon(item)}
             title={item?.item?.name || 'Loot'}
             accent={getWorldItemAccent(item)}
-            scale={0.23}
-            size={AVATAR_PLANE_SIZE}
+            sizeMultiplier={1.0}
             renderOrder={40}
             onClick={() => handleWorldItemClick(item)}
+            zoomScale={zoomScale}
           />
         );
       })}

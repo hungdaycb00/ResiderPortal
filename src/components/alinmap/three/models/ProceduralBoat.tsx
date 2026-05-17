@@ -9,21 +9,23 @@ import LootSprite from './LootSprite';
 interface ProceduralBoatProps {
     position: [number, number, number];
     rotation?: [number, number, number];
-    scale?: number;
+    sizeMultiplier?: number;
     offsetX?: MotionValue<number>;
     offsetY?: MotionValue<number>;
     reducedMotion?: boolean;
     sceneWorldScale?: number;
+    zoomScale?: MotionValue<number>;
 }
 
 const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
     position,
     rotation = [0, 0, 0],
-    scale = 0.31,
+    sizeMultiplier = 1.5,
     offsetX,
     offsetY,
     reducedMotion = false,
     sceneWorldScale = 1,
+    zoomScale,
 }) => {
     const groupRef = useRef<THREE.Group>(null);
 
@@ -49,9 +51,9 @@ const ProceduralBoat: React.FC<ProceduralBoatProps> = ({
                 type="boat"
                 title="You"
                 accent="#38bdf8"
-                scale={scale}
-                size={AVATAR_PLANE_SIZE}
+                sizeMultiplier={sizeMultiplier}
                 interactive={false}
+                zoomScale={zoomScale}
             />
         </group>
     );

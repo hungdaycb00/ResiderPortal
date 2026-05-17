@@ -385,6 +385,7 @@ export default function SceneContent({
           getWorldItemIcon={getWorldItemIcon}
           getWorldItemAccent={getWorldItemAccent}
           handleWorldItemClick={handleWorldItemClick}
+          zoomScale={scale}
         />
       </group>
 

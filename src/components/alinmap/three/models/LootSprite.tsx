@@ -1,9 +1,16 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Billboard } from '@react-three/drei';
+import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
-import { makeLootSpriteTexture, AVATAR_PLANE_SIZE, AVATAR_RING_RADIUS } from '../sceneUtils';
+import { makeLootSpriteTexture, AVATAR_PLANE_SIZE } from '../sceneUtils';
 
 const FOOTPRINT_WORLD_Y = 0.01; // Vòng tròn click đặt ngay trên mặt đất (ground y=0)
+
+/**
+ * BASE_LOOT_SCALE = 0.2 — giống hệt baseAvatarScale trong AvatarBillboard.
+ * Điều này đảm bảo LootSprite có cùng tỷ lệ gốc với avatar trên map.
+ */
+const BASE_LOOT_SCALE = 0.2;
 
 interface LootSpriteProps {
     position: [number, number, number];
@@ -11,11 +18,13 @@ interface LootSpriteProps {
     type?: string;
     title?: string;
     accent?: string;
-    scale?: number;
-    size?: number;
+    /** Hệ số nhân thêm (1.0 = cùng size avatar, 1.5 = lớn hơn 50%). */
+    sizeMultiplier?: number;
     renderOrder?: number;
     interactive?: boolean;
     onClick?: () => void;
+    /** MotionValue zoom từ camera — giống zoomScale trong AvatarBillboard. */
+    zoomScale?: MotionValue<number>;
 }
 
 const LootSprite: React.FC<LootSpriteProps> = ({
@@ -24,22 +33,42 @@ const LootSprite: React.FC<LootSpriteProps> = ({
     type = 'item',
     title,
     accent = '#22d3ee',
-    scale = 1,
-    size = AVATAR_PLANE_SIZE,
+    sizeMultiplier = 1,
     renderOrder = 35,
     interactive = true,
     onClick,
+    zoomScale,
 }) => {
     const texture = useMemo(() => makeLootSpriteTexture(type, title, accent, icon), [type, title, accent, icon]);
+    const [currentZoomScale, setCurrentZoomScale] = useState(() => zoomScale?.get?.() ?? 1);
+
+    // Subscribe zoom MotionValue — cùng pattern với AvatarBillboard
+    useEffect(() => {
+        if (!zoomScale) {
+            setCurrentZoomScale(1);
+            return;
+        }
+        setCurrentZoomScale(zoomScale.get());
+        const unsubscribe = zoomScale.on('change', (value) => {
+            setCurrentZoomScale(value);
+        });
+        return unsubscribe;
+    }, [zoomScale]);
 
     useEffect(() => () => { texture.dispose(); }, [texture]);
 
-    // Vị trí Y cục bộ để vòng tròn footprint nằm ở FOOTPRINT_WORLD_Y trong world space,
-    // bất kể item được đặt ở độ cao nào hay scale bao nhiêu.
-    const footprintLocalY = FOOTPRINT_WORLD_Y - position[1];
+    // ── Scale tính toán giống hệt AvatarBillboard ──
+    // zoomOutT: 0 khi zoom=1 (gần nhất), 1 khi zoom<=0.5 (xa nhất)
+    const zoomOutT = Math.max(0, Math.min(1, (1 - currentZoomScale) / 0.5));
+    // Zoom xa → icon lớn hơn để vẫn nhìn thấy (giống avatar)
+    const zoomMultiplier = 1 + zoomOutT * 2;
+    const lootScale = BASE_LOOT_SCALE * zoomMultiplier * sizeMultiplier;
+    const planeSize = AVATAR_PLANE_SIZE * lootScale;
 
-    // Bán kính vòng tròn click — tỉ lệ với size, tối thiểu 3.5 để luôn dễ click
-    const footprintRadius = Math.max(size * scale * 0.65, 0.5);
+    // Vị trí Y cục bộ để vòng tròn footprint nằm ở FOOTPRINT_WORLD_Y trong world space
+    const footprintLocalY = FOOTPRINT_WORLD_Y - position[1];
+    // Bán kính vòng tròn click — tỉ lệ với kích thước hiển thị thực tế
+    const footprintRadius = Math.max(planeSize * 0.65, 0.5);
 
     return (
         <group
@@ -67,10 +96,10 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                 document.body.style.cursor = 'auto';
             }}
         >
-            {/* Sprite chính luôn quay thẳng về camera để giữ đủ thông tin hiển thị. */}
-            <Billboard follow scale={[scale, scale, 1]}>
+            {/* Sprite chính — dùng planeSize thay vì Billboard scale, giống avatar. */}
+            <Billboard follow>
                 <mesh renderOrder={renderOrder} raycast={interactive ? undefined : () => {}}>
-                    <planeGeometry args={[size, size]} />
+                    <planeGeometry args={[planeSize, planeSize]} />
                     <meshBasicMaterial
                         map={texture}
                         transparent
@@ -80,7 +109,7 @@ const LootSprite: React.FC<LootSpriteProps> = ({
                     />
                 </mesh>
             </Billboard>
-            {/* Click footprint — vòng tròn nằm ngang trên mặt đất, LUÔN trên ground (y=-1) */}
+            {/* Click footprint — vòng tròn nằm ngang trên mặt đất */}
             <mesh
                 position={[0, footprintLocalY, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}

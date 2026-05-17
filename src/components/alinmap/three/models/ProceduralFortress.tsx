@@ -1,23 +1,24 @@
 import React from 'react';
 import LootSprite from './LootSprite';
-import { AVATAR_PLANE_SIZE } from '../sceneUtils';
+import type { MotionValue } from 'framer-motion';
 
 interface ProceduralFortressProps {
     position: [number, number, number];
-    scale?: number;
+    sizeMultiplier?: number;
     onClick?: () => void;
+    zoomScale?: MotionValue<number>;
 }
 
-const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, scale = 0.62, onClick }) => {
+const ProceduralFortress: React.FC<ProceduralFortressProps> = ({ position, sizeMultiplier = 3, onClick, zoomScale }) => {
     return (
         <LootSprite
             position={position}
             type="fortress"
             title="Fortress"
             accent="#f59e0b"
-            scale={scale}
-            size={AVATAR_PLANE_SIZE}
+            sizeMultiplier={sizeMultiplier}
             onClick={onClick}
+            zoomScale={zoomScale}
         />
     );
 };

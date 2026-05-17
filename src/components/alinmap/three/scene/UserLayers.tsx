@@ -211,6 +211,7 @@ export default function UserLayers({
           offsetY={boatOffsetY}
           reducedMotion={performanceMode === 'low'}
           sceneWorldScale={sceneWorldScale}
+          zoomScale={scale}
         />
       ) : !isLooterGameMode && (() => {
         const isSelfSelected = selectedUser?.id === 'self' || selectedUser?.id === user?.uid || selectedUser?.id === myUserId;
